@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_private.h 1.2 2002/11/14 15:53:13Z jl11312 Exp ms10234 $
  * $Log: datalog_private.h $
+ * Revision 1.1  2002/08/15 21:03:18  jl11312
+ * Initial revision
  *
  */
 
@@ -93,6 +95,37 @@ template<class Value, class Arg> inline DataLog_Result datalog_AddFunc(DataLog_S
 }
 
 //
+// Periodic logging support for member functions
+//
+template<class Value, class T> class DataLog_PeriodicItemMemberFunc : public DataLog_PeriodicItemBase
+{
+public:
+	DataLog_PeriodicItemMemberFunc(DataLog_SetHandle set, T * obj, Value (T::* func)(void), const char * key, const char * description, const char * format)
+		: DataLog_PeriodicItemBase(set, sizeof(Value), key, description, format), _obj(obj), _func(func) { }
+
+	DataLog_PeriodicItemMemberFunc(DataLog_SetHandle set, T * obj, Value (T::* func)(void) const, const char * key, const char * description, const char * format)
+		: DataLog_PeriodicItemBase(set, sizeof(Value), key, description, format), _obj(obj), _func(func) { }
+
+	virtual void updateItem(void) { Value data = (_obj->*_func)(); setItemData(sizeof(data), (const void *)&data); }
+
+private:
+	T * _obj;
+	Value (T::* _func)(void);
+};
+
+template<class Value, class T> inline DataLog_Result datalog_AddMemberFunc(DataLog_SetHandle handle, T * obj, Value (T::* func)(void), const char * key, const char * description, const char * format)
+{
+   DataLog_PeriodicItemMemberFunc<Value, T> * item = new DataLog_PeriodicItemMemberFunc<Value, T>(handle, obj, func, key, description, format);
+   return DataLog_OK;
+}
+
+template<class Value, class T> inline DataLog_Result datalog_AddMemberFunc(DataLog_SetHandle handle, T * obj, Value (T::* func)(void) const, const char * key, const char * description, const char * format)
+{
+   DataLog_PeriodicItemMemberFunc<Value, T> * item = new DataLog_PeriodicItemMemberFunc<Value, T>(handle, obj, func, key, description, format);
+   return DataLog_OK;
+}
+
+//
 // Periodic logging support for char pointer references
 //
 typedef char * DataLog_CharPtr;
@@ -153,6 +186,55 @@ template<class Arg> inline DataLog_Result datalog_AddFunc(DataLog_SetHandle hand
 template<class Arg> inline DataLog_Result datalog_AddFunc(DataLog_SetHandle handle, DataLog_ConstCharPtr (* func)(const Arg& arg), const Arg& arg, const char * key, const char * description, const char * format)
 {
    DataLog_PeriodicItemStringFunc<Arg> * item = new DataLog_PeriodicItemStringFunc<Arg>(handle, func, arg, key, description, format);
+   return DataLog_OK;
+}
+
+//
+// Periodic logging support for char pointer member functions
+//
+template <class T> class DataLog_PeriodicItemStringMemberFunc : public DataLog_PeriodicItemBase
+{
+public:
+	DataLog_PeriodicItemStringMemberFunc(DataLog_SetHandle set, T * obj, DataLog_CharPtr (T::* func)(void), const char * key, const char * description, const char * format)
+		: DataLog_PeriodicItemBase(set, DataLog_PeriodicItemBase::BUFFER_SIZE_INC, key, description, format), _obj(obj), _func(func) { }
+
+	DataLog_PeriodicItemStringMemberFunc(DataLog_SetHandle set, T * obj, DataLog_ConstCharPtr (T::* func)(void), const char * key, const char * description, const char * format)
+		: DataLog_PeriodicItemBase(set, DataLog_PeriodicItemBase::BUFFER_SIZE_INC, key, description, format), _obj(obj), _func(func) { }
+
+	DataLog_PeriodicItemStringMemberFunc(DataLog_SetHandle set, T * obj, DataLog_CharPtr (T::* func)(void) const, const char * key, const char * description, const char * format)
+		: DataLog_PeriodicItemBase(set, DataLog_PeriodicItemBase::BUFFER_SIZE_INC, key, description, format), _obj(obj), _func(func) { }
+
+	DataLog_PeriodicItemStringMemberFunc(DataLog_SetHandle set, T * obj, DataLog_ConstCharPtr (T::* func)(void) const, const char * key, const char * description, const char * format)
+		: DataLog_PeriodicItemBase(set, DataLog_PeriodicItemBase::BUFFER_SIZE_INC, key, description, format), _obj(obj), _func(func) { }
+
+	virtual void updateItem(void) { DataLog_ConstCharPtr data = (_obj->*_func)(); setItemString(data); }
+
+private:
+	T * _obj;
+	DataLog_ConstCharPtr (T::* _func)(void);
+};
+
+template<class T> inline DataLog_Result datalog_AddMemberFunc(DataLog_SetHandle handle, T * obj, DataLog_CharPtr (T::* func)(void), const char * key, const char * description, const char * format)
+{
+   DataLog_PeriodicItemStringMemberFunc<T> * item = new DataLog_PeriodicItemStringMemberFunc<T>(handle, obj, func, key, description, format);
+   return DataLog_OK;
+}
+
+template<class T> inline DataLog_Result datalog_AddMemberFunc(DataLog_SetHandle handle, T * obj, DataLog_ConstCharPtr (T::* func)(void), const char * key, const char * description, const char * format)
+{
+   DataLog_PeriodicItemStringMemberFunc<T> * item = new DataLog_PeriodicItemStringMemberFunc<T>(handle, obj, func, key, description, format);
+   return DataLog_OK;
+}
+
+template<class T> inline DataLog_Result datalog_AddMemberFunc(DataLog_SetHandle handle, T * obj, DataLog_CharPtr (T::* func)(void) const, const char * key, const char * description, const char * format)
+{
+   DataLog_PeriodicItemStringMemberFunc<T> * item = new DataLog_PeriodicItemStringMemberFunc<T>(handle, obj, func, key, description, format);
+   return DataLog_OK;
+}
+
+template<class T> inline DataLog_Result datalog_AddMemberFunc(DataLog_SetHandle handle, T * obj, DataLog_ConstCharPtr (T::* func)(void) const, const char * key, const char * description, const char * format)
+{
+   DataLog_PeriodicItemStringMemberFunc<T> * item = new DataLog_PeriodicItemStringMemberFunc<T>(handle, obj, func, key, description, format);
    return DataLog_OK;
 }
 

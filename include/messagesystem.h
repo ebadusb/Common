@@ -23,6 +23,12 @@ public:
    static void MsgSystem( MessageSystem *msgSys ) { _TheMessageSystem = msgSys; }
    static MessageSystem *MsgSystem() { return _TheMessageSystem; }
 
+   //
+   // Function to handle task level datalog errors ...
+   static void datalogErrorHandler( const char * file, int line, 
+                                    DataLog_ErrorType error, 
+                                    const char * msg, 
+                                    int continuable );
 private:
 
    //

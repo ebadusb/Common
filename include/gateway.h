@@ -29,6 +29,12 @@ public:
    //  task will also be considered as exitted.
    static int Gateway_main( short port );
 
+   //
+   // Function to handle task level datalog errors ...
+   static void datalogErrorHandler( const char * file, int line, 
+                                    DataLog_ErrorType error, 
+                                    const char * msg, 
+                                    int continuable );
 
 public:
 

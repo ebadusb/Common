@@ -45,6 +45,12 @@ public:
    // Function called whenever any task gets deleted ...
    static int taskDeleteHook( WIND_TCB *pTcb );
 
+   //
+   // Function to handle task level datalog errors ...
+   static void datalogErrorHandler( const char * file, int line, 
+                                    DataLog_ErrorType error, 
+                                    const char * msg, 
+                                    int continuable );
 private:
 
    static WIND_TCB *_TheRouterTid;

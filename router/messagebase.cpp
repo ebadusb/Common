@@ -209,17 +209,17 @@ void MessageBase::dump( ostream &outs )
         << " MsgId: " << hex << _MsgId << " NodeId: " << hex << _NodeId  << " Tid: " << hex << _TaskId 
         << " Time: " << dec << _SentTime.tv_sec << " " << _SentTime.tv_nsec << " ";
 
-   outs << endl;
+   outs << endmsg;
    int i = 0;
    list< MessagePacket* >::iterator pckt;
    for ( pckt  = _PacketList.begin() ;
          pckt != _PacketList.end() ;
          pckt++ ) 
    {
-      outs << "pckt#" << i++ << endl;
+      outs << "pckt#" << i++ << endmsg;
       (*pckt)->dump( outs );
    }
-   outs << "===================================================================" << endl;
+   outs << "===================================================================" << endmsg;
 }
 
 void MessageBase::postConstructInit()

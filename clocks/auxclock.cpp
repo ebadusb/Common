@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.4 2002/06/19 22:53:29 pn02526 Exp ms10234 $
  * $Log: auxclock.cpp $
+ * Revision 1.1  2002/06/18 08:55:18  pn02526
+ * Initial revision
  *
  * TITLE:      auxclock.cpp, Auxilliary clock ISR and support functions.
  *
@@ -273,7 +275,7 @@ int auxClockMsgPktEnable( unsigned int periodicity /* number of ticks */,
     {
         auxClockMsgPktQDes = mq_open(
                                     MsgPktQName, /* name of queue to open */
-/*                                    O_WRONLY | O_NONBLOCK  /* open flags */
+/*                                    O_WRONLY | O_NONBLOCK  open flags */
                                     O_WRONLY  /* open flags */
                                    );
     }

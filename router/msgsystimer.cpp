@@ -527,6 +527,31 @@ void MsgSysTimer::checkTimers()
          else
          {
             //
+            // Check the task's queue to see if it is full or not ...
+            mq_attr qattributes;
+            if (    mq_getattr( (*tqiter).second, &qattributes ) == ERROR
+                 || qattributes.mq_curmsgs >= qattributes.mq_maxmsg )
+            {
+               //
+               // The task's queue is full!
+               //
+               // Error ...
+               int errorNo = errno;
+               DataLog_Critical criticalLog;
+               DataLog(criticalLog) << "Sending message=" << hex << mpPtr->msgData().msgId() 
+                                    << "- Task Id=" << mpPtr->msgData().taskId() 
+                                    << "(" << taskName( mpPtr->msgData().taskId() ) << ")"
+                                    << " queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
+                                    << ", (" << strerror( errorNo ) << ")"
+                                    << endmsg;
+#if !( BUILD_TYPE==DEBUG ) && !( CPU==SIMNT )
+               _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
+#endif // #if CPU!=SIMNT && BUILD_TYPE!=DEBUG
+               return;
+
+            }
+
+            //
             // Send the message packet ...
             unsigned int retries=0;
             while (    mq_send( (*tqiter).second, mpPtr, sizeof( MessagePacket ), 

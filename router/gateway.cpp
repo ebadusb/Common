@@ -143,6 +143,28 @@ void Gateway::receiveLoop()
 void Gateway::sendMsgToRouter( const MessagePacket &mp )
 {
    //
+   // Check the task's queue to see if it is full or not ...
+   mq_attr qattributes;
+   if (    mq_getattr( _RouterQueue, &qattributes ) == ERROR
+        || qattributes.mq_curmsgs >= qattributes.mq_maxmsg )
+   {
+      //
+      // The queue is full!
+      //
+      // Error ...
+      int errorNo = errno;
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+                           << " - Router queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
+                           << ", (" << strerror( errorNo ) << ")"
+                           << endmsg;
+#if !( BUILD_TYPE==DEBUG ) && !( CPU==SIMNT )
+      _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
+#endif // #if CPU!=SIMNT && BUILD_TYPE!=DEBUG
+      return;
+   }
+
+   //
    // Send message packet to router ...
    unsigned int retries=0;
    while (    mq_send( _RouterQueue, &mp, sizeof( MessagePacket ), 0 ) == ERROR 

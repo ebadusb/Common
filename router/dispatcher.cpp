@@ -133,38 +133,12 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
 
 void Dispatcher :: send( const MessagePacket &mp, const int priority )
 {
-   //
-   // Send message packet to router ...
-   unsigned int retries=0;
-   while (    mq_send( _RQueue, &mp, sizeof( MessagePacket ), priority ) == ERROR 
-           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES )
-      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
-   if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
-   {
-      //
-      // Error ...
-      _FATAL_ERROR( __FILE__, __LINE__, "Router message queue send failed" );
-      return;
-   }
-
+   send( _RQueue, mp, priority );
 }
 
 void Dispatcher :: sendTimerMessage( const MessagePacket &mp, const int priority  )
 {
-   //
-   // Send message packet to timer task ...
-   unsigned int retries=0;
-   while (    mq_send( _TimerQueue, &mp, sizeof( MessagePacket ), priority ) == ERROR 
-           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES )
-      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
-   if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
-   {
-      //
-      // Error ...
-      _FATAL_ERROR( __FILE__, __LINE__, "Timer message queue send failed" );
-      return;
-   }
-
+   send( _TimerQueue, mp, priority );
 }
 
 int Dispatcher :: dispatchMessages()
@@ -364,6 +338,47 @@ void Dispatcher :: processMessage( MessagePacket &mp )
       _FATAL_ERROR( __FILE__, __LINE__, "CRC check failed" );
       return;
    }
+}
+
+void Dispatcher :: send( mqd_t mqueue,  const MessagePacket &mp, const int priority )
+{
+   //
+   // Check the task's queue to see if it is full or not ...
+   mq_attr qattributes;
+   if (    mq_getattr( mqueue, &qattributes ) == ERROR
+        || qattributes.mq_curmsgs >= qattributes.mq_maxmsg )
+   {
+      //
+      // The queue is full!
+      //
+      // Error ...
+      int errorNo = errno;
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+                           << " - " << mqueue << " queue full (" 
+                           << dec << qattributes.mq_curmsgs << " messages)" 
+                           << ", (" << strerror( errorNo ) << ")"
+                           << endmsg;
+#if !( BUILD_TYPE==DEBUG ) && !( CPU==SIMNT )
+      _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
+#endif // #if CPU!=SIMNT && BUILD_TYPE!=DEBUG
+      return;
+   }
+
+   //
+   // Send message packet to router ...
+   unsigned int retries=0;
+   while (    mq_send( mqueue, &mp, sizeof( MessagePacket ), priority ) == ERROR 
+           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES )
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
+   if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
+   {
+      //
+      // Error ...
+      _FATAL_ERROR( __FILE__, __LINE__, "Message queue send failed" );
+      return;
+   }
+
 }
 
 void Dispatcher :: shutdown()

@@ -3,6 +3,8 @@
 # Makefile.vx - main Trima makefile
 #
 # $Log: makefile.vx $
+# Revision 1.1  2002/04/30 19:25:18  rm70006
+# Initial revision
 #
 
 .PHONY: all
@@ -13,10 +15,11 @@ include $(MAINDIR)/makefile.vxc
 
 .PHONY: common
 common:
+	@cd datalog && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
 	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
 #	@cd convert && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
 #	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
-#	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
+	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
 
 socket++:
 	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
@@ -25,8 +28,9 @@ socket++:
 
 .PHONY: clean
 clean:
+	@cd datalog && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
 	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
 #	@cd convert && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
 #	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
-#	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
+	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
  

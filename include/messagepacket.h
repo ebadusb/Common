@@ -134,7 +134,7 @@ public:
       memset( _Msg, 0, MAX_MESSAGE_SIZE + 1 ); 
       memmove( (void*) _Msg , (void*) v , ( length > MAX_MESSAGE_SIZE ? MAX_MESSAGE_SIZE : length ) ); 
    }
-   const unsigned char *msg() const{ return _Msg;} 
+   const unsigned char *msg() const { return _Msg;} 
 
    //
    // Dump the contents of the class ...
@@ -191,6 +191,7 @@ public:
    //
    // Get/Set the message data ...
    MessageData &msgData() { return _MessageData; }
+   const MessageData &msgData() const { return _MessageData; }
    void msgData( const MessageData &md ) { _MessageData = md; }
 
    //

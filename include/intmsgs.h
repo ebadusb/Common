@@ -3,6 +3,8 @@
  *
  * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/INTMSGS.H 1.2 1999/07/09 15:24:50 BS04481 Exp TD10216 $
  * $Log: INTMSGS.H $
+ * Revision 1.1  1999/05/24 23:26:36  TD10216
+ * Initial revision
  * Revision 1.5  1999/05/05 22:15:42  TW09453
  * Add messages for the Replace Fluid status and the operator set ID
  * screens.
@@ -122,6 +124,8 @@ enum INT32_MESSAGES
    OptimizerAlive,               // optimizer task to predict task, opt task is alive
    RepFluidConnectStatus,        // GUI       -> Procedure: notify proc whether operator connected Rep. Fluid or not
    OperatorSetIdentification,    // GUI       -> Procedure: relay operator's ID of a machine-unreadable set.
+   DateTimeSet,                  // anyone -> time setting task.  Data is seconds since 1/1/1970 UTC.
+   WatchdogControl,              // time setting task -> drivers.  Temporary override of watchdog.
 
 
    // NOTE: Block of last 255 Int32Msg IDs reserved for Spectra

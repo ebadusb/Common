@@ -1,5 +1,5 @@
 #
-# PURPOSE: makefile for COBE BCT common router
+# PURPOSE: makefile for COBE BCT common config conversion library
 # $Header: //bctquad3/HOME/BCT_Development/Common/convert/rcs/makefile 1.2 2001/08/16 22:48:59 ms10234 Exp ms10234 $
 # NB:Do NOT save & try to run this file with DOS CR/LFs
 # Set MKS option Configuration->Personal->Checkout->UNIX

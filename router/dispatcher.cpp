@@ -111,8 +111,7 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
    //
    // Register this task ...
    MessagePacket mp;
-   char *tname = taskName( 0 );
-   int length = strlen( tname );
+   int length = strlen( qname );
    mp.msgData().osCode( MessageData::TASK_REGISTER );
    mp.msgData().msgId( 0 );
    mp.msgData().nodeId( 0 );
@@ -122,7 +121,7 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
    mp.msgData().totalNum( 1 );
    mp.msgData().seqNum( 1 );
    mp.msgData().packetLength( length );
-   mp.msgData().msg( (const unsigned char*)tname, length );
+   mp.msgData().msg( (const unsigned char*)qname, length );
    mp.updateCRC();
 
    //

@@ -18,18 +18,23 @@
 list< ObjDictionaryEntry* > ObjDictionary::_ObjEntries = list< ObjDictionaryEntry* >();
 
 
-ObjDictionaryEntry :: ObjDictionaryEntry( const char* n, NewObjFcnPtr fcnPtr ) :
-_ClassName( 0 ),
+ObjDictionaryEntry :: ObjDictionaryEntry( const string &n, NewObjFcnPtr fcnPtr ) :
+_ClassName( n ),
 _NewObjFcnPtr( fcnPtr )
 {
    ObjDictionary::add( this );
-   strcpy(_ClassName,n);
+};
+
+ObjDictionaryEntry :: ObjDictionaryEntry( const char* n, NewObjFcnPtr fcnPtr ) :
+_ClassName( n ),
+_NewObjFcnPtr( fcnPtr )
+{
+   ObjDictionary::add( this );
 };
 
 ObjDictionaryEntry :: ObjDictionaryEntry( const ObjDictionaryEntry &d ) :
-_ClassName( 0 )
+_ClassName( d._ClassName )
 {
-   strcpy(_ClassName,d.className());
    ObjDictionary::add( this );
 };
 
@@ -42,19 +47,24 @@ ObjDictionaryEntry &ObjDictionaryEntry :: operator=( const ObjDictionaryEntry &d
 {
    if ( &d != this )
    {
-      className( d.className() );
+      _ClassName = d.className();
    }
    return *this;
 };
 
 void *ObjDictionaryEntry :: newObject()
 {
-   return (*_NewObjFcnPtr)( _ClassName );
+   return (*_NewObjFcnPtr)();
 }
 
 int ObjDictionaryEntry :: operator==( const ObjDictionaryEntry &d )
 {
-   return operator==( d.className() );
+   return operator==( d._ClassName );
+};
+
+int ObjDictionaryEntry :: operator==( const string &n )
+{
+   return ( compare( n )==0 ? 1 : 0 );
 };
 
 int ObjDictionaryEntry :: operator==( const char *n )
@@ -64,7 +74,12 @@ int ObjDictionaryEntry :: operator==( const char *n )
 
 int ObjDictionaryEntry :: operator<( const ObjDictionaryEntry &d )
 {
-   return operator<( d.className() );
+   return operator<( d._ClassName );
+};
+
+int ObjDictionaryEntry :: operator<( const string &n )
+{
+   return ( compare( n )<0 ? 1 : 0 );
 };
 
 int ObjDictionaryEntry :: operator<( const char *n )
@@ -72,14 +87,19 @@ int ObjDictionaryEntry :: operator<( const char *n )
    return ( compare( n )<0 ? 1 : 0 );
 };
 
+int ObjDictionaryEntry :: compare( const string &n )
+{
+   return ( _ClassName.compare( n ) );
+};
+
 int ObjDictionaryEntry :: compare( const char *n )
 {
-   return strcmp( _ClassName, n );
+   return ( _ClassName.compare( n ) );
 };
 
 void ObjDictionaryEntry :: cleanup()
 {
-   className( 0 );
+   _ClassName.erase();
 };
 
 
@@ -119,12 +139,13 @@ int ObjDictionary :: valid( const char *n )
 
 void ObjDictionary :: dump( ostream &outs )
 {
+   outs << "ObjDictionary content dump:" << endmsg;
    list< ObjDictionaryEntry* >::iterator entry;
    for ( entry = _ObjEntries.begin();
          entry != _ObjEntries.end() ;
          entry++ ) 
    {
-      outs << "objdictionary obj: " <<  (char *)(*entry)->className() << endmsg;
+      outs << " dictionary entry: " <<  (*entry)->className() << endmsg;
    }
 
 }

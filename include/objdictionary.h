@@ -11,19 +11,20 @@
 #define _OBJDICTIONARY_H
 
 #include <list>
-#include <string.h>
+#include <string>
 
 #ifdef WIN32
 using namespace std;
 #endif
 
 
-typedef void *(*NewObjFcnPtr)( const char * );
+typedef void *(*NewObjFcnPtr)();
 
 class ObjDictionaryEntry
 {
 public:
 
+   ObjDictionaryEntry( const string &n, NewObjFcnPtr fcnPtr );
    ObjDictionaryEntry( const char* n, NewObjFcnPtr fcnPtr );
 
    ObjDictionaryEntry( const ObjDictionaryEntry &d );
@@ -34,26 +35,21 @@ public:
 
    virtual void *newObject();
    
-   const char* className() const { return _ClassName; };
-   void className( const char* n ) 
-   {        
-      if ( _ClassName != 0 )
-      {
-         free( _ClassName );
-         _ClassName = 0;
-      }
-      if ( n != 0 )
-         strcpy(_ClassName, n ); 
-   };
+   const string &className() const { return _ClassName; }
+   void className( const string &n ) { _ClassName = n; }
+   void className( const char* n ) { _ClassName = n; }
 
    int operator==( const ObjDictionaryEntry &d );
 
+   int operator==( const string &n );
    int operator==( const char *n );
 
    int operator<( const ObjDictionaryEntry &d );
 
+   int operator<( const string &n );
    int operator<( const char *n );
 
+   int compare( const string &n );
    int compare( const char *n );
    
 protected:
@@ -65,7 +61,7 @@ protected:
 
 protected:
 
-   char         *_ClassName;
+   string _ClassName;
 
    NewObjFcnPtr _NewObjFcnPtr;
    
@@ -97,25 +93,30 @@ private:
 #define DECLARE_OBJ( __objclassname__ ) \
    \
 public: \
-   static void *newObject( const char *name=0 ) \
+   \
+   static void *newObject() \
    {  \
-      return new __objclassname__##( name ); \
+      return new __objclassname__##( ); \
    }; \
    \
+// End of DECLARE_OBJ macro
+/*
    static const char *className() { return (const char *)__ClassName; }; \
    \
 private: \
    static char *__ClassName; \
-// End of DECLARE_OBJ macro
+*/
 
 
 #define DEFINE_OBJ( __objclassname__ ) \
    \
    static ObjDictionaryEntry entry##__objclassname__\
                     ( #__objclassname__, &__objclassname__##::newObject ); \
-   char * __objclassname__##::__ClassName=#__objclassname__; \
    \
 // End of DEFINE_OBJ macro
+/*
+   char * __objclassname__##::__ClassName=#__objclassname__; \
+*/
 
 
 #endif

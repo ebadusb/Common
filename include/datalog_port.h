@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.16 2003/10/03 12:32:57Z jl11312 Exp rm70006 $
  * $Log: datalog_port.h $
+ * Revision 1.1  2002/03/19 16:11:35  jl11312
+ * Initial revision
  *
  */
 
@@ -10,9 +12,18 @@
 #define _DATALOG_PORT_INCLUDE
 
 /*
+ * Error type is defined here to allow for platform specific errors.  Most
+ * errors however are common to all platforms.
+ */
+enum DataLog_ErrorType
+{
+	DataLog_NoError
+};
+
+/*
  * Platform specific configuration
  */
-#ifdef TRIMA_VXWORKS
+#ifdef VXWORKS
 
 /*
  * Trima on vxWorks platform

@@ -214,7 +214,7 @@ void MsgSysTimer::dump( ostream &outs )
    outs << " RouterMQueue: " << hex << (long)_RouterMQ << endl;
    outs << " StopLoop: " << _StopLoop << endl;
 
-   outs << " Timer Message Map: size " << _TimerMsgMap.size() << endl;
+   outs << " Timer Message Map: size " << dec << _TimerMsgMap.size() << endl;
    map< unsigned long, MapEntry* >::iterator miter;
    for ( miter  = _TimerMsgMap.begin() ;
          miter != _TimerMsgMap.end() ;
@@ -262,9 +262,10 @@ void MsgSysTimer::processMessage( const MessagePacket &mp )
       updateTime( tc );
       _ReadyToReceiveTickMsg=1;
       break;
-   case MessageData::MESSAGE_MULTICAST:
-   case MessageData::MESSAGE_MULTICAST_LOCAL:
-   case MessageData::SPOOFED_MESSAGE:
+   case MessageData::DISTRIBUTE_LOCALLY:
+   case MessageData::DISTRIBUTE_GLOBALLY:
+   case MessageData::SPOOFED_LOCALLY:
+   case MessageData::SPOOFED_GLOBALLY:
       memmove( (char *) &interval , 
                (char *) mp.msgData().msg(), 
                sizeof( unsigned long ) );
@@ -541,4 +542,10 @@ int MsgSysTimer::QueueEntry::operator>( const long long l ) const
 int MsgSysTimer::QueueEntry::operator>=( const long long l ) const
 {
    return ( _ExpirationTickCount >= l );
+}
+
+void msgsystimerDump()
+{
+   if ( MsgSysTimer::globalMsgSysTimer() )
+      MsgSysTimer::globalMsgSysTimer()->dump( cout );
 }

@@ -38,6 +38,9 @@ public:
    //  message.
    void despoofMessage( MessageBase &mb );
 
+   //
+   // Get the dispatcher
+   SpooferDispatcher &spooferDispatcher(); 
 
 protected:
 

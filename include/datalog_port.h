@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.16 2003/10/03 12:32:57Z jl11312 Exp rm70006 $
  * $Log: datalog_port.h $
+ * Revision 1.13  2003/02/25 20:40:11Z  jl11312
+ * - added support for logging platform specific information in log header
  * Revision 1.12  2003/02/25 16:12:01  jl11312
  * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.11  2003/02/06 20:42:04  jl11312
@@ -113,6 +115,11 @@ DataLog_ErrorInformation	datalog_ErrorInformation[DataLog_LastError] =
  */
 #define DATALOG_NETWORK_SUPPORT
 typedef unsigned long	DataLog_NodeID;
+
+/*
+ * Support initialization of global datalog levels/handles
+ */
+#define DATALOG_LEVELS_INIT_SUPPORT
 
 /*
  *	Platform specific data types

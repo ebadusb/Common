@@ -1,29 +1,21 @@
 /*
- * Copyright (c) 2002 by Cobe BCT, Inc.  All rights reserved.
+ * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * TITLE:      common_datalog.h
- *
- * AUTHOR:     Regis McGarry
- *
- * ABSTRACT:   This header file contains definitions that are used
- *              throughout the Common system to define logging levels and keys.
- *
- * DOCUMENTS
- * Requirements:
- * Test:
- *
+ * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/common_datalog.h 1.2 2003/03/27 15:47:34Z jl11312 Exp jl11312 $
+ * $Log: common_datalog.h $
  */
 
 
 #ifndef COMMON_DATALOG_H  //  Prevents multiple compilations.
 #define COMMON_DATALOG_H
 
-#include "datalog.h"
+#include "datalog_levels.h"
 
-//
-//
-//   Logging levels for programmer debug
-//
+/*
+ * Definitions below this line will go away when conversion to levels/handles in
+ * datalog_levels.h is complete
+ */
+
 #define LOG_DATASTORE           "log_datastore"
 
-#endif
+#endif /* ifndef COMMON_DATALOG_H */

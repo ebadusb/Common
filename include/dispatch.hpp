@@ -1,8 +1,12 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: M:/BCT_Development/vxWorks/Common/include/rcs/dispatch.hpp 1.12 2000/12/14 23:53:47 ms10234 Exp sb07663 $
+ * $Header: M:/BCT_Development/vxWorks/Common/include/rcs/dispatch.hpp 1.12 2000/12/14 23:53:47 ms10234 Exp $
  * $Log: dispatch.hpp $
+ * Revision 1.12  2000/12/14 23:53:47  ms10234
+ * IT4618,4685 -  Changes were made to the message types to allow for 
+ * messages to be sent, but not received, and for messages to remain local
+ * to the current node.
  * Revision 1.11  2000/10/27 14:45:02  bs04481
  * Make timeDispatch a friend.  It is used by safety tasks that
  * measure message delivery times.  
@@ -163,7 +167,7 @@ class routeBuffer
       //   using the Callback constructor and passing the
       //   this pointer along with a member function that
       //   matches the definition inside the Callback class
-      void virtualNotify( Callback cb ) { _VirtualNotify = cb; };
+      void virtualNotify( CallbackBase cb ) { _VirtualNotify = cb; };
    
       // Set/Get the local node only flag
       void local( const int f ) { _LocalNodeOnly = f; };
@@ -178,7 +182,7 @@ class routeBuffer
       
       // This will call a user specified member function of any
       //  type of class.
-      Callback _VirtualNotify;
+      CallbackBase _VirtualNotify;
 
       // Flag to signify we only want this message to be distributed on the local
       //  node
@@ -207,7 +211,7 @@ class timerMsg
       //   using the Callback constructor and passing the
       //   this pointer along with a member function that
       //   matches the definition inside the Callback class
-      void virtualTimeout( Callback cb ) { _VirtualTimeout = cb; };
+      void virtualTimeout( CallbackBase cb ) { _VirtualTimeout = cb; };
    
    protected:
 
@@ -215,7 +219,7 @@ class timerMsg
 
       // This will call a user specified member function of any
       //  type of class.
-      Callback _VirtualTimeout;
+      CallbackBase _VirtualTimeout;
                                            
    private:
       timerMsg( timerMsg const &);

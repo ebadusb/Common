@@ -10,6 +10,9 @@
 #ifndef __CALLBACK_H__
 #define __CALLBACK_H__
 
+#ifdef __GNUG__
+#pragma interface
+#endif
 
 class CallbackBase
 {

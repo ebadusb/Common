@@ -1,8 +1,10 @@
-# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/makefile.lib 1.4 2002/09/11 16:10:56Z jl11312 Exp ms10234 $
+# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/makefile.lib 1.4 2002/09/11 16:10:56 jl11312 Exp $
 #
 # Makefile.lib - common makefile for libraries
 #
 # $Log: makefile.lib $
+# Revision 1.4  2002/09/11 16:10:56  jl11312
+# - corrected file suffix for assembly language files
 # Revision 1.3  2002/08/15 20:46:32  jl11312
 # - added support for BUILD_TYPE=CLEAN
 # Revision 1.2  2002/04/19 17:28:54  jl11312
@@ -39,10 +41,17 @@ LIB_ARCHIVE := $(ARCHIVE_DIR)/$(ARCHIVE_NAME)
 .PHONY: lib
 lib : $(LIB_ARCHIVE)
 
+ifneq ($(ARCHIVE_TYPE),OBJFILE)
 $(LIB_ARCHIVE) : $(LIB_DEPEND) $(LIB_OBJ)
 	@if not exist $(ARCHIVE_DIR) mkdir $(ARCHIVE_DIR)
 	@rm -f $@
 	$(AR) -rcs $@ $(LIB_OBJ)
+else
+$(LIB_ARCHIVE) : $(LIB_DEPEND) $(LIB_OBJ)
+	@if not exist $(ARCHIVE_DIR) mkdir $(ARCHIVE_DIR)
+	@rm -f $@
+	$(LD) $(LDFLAGS) $(LIB_OBJ) -o $@
+endif
 
 ifeq ($(BUILD_TYPE),CLEAN)
 .PHONY: clean

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/pearlyg.c 1.5 2000/12/19 20:01:36 ms10234 Exp jl11312 $
  * $Log: pearlyg.c $
+ * Revision 1.3  1999/09/14 16:51:30  TD10216
+ * IT4333
  * Revision 1.2  1999/05/31 20:35:10  BS04481
  * Remove unused MSGHEADER structure from messages. 
  * Decrease maximum message size.  Add new version of 
@@ -100,7 +102,7 @@ main()
    char eString[256];
 
 // set priority and scheduling method to round robin
-   setprio( 0, 11);
+   setprio( 0, 12);
    sched_getparam( 0, &param);
    sched_setscheduler( 0, SCHED_RR, &param);
 

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/gateway.c 1.4 2001/05/11 19:56:38 jl11312 Exp jl11312 $
  * $Log: gateway.c $
+ * Revision 1.2  1999/08/31 17:51:01  BS04481
+ * Change to use new _log_error_with_display in fatalerror function
  * Revision 1.1  1999/05/24 23:29:37  TD10216
  * Initial revision
  * Revision 1.6  1998/09/23 18:27:56  bs04481
@@ -141,7 +143,7 @@ main(int argc, char** argv)
 
 // set priority and scheduling method as round robin
 
-   setprio( 0, 11);                       // set priority
+   setprio( 0, 12);                       // set priority
    sched_getparam( 0, &param);
    sched_setscheduler( 0, SCHED_RR, &param);
 

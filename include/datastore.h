@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.2  2002/07/02 16:03:44Z  rm70006
+ * HISTORY:    Added new non-write-restrictive class to CDS.
  * HISTORY:    Revision 1.1  2002/06/24 19:30:44Z  rm70006
  * HISTORY:    Initial revision
  * HISTORY:    Revision 1.4  2002/06/17 18:40:41Z  rm70006
@@ -87,8 +89,8 @@ public:
    void SetSpoof   (FP fp);
    void ClearSpoof ();
 
-   void Register (DataStore *ds, Role role, PfrType pfr);
-   void Register (DataStore *ds, Role role, PfrType pfr, const dataType &initValue);
+   virtual void Register (DataStore *ds, Role role, PfrType pfr);
+   virtual void Register (DataStore *ds, Role role, PfrType pfr, const dataType &initValue);
 
 // Class Methods
 protected:

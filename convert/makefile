@@ -20,8 +20,7 @@ include $(LOCAL_TOP)/stacksize.mk
 OFFSET=40
 include $(LOCAL_TOP)/offset.mk
 
-CPPSRCS=enum_hit_collect.cpp new_drvr_collect.cpp new_drvr_element.cpp \
-old_cfg_collect.cpp old_cfg_element.cpp
+CPPSRCS=new_drvr_collect.cpp new_drvr_element.cpp old_cfg_collect.cpp old_cfg_element.cpp
 
 CPPOBJS=${CPPSRCS:.cpp=.o}
 

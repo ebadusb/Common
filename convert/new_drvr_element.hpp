@@ -25,6 +25,8 @@
 
 $Header: //bctquad3/HOME/BCT_Development/Common/convert/rcs/new_drvr_element.hpp 1.1 2001/08/16 22:40:20 ms10234 Exp ms10234 $
 $Log: new_drvr_element.hpp $
+Revision 1.1  2001/08/16 22:40:20  ms10234
+Initial revision
 Revision 1.1  2001/08/16 13:50:17  jl11312
 Initial revision
 Revision 1.1  1999/12/10 14:37:07  BS04481
@@ -42,7 +44,7 @@ Initial revision
 #include "convenum.h"
 
 #include "old_cfg_collect.hpp"
-#include "enum_hit_collect.cpp"
+#include "enum_hit_collect.hpp"
 
 
 // System #INCLUDES

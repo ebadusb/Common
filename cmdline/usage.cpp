@@ -22,16 +22,19 @@
 #define ASSERT assert
 
 
-// FUNCTION: Usage
-// PURPOSE: constructs a Usage instance, comment should describes basic purpose
-// of the application.
-Usage::Usage(char* programName, char* comment)
-: _full_usage(0), _usage_text(0), _comment(comment), _programName(programName)
+Usage::Usage(const char* programName, const char* comment)
+: _usage_text(0), _comment(comment), _programName(programName)
 {
+    // PURPOSE: constructs a Usage instance, comment should describes basic purpose
+    // of the application.
+    
+    ASSERT(programName);
     ASSERT(comment);
-    _usage_text = new char[1]; // add_usage() expects _usage_text
-    *_usage_text = 0;
-//    LOG_DEBUG("Usage object constructed");
+
+    // initialize usage test
+    _usage_text = new char[ 2*strlen(programName) + strlen(comment) + 50 ];
+    sprintf(_usage_text, "Usage: %s - %s\n%s [options]\nOptions:\n",
+            programName, comment, programName);
 }
 
 
@@ -39,35 +42,19 @@ Usage::~Usage()
 {
     delete [] _usage_text;
     _usage_text = 0;
-    delete [] _full_usage;
-    _full_usage = 0;
+    
     _comment = 0;
+    _programName = 0;
 }
 
 
-// FUNCTION:  add_usage
-// PURPOSE:  add to usage text
-void Usage::add_usage(char* usage)
+void Usage::add_usage(const char* usage)
 {
-//    LOG_DEBUG("add_usage: %s", usage);
-    char* newusage = new char[strlen(_usage_text)+strlen(usage)+10];
+    // PURPOSE:  add to usage text
+ 
+    char* newusage = new char[ strlen(_usage_text) + strlen(usage) + 10];
     sprintf(newusage,"%s\n  %s", _usage_text, usage);
     delete [] _usage_text;
     _usage_text = newusage;
 }
 
-
-// FUNCTION:  get_usage
-// PURPOSE: build and return the full usage text
-const char* Usage::get_usage()
-{
-    delete [] _full_usage;
-
-    _full_usage = new char[2*strlen(_programName) + 30  
-                           + strlen(_comment) + strlen(_usage_text)];
-    sprintf(_full_usage, "%s - %s\n%s [options]\nOptions:%s", 
-            _programName, _comment, 
-            _programName, _usage_text);
-
-    return _full_usage;
-}

@@ -15,28 +15,28 @@
 // RESPONSIBILITIES:
 //   1. accepts an overall comment about the application
 //   2. accepts incremental additions to the usage message
-// COLLABORATIONS:
-//   1. queried by Logger for usage string.
-//   2. usage info added by OptionParser
 class Usage
 {
     public:
 
-        Usage(char* programName, char* comment);
+        Usage(const char* programName, const char* comment);
         ~Usage();
 
-        void add_usage(char* usage);
-        const char* get_usage();
+        void add_usage(const char* usage);
+
+        const char* get_usage() { return _usage_text; };
+
+        const char* getProgramName() { return _programName; };
+
 
     protected:
 
-        char* _comment; 
-        char* _usage_text; // built by add_usage
-        char* _full_usage; // built by get_usage()
-        char* _programName;
-
 
     private:
+
+        const char* _programName;
+        const char* _comment; 
+        char* _usage_text; // built by add_usage
 
         Usage(); // catch unauthorized use
         Usage(const Usage&); // catch unauthorized use 

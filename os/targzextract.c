@@ -89,6 +89,7 @@ int tarExtract ( const char *file     /* archive file name */,
 //
 // file pointer for console output 
 extern int consoleFd;
+static FILE * consoleFile = NULL;
 
 typedef union hblock
 {
@@ -121,7 +122,7 @@ typedef struct
 
 
 /* locals */
-char  bZero[ TBLOCK ] ; /* zeroed block */
+static char  bZero[ TBLOCK ] ; /* zeroed block */
 
 /*******************************************************************************
 *
@@ -130,7 +131,7 @@ char  bZero[ TBLOCK ] ; /* zeroed block */
 * RETURNS: the checksum value
 */
 
-int mtChecksum ( void *  pBuf, unsigned   size )
+static int mtChecksum ( void *  pBuf, unsigned   size )
 {
    register int sum = 0 ;
    register unsigned char *p = (unsigned char*)pBuf ;
@@ -151,7 +152,7 @@ int mtChecksum ( void *  pBuf, unsigned   size )
 * RETURNS: number of blocks actually got, or ERROR.
 */
 
-int tarRdBlks ( MT_TAR_SOFT *pCtrl,    /* control structure */ 
+static int tarRdBlks ( MT_TAR_SOFT *pCtrl,    /* control structure */ 
                 MT_HBLOCK **ppBlk,     /* where to return buffer address */ 
                 unsigned int nBlocks   /* how many blocks to get */ 
               )
@@ -194,7 +195,7 @@ int tarRdBlks ( MT_TAR_SOFT *pCtrl,    /* control structure */
 * RETURNS: OK or ERROR
 */
 
-int mtAccess ( const char *name )
+static int mtAccess ( const char *name )
 {
    char tmpName [ NAMSIZ ] ;
    struct stat st ;
@@ -241,7 +242,7 @@ int mtAccess ( const char *name )
 * RETURNS: OK or ERROR
 */
 
-int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */ 
+static int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */ 
                      MT_HBLOCK     *pBlk,      /* header block */ 
                      const char    *location
                    )
@@ -301,9 +302,13 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
          return ERROR;
       }
 
-      FILE *con = fdopen( consoleFd, "w" );
-      fprintf( con, "created directory %s.\n", fn );
-      fflush( con );
+		if ( !consoleFile )
+		{
+			consoleFile = fdopen(consoleFd, "w");
+		}
+
+      fprintf( consoleFile, "created directory %s.\n", fn );
+      fflush( consoleFile );
 
       return OK;
    }
@@ -345,7 +350,10 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
    fprintf( stdout, "extracting file %s, size %d bytes, %d blocks\n", fn, size, nblks );
    fflush( stdout );
 
-   FILE *con = fdopen( consoleFd, "w" );
+	if ( !consoleFile )
+	{
+		consoleFile = fdopen(consoleFd, "w");
+	}
 
    /* Loop until entire file extracted */
    while ( size > 0 )
@@ -354,8 +362,8 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
       register int wc ;
 
       rc = tarRdBlks( pCtrl, &pBuf, nblks ) ;
-      fprintf( con, "\ttarExtract: bytes remaining->%d         \r", size);
-      fflush( con );
+      fprintf( consoleFile, "\ttarExtract: bytes remaining->%d         \r", size);
+      fflush( consoleFile );
 
       if ( rc < 0 )
       {
@@ -375,8 +383,8 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
       size -= rc*TBLOCK ;
       nblks -= rc ;
    }
-   fprintf( con, "                                                                      \r");
-   fflush( con );
+   fprintf( consoleFile, "                                                                      \r");
+   fflush( consoleFile );
 
    /* Close the newly created file */
    return( close(fd) ) ;

@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.27  2003/08/29 21:09:37Z  ms10234
+ * HISTORY:    semaphore protected the datastore creation code.
  * HISTORY:    Revision 1.26  2003/07/11 21:21:37Z  ms10234
  * HISTORY:    5829 - Speed improvements for PFR
  * HISTORY:    Revision 1.25  2003/07/08 22:16:03Z  ms10234
@@ -432,15 +434,13 @@ bool DataStore::RestoreAllPfData()
 //
 // Begin Critical Section macro
 //
-//#define BEGIN_CRITICAL_SECTION() SEM_TAKE(*_mutexSemaphore, WAIT_FOREVER);
-#define BEGIN_CRITICAL_SECTION() ;
+#define BEGIN_CRITICAL_SECTION() SEM_TAKE(_mutexSemaphore, WAIT_FOREVER);
 
 
 //
 // End Critical Section macro
 //
-//#define END_CRITICAL_SECTION() SEM_GIVE(*_mutexSemaphore);
-#define END_CRITICAL_SECTION() ;
+#define END_CRITICAL_SECTION() SEM_GIVE(_mutexSemaphore);
 
 
 void DataStoreSymbolContainer::Lock( Role role )

@@ -12,6 +12,8 @@
  *
  * $Header: I:/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.h 1.3 2000/12/08 23:22:55 td07711 Exp td07711 $
  * $Log: softcrc.h $
+ * Revision 1.1  1999/05/24 23:32:04  TD10216
+ * Initial revision
  * Revision 1.6  1998/11/03 02:54:30  TM02109
  * Added ability to do multipule filelist's and multipule chroot's
  * Revision 1.5  1998/08/26 00:06:53  TD10216
@@ -31,7 +33,6 @@
  #define MACH_CRCFILE     "/d/machine/crc/config.crc"
 
  // cmd line arg defaults and limits
- #define INITCRC_DEFAULT 0
  #define VERBOSE_DEFAULT 1
  #define VERBOSE_MAX     3
  #define LIMIT_DEFAULT 10

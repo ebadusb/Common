@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.9 2005/03/02 01:37:51Z cf10242 Exp psanusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.3  2004/11/04 20:19:09Z  rm10919
+ * Common updates and changes.
  * Revision 1.2  2004/09/30 17:00:52Z  cf10242
  * Correct for initial make to work
  * Revision 1.1  2004/09/20 18:18:09Z  rm10919
@@ -195,6 +197,11 @@ void CGUIWindow::detach(void)
       {
          winDetach(_id);
       }
+
+		WIN_MGR_ID winMgr = winMgrGet(_id);
+      WIN_ID grabber = winPointerGrabGet (winMgr);
+		if(grabber == _id)
+			winPointerUngrab(_id);
 
       winDestroy(_id);
       _id = UGL_NULL_ID;
@@ -389,7 +396,8 @@ void CGUIWindow::deleteChildWindow(CGUIWindow * child)
 UGL_STATUS CGUIWindow::uglDrawCallback (WIN_ID id, WIN_MSG * pMsg, void * pData, void * pParam)
 {
    CGUIWindow * window = *(CGUIWindow **)pData;
-   window->draw(pMsg->data.draw.gcId);
+	if(window && pMsg)
+		window->draw(pMsg->data.draw.gcId);
 
    return UGL_STATUS_FINISHED;
 }
@@ -400,7 +408,7 @@ UGL_STATUS CGUIWindow::uglPointerCallback (WIN_ID id, WIN_MSG * pMsg, void * pDa
    UGL_WINDOW_ID  windowId = id;
    CGUIWindow * window = *(CGUIWindow **)pData;
 
-   if (window)
+   if (window && pMsg)
    {
       if ((pMsg->data.ptr.buttonChange & 0x01) == 0)
       {
@@ -409,17 +417,18 @@ UGL_STATUS CGUIWindow::uglPointerCallback (WIN_ID id, WIN_MSG * pMsg, void * pDa
       }
 
       CGUIWindow::PointerEvent ptEvent;
-      if
-          ((pMsg->data.ptr.buttonState & 0x01) != 0)
+      if ((pMsg->data.ptr.buttonState & 0x01) != 0)
       {
          // Left button is pressed.  Grab the pointer to insure
          // we get the release event as well.
+		//	_winGrabbed = true;
          winPointerGrab (windowId);
          ptEvent.eventType = CGUIWindow::PointerEvent::ButtonPress;
       }
       else
       {
          winPointerUngrab (windowId);
+	//		_winGrabbed = false;
          ptEvent.eventType = CGUIWindow::PointerEvent::ButtonRelease;  
       }
 

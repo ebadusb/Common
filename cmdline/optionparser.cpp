@@ -3,6 +3,8 @@
  * PURPOSE: option parsing class
  * CHANGELOG:
  *   $Log: optionparser.cpp $
+ *   Revision 1.3  2002/09/19 21:06:02  td07711
+ *   errmsg fix
  *   Revision 1.2  2002/09/19 20:13:13  td07711
  *   add public init() variants
  *   Revision 1.1  2002/09/18 23:33:07  td07711
@@ -33,8 +35,7 @@
 #include "stdio.h"
 #include "assert.h"
 
-#define LOG_FATAL printf
-#define ASSERT assert
+#define ASSERT(n) assert(n)
 
 
 
@@ -199,19 +200,31 @@ void OptionParser::parse(const char* keyword, const char* usage, int* pStorage,
         if(strcmp(keyword, _argv[i]) == 0)
         {
             if((i+1) >= _argc)
-                LOG_FATAL("no value for keyword=%s", keyword);
+            {
+                fprintf(stderr, "no value for keyword=%s", keyword);
+                exit(1);
+            }
 
             if(sscanf(_argv[i+1], "%i", pStorage) != 1)
-                LOG_FATAL("scanf %%i failed, keyword=%s value=%s",
+            {
+                fprintf(stderr, "scanf %%i failed, keyword=%s value=%s",
                           keyword, _argv[i+1]);
+                exit(1);
+            }
 
             if(*pStorage < min)
-                LOG_FATAL("range check failed keyword=%s value=%i<%i",
+            {
+                fprintf(stderr, "range check failed keyword=%s value=%i<%i",
                           keyword, *pStorage, min);
+                exit(1);
+            }
 
             if(*pStorage > max)
-                LOG_FATAL("range check failed keyword=%s value=%i>%i",
+            {
+                fprintf(stderr, "range check failed keyword=%s value=%i>%i",
                           keyword, *pStorage, max);
+                exit(1);
+            }
 
             remove_token(i+1);
             remove_token(i);
@@ -242,16 +255,25 @@ void OptionParser::parse(const char* usage, int* pStorage,
     }
 
     if(sscanf(_argv[1], "%i", pStorage) != 1)
-        LOG_FATAL("scanf %%i failed, usage=%s value=%s",
+    {
+        fprintf(stderr, "scanf %%i failed, usage=%s value=%s",
                   usage, _argv[1]);
+        exit(1);
+    }
 
     if(*pStorage < min)
-        LOG_FATAL("range check failed usage=%s value=%i<%i",
+    {
+        fprintf(stderr, "range check failed usage=%s value=%i<%i",
                   usage, *pStorage, min);
+        exit(1);
+    }
 
     if(*pStorage > max)
-        LOG_FATAL("range check failed usage=%s value=%i>%i",
+    {
+        fprintf(stderr, "range check failed usage=%s value=%i>%i",
                   usage, *pStorage, max);
+        exit(1);
+    }
 
     remove_token(1);
 }
@@ -279,19 +301,31 @@ void OptionParser::parse(const char* keyword, const char* usage, float* pStorage
         if(strcmp(keyword, _argv[i]) == 0)
         {
             if((i+1) >= _argc)
-                LOG_FATAL("no value for keyword=%s", keyword);
+            {
+                fprintf(stderr, "no value for keyword=%s", keyword);
+                exit(1);
+            }
 
             if(sscanf(_argv[i+1], "%f", pStorage) != 1)
-                LOG_FATAL("scanf %%f failed, keyword=%s value=%s",
+            {
+                fprintf(stderr, "scanf %%f failed, keyword=%s value=%s",
                           keyword, _argv[i+1]);
+                exit(1);
+            }
 
             if(*pStorage < min)
-                LOG_FATAL("range check failed keyword=%s value=%f<%f",
+            {
+                fprintf(stderr, "range check failed keyword=%s value=%f<%f",
                           keyword, *pStorage, min);
+                exit(1);
+            }
 
             if(*pStorage > max)
-                LOG_FATAL("range check failed keyword=%s value=%f>%f",
+            {
+                fprintf(stderr, "range check failed keyword=%s value=%f>%f",
                           keyword, *pStorage, max);
+                exit(1);
+            }
 
             remove_token(i+1);
             remove_token(i);
@@ -322,16 +356,25 @@ void OptionParser::parse(const char* usage, float* pStorage,
     }
 
     if(sscanf(_argv[1], "%f", pStorage) != 1)
-        LOG_FATAL("scanf %%f failed, usage=%s value=%s",
+    {
+        fprintf(stderr, "scanf %%f failed, usage=%s value=%s",
                   usage, _argv[1]);
+        exit(1);
+    }
 
     if(*pStorage < min)
-        LOG_FATAL("range check failed usage=%s value=%f<%f",
+    {
+        fprintf(stderr, "range check failed usage=%s value=%f<%f",
                   usage, *pStorage, min);
+        exit(1);
+    }
 
     if(*pStorage > max)
-        LOG_FATAL("range check failed usage=%s value=%f>%f",
+    {
+        fprintf(stderr, "range check failed usage=%s value=%f>%f",
                   usage, *pStorage, max);
+        exit(1);
+    }
 
     remove_token(1);
 }
@@ -358,19 +401,31 @@ void OptionParser::parse(const char* keyword, const char* usage, double* pStorag
         if(strcmp(keyword, _argv[i]) == 0)
         {
             if((i+1) >= _argc)
-                LOG_FATAL("no value for keyword=%s", keyword);
+            {
+                fprintf(stderr, "no value for keyword=%s", keyword);
+                exit(1);
+            }
 
             if(sscanf(_argv[i+1], "%lf", pStorage) != 1)
-                LOG_FATAL("scanf %%lf failed, keyword=%s value=%s",
+            {
+                fprintf(stderr, "scanf %%lf failed, keyword=%s value=%s",
                           keyword, _argv[i+1]);
+                exit(1);
+            }
 
             if(*pStorage < min)
-                LOG_FATAL("range check failed keyword=%s value=%f<%f",
+            {
+                fprintf(stderr, "range check failed keyword=%s value=%f<%f",
                           keyword, *pStorage, min);
+                exit(1);
+            }
 
             if(*pStorage > max)
-                LOG_FATAL("range check failed keyword=%s value=%f>%f",
+            {
+                fprintf(stderr, "range check failed keyword=%s value=%f>%f",
                           keyword, *pStorage, max);
+                exit(1);
+            }
 
             remove_token(i+1);
             remove_token(i);
@@ -401,16 +456,25 @@ void OptionParser::parse(const char* usage, double* pStorage,
     }
 
     if(sscanf(_argv[1], "%lf", pStorage) != 1)
-        LOG_FATAL("scanf %%lf failed, usage=%s value=%s",
+    {
+        fprintf(stderr, "scanf %%lf failed, usage=%s value=%s",
                   usage, _argv[1]);
+        exit(1);
+    }
 
     if(*pStorage < min)
-        LOG_FATAL("range check failed usage=%s value=%f<%f",
+    {
+        fprintf(stderr, "range check failed usage=%s value=%f<%f",
                   usage, *pStorage, min);
+        exit(1);
+    }
 
     if(*pStorage > max)
-        LOG_FATAL("range check failed usage=%s value=%f>%f",
+    {
+        fprintf(stderr, "range check failed usage=%s value=%f>%f",
                   usage, *pStorage, max);
+        exit(1);
+    }
 
     remove_token(1);
 }
@@ -445,7 +509,10 @@ void OptionParser::parse(const char* keyword, const char* usage,
         if(strcmp(keyword, _argv[i]) == 0)
         {
             if((i+1) >= _argc)
-                LOG_FATAL("no value for keyword=%s", keyword);
+            {
+                fprintf(stderr, "no value for keyword=%s", keyword);
+                exit(1);
+            }
 
             *pStorage = _argv[i+1];
 

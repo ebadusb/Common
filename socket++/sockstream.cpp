@@ -301,6 +301,16 @@ int sockbuf::connect (sockAddr& sa)
    return 0;
 }
 
+int sockbuf::connectWithTimeout( sockAddr& sa, timeval *tv )
+{
+   if( ::connectWithTimeout( rep->sock, sa.addr (), sa.size(), tv ) == -1 )
+   {
+      return errnoGet();
+   }
+   
+   return 0;
+}
+
 void sockbuf::listen (int num)
 {
    if(::listen (rep->sock, num) == -1)

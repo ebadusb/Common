@@ -316,11 +316,31 @@ int sockinetbuf::connect (const char* host_name, int port_no)
 {
    in_addr sock_addr;
    sock_addr.s_addr = inet_addr(host_name);
-   //perror(inet_ntoa(sock_addr.s_addr));
-   cout << "connect: " << (inet_ntoa(sock_addr.s_addr)) << endl;
    sockinetaddr sa (ntohl(inet_addr(host_name)), port_no);
 
    return connect (sa);
+}
+
+int sockinetbuf::connectWithTimeout (sockAddr& sa, timeval *tv)
+{
+   return sockbuf::connectWithTimeout (sa, tv);
+}
+
+int sockinetbuf::connectWithTimeout (unsigned long addr, int port_no, timeval *tv)
+// address and portno are in host byte order
+{
+   sockinetaddr sa (addr, port_no);
+   return connectWithTimeout (sa, tv);
+}
+
+
+int sockinetbuf::connectWithTimeout (const char* host_name, int port_no, timeval *tv)
+{
+   in_addr sock_addr;
+   sock_addr.s_addr = inet_addr(host_name);
+   sockinetaddr sa (ntohl(inet_addr(host_name)), port_no);
+
+   return connectWithTimeout (sa, tv);
 }
 
 

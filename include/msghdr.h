@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/HOME/BCT_Development/Common/include/rcs/msghdr.h 1.9 2001/09/21 17:35:18 ms10234 Exp ms10234 $
+ * $Header: //bctquad3/HOME/BCT_Development/Common/include/rcs/msghdr.h 1.9 2001/09/21 17:35:18 ms10234 Exp $
  * $Log: msghdr.h $
+ * Revision 1.9  2001/09/21 17:35:18  ms10234
+ * 5291 -  Increased message size from 420 to 430
  * Revision 1.8  2001/09/18 16:51:36  ms10234
  * 5288 -  Increase message size due to 408 byte message (dyndata)
  * Revision 1.7  2000/12/14 23:53:54  ms10234
@@ -86,7 +88,7 @@ typedef long         nid_t;            /* Used for network IDs         */
 
 
 #define MAX_MESSAGES   1024            // max number of messages
-#define BSIZE          430             // max message size
+#define BSIZE          450             // max message size
 
 enum BOUNCE_FLAG
 {

@@ -4,7 +4,7 @@
  * FILENAME: crcgen.h
  * PURPOSE: function prototype for crcgen32()
  * CHANGELOG:
- *  $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/crcgen.h 1.5 2002/05/01 14:44:21 ms10234 Exp ms10234 $
+ *  $Header: K:/BCT_Development/vxWorks/Common/include/rcs/crcgen.h 1.7 2003/05/21 20:01:26Z jl11312 Exp jl11312 $
  *  $Log: crcgen.h $
  *  Revision 1.4  2001/08/22 14:33:20  rm70006
  *  IT 4766.
@@ -45,7 +45,7 @@ extern "C" {
 */
 
 
-int crcgen32(unsigned long* pcrc, const char* pdata, long length);
+int crcgen32(unsigned long* pcrc, const unsigned char* pdata, long length);
 
 
 

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_levels.h 1.10 2006/10/07 19:29:42Z cf10242 Exp MS10234 $
  * $Log: datalog_levels.h $
+ * Revision 1.7  2003/05/21 20:15:57Z  ms10234
+ * Changed debug log level to off by default
  * Revision 1.6  2003/05/15 15:21:59Z  ms10234
  * added log level for state machine
  * Revision 1.5  2003/04/25 17:25:02Z  jl11312
@@ -64,6 +66,8 @@ LOG_DEF DataLog_Level	log_level_state_machine_debug;
 LOG_DEF DataLog_Level	log_level_state_machine_error;
 LOG_DEF DataLog_Level	log_level_spoofer_info;
 LOG_DEF DataLog_Level	log_level_spoofer_error;
+LOG_DEF DataLog_Level	log_level_hog_info;
+LOG_DEF DataLog_Level	log_level_hog_error;
 
 
 #endif /* ifdef __cplusplus */
@@ -100,6 +104,8 @@ LOG_DEF DataLog_Handle	log_handle_state_machine_debug;
 LOG_DEF DataLog_Handle	log_handle_state_machine_error;
 LOG_DEF DataLog_Handle	log_handle_spoofer_info;
 LOG_DEF DataLog_Handle	log_handle_spoofer_error;
+LOG_DEF DataLog_Handle	log_handle_hog_info;
+LOG_DEF DataLog_Handle	log_handle_hog_error;
 
 #ifdef DATALOG_LEVELS_INIT_TABLE
 

@@ -4,8 +4,10 @@
  * FILENAME: checkself.c
  * PURPOSE: checkself() is used to verify crc of self
  * CHANGELOG:
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/checkself.cpp 1.2 2002/08/14 15:40:05Z pn02526 Exp ms10234 $
+ * $Header: //bctquad3/HOME/BCT_Development/vxWorks/Common/softcrc/rcs/checkself.cpp 1.3 2002/12/20 14:30:39 ms10234 Exp pn02526 $
  * $Log: checkself.cpp $
+ * Revision 1.2  2002/08/14 15:40:05Z  pn02526
+ * TEMPORARILY disabled for vxWorks.
  * Revision 1.1  1999/05/24 17:32:05  TD10216
  * Initial revision
  * Revision 1.1  1999/03/20 00:45:20  TD10216
@@ -26,7 +28,7 @@
 
 #ifdef VXWORKS
  // Temporarily disabled in vxWorks
- int checkself(int argc, char** argv, char* start, char* filename)
+ int checkself(int argc, const char** argv, const char* start, const char* filename)
  {
      return 0;
  }
@@ -45,7 +47,7 @@
  // ERROR HANDLING:
  //    asserts that args are non null
  //    asserts that size of region to verify is > 0
- int checkself(int argc, char** argv, char* start, char* filename)
+ int checkself(int argc, const char** argv, const char* start, const char* filename)
  {
     unsigned long calc_crc = 0;
     unsigned long exp_crc;
@@ -64,7 +66,7 @@
     // calculate crc
     //
     ASSERT(size > 0);
-    if (crcgen32(&calc_crc, start, size) == -1) {
+    if (crcgen32(&calc_crc, (const unsigned char*)start, size) == -1) {
        sprintf(buf, "checkself: crcgen32 failed, start=0x%08x size=%ld\n",
                start, size);
        _LOG_ERROR(__FILE__, __LINE__, TRACE_CODE, errno, buf);

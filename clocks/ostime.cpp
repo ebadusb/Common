@@ -3,6 +3,10 @@
  *
  * $Header: //Bctquad3/HOME/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.8 2001/04/05 14:16:14 jl11312 Exp pn02526 $
  * $Log: ostime.cpp $
+ * Revision 1.5  1999/10/13 04:14:08  BS04481
+ * Correct delta time calculation to avoid overflow.  Overflow 
+ * resulted in truncation of left 12 bits of an intermediate result and
+ * would not effect the final result.
  * Revision 1.4  1999/10/08 18:34:59  BS04481
  * Reference the variable that controls the watchdogs during time 
  * setting via a function instead of directly.
@@ -45,7 +49,7 @@
 #include "common.h"
 #include "ostime.hpp"
 
-const int TICKTIME=2;                  // our ticksize is set to 2 in the sysinit
+const int MS_EQUIVALENT=1193;          //equivalent of 1ms in raw clock ticks for out clock
 
 // SPECIFICATION:    osTime constructor.
 //                   Sets up pointer to kernel's time-tick space and
@@ -103,6 +107,27 @@ osTime::snapshotTime(timeFromTick* now)
    {
       now->sec = _timeptr->seconds;
       now->nanosec = _timeptr->nsec;
+
+   } while ( now->sec != _timeptr->seconds || now->nanosec != _timeptr->nsec  );
+};
+
+
+// SPECIFICATION:    snapshotRaw.
+//                   osTime method to get raw ticks from the kernel.
+//
+// ERROR HANDLING:   none.
+
+inline void
+osTime::snapshotRaw(rawTick* now)
+{
+   // loop to make sure you take both readings on the same tick
+   do
+   {
+      now->sec = _timeptr->seconds;
+      now->nanosec = _timeptr->nsec;
+      now->cnt8254 = _timeptr->cnt8254;
+      now->cycles_per_sec = _timeptr->cycles_per_sec;
+      now->cycle = _timeptr->cycle_lo;
 
    } while ( now->sec != _timeptr->seconds || now->nanosec != _timeptr->nsec  );
 };
@@ -213,6 +238,42 @@ osTime::howLongMicro(timeFromTick then)
          + ( (now.nanosec - then.nanosec) / 1000);
 
    return(delta);
+};
+
+      
+// SPECIFICATION:    howLongRaw.
+//                   Returns delta in msec between previous 
+//                   then and now based on the raw clock.
+//
+// ERROR HANDLING:   FATAL_ERROR if the ticksize is not 2.
+//                   FATAL_ERROR if the clock has changed.
+
+int
+osTime::howLongRaw(rawTick then)
+{
+   rawTick   now;
+   long deltaRaw;             // ticks
+   int deltaMsec;             // milliseconds    
+
+   snapshotRaw(&now);
+
+   if (now.cnt8254 != 2386) // magic number that represents 2ms tick
+      FATAL_ERROR( __LINE__, __FILE__ "Ticksize is not 2!");
+   if (now.cycles_per_sec != 1193181) // magic number that represents the clock rate of our clock
+      FATAL_ERROR( __LINE__, __FILE__ "Clock chip is wrong!");
+
+   // this element of the timesel structure is not sensitive 
+   // changes to the realtime clock.  This value should increment by
+   // 23860 (decimal) each tick which is 1193000 each second.  
+   // The register will wrap in just over 3600 seconds.
+   deltaRaw = now.cycle - then.cycle;
+   if (deltaRaw < 0L)
+      deltaRaw += 0x7fffffff;
+
+   // convert to msec
+   deltaMsec = deltaRaw / MS_EQUIVALENT; 
+   
+   return(deltaMsec);
 };
 
 

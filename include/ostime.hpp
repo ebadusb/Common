@@ -3,6 +3,9 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/ostime.hpp 1.7 2002/11/22 21:07:37 pn02526 Exp jl11312 $
  * $Log: ostime.hpp $
+ * Revision 1.4  1999/10/08 18:35:01  BS04481
+ * Reference the variable that controls the watchdogs during time 
+ * setting via a function instead of directly.
  * Revision 1.3  1999/09/30 04:08:02  BS04481
  * Remove message send and receive functions from the driver 
  * service loop. 
@@ -40,17 +43,28 @@ typedef struct
    time_t   nanosec;
 }timeFromTick;
 
+typedef struct
+{
+   time_t   sec;
+   time_t   nanosec;
+   unsigned long cnt8254;
+   unsigned long cycles_per_sec;
+   unsigned long cycle;
+}rawTick;
+
 class osTime
 {
    public:
       osTime();
       ~osTime();
-      inline void snapshotTime(timeFromTick* now);        // get new time from kernel
+      inline void snapshotTime(timeFromTick* now); // get new time from kernel
+      inline void snapshotRaw(rawTick* now);       // get new time from kernel in raw clock ticks
       void whatTimeIsIt(timeFromTick* now);        // get new time from object
       int howLong(timeFromTick then);              // return delta between then and now
       int howLongMicro(timeFromTick then);         // return delta in usecond between then and now
       int howLongAndUpdate(timeFromTick* then);    // update then with time from object and return delta
       int howLongMicroAndUpdate(timeFromTick* then); // update then with time from object and return delta in usec
+      int howLongRaw(rawTick then);                // return delta between now and then based on raw clock ticks
       void delayTime(int deltaTime);               // holds in a tight loop for specified time
       int getTimeCounter(void);                    // timeCounter != 0 => time reset in progress
       void countDown(void);                        // decrement timeCounter

@@ -16,6 +16,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "datalog.h"
 #include "messagesystemconstant.h"
 
 
@@ -32,6 +33,7 @@ public:
       MESSAGE_DEREGISTER,                       // deregister message with router
       GATEWAY_CONNECT,                          // register a gateway task
       GATEWAY_DISCONNECT,                       // deregister a gateway task
+      GATEWAY_MESSAGE_SYNCH_BEGIN,              // synchronization of messages with a gateway task started
       GATEWAY_MESSAGE_SYNCH,                    // synchronize messages with a gateway task
       GATEWAY_MESSAGE_SYNCH_COMPLETE,           // synchronization of messages with a gateway task completed
       SPOOF_MSG_REGISTER,                       // register the spoofer task
@@ -117,7 +119,7 @@ public:
 
    //
    // Dump the contents of the class ...
-   void dump( ostream &outs );
+   void dump( DataLog_Stream &outs );
 
 
 protected:
@@ -181,7 +183,7 @@ public:
 
    //
    // Dump the contents of the class ...
-   void dump( ostream &outs );
+   void dump( DataLog_Stream &outs );
 
 protected:
 

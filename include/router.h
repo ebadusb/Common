@@ -76,6 +76,13 @@ public:
    // Dump the contents of this class
    void dump( DataLog_Stream &outs );
 
+   //
+   // Dump the different router structures
+   void msgDump();
+   void msgTaskDump();
+   void gatewayDump();
+   void remoteMsgDump();
+
 protected:
 
    //
@@ -158,6 +165,12 @@ protected:
    short getGatewayPort();
 
    //
+   // This function will return the gateway connection status found for the
+   //  passed in nodeId in the _GatewayConnSynchedMap.  The map contains an
+   //  enum which will be reported as a meaningful character value.
+   const char *gatewayConnStatus( unsigned long nodeId );
+
+   //
    // Dump the contents of the given queue
    void dumpQueue( unsigned long tId, mqd_t mqueue, DataLog_Stream &out );
 
@@ -210,7 +223,7 @@ protected:
    //  the socket connection to the gateway.
    map< unsigned long, int >                                    _InetGatewayMap;
 
-   enum GatewaySynched { Incomplete, LocalComplete, RemoteComplete, Synched };
+   enum GatewaySynched { NoConn, Connected, Inprogress, LocalComplete, RemoteComplete, Synched };
    map< unsigned long, GatewaySynched >                         _GatewayConnSynchedMap;
 
    //
@@ -232,9 +245,17 @@ protected:
 #ifdef __cplusplus 
 extern "C" void routerInit();
 extern "C" void routerDump();
+extern "C" void msgDump();
+extern "C" void msgTaskDump();
+extern "C" void gatewayDump();
+extern "C" void remoteMsgDump();
 #else 
 void routerInit();
 void routerDump();
+void msgDump();
+void msgTaskDump();
+void gatewayDump();
+void remoteMsgDump();
 #endif
 
 #endif

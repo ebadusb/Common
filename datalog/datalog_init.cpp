@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_init.cpp 1.8 2003/04/11 15:26:11Z jl11312 Exp jl11312 $
  * $Log: datalog_init.cpp $
+ * Revision 1.1  2002/07/18 21:21:00  jl11312
+ * Initial revision
  *
  */
 
@@ -13,28 +15,24 @@
 DataLog_Result datalog_Init(const char * logPath, const char * platformName)
 {
 	DataLog_Result	result = DataLog_OK;
-	DataLog_CommonData * common = DATALOG_NULL_SHARED_PTR;
 
-	if ( datalog_StartInitialization() != DataLog_OK )
+	if ( !DataLog_CommonData::startInitialization() )
 	{
-		common = datalog_GetCommonDataPtr();
-		common->setTaskError(DataLog_MultipleInitialization, __FILE__, __LINE__);
+		DataLog_CommonData common;
+		common.setTaskError(DataLog_MultipleInitialization, __FILE__, __LINE__);
 		result = DataLog_Error;
 	}
 	else
 	{
-		void * commonDataArea = datalog_AllocSharedMem(sizeof(DataLog_CommonData));
-		common = new(commonDataArea)DataLog_CommonData;
-
 		//
 		// The task hooks for create/delete are installed only after the common data
 		// pointer is set, so we must add the task info for the current (initialization)
 		// task manually.
 		//
-		datalog_SetCommonDataPtr(common);
 		datalog_TaskCreated(datalog_CurrentTask());
 
-		common->setConnect(DataLog_CommonData::LogToFile, logPath);
+		DataLog_CommonData common;
+		common.setConnect(DataLog_CommonData::LogToFile, logPath);
 		datalog_StartOutputTask(platformName);
 	}
 
@@ -49,22 +47,22 @@ DataLog_Result datalog_InitNet(const char * ipAddress, double seconds)
 
 DataLog_Result datalog_SetDefaultTraceBufferSize(size_t size)
 {
-	DataLog_CommonData * common = datalog_GetCommonDataPtr();
-	common->defaultTraceBufferSize() = size;
+	DataLog_CommonData common;
+	common.setDefaultTraceBufferSize(size);
    return DataLog_OK;
 }
 
 DataLog_Result datalog_SetDefaultIntBufferSize(size_t size)
 {
-	DataLog_CommonData * common = datalog_GetCommonDataPtr();
-	common->defaultIntBufferSize() = size;
+	DataLog_CommonData common;
+	common.setDefaultIntBufferSize(size);
    return DataLog_OK;
 }
 
 DataLog_Result datalog_SetDefaultCriticalBufferSize(size_t size)
 {
-	DataLog_CommonData * common = datalog_GetCommonDataPtr();
-	common->defaultCriticalBufferSize() = size;
+	DataLog_CommonData common;
+	common.setDefaultCriticalBufferSize(size);
    return DataLog_OK;
 }
 

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.9 2003/04/29 17:07:54Z jl11312 Exp jl11312 $
  * $Log: datalog_message_stream.cpp $
+ * Revision 1.1  2002/07/18 21:20:57  jl11312
+ * Initial revision
  *
  */
 
@@ -27,8 +29,8 @@ DataLog_Level::DataLog_Level(const char * levelName)
 	_handle = DATALOG_NULL_HANDLE;
 	if ( initialize(levelName) != DataLog_OK )
 	{
-		DataLog_CommonData * common = datalog_GetCommonDataPtr();
-		common->setTaskError(DataLog_LevelConstructorFailed, __FILE__, __LINE__);
+		DataLog_CommonData common;
+		common.setTaskError(DataLog_LevelConstructorFailed, __FILE__, __LINE__);
 	}
 }
 
@@ -43,8 +45,8 @@ DataLog_EnabledType DataLog_Level::logOutput(void)
  
 	if ( _handle == DATALOG_NULL_HANDLE )
 	{
-		DataLog_CommonData * common = datalog_GetCommonDataPtr();
-		common->setTaskError(DataLog_LevelNotInitialized, __FILE__, __LINE__);
+		DataLog_CommonData common;
+		common.setTaskError(DataLog_LevelNotInitialized, __FILE__, __LINE__);
 	}
 	else
 	{
@@ -59,8 +61,8 @@ DataLog_EnabledType DataLog_Level::logOutput(void)
 			break;
 
 		default:
-			DataLog_CommonData * common = datalog_GetCommonDataPtr();
-			common->setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
+			DataLog_CommonData common;
+			common.setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
 			break;
 		}
 	}
@@ -74,8 +76,8 @@ DataLog_EnabledType DataLog_Level::logOutput(DataLog_EnabledType flag)
  
 	if ( _handle == DATALOG_NULL_HANDLE )
 	{
-		DataLog_CommonData * common = datalog_GetCommonDataPtr();
-		common->setTaskError(DataLog_LevelNotInitialized, __FILE__, __LINE__);		
+		DataLog_CommonData common;
+		common.setTaskError(DataLog_LevelNotInitialized, __FILE__, __LINE__);		
 	}
 	else
 	{
@@ -91,8 +93,8 @@ DataLog_EnabledType DataLog_Level::logOutput(DataLog_EnabledType flag)
 			break;
 
 		default:
-			DataLog_CommonData * common = datalog_GetCommonDataPtr();
-			common->setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
+			DataLog_CommonData common;
+			common.setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
 			break;
 		}
 	}
@@ -106,8 +108,8 @@ DataLog_ConsoleEnabledType DataLog_Level::consoleOutput(void)
  
 	if ( _handle == DATALOG_NULL_SHARED_PTR )
 	{
-		DataLog_CommonData * common = datalog_GetCommonDataPtr();
-		common->setTaskError(DataLog_LevelNotInitialized, __FILE__, __LINE__);		
+		DataLog_CommonData common;
+		common.setTaskError(DataLog_LevelNotInitialized, __FILE__, __LINE__);		
 	}
 	else
 	{
@@ -122,8 +124,8 @@ DataLog_ConsoleEnabledType DataLog_Level::consoleOutput(void)
 			break;
 
 		default:
-			DataLog_CommonData * common = datalog_GetCommonDataPtr();
-			common->setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
+			DataLog_CommonData common;
+			common.setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
 			break;
 		}
 	}
@@ -137,8 +139,8 @@ DataLog_ConsoleEnabledType DataLog_Level::consoleOutput(DataLog_ConsoleEnabledTy
  
 	if ( _handle == DATALOG_NULL_SHARED_PTR )
 	{
-		DataLog_CommonData * common = datalog_GetCommonDataPtr();
-		common->setTaskError(DataLog_LevelNotInitialized, __FILE__, __LINE__);		
+		DataLog_CommonData common;
+		common.setTaskError(DataLog_LevelNotInitialized, __FILE__, __LINE__);		
 	}
 	else
 	{
@@ -154,8 +156,8 @@ DataLog_ConsoleEnabledType DataLog_Level::consoleOutput(DataLog_ConsoleEnabledTy
 			break;
 
 		default:
-			DataLog_CommonData * common = datalog_GetCommonDataPtr();
-			common->setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
+			DataLog_CommonData common;
+			common.setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
 			break;
 		}
 	}
@@ -163,12 +165,45 @@ DataLog_ConsoleEnabledType DataLog_Level::consoleOutput(DataLog_ConsoleEnabledTy
 	return result;
 }
 
+struct OutputControl
+{
+	DataLog_EnabledType	logOutput;
+	DataLog_ConsoleEnabledType	consoleOutput;
+};
+
+DataLog_EnabledType streamCallBack(const DataLog_BufferData * data, size_t size)
+{
+	OutputControl * control = (OutputControl *)data;
+
+//	if ( control->consoleOutput == DataLog_ConsoleEnabled )
+	{
+		//
+		// Parse the stream output record and send data to stdout
+		//
+		DataLog_StreamOutputRecord * streamOutputRecord;
+		const DataLog_BufferData * fileName;
+		DataLog_UINT16 * streamDataLen;
+		const DataLog_BufferData * streamData;
+
+		streamOutputRecord = (DataLog_StreamOutputRecord *)&data[sizeof(*control)];
+		fileName = &data[sizeof(*control)+sizeof(*streamOutputRecord)];
+		streamDataLen = (DataLog_UINT16 *)(fileName + streamOutputRecord->_fileNameLen*sizeof(char));
+		streamData = ((DataLog_BufferData *)streamDataLen) + sizeof(DataLog_UINT16);
+
+		fwrite(fileName, sizeof(char), (unsigned int)streamOutputRecord->_fileNameLen, stderr);
+		fprintf(stderr, "(%d): ", streamOutputRecord->_lineNum);
+		fwrite(streamData, sizeof(char), (unsigned int)(*streamDataLen), stderr);
+		fputc('\n', stderr);
+	}
+
+	return control->logOutput;
+}
+
 DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber)
 {
-	DataLog_CommonData * common = datalog_GetCommonDataPtr();
+	DataLog_CommonData common;
 	DataLog_OutputBuffer * outputBuffer = NULL;
-	DataLog_EnabledType logOutput = DataLog_LogEnabled;
-	DataLog_ConsoleEnabledType consoleOutput = DataLog_ConsoleDisabled;
+	OutputControl outputControl = { DataLog_LogEnabled, DataLog_ConsoleDisabled };
 
 	DataLog_StreamOutputRecord streamOutputRecord;
 	streamOutputRecord._recordType = DataLog_StreamOutputRecordID;
@@ -179,29 +214,25 @@ DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber
 	{
 	case DataLog_HandleInfo::TraceHandle:
 		{
-			streamOutputRecord._levelID = _handle->_traceData._id;
+			streamOutputRecord._levelID = _handle->_id;
 			streamOutputRecord._taskID = datalog_CurrentTask();
 
-			logOutput = _handle->_traceData._logOutput;
-			consoleOutput = _handle->_traceData._consoleOutput;
+			outputControl.logOutput = _handle->_traceData._logOutput;
+			outputControl.consoleOutput = _handle->_traceData._consoleOutput;
 
-			DataLog_CommonData::TaskInfoPtr	taskInfo = common->findTask(DATALOG_CURRENT_TASK);
-			if ( taskInfo != DATALOG_NULL_SHARED_PTR )
-			{
-				logOutput = ( logOutput == DataLog_LogEnabled ) ? DataLog_LogEnabled : taskInfo->_logOutput;
-				consoleOutput = ( consoleOutput == DataLog_ConsoleEnabled ) ? DataLog_ConsoleEnabled : taskInfo->_consoleOutput;
-		   }
-
-			outputBuffer = (common->getTaskTraceBuffer(DATALOG_CURRENT_TASK))->_buffer;
+			DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
+			outputControl.logOutput = ( outputControl.logOutput == DataLog_LogEnabled ) ? DataLog_LogEnabled : taskInfo->_logOutput;
+			outputControl.consoleOutput = ( outputControl.consoleOutput == DataLog_ConsoleEnabled ) ? DataLog_ConsoleEnabled : taskInfo->_consoleOutput;
+			outputBuffer = taskInfo->_trace;
 		}
 		break;
 
 	case DataLog_HandleInfo::CriticalHandle:
 		{
 			streamOutputRecord._levelID = 0;
-			streamOutputRecord._taskID = _handle->_criticalData._id;
+			streamOutputRecord._taskID = _handle->_criticalData._taskID;
 
-			consoleOutput = DataLog_ConsoleEnabled;
+			outputControl.consoleOutput = DataLog_ConsoleEnabled;
 			outputBuffer = _handle->_criticalData._buffer;
 	   }
 		break;
@@ -212,11 +243,11 @@ DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber
 			 *	Invalid handle type for stream.  Report the error and choose reasonable
 			 * defaults if continuing.
 			 */
-			common->setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
+			common.setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
 
 			streamOutputRecord._levelID = 0;
 			streamOutputRecord._taskID = DATALOG_CURRENT_TASK;
-			outputBuffer = (common->getTaskTraceBuffer(DATALOG_CURRENT_TASK))->_buffer;
+			outputBuffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
 		}
 		break;
 	}
@@ -227,50 +258,45 @@ DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber
 
 	streamOutputRecord._fileNameLen = strlen(fileName);
 	streamOutputRecord._lineNum = lineNumber;
-	DataLog_Stream	& stream = outputBuffer->lockStreamBuffer(&streamOutputRecord, fileName, logOutput, consoleOutput);
+ 
+	DataLog_Stream	& stream = outputBuffer->streamWriteStart(&streamCallBack, sizeof(outputControl));
+	stream.write(&outputControl, sizeof(outputControl));
+	stream.write(&streamOutputRecord, sizeof(streamOutputRecord));
+	stream.write(fileName, streamOutputRecord._fileNameLen * sizeof(char));
+
+	DataLog_UINT16	dataLen = 0;
+	stream.write(&dataLen, sizeof(dataLen));
+
+	outputBuffer->streamWriteReleaseToApp();
 	return stream;
 }
 
 DataLog_Result DataLog_Level::setAsDefault(void)
 {
-	DataLog_Result result = DataLog_OK;
+	DataLog_CommonData common;
+	DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
+	taskInfo->_defaultHandle = _handle;
+	taskInfo->_defaultLevel.setHandle(_handle);
 
-	DataLog_CommonData * common = datalog_GetCommonDataPtr();
-	DataLog_TaskInfo * taskInfo = common->findTask(DATALOG_CURRENT_TASK);
-
-	if ( taskInfo == DATALOG_NULL_SHARED_PTR )
-	{
-		common->setTaskError(DataLog_NoSuchTask, __FILE__, __LINE__);
-		result = DataLog_Error;
-	}
-	else
-	{
-		taskInfo->_defaultHandle = _handle;
-		taskInfo->_defaultLevel.setHandle(_handle);
-	}
-
-	return result;
+	return DataLog_OK;
 }
 
 DataLog_Critical::DataLog_Critical(void)
 {
-	DataLog_CommonData * common = datalog_GetCommonDataPtr();
-	DataLog_TaskInfo * taskInfo = common->findTask(DATALOG_CURRENT_TASK);
+	DataLog_CommonData common;
+	DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
 
-	if ( taskInfo == DATALOG_NULL_SHARED_PTR )
-	{
-		_handle = DATALOG_NULL_HANDLE;
-		common->setTaskError(DataLog_NoSuchTask, __FILE__, __LINE__);
-	}
-	else
-	{
-		_handle = taskInfo->_criticalHandle;
-	}
+	_handle = taskInfo->_criticalHandle;
 }
 
 DataLog_Critical::~DataLog_Critical()
 {
 	_handle = DATALOG_NULL_HANDLE;
+}
+
+DataLog_Stream::DataLog_Stream(DataLog_OutputBuffer * output)
+				: ostrstream(), _output(output)
+{
 }
 
 DataLog_Stream::DataLog_Stream(DataLog_BufferData * buffer, size_t bufferSize, DataLog_OutputBuffer * output)
@@ -294,7 +320,7 @@ ostream & endmsg(ostream & stream)
 		DataLog_Stream * dstream = dynamic_cast<DataLog_Stream *>(&stream);
 		if ( dstream )
 		{
-			dstream->_output->releaseStreamBuffer();
+			dstream->_output->streamWriteComplete();
 			validStream = true;
 	   }
 	}
@@ -309,13 +335,8 @@ ostream & endmsg(ostream & stream)
 
 ostream & datalog_GetDefaultStream(const char * file, int line)
 {
-	DataLog_CommonData * common = datalog_GetCommonDataPtr();
-	DataLog_CommonData::TaskInfoPtr	taskInfo = common->findTask(DATALOG_CURRENT_TASK);
-
-	if ( taskInfo == DATALOG_NULL_SHARED_PTR )
-	{
-		common->setTaskError(DataLog_NoSuchTaskFatal, __FILE__, __LINE__);
-   }
+	DataLog_CommonData common;
+	DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
 
 	return (taskInfo->_defaultLevel)(file, line);
 }

@@ -3,11 +3,10 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port.cpp 1.2 2002/08/15 20:53:57Z jl11312 Exp rm70006 $
  * $Log: datalog_port.cpp $
+ * Revision 1.1  2002/07/18 21:20:59  jl11312
+ * Initial revision
  *
  */
-
-#include "datalog.h"
-#include "datalog_internal.h"
 
 #ifdef VXWORKS
 # include "datalog_port_vxworks.cpp"

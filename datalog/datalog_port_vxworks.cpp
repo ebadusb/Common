@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.9 2003/10/16 14:57:40Z jl11312 Exp jl11312 $
  * $Log: datalog_port_vxworks.cpp $
+ * Revision 1.1  2002/07/18 21:20:52  jl11312
+ * Initial revision
  *
  */
 
@@ -14,98 +16,262 @@
 #include <timers.h>
 
 #include "datalog.h"
+#include "datalog_internal.h"
 #include "error.h"
 
-class DataLog_PortData
+//
+// Local functions
+//
+struct SignalInfo;
+static SignalInfo * getSignalInfo(const char * signalName);
+static void timerNotify(timer_t timerID, SignalInfo * signalInfo);
+static time_t markTimeStampStart(void);
+
+//
+// Initialization related functions
+//
+static SEM_ID	initializationDataLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+static bool initializationStarted;
+
+bool DataLog_CommonData::startInitialization(void)
 {
-public:
-	DataLog_PortData(void);
+	bool result = false;
 
-	DataLog_SharedPtr(DataLog_CommonData) getCommonDataPtr(void) { return commonDataPtr; }
-	void setCommonDataPtr(DataLog_SharedPtr(DataLog_CommonData) ptr) { commonDataPtr = ptr; }
+	semTake(initializationDataLock, WAIT_FOREVER);
+	if ( !initializationStarted )
+	{
+		initializationStarted = true;
+		result = true;
+	}
 
-	bool startInitialization(void);
-
-	SEM_ID getSignalSem(const char * signalName);
-	void sendSignal(const char * signalName);
-	bool waitSignal(const char * signalName, double seconds);
-
-	void getTimeStampStart(DataLog_TimeStampStart * start);
-	void getTimeStamp(DataLog_TimeStamp * stamp);
-
-protected:
-	void markTimeStampStart(void);
-
-private:
-	bool initializationStarted;
-	DataLog_SharedPtr(DataLog_CommonData) commonDataPtr; 
-
-	map<string, SEM_ID>	signalMap;
-
-#if (CPU != SIMNT)
-	UINT32				timestampStart;
-#endif
-
-	struct timespec	clockStart;
-	time_t				timeStart;
-
-	SEM_ID portDataLock;
-};
-
-static DataLog_PortData	localPortData;
-
-DataLog_PortData::DataLog_PortData(void)
-{
-	portDataLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
-	initializationStarted = false;
-	commonDataPtr = NULL;
-
-	markTimeStampStart();
+	semGive(initializationDataLock);
+	return result;
 }
 
-bool DataLog_PortData::startInitialization(void)
+bool DataLog_CommonData::isInitialized(void)
 {
-	semTake(portDataLock, WAIT_FOREVER);
+	semTake(initializationDataLock, WAIT_FOREVER);
 	bool result = initializationStarted;
-	initializationStarted = true;
-	semGive(portDataLock);
+	semGive(initializationDataLock);
 
 	return result;
 }
 
-SEM_ID DataLog_PortData::getSignalSem(const char * signalName)
+//
+// Internal ID related functions
+//
+static SEM_ID	internalIDLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+
+DataLog_InternalID DataLog_CommonData::getNextInternalID(void)
+{
+	static DataLog_InternalID	id = DATALOG_NULL_ID;
+
+	semTake(internalIDLock, WAIT_FOREVER);
+
+	id += 1;
+	DataLog_InternalID	result = id;
+	semGive(internalIDLock);
+
+	return result;	
+}
+
+//
+// Level ID related functions
+//
+static SEM_ID	levelIDLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+static map<string, DataLog_InternalID>	levelIDMap;
+
+DataLog_InternalID DataLog_CommonData::lookupLevelID(const char * levelName)
+{
+	DataLog_InternalID result = DATALOG_NULL_ID;
+
+	semTake(levelIDLock, WAIT_FOREVER);
+	if ( levelIDMap.find(levelName) != levelIDMap.end() )
+	{
+		result = levelIDMap[levelName];
+	}
+
+	semGive(levelIDLock);
+	return result;
+}
+
+void DataLog_CommonData::registerLevelID(const char * levelName, DataLog_InternalID id)
+{
+	semTake(levelIDLock, WAIT_FOREVER);
+	if ( levelIDMap.find(levelName) != levelIDMap.end() )
+	{
+		DataLog_Critical	errorLog;
+		DataLog(errorLog) << "attempt to register duplicate level name ignored" << endmsg;
+	}
+	else
+	{
+		levelIDMap[levelName] = id;
+	}
+
+	semGive(levelIDLock);
+}
+
+//
+// Common data area related functions
+//
+static SEM_ID	commonDataLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+
+void DataLog_CommonData::setCommonDataPtr(void)
+{
+	static DataLog_SharedPtr(CommonData)	commonData = DATALOG_NULL_SHARED_PTR;
+
+	//
+	// If commonData has been set, it will never change so we don't
+	// need to acquire the semaphore.  Otherwise, we need to acquire
+	// the semaphore and allocate the common data area.
+	//
+	if ( commonData == DATALOG_NULL_SHARED_PTR )
+	{
+		semTake(commonDataLock, WAIT_FOREVER);
+		if ( commonData == DATALOG_NULL_SHARED_PTR )
+		{
+			commonData = (DataLog_SharedPtr(CommonData))datalog_AllocSharedMem(sizeof(CommonData));
+			initializeCommonData(commonData);
+
+			taskCreateHookAdd((FUNCPTR)datalog_TaskCreated);
+			taskDeleteHookAdd((FUNCPTR)datalog_TaskDeleted);
+	   }
+
+		semGive(commonDataLock);
+	}
+
+	_commonData = commonData;
+}
+
+//
+// Buffer list related functions
+//
+static SEM_ID	bufferListDataLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+static DataLog_SharedPtr(DataLog_Buffer::SharedBufferData) bufferListHead = DATALOG_NULL_SHARED_PTR;
+static DataLog_SharedPtr(DataLog_Buffer::SharedBufferData) bufferListTail = DATALOG_NULL_SHARED_PTR;
+
+void DataLog_Buffer::lockBufferList(void)
+{
+	semTake(bufferListDataLock, WAIT_FOREVER);
+}
+
+void DataLog_Buffer::releaseBufferList(void)
+{
+	semGive(bufferListDataLock);
+}
+
+DataLog_SharedPtr(DataLog_Buffer::SharedBufferData) DataLog_Buffer::getBufferListHead(void)
+{
+	return bufferListHead;
+}
+
+void DataLog_Buffer::setBufferListHead(DataLog_SharedPtr(DataLog_Buffer::SharedBufferData) head)
+{
+	bufferListHead = head;
+}
+
+DataLog_SharedPtr(DataLog_Buffer::SharedBufferData) DataLog_Buffer::getBufferListTail(void)
+{
+	return bufferListTail;
+}
+
+void DataLog_Buffer::setBufferListTail(DataLog_SharedPtr(DataLog_Buffer::SharedBufferData) tail)
+{
+	bufferListTail = tail;
+}
+
+//
+// Signal related functions
+//
+struct SignalInfo
+{
+	SEM_ID	_semID;
+
+	bool		_timerCreated;
+	timer_t 	_timerID;
+};
+
+static SEM_ID	signalDataLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+static map<string, SignalInfo *>	signalMap;
+
+static SignalInfo * getSignalInfo(const char * signalName)
 {
 	//
 	//	Create signal if necessary
 	//
-	SEM_ID	result;
+	SignalInfo *	result;
 
-	semTake(portDataLock, WAIT_FOREVER);
+	semTake(signalDataLock, WAIT_FOREVER);
 	if ( signalMap.find(signalName) == signalMap.end() )
 	{
-		signalMap[signalName] = semBCreate(SEM_Q_PRIORITY, SEM_EMPTY);
+		result = new SignalInfo;
+		result->_semID = semBCreate(SEM_Q_PRIORITY, SEM_EMPTY);
+		result->_timerCreated = false;
+		signalMap[signalName] = result;
 	}
 
 	result = signalMap[signalName];
-	semGive(portDataLock);
+	semGive(signalDataLock);
 	return result;
 }
 
-bool DataLog_PortData::waitSignal(const char * signalName, double seconds)
+static void timerNotify(timer_t timerID, SignalInfo * signalInfo)
 {
-	SEM_ID signalSem = getSignalSem(signalName);
-	STATUS result = semTake(signalSem, (seconds < 0) ? WAIT_FOREVER : (int)(seconds * sysClkRateGet()));
+	semGive(signalInfo->_semID);
+}
+
+bool datalog_WaitSignal(const char * signalName, double seconds)
+{
+	SignalInfo * signalInfo = getSignalInfo(signalName);
+	STATUS result = semTake(signalInfo->_semID, (seconds < 0) ? WAIT_FOREVER : (int)(seconds * sysClkRateGet()));
 
 	return (result == OK) ? true : false;
 }
 
-void DataLog_PortData::sendSignal(const char * signalName)
+void datalog_SendSignal(const char * signalName)
 {
-	SEM_ID signalSem = getSignalSem(signalName);
-	semGive(signalSem);
+	SignalInfo * signalInfo = getSignalInfo(signalName);
+	semGive(signalInfo->_semID);
 }
 
-void DataLog_PortData::markTimeStampStart(void)
+void datalog_SetupPeriodicSignal(const char * signalName, double seconds)
+{
+	SignalInfo * signalInfo = getSignalInfo(signalName);
+	if ( !signalInfo->_timerCreated )
+	{
+		if ( timer_create(CLOCK_REALTIME, NULL, &(signalInfo->_timerID)) != OK )
+		{
+			_FATAL_ERROR(__FILE__, __LINE__, "timerCreate failed");
+		}
+
+		timer_connect(signalInfo->_timerID, (VOIDFUNCPTR)timerNotify, (int)signalInfo);
+		signalInfo->_timerCreated = true;
+	}
+
+	timer_cancel(signalInfo->_timerID);
+	if ( seconds > 0 )
+	{
+		struct itimerspec	period;
+
+		period.it_value.tv_sec = period.it_interval.tv_sec = (time_t)seconds;
+		period.it_value.tv_nsec = period.it_interval.tv_nsec = (long)((seconds-period.it_interval.tv_sec) * 1e9);
+		timer_settime(signalInfo->_timerID, 0, &period, NULL);
+	}
+}
+
+//
+// Time stamp related functions
+//
+static SEM_ID 	timeDataLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+
+#if (CPU != SIMNT)
+static UINT32		timestampStart;
+#endif
+
+static struct timespec	clockStart;
+static time_t				timeStart = markTimeStampStart();
+
+static time_t markTimeStampStart(void)
 {
 	int	oldLevel;
 
@@ -122,7 +288,7 @@ void DataLog_PortData::markTimeStampStart(void)
 	//
 	// Latch current values for all clocks needed for log timestamp
 	//
-	semTake(portDataLock, WAIT_FOREVER);
+	semTake(timeDataLock, WAIT_FOREVER);
 	oldLevel = intLock();
 
 #if (CPU != SIMNT)
@@ -130,13 +296,14 @@ void DataLog_PortData::markTimeStampStart(void)
 #endif /* if (CPU != SIMNT) */
 
 	clock_gettime(CLOCK_REALTIME, &clockStart);
-	timeStart = time(NULL);
 
 	intUnlock(oldLevel);
-	semGive(portDataLock);
+	semGive(timeDataLock);
+
+	return time(NULL);
 }
 
-void DataLog_PortData::getTimeStampStart(DataLog_TimeStampStart * start)
+void datalog_GetTimeStampStart(DataLog_TimeStampStart * start)
 {
 	struct tm	tmVal;
 	gmtime_r(&timeStart, &tmVal);
@@ -149,7 +316,7 @@ void DataLog_PortData::getTimeStampStart(DataLog_TimeStampStart * start)
 	start->_second = tmVal.tm_sec;
 }
 
-void DataLog_PortData::getTimeStamp(DataLog_TimeStamp * stamp)
+void datalog_GetTimeStamp(DataLog_TimeStamp * stamp)
 {
 	struct timespec	clockCurrent;
 
@@ -226,52 +393,5 @@ void datalog_LockAccess(DataLog_Lock lock)
 void datalog_ReleaseAccess(DataLog_Lock lock)
 {
 	semGive(lock);
-}
-
-bool datalog_WaitSignal(const char * signalName, double seconds)
-{
-	return localPortData.waitSignal(signalName, seconds);
-}
-
-void datalog_SendSignal(const char * signalName)
-{
-	localPortData.sendSignal(signalName);
-}
-
-DataLog_SharedPtr(DataLog_CommonData) datalog_GetCommonDataPtr(void)
-{
-	DataLog_SharedPtr(DataLog_CommonData) result = localPortData.getCommonDataPtr();
-	if ( result == NULL )
-	{
-		_FATAL_ERROR(__FILE__, __LINE__, "data log common data pointer not set");
-	}
-
-	return result;
-}
-
-void datalog_SetCommonDataPtr(DataLog_SharedPtr(DataLog_CommonData) ptr)
-{
-	localPortData.setCommonDataPtr(ptr);
-
-	/*
-	 *	task hooks require the common pointer to be set to function correctly
-	 */
-	taskCreateHookAdd((FUNCPTR)datalog_TaskCreated);
-	taskDeleteHookAdd((FUNCPTR)datalog_TaskDeleted);
-}
-
-bool datalog_StartInitialization(void)
-{
-	return localPortData.startInitialization();
-}
-
-void datalog_GetTimeStampStart(DataLog_TimeStampStart * start)
-{
-	localPortData.getTimeStampStart(start);
-}
-
-void datalog_GetTimeStamp(DataLog_TimeStamp * stamp)
-{
-	localPortData.getTimeStamp(stamp);
 }
 

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message.cpp 1.5 2003/02/25 16:10:14Z jl11312 Exp jl11312 $
  * $Log: datalog_message.cpp $
+ * Revision 1.1  2002/07/18 21:20:54  jl11312
+ * Initial revision
  *
  */
 
@@ -12,28 +14,28 @@
 DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * handle)
 {
 	DataLog_Result result = DataLog_OK;
-	DataLog_CommonData * common = datalog_GetCommonDataPtr();
-	DataLog_CommonData::LevelInfoPtr levelInfo = common->findLevel(levelName);
+	DataLog_CommonData common;
+	DataLog_HandleInfo * handleInfo = common.findHandle(levelName);
 
-	if ( levelInfo == DATALOG_NULL_SHARED_PTR )
+	if ( !handleInfo )
 	{
-		levelInfo = (DataLog_CommonData::LevelInfoPtr)datalog_AllocSharedMem(sizeof(DataLog_LevelInfo));
+		//
+		// Create new log level
+		//
+		handleInfo = new DataLog_HandleInfo;
+		handleInfo->_id = common.getNextInternalID();
+		handleInfo->_type = DataLog_HandleInfo::TraceHandle;
+		handleInfo->_traceData._logOutput = DataLog_LogEnabled;
+		handleInfo->_traceData._consoleOutput = DataLog_ConsoleDisabled;
+		common.addHandle(levelName, handleInfo);
 
-		char * buffer = (char *)datalog_AllocSharedMem(strlen(levelName)+1);
-		strcpy(buffer,levelName);
-		levelInfo->_name = buffer;
-		common->addLevel(levelInfo);
-
-		levelInfo->_handle = (DataLog_Handle)datalog_AllocSharedMem(sizeof(DataLog_HandleInfo));
-		levelInfo->_handle->_type = DataLog_HandleInfo::TraceHandle;
-		levelInfo->_handle->_traceData._id = levelInfo->_id;
-		levelInfo->_handle->_traceData._logOutput = DataLog_LogEnabled;
-		levelInfo->_handle->_traceData._consoleOutput = DataLog_ConsoleDisabled;
-
+		//
+		// Write record to log showing addition of new log level
+		//
 	   DataLog_LogLevelRecord logLevelRecord;
 	   logLevelRecord._recordType = DataLog_LogLevelRecordID;
 		datalog_GetTimeStamp(&logLevelRecord._timeStamp);
-	   logLevelRecord._levelID = levelInfo->_id;
+	   logLevelRecord._levelID = handleInfo->_id;
 
 #ifndef DATALOG_NO_NETWORK_SUPPORT
 		logLevelRecord._nodeID = datalog_NodeID();
@@ -41,117 +43,60 @@ DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * hand
 
 		logLevelRecord._nameLen = strlen(levelName);
 
-		common->internalBuffer()->partialWriteStart(); 
-		size_t writeSize = common->internalBuffer()->partialWrite((DataLog_BufferData *)&logLevelRecord, sizeof(logLevelRecord));
-		writeSize += common->internalBuffer()->partialWrite((DataLog_BufferData *)levelName, logLevelRecord._nameLen * sizeof(char));
-		common->internalBuffer()->partialWriteComplete();
+		DataLog_CriticalBuffer * buffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
+		DataLog_Stream & stream = buffer->streamWriteStart();
 
+		stream.write(&logLevelRecord, sizeof(logLevelRecord));
+		stream.write(levelName, logLevelRecord._nameLen * sizeof(char));
+		size_t writeSize = buffer->streamWriteComplete();
+ 
 		if ( writeSize != sizeof(logLevelRecord) + logLevelRecord._nameLen * sizeof(char) )
 		{
-			common->setTaskError(DataLog_LevelRecordWriteFailed, __FILE__, __LINE__);
+			common.setTaskError(DataLog_LevelRecordWriteFailed, __FILE__, __LINE__);
 			result = DataLog_Error;
 		}
 	}
 
-	*handle = levelInfo->_handle;
+	*handle = handleInfo;
 	return result;
 }
 
 DataLog_Handle datalog_GetCriticalHandle(void)
 {
-	DataLog_Handle result = DATALOG_NULL_HANDLE;
-	DataLog_CommonData * common = datalog_GetCommonDataPtr();
-	DataLog_CommonData::TaskInfoPtr	taskInfo = common->findTask(DATALOG_CURRENT_TASK);
+	DataLog_CommonData	common;
+	DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
 
-	if ( taskInfo == DATALOG_NULL_SHARED_PTR )
-	{
-		common->setTaskError(DataLog_NoSuchTask, __FILE__, __LINE__);
-   }
-   else
-	{
-		result = taskInfo->_criticalHandle;
-	}
-
-	return result;	
-}
-
-DataLog_Result datalog_GetDefaultLevel(DataLog_Handle * handle)
-{
-	DataLog_Result result = DataLog_OK;
-	DataLog_CommonData * common = datalog_GetCommonDataPtr();
-	DataLog_CommonData::TaskInfoPtr	taskInfo = common->findTask(DATALOG_CURRENT_TASK);
-
-	if ( taskInfo == DATALOG_NULL_SHARED_PTR )
-	{
-		common->setTaskError(DataLog_NoSuchTask, __FILE__, __LINE__);
-		result = DataLog_Error;
-   }
-   else
-	{
-		*handle = taskInfo->_defaultHandle;
-	}
-
-	return result;
+	return taskInfo->_criticalHandle;
 }
 
 DataLog_Result datalog_SetDefaultLevel(DataLog_Handle handle)
 {
-	DataLog_Result result = DataLog_OK;
-	DataLog_CommonData * common = datalog_GetCommonDataPtr();
-	DataLog_CommonData::TaskInfoPtr	taskInfo = common->findTask(DATALOG_CURRENT_TASK);
+	DataLog_CommonData	common;
+	DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
 
-	if ( taskInfo == DATALOG_NULL_SHARED_PTR )
-	{
-		common->setTaskError(DataLog_NoSuchTask, __FILE__, __LINE__);
-		result = DataLog_Error;
-   }
-   else
-	{
-		taskInfo->_defaultHandle = handle;
-		taskInfo->_defaultLevel.setHandle(handle);
-	}
-
-	return result;
+	taskInfo->_defaultHandle = handle;
+	taskInfo->_defaultLevel.setHandle(handle);
+	return DataLog_OK;
 }
 
 DataLog_Result datalog_GetTaskOutputOptions(DataLog_TaskID task, DataLog_EnabledType * log, DataLog_ConsoleEnabledType * console)
 {
-	DataLog_Result result = DataLog_OK;
-	DataLog_CommonData * common = datalog_GetCommonDataPtr();
-	DataLog_CommonData::TaskInfoPtr	taskInfo = common->findTask(DATALOG_CURRENT_TASK);
+	DataLog_CommonData	common;
+	DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
 
-	if ( taskInfo == DATALOG_NULL_SHARED_PTR )
-	{
-		common->setTaskError(DataLog_NoSuchTask, __FILE__, __LINE__);
-		result = DataLog_Error;
-   }
-   else
-	{
-		*log = taskInfo->_logOutput;
-		*console = taskInfo->_consoleOutput;
-	}
-
-	return result;
+	*log = taskInfo->_logOutput;
+	*console = taskInfo->_consoleOutput;
+	return DataLog_OK;
 }
 
 DataLog_Result datalog_SetTaskOutputOptions(DataLog_TaskID task, DataLog_EnabledType log, DataLog_ConsoleEnabledType console)
 {
-	DataLog_Result result = DataLog_OK;
-	DataLog_CommonData * common = datalog_GetCommonDataPtr();
-	DataLog_CommonData::TaskInfoPtr	taskInfo = common->findTask(DATALOG_CURRENT_TASK);
+	DataLog_CommonData	common;
+	DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
 
-	if ( taskInfo == DATALOG_NULL_SHARED_PTR )
-	{
-		common->setTaskError(DataLog_NoSuchTask, __FILE__, __LINE__);
-		result = DataLog_Error;
-   }
-   else
-	{
-		taskInfo->_logOutput = log;
-		taskInfo->_consoleOutput = console;
-	}
-
-	return result;
+	taskInfo->_logOutput = log;
+	taskInfo->_consoleOutput = console;
+	return DataLog_OK;
 }
 
 DataLog_Result datalog_GetLevelOutputOptions(DataLog_Handle handle, DataLog_EnabledType * log, DataLog_ConsoleEnabledType * console)
@@ -177,8 +122,8 @@ DataLog_Result datalog_GetLevelOutputOptions(DataLog_Handle handle, DataLog_Enab
 
 	default:
 		{
-			DataLog_CommonData * common = datalog_GetCommonDataPtr();
-			common->setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
+			DataLog_CommonData common;
+			common.setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
 			result = DataLog_Error;
 		}
 		break;
@@ -207,8 +152,8 @@ DataLog_Result datalog_SetLevelOutputOptions(DataLog_Handle handle, DataLog_Enab
 
 	default:
 		{
-			DataLog_CommonData * common = datalog_GetCommonDataPtr();
-			common->setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
+			DataLog_CommonData common;
+			common.setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
 			result = DataLog_Error;
 		}
 		break;

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.4 2002/09/23 15:35:36Z jl11312 Exp rm70006 $
  * $Log: datalog_output.cpp $
+ * Revision 1.1  2002/07/18 21:20:58  jl11312
+ * Initial revision
  *
  */
 
@@ -14,17 +16,18 @@
 
 DataLog_OutputTask::DataLog_OutputTask(const char * platformName)
 {
+	DataLog_CommonData common;
+
 	_isRunning = true;
 	_isExiting = false;
 	_exitCode = 0;
-	_common = datalog_GetCommonDataPtr();
 
-	if ( _common->connectType() == DataLog_CommonData::LogToFile )
+	if ( common.connectType() == DataLog_CommonData::LogToFile )
 	{
-		_outputFile = open(_common->connectName(), O_WRONLY | O_CREAT, 0666);
+		_outputFile = open(common.connectName(), O_WRONLY | O_CREAT, 0666);
 		if ( _outputFile < 0 )
 		{
-			_common->setTaskError(DataLog_OpenOutputFileFailed, __FILE__, __LINE__);
+			common.setTaskError(DataLog_OpenOutputFileFailed, __FILE__, __LINE__);
 		}
 
 		ftruncate(_outputFile, 0);
@@ -68,11 +71,14 @@ void DataLog_OutputTask::exit(int code)
 
 int DataLog_OutputTask::main(void)
 {
-	size_t	maxBufferSize = _common->currentMaxBufferSize();
+	DataLog_CommonData 	common;
+	DataLog_InputBuffer	inputBuffer;
+
+	size_t	maxBufferSize = common.getCurrentMaxBufferSize();
 	DataLog_BufferData	* tempBuffer = NULL;
 
 	tempBuffer = new DataLog_BufferData[maxBufferSize];
-	if ( _common->connectType() == DataLog_CommonData::LogToNetwork )
+	if ( common.connectType() == DataLog_CommonData::LogToNetwork )
 	{
 		notifyNetworkBufferSize(maxBufferSize);
 	}
@@ -106,20 +112,21 @@ int DataLog_OutputTask::main(void)
 		// we are about to scan the critical output buffers anyway.
 		//
 		datalog_WaitSignal("DataLog_CriticalOutput", 0);
-		DataLog_CommonData::BufferInfoPtr currentBuffer = _common->findFirstBuffer();
-		while ( currentBuffer != DATALOG_NULL_SHARED_PTR && _isRunning )
+
+		bool	attachOK = inputBuffer.attachToFirstBuffer();
+		while ( attachOK && _isRunning )
 		{
 			//
 			// Check if the local buffer is large enough.  If not, increase the
 			// buffer size and notify the network client (if any) of the new size.
 			//
-			if ( currentBuffer->_buffer->size() > maxBufferSize )
+			if ( inputBuffer.size() > maxBufferSize )
 			{
 				delete[] tempBuffer;
-				maxBufferSize = currentBuffer->_buffer->size();
+				maxBufferSize = inputBuffer.size();
 				tempBuffer = new DataLog_BufferData[maxBufferSize];
 
-				if ( _common->connectType() == DataLog_CommonData::LogToNetwork )
+				if ( common.connectType() == DataLog_CommonData::LogToNetwork )
 			   {
 					notifyNetworkBufferSize(maxBufferSize);
 			   }
@@ -128,7 +135,7 @@ int DataLog_OutputTask::main(void)
 			//
 			// Copy data from the output buffer
 			//
-			size_t bytesRead = currentBuffer->_buffer->read(tempBuffer, currentBuffer->_buffer->size());
+			size_t bytesRead = inputBuffer.read(tempBuffer, maxBufferSize);
 			if ( bytesRead > 0 )
 			{
 				if ( !timeStampWritten )
@@ -148,12 +155,12 @@ int DataLog_OutputTask::main(void)
 			//
 			if ( datalog_WaitSignal("DataLog_CriticalOutput", 0) )
 			{
-				currentBuffer = _common->findFirstBuffer();
+				attachOK = inputBuffer.attachToFirstBuffer();
 				datalog_WaitSignal("DataLog_Output", 0);
 			}
 			else
 			{
-				currentBuffer = _common->findNextBuffer();
+				attachOK = inputBuffer.attachToNextBuffer();
 			}
 		}
 	}
@@ -171,7 +178,9 @@ void DataLog_OutputTask::notifyNetworkBufferSize(size_t size)
 
 void DataLog_OutputTask::shutdown(void)
 {
-	if ( _common->connectType() == DataLog_CommonData::LogToFile )
+	DataLog_CommonData	common;
+
+	if ( common.connectType() == DataLog_CommonData::LogToFile )
 	{
 		writeFileCloseRecord();
 		close(_outputFile);
@@ -233,7 +242,9 @@ void DataLog_OutputTask::writeMissedLogDataRecord(void)
 
 void DataLog_OutputTask::writeOutputRecord(DataLog_BufferData * buffer, size_t size)
 {
-	if ( _common->connectType() == DataLog_CommonData::LogToFile )
+	DataLog_CommonData	common;
+
+	if ( common.connectType() == DataLog_CommonData::LogToFile )
 	{
 		write(_outputFile, (char *)buffer, size);
 	}

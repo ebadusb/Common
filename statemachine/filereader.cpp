@@ -245,7 +245,7 @@ int FileReader :: readState( char *buffer )
       if ( !p || strlen( p ) == 0 ) 
       {
          _StateList->push_back( newState );
-         _AllStatesList.push_back( newState );
+         _AllStatesList.push_front( newState );
       }
       else
       {
@@ -262,7 +262,7 @@ int FileReader :: readState( char *buffer )
             return PROCESSING_ERROR;
          }
          pPtr->addSubstate( newState );
-         _AllStatesList.push_back( newState );
+         _AllStatesList.push_front( newState );
       }
 
       //

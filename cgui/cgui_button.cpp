@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.12  2005/03/15 00:21:35Z  rm10919
+ *  Change CGUIText to not add object to window object list of parent in constructor.
  *  Revision 1.11  2005/02/21 17:17:11Z  cf10242
  *  IT 133 - delete all allocated memory to avoid unrecovered memory
  *  Revision 1.10  2005/01/28 23:52:17Z  rm10919
@@ -520,6 +522,16 @@ void CGUIButton::setText (const char * string = NULL) // ptr to a text object as
    }
 }
 
+void CGUIButton::setText (const StringChar * string = NULL) // ptr to a text object associated with the button
+{
+   if (string)
+   {
+      setEnabledText(string);
+      setDisabledText(string);
+      setPressedText(string);
+   }
+}
+
 void CGUIButton::setEnabledText (CGUITextItem * textItem = NULL)
 {
    if (textItem)
@@ -552,6 +564,38 @@ void CGUIButton::setEnabledText (CGUITextItem * textItem = NULL)
 }
 
 void CGUIButton::setEnabledText (const char * string = NULL)
+{
+   if (string)
+   {
+      if (_enabledText)
+      {
+         _enabledText->setText(string);
+      }
+      else
+      {
+         _enabledText = new CGUIText(_display);
+         _enabledText->setText(string);
+         _enabledText->attachText(this);
+      }      
+   }
+   if (!string)
+   {
+      // NOT GOOD!!! Nothing to do.
+   }
+   else
+   {
+      if (_enabled)
+      {
+         _enabledText->setVisible(true);
+      }
+      else
+      {
+         _enabledText->setVisible(false);
+      }
+   }
+}
+
+void CGUIButton::setEnabledText (const StringChar * string = NULL)
 {
    if (string)
    {
@@ -646,6 +690,38 @@ void CGUIButton::setDisabledText (const char * string = NULL)
    }
 }
 
+void CGUIButton::setDisabledText (const StringChar * string = NULL)
+{
+   if (string)
+   {
+      if (_disabledText)
+      {
+         _disabledText->setText(string);
+      }
+      else
+      {
+         _disabledText = new CGUIText(_display);
+         _disabledText->setText(string);
+         _disabledText->attachText(this);
+      }      
+   }
+   if (!string)
+   {
+      // NOT GOOD!!! Nothing to do.
+   }
+   else
+   {
+      if (_enabled)
+      {
+         _disabledText->setVisible(false);
+      }
+      else
+      {
+         _disabledText->setVisible(true);
+      }
+   }
+}
+
 void CGUIButton::setPressedText (CGUITextItem * textItem = NULL)
 {
    if (textItem)
@@ -666,6 +742,26 @@ void CGUIButton::setPressedText (CGUITextItem * textItem = NULL)
 }
 
 void CGUIButton::setPressedText (const char * string = NULL)
+{
+   if (string)
+   {
+      if (_pressedText)
+      {
+         _pressedText->setText(string);
+      }
+      else
+      {
+         _pressedText = new CGUIText(_display);
+         _pressedText->setText(string);
+         _pressedText->attachText(this);
+      }      
+   }else
+   {
+      // NOT GOOD!!! Nothing to do.
+   }
+}
+
+void CGUIButton::setPressedText (const StringChar * string = NULL)
 {
    if (string)
    {

@@ -22,7 +22,14 @@ class MessageData
 {
 public:
    
-   const int MAX_MESSAGE_SIZE = 128;
+   //
+   //
+   //  This size MUST be (divisible by 4) - 1 .  (e.g. only change this number in
+   //  +/- increments of 4 bytes).  Choosing non-word-sized messages will cause
+   //  the sizeof() operator to return the wrong value for this class, resulting
+   //  in a crc mismatch of the message data.
+   //
+   const int MAX_MESSAGE_SIZE = 127;
 
    enum OperationType
    {
@@ -153,16 +160,21 @@ public:
 
 protected:
 
-   OperationType   _OSCode;                       // os message code
+   //  Order from "largest" to "smallest" to avoid OS fillin for boundaries.  The
+   //  total header size MUST be a multiple of four bytes or the sizeof operator
+   //  will fail for this class, resulting in a crc mismatch of the message data.
+   //
    unsigned long   _MsgId;                        // hashed message id
-   unsigned short  _Length;                       // total message data length, bytes
    unsigned long   _NodeId;                       // node ID number
    unsigned long   _TaskId;                       // task PID number
    struct timespec _SendTime;                     // time message sent
+   OperationType   _OSCode;                       // os message code
    unsigned short  _SeqNum;                       // For big messages, sequence of total parts of the message
    unsigned short  _TotNum;                       //   ... Total number of parts to the message
    unsigned short  _PacketLength;                 // total length of data in this packet
+   unsigned short  _Length;                       // total message data length, bytes
    unsigned char   _Msg[MAX_MESSAGE_SIZE+1];      // Message data 
+
 };
 
 
@@ -200,14 +212,14 @@ public:
    // Generate the crc for the message
    void updateCRC()
    {
-      _CRC = msgcrc32( (unsigned char *) &_MessageData, sizeof( MessageData )-1 );
+      _CRC = msgcrc32( (unsigned char *) &_MessageData, sizeof( MessageData) );
    }
 
    //
    // Validate the crc for the message
    bool validCRC() const
    {
-      if ( _CRC != msgcrc32( (unsigned char *) &_MessageData, sizeof( MessageData )-1 ) )
+      if ( _CRC != msgcrc32( (unsigned char *) &_MessageData, sizeof( MessageData) ) )
       {
          //
          // The crc's do not match, return an error ...

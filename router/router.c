@@ -3,6 +3,10 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/router.c 1.11 2001/05/11 19:57:01 jl11312 Exp jl11312 $
  * $Log: router.c $
+ * Revision 1.9  2000/12/14 23:53:11  ms10234
+ * IT4618,4685 -  Changes were made to the message types to allow for 
+ * messages to be sent, but not received, and for messages to remain local
+ * to the current node.
  * Revision 1.8  1999/09/24 22:36:07  BS04481
  * Re-enable PROC_SHUTDOWN in generic shutdown but, this time,
  * delay it by 3 seconds instead of 600ms.  This should give sufficient
@@ -460,6 +464,7 @@ distributeMessage( MSGHEADER* msg)
    short k;                               // counter
    unsigned    msgID = msg->msgID;        // message id
    pid_t       origPID = msg->taskPID;    // pid of originator
+   nid_t       origNID = msg->taskNID;    // nid of originator
 
    if(msg == NULL)                       // internal error check
    {
@@ -472,7 +477,7 @@ distributeMessage( MSGHEADER* msg)
       // gateway will not be enabled in the test mode where the
       // second command line parameter (remote node) = running node number
 
-      if ((msg->taskNID == getnid()) &&       // not from other gateway
+      if ((origNID == getnid()) &&       // not from other gateway
           (gatewayQueue != QNX_ERROR) &&      // and gateway active
           (msg->osCode != SPOOFED_MESSAGE))
       {
@@ -510,6 +515,7 @@ distributeMessage( MSGHEADER* msg)
 
       mq_check(t->mq);
       if ( (t->bounce == BOUNCE)
+         ||( (t->bounce == NO_BOUNCE) && (t->h.taskNID != origNID) ) 
          ||( (t->bounce == NO_BOUNCE) && (t->h.taskPID != origPID) ) )
       {
          while( (mq_send( t->mq, msg, msg->length, 0) == QNX_ERROR) 

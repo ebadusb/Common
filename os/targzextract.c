@@ -376,7 +376,7 @@ static int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
 
       if ( wc == ERROR )
       {
-         fprintf( stdout, "error writing file\n");
+         fprintf( stdout, "error writing file.  Errno = %d\n", errnoGet())
          break;
       }
 

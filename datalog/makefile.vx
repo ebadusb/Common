@@ -3,14 +3,21 @@
 # Makefile - makefile for datalog library
 #
 # $Log: makefile.vx $
+# Revision 1.3  2002/07/18 21:20:29  jl11312
+# - preliminary implementation
 # Revision 1.2  2002/07/09 16:24:14  ms10234
 # changed name and location of library
 # Revision 1.1  2002/05/17 14:51:30  jl11312
 # Initial revision
 #
 
+ifeq ($(BUILD_TYPE),CLEAN)
+.PHONY: all
+all: clean
+else
 .PHONY: all
 all: check_opt_change lib
+endif
 
 #
 # Define include directories needed for apps built in this directory
@@ -31,9 +38,10 @@ include $(MAINDIR)/makefile.vxc
 # to be compiled for the library
 #
 LIB_C_FILES   = 
-LIB_CXX_FILES = datalog.cpp datalog_init.cpp datalog_message.cpp \
-		datalog_message_print.cpp datalog_message_stream.cpp \
-		datalog_output.cpp datalog_port.cpp
+LIB_CXX_FILES = datalog.cpp datalog_buffer.cpp datalog_init.cpp \
+		datalog_message.cpp datalog_message_print.cpp \
+		datalog_message_stream.cpp datalog_output.cpp \
+		datalog_periodic.cpp datalog_port.cpp
 LIB_S_FILES =
 
 #

@@ -3,6 +3,8 @@
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.8  2002/07/19 16:56:06  jl11312
+# - removed datalog library from common.out
 # Revision 1.7  2002/07/09 16:25:10  ms10234
 # changed to create a common.out file which can be loaded into vxWorks
 # Revision 1.6  2002/06/24 19:30:15  rm70006
@@ -19,14 +21,20 @@
 # Initial revision
 #
 
+ifeq ($(BUILD_TYPE),CLEAN)
+.PHONY: all
+all: libs clean
+else
 .PHONY: all
 all: check_opt_change libs app
+endif
 
 MAINDIR = .
 include $(MAINDIR)/makefile.vxc
 
 INCLUDED_LIBS = $(MAINDIR)\socket++\lib\libsocket++.a $(MAINDIR)\router\lib\librouter.a \
-$(MAINDIR)\softcrc\lib\libsoftcrc.a $(MAINDIR)\clocks\lib\libclocks.a $(MAINDIR)\cds\lib\libcds.a
+                $(MAINDIR)\softcrc\lib\libsoftcrc.a $(MAINDIR)\clocks\lib\libclocks.a \
+                $(MAINDIR)\cds\lib\libcds.a
 
 .PHONY: libs
 libs:
@@ -42,34 +50,23 @@ libs:
 # that APP_DIR is used in DOS shell commands, and must use \ directory
 # separators.
 #
-APP_NAME = common.out
-APP_DIR = $(MAINDIR)\bin
-APP_LIBS = @.opt/lib_objs
+APP_NAME := common
+common_dir = $(MAINDIR)\bin
+common_libs =
+common_lib_list = .opt/lib_objs
+include $(MAINDIR)/makefile.process_app
 
-.PHONY: @.opt/lib_objs
-@.opt/lib_objs:
+.opt/lib_objs: $(INCLUDED_LIBS)
 	for %l in ($(INCLUDED_LIBS)) do $(AR) t %l >> .opt\lib_objs_tmp
 	sed "s@^@$(CPU)/@" < .opt\lib_objs_tmp > .opt\lib_objs
 	rm -f .opt\lib_objs_tmp 
 	@if not exist $(MAINDIR)\$(CPU) mkdir $(MAINDIR)\$(CPU)
 	cd $(CPU) && for %l in ($(INCLUDED_LIBS)) do $(AR) x ..\%l 
 
-app : $(APP_DIR)/$(APP_NAME)
-
-.PHONY: clean
-clean:
-	@cd datalog && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
-	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
-	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
-	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
-	@cd clocks && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
-	@cd cds && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
-	rm -f $(addprefix $(APP_DIR_CPU)/, $(notdir $(APP_C_FILES:.c=.o))) $(addprefix .dfile/, $(notdir $(APP_C_FILES:.c=.d)))
-	rm -f $(addprefix $(APP_DIR_CPU)/, $(notdir $(APP_CXX_FILES:.cpp=.o))) $(addprefix .dfile/, $(notdir $(APP_CXX_FILES:.cpp=.d)))
-	rm -f $(addprefix $(APP_DIR)/, $(APP_NAME))
+app : $(APP_LIST)
 
 #
 # This is the standard makefile for applications
 #
-include $(MAINDIR)/makefile.app
+include $(MAINDIR)/makefile.build_apps
 

@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/INTMSGS.H 1.5 2000/04/25 18:14:10 MS10234 Exp MS10234 $
  * $Log: INTMSGS.H $
+ * Revision 1.3  1999/07/24 21:07:28  TD10216
+ * IT4154
  * Revision 1.2  1999/07/09 15:24:50  BS04481
  * Add messages for clock setting
  * Revision 1.1  1999/05/24 23:26:36  TD10216
@@ -129,7 +131,8 @@ enum INT32_MESSAGES
    DateTimeSet,                  // anyone -> time setting task.  Data is seconds since 1/1/1970 UTC.
    WatchdogControl,              // time setting task -> drivers.  Temporary override of watchdog.
    ProductSelection,			 // proc->AP2 - Product Selection
-
+   OptimizerSelected,            // optimizer -> predict: I have been selected successfully (IT4080)
+   OptimizerAreYouOk,            // predict -> optimizer: notify me that you are okay....
 
    // NOTE: Block of last 255 Int32Msg IDs reserved for Spectra
       // Spectra Int32Msgs go here

@@ -3,8 +3,13 @@
 # Makefile - makefile for socket++ library
 #
 # $Log: makefile.vx $
+# Revision 1.2  2002/04/30 20:06:19Z  rm70006
+# Something goofy happened.  the upper level make file got checked in it's place.
 #
 
+#
+# Must be first line
+#
 .PHONY: all
 all: check_opt_change lib
 
@@ -15,6 +20,11 @@ all: check_opt_change lib
 #
 MAINDIR = ..
 include $(MAINDIR)/makefile.vxc
+
+#
+# Define include directories needed for apps built in this directory
+#
+ADDN_INCDIR = -I../include
 
 #
 # The following should define all of the source files of each type

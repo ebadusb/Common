@@ -7,6 +7,8 @@
  * CHANGELOG:
  * $Header: Z:/BCT_Development/Common/ROUTER/rcs/DEBUGCLASS.CPP 1.2 1999/09/14 16:51:29 TD10216 Exp MS10234 $
  * $Log: DEBUGCLASS.CPP $
+ * Revision 1.1  1999/05/24 23:29:29  TD10216
+ * Initial revision
  * Revision 1.2  1998/09/30 20:44:46  TD07711
  *   fixed to pass callers TRACE_CODE info correctly to the tracelog.
  * Revision 1.1  1998/09/04 23:03:26  TD07711
@@ -30,17 +32,17 @@
 
 // initialize static data
 // default control values
-static int Debug::Enabled = 1;
-static int Debug::Use_timestamps = 1;
-static int Debug::Use_tracelog = 0;
-static int Debug::Argv_scanned = 0;
+int Debug::Enabled = 1;
+int Debug::Use_timestamps = 1;
+int Debug::Use_tracelog = 0;
+int Debug::Argv_scanned = 0;
 
 // default filename and linenumber
-static char* Debug::Filename = "";
-static int Debug::Line = 0;
-static trace_codes_t Debug::Domain = TRACE_TEST1;
+char* Debug::Filename = "";
+int Debug::Line = 0;
+trace_codes_t Debug::Domain = TRACE_TEST1;
 
-static char Debug::Buf[] = {'D', 'E', 'B', 'U', 'G', ' '}; // prefix Buf with "DEBUG "
+char Debug::Buf[] = {'D', 'E', 'B', 'U', 'G', ' '}; // prefix Buf with "DEBUG "
 
 
 
@@ -64,8 +66,7 @@ static char Debug::Buf[] = {'D', 'E', 'B', 'U', 'G', ' '}; // prefix Buf with "D
 //    1. scan_argv should be called once near top of main() prior to normal command line processing.
 //    2. calls to LOG_DEBUG prior to calling scan_argv will presume -debug behavior.
 //    3. calling scan_argv more than once will result in error msg to stderr and exit
-static void
-Debug::scan_argv(int* pArgc, char** argv)
+void Debug::scan_argv(int* pArgc, char** argv)
 {
     if (Debug::Argv_scanned) {
         fprintf(stderr, "ERROR Debug::scan_argv: called more than once, exiting\n");
@@ -126,8 +127,7 @@ Debug::scan_argv(int* pArgc, char** argv)
 // FUNCTION: log
 // PURPOSE: generates the debug message
 // USAGE: called by the LOG_DEBUG macro.
-static void
-Debug::log(char* format, ...)
+void Debug::log(char* format, ...)
 {
     va_list arglist;
     struct timeb timebuf;
@@ -159,44 +159,44 @@ Debug::log(char* format, ...)
 // FUNCTION: is_enabled
 // PURPOSE: returns true/false indication of whether debug message are enabled.
 // RETURNS: non-zero if enabled, 0 if not enabled
-static int
+int
 Debug::is_enabled()
 {
     return Enabled;
 }
 
 
-static void
+void
 Debug::enable()
 {
     Enabled = 1;
 }
 
-static void
+void
 Debug::disable()
 {
     Enabled = 0;
 }
 
-static void
+void
 Debug::enable_timestamps()
 {
     Use_timestamps = 1;
 }
 
-static void
+void
 Debug::disable_timestamps()
 {
     Use_timestamps = 0;
 }
 
-static void
+void
 Debug::use_tracelog()
 {
     Use_tracelog = 1;
 }
 
-static void
+void
 Debug::use_stderr()
 {
     Use_tracelog = 0;

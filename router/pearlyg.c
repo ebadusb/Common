@@ -1,8 +1,13 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/PEARLYG.C 1.2 1999/05/31 20:35:10 BS04481 Exp TD10216 $
+ * $Header: K:/BCT_Development/Common/router/rcs/pearlyg.c 1.5 2000/12/19 20:01:36 ms10234 Exp jl11312 $
  * $Log: pearlyg.c $
+ * Revision 1.2  1999/05/31 20:35:10  BS04481
+ * Remove unused MSGHEADER structure from messages. 
+ * Decrease maximum message size.  Add new version of 
+ * focusBufferMsg and focusInt32Msg that do not bounce the message
+ * back to the originator.  All changes to increase free memory.
  * Revision 1.1  1999/05/24 23:29:49  TD10216
  * Initial revision
  * Revision 1.4  1998/08/21 19:44:11  MS10234
@@ -104,7 +109,7 @@ main()
    bits = _PPF_INFORM;
    if (qnx_pflags( bits, bits, 0, 0) == QNX_ERROR)
    {
-      FATAL_ERROR( __LINE__, 0, "qnx_flags()");
+      FATAL_ERROR( (unsigned short) __LINE__, 0, "qnx_flags()");
    }
    sinVerInitialize();                       // init sin ver processing
 
@@ -116,7 +121,7 @@ main()
       pid = Receive( 0, msg, sizeof( msg));
       if (pid == QNX_ERROR)
       {
-         FATAL_ERROR( __LINE__, 0, "Receive()");
+         FATAL_ERROR( (unsigned short)__LINE__, 0, "Receive()");
       }
 
 // check for sin ver message, if not process task termination

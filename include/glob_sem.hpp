@@ -21,6 +21,10 @@
 #include <sys/trace.h>
 #include <sys/tracecod.h>
 #include <sys/types.h>
+#include <stddef.h>
+#ifdef WIN32
+#define __offsetof(__typ,__id) 1
+#endif
 #include <unistd.h>
 #include <conio.h>
 #include <stdio.h>

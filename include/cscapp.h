@@ -17,7 +17,7 @@
 
 #ifndef __QNX__
 static const char cscapph_sccsid[] = "@(#)%M% %I% Amida S/W %G%";
-static const char cscapph_rcsid[] = "$Author: TD10216 $ $Id: CSCAPP.H 1.2 1999/07/24 21:07:24 TD10216 Exp TD10216 $";
+static const char cscapph_rcsid[] = "$Author: TD10216 $ $Id: CSCAPP.H 1.2 1999/07/24 21:07:24 TD10216 Exp $";
 #endif
 
 #include <stdio.h>
@@ -102,7 +102,9 @@ extern FILE *GetDbgFd(void);
 #ifdef DEBUG
 #define dbgprintf fprintf
 #else
+#ifndef WIN32
     inline void dbgprintf(FILE *, ...) {}
+#endif
 #endif
 
 #endif

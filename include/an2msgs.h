@@ -1,8 +1,10 @@
 /*
 * Copyright (c) 1995, 1996 by Cobe BCT, Inc.	All rights reserved.
 *
-* $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.7 1999/08/18 17:08:16 TD10216 Exp TD10216 $
+* $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.8 1999/09/14 16:51:20 TD10216 Exp TD10216 $
 * $Log: AN2MSGS.H $
+* Revision 1.7  1999/08/18 17:08:16  TD10216
+* IT4266
 * Revision 1.6  1999/08/13 00:35:40  TD10216
 * IT4219
 * Revision 1.5  1999/08/04 22:51:45  TD10216
@@ -28,22 +30,23 @@ enum { UNKNOWN, SPECTRA, TRIMA };
 #define FS_AN2_BROADCAST_PORT_CHAR	"7002"
 #define FS_AN2_BROADCAST_PORT		7002
 
-#ifndef WIN32
 // structures defined in buffmsg.hpp 
 // buffmsg class must be explicitly called here for support
 // in the process_fs_msg routine 
 //
-struct MSGDATA
-{
-	unsigned char buffer[1];	// length allocated in constructor
-};
+//struct MSGDATA
+//{
+//	unsigned char buffer[1];	// length allocated in constructor
+//};
 
+#ifndef MSG_TYPE
+#define MSG_TYPE
 struct MSG
 {
 	MSGHEADER	header;
 	MSGDATA		data;
 };
-#endif 
+#endif
 
 // AN2 Services
 //

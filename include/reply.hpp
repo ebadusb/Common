@@ -58,7 +58,7 @@ class UDP_Reply
 		 UDP_Init(szHostIP, szHostPort, MsgLen);
       };
 
-      UDP_Init( char* szHostIP, char* szHostPort, int len)
+      void UDP_Init( char* szHostIP, char* szHostPort, int len)
 		{
          /* Create socket as an Internet Datagram */
          iAN2Socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -149,7 +149,7 @@ class UDP_Reply
       };
 
       // Methods.
-      send_reply( the_struct* msg_struct )
+      void send_reply( the_struct* msg_struct )
       {
          // Copy the new data to the focus message.
          memcpy( (void *)&pfsan2_msg->data, (void const *)msg_struct, sizeof( the_struct ) );
@@ -180,17 +180,17 @@ class UDP_Reply
          (hdr->taskPID)++;
       };
 
-		send_string_message( char *msg )
+		void send_string_message( char *msg )
 		{
 			_send_message((void *) msg, strlen(msg));
 		}		
 
-      send_message( the_struct* msg_struct )
+      void send_message( the_struct* msg_struct )
 		{
 			_send_message((void *) msg_struct, sizeof(the_struct));
 		}
 
-      _send_message( void *msg, int len)
+      void _send_message( void *msg, int len)
       {
          // Copy the new data to the focus message.
          memcpy( (void *)&pfsan2_msg->data, (void const *)msg, len );

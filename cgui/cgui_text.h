@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.12  2005/03/18 16:42:07Z  rm10919
+ * Fix getText method to actually do something.
  * Revision 1.11  2005/03/15 00:21:36Z  rm10919
  * Change CGUIText to not add object to window object list of parent in constructor.
  * Revision 1.10  2005/02/21 17:17:12Z  cf10242
@@ -188,7 +190,7 @@ public:
    // calling each individual method.
    //
    void setStylingRecord(StylingRecord * stylingRecord);
-   StylingRecord * getStylingRecord(void) { return &_stylingRecord;};
+   StylingRecord * getStylingRecord(void) { return &_stylingRecord;}
 
    //
    // SET_TEXT
@@ -200,6 +202,8 @@ public:
    void setText(const StringChar * string);
 //   void getText(char * string);
    void getText(StringChar * string);
+
+   int getLength(void) {return _stringLength;}
 
 protected:
 

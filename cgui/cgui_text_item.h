@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.7 2005/11/22 00:34:43Z rm10919 Exp MS10234 $
  * $Log: cgui_text_item.h $
+ * Revision 1.3  2005/03/15 00:21:36Z  rm10919
+ * Change CGUIText to not add object to window object list of parent in constructor.
  * Revision 1.2  2005/02/21 17:17:13Z  cf10242
  * IT 133 - delete all allocated memory to avoid unrecovered memory
  * Revision 1.1  2005/01/31 17:36:39Z  rm10919
@@ -62,6 +64,7 @@ public:
    
    StylingRecord getStylingRecord(){return _stylingRecord;}
 
+   int getLength(void) {return _stringLength;}
 
 protected:
 

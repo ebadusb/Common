@@ -1323,9 +1323,8 @@ void Router::sendMessageToGateway( unsigned long nodeId, const MessagePacket &mp
    {
       //
       // Error ...                                                               
-      DataLog( log_level_critical ) << "Error sending to gateway=" << hex << nodeId
-                           << ", TCP socket not found." << endmsg;
-      _FATAL_ERROR( __FILE__, __LINE__, "Gateway send failed" );
+      DataLog( log_level_router_error ) << "Error sending to gateway=" << hex << nodeId
+                                        << ", TCP socket not found." << endmsg;
    }
 }
 

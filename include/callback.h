@@ -74,7 +74,7 @@ public:
    };
 
    // function dispatch
-   void operator()()
+   void operator()() const
    {
       //
       // If the object pointer variable is set ...
@@ -109,7 +109,7 @@ public:
       //
    };
    // ...call the function with the specified data.
-   void operator()( void* d )
+   void operator()( void* d ) const 
    {
       //
       // If the object pointer variable is set ...

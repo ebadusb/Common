@@ -294,20 +294,20 @@ void Dispatcher :: dump( ostream &outs )
         // << "  flags " << qattributes.mq_flags
         // << "  size " << qattributes.mq_curmsgs
         // << "  maxsize " << qattributes.mq_maxmsg 
-        << endl;
+        << endmsg;
    // if ( _RQueue != (mqd_t)0 ) mq_getattr( _RQueue, &qattributes );
    outs << " RouterQueue: " << hex << (long)_RQueue 
         // << "  flags " << qattributes.mq_flags
         // << "  size " << qattributes.mq_curmsgs
         // << "  maxsize " << qattributes.mq_maxmsg 
-        << endl;
+        << endmsg;
    // if ( _TimerQueue != (mqd_t)0 ) mq_getattr( _TimerQueue, &qattributes );
    outs << " MsgSysTimerQueue: " << hex << (long)_TimerQueue 
         // << "  flags " << qattributes.mq_flags
         // << "  size " << qattributes.mq_curmsgs
         // << "  maxsize " << qattributes.mq_maxmsg 
-        << endl;
-   outs << "Map size = " << dec << _MessageMap.size() << " " << (int)(_MessageMap.begin() == _MessageMap.end()) << endl;
+        << endmsg;
+   outs << "Map size = " << dec << _MessageMap.size() << " " << (int)(_MessageMap.begin() == _MessageMap.end()) << endmsg;
    for ( miter = _MessageMap.begin() ; 
          miter != _MessageMap.end() ;
          miter++ )
@@ -319,7 +319,7 @@ void Dispatcher :: dump( ostream &outs )
          ( (MessageBase*)(*siter) )->dump( outs );
       }
     }
-   outs << "************************** DUMP finished **************************" << endl;
+   outs << "************************** DUMP finished **************************" << endmsg;
 }
 
 void Dispatcher :: processMessage( MessagePacket &mp )

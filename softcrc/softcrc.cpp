@@ -6,6 +6,8 @@
  * CHANGELOG:
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.cpp 1.10 2003/06/26 22:33:44Z jl11312 Exp MS10234 $
  * $Log: softcrc.cpp $
+ * Revision 1.9  2003/06/23 19:40:01Z  jl11312
+ * - added options for computing string and value list CRC's under Windows
  * Revision 1.8  2003/05/13 15:04:00Z  jl11312
  * - completed vxWorks port
  * - modified to allow compiling as both a vxWorks and a Win32 program
@@ -164,6 +166,24 @@ bool S_ISDIR(int m)
 bool S_ISREG(int m)
 {
    return ((m & _S_IFREG) != 0 );
+}
+
+#include "crc_table.h"
+int crcgen32(unsigned long * pcrc, const unsigned char * pdata, long length)
+{
+   // check args
+   if (length < 0)
+      return -1;
+   if (pdata == 0)
+      return -1;
+   if (pcrc == 0)
+      return -1;
+
+   // do crc calc
+   while(length--)
+      *pcrc = crctable[ (*pcrc ^ *pdata++) & 0xFFL] ^ (*pcrc >> 8);
+
+	return 0;
 }
 
 #endif /* ifdef VXWORKS */
@@ -581,7 +601,7 @@ SoftCRC::SoftCRC(void)
         rootDirList(NULL),
         updateFileName(NULL),
         verifyFileName(NULL),
-        initCRC(0),
+        initCRC(INITCRC_DEFAULT),
         subDirLimit(10),
         currentCRC(0)
 {
@@ -844,7 +864,7 @@ void SoftCRC::usage(const char * message)
       "   -filelist <filename> [-filelist <filename>] - list of files and directories to CRC\n"
       "   -chroot <path> [-chroot <path>] - specify prefix for absolute pathnames, default is no prefix\n"
       "        multiple -chroot OK and are associated with corresponding -filelist entries\n"
-      "   -initcrc <value> - initial CRC value, default=0\n"
+      "   -initcrc <value> - initial CRC value, default=0xffffffff\n"
       "   -limit <value> - limits subdirectory nesting, default=10\n"
       "   -update <filename> - saves calculated CRC, default is no update\n"
       "   -verbose <value> - verbosity of CRC output\n"

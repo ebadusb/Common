@@ -65,7 +65,7 @@ public:
 
    friend bool operator == (const sockinetaddr &lhs, const sockinetaddr &rhs);
 
-   friend ostream & operator << (ostream &os, const sockinetaddr &sa);
+   friend DataLog_Stream & operator << (DataLog_Stream &os, const sockinetaddr &sa);
 
    int        size() const { return sizeof (sockaddr_in); }
    int        family() const { return sin_family; }

@@ -3,18 +3,19 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_network.cpp 1.5 2003/12/09 14:14:28Z jl11312 Exp rm70006 $
  * $Log: datalog_network.cpp $
+ * Revision 1.2  2002/09/23 15:35:36  jl11312
+ * - fixed port number setting
  * Revision 1.1  2002/08/22 20:19:02  jl11312
  * Initial revision
  *
  */
 
-#include <vxWorks.h>
+#include "datalog.h"
+
 #include <errnoLib.h>
 #include <fcntl.h>
 #include <ioLib.h>
 #include <sysLib.h>
-
-#include "datalog.h"
 #include "datalog_internal.h"
 
 DataLog_NetworkTask::DataLog_NetworkTask(int port)

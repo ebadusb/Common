@@ -3,6 +3,10 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.10 2003/10/03 12:35:02Z jl11312 Exp jl11312 $
  * $Log: datalog_internal.h $
+ * Revision 1.8  2003/02/06 20:41:30  jl11312
+ * - added support for binary record type
+ * - added support for symbolic node names in networked configurations
+ * - enabled compression/encryption of log files
  * Revision 1.7  2003/01/31 19:52:50  jl11312
  * - new stream format for datalog
  * Revision 1.6  2002/10/08 14:43:02  jl11312
@@ -25,9 +29,9 @@
 #define _DATALOG_INTERNAL_INCLUDE
 
 #include "datalog.h"
+#include "datalog_periodic.h"
 #include <stdlib.h>
 #include <string>
-#include <strstream.h>
 
 //
 // level ID used for internal datalog records
@@ -35,155 +39,51 @@
 #define	DATALOG_SYSTEM_LEVEL_ID		0xffff
 #define	DATALOG_SYSTEM_LEVEL_NAME	"datalog_system"
 
-class DataLog_Buffer
+enum { DataLog_BufferSize = 256 };
+
+struct DataLog_Buffer
+{
+	DataLog_BufferPtr _next;		// pointer to next buffer in list
+
+	DataLog_BufferPtr _tail;		// pointer to tail of chain (valid only for first buffer in chain)
+	size_t _length;					// valid only for first buffer in chain
+
+	DataLog_BufferData _data[DataLog_BufferSize];
+};
+
+class DataLog_BufferManager
 {
 public:
 	//
-	// The data items in this struct must be shared between tasks.  They are
-	// encapsulated in a single struct to make managing the shared memory for
-	// them simpler.
+	// Platform specific routines
 	//
-	struct SharedBufferData
-	{
-		DataLog_SharedPtr(DataLog_BufferData) _startBufferPtr;
-		DataLog_SharedPtr(DataLog_BufferData) _endBufferPtr;
-		DataLog_SharedPtr(DataLog_BufferData) _readPtr;
-		DataLog_SharedPtr(DataLog_BufferData) _writePtr;
+	static void initialize(size_t bufferSizeKBytes);
 
-		size_t _bufferSize;
-		size_t _bytesWritten;
-		size_t _bytesMissed;
+	static DataLog_BufferPtr getFreeBuffer(unsigned long reserveBuffers);
+	static bool getNextChain(DataLog_BufferChain & chain);
 
-		DataLog_SharedPtr(SharedBufferData)	_prev;
-		DataLog_SharedPtr(SharedBufferData)	_next;
+	enum BufferList { TraceList, CriticalList, FreeList };
+	static void addChainToList(BufferList list, const DataLog_BufferChain & chain);
 
-		short _refCount;
-   };
+	static unsigned long currentBufferCount(BufferList list);
+	static unsigned long	bytesWritten(BufferList list);
+	static unsigned long bytesMissed(BufferList list);
 
-	DataLog_Buffer(void);
-	virtual ~DataLog_Buffer();
+#ifdef DATALOG_BUFFER_STATISTICS
+	static unsigned long minBufferCount(BufferList list);
+	static unsigned long maxBufferCount(BufferList list);
+	static unsigned long avgBufferCount(BufferList list);
+#endif /* ifdef DATALOG_BUFFER_STATISTICS */
 
-	size_t size(void) { return (_data != DATALOG_NULL_SHARED_PTR) ? _data->_bufferSize : 0; }
-
-	size_t bytesWritten(void) { return (_data != DATALOG_NULL_SHARED_PTR) ? _data->_bytesWritten : 0; }
-	size_t bytesMissed(void) { return (_data != DATALOG_NULL_SHARED_PTR) ? _data->_bytesMissed : 0; }
-	size_t bytesBuffered(void);
-
-protected:
+public:
 	//
-	// These functions are platform specific, since they rely on the underlying
-	// operating system to provide the means for sharing the associated data
-	// items across all tasks.
+	// Non platform-specific routines
 	//
-	static void lockBufferList(void);
-	static void releaseBufferList(void);
+	static bool createChain(DataLog_BufferChain & chain, unsigned long reserveBuffers=0);
+	static bool copyChain(DataLog_BufferChain & dest, const DataLog_BufferChain & source);
+	static bool writeToChain(DataLog_BufferChain & chain, DataLog_BufferData * data, size_t size);
 
-	static DataLog_SharedPtr(SharedBufferData) getBufferListHead(void);
-	static void setBufferListHead(DataLog_SharedPtr(SharedBufferData) head);
-
-	static DataLog_SharedPtr(SharedBufferData) getBufferListTail(void);
-	static void setBufferListTail(DataLog_SharedPtr(SharedBufferData) tail);
-
-protected:
-	DataLog_SharedPtr(SharedBufferData)	_data;
-};
-
-class DataLog_InputBuffer : public DataLog_Buffer
-{
-public:
-	DataLog_InputBuffer(void) : DataLog_Buffer() { }
-	virtual ~DataLog_InputBuffer() { }
-
-	bool attachToFirstBuffer(void);
-	bool attachToNextBuffer(void);
-
-   size_t read(DataLog_BufferData * ptr, size_t maxSize);
-
-private:
-	void reattach(DataLog_SharedPtr(SharedBufferData) data);
-};
-
-struct DataLog_StreamOutputRecord;
-class DataLog_OutputBuffer : public DataLog_Buffer
-{
-public:
-	DataLog_OutputBuffer(size_t bufferSize);
-	virtual ~DataLog_OutputBuffer();
-
-	virtual size_t write(const DataLog_BufferData * ptr, size_t size);
-	virtual void partialWrite(const DataLog_BufferData * ptr, size_t size);
-	virtual size_t partialWriteComplete(void);
-
-	virtual DataLog_Stream & streamAppWriteStart(const DataLog_StreamOutputRecord & header, const char * fileName, DataLog_EnabledType logOutput, DataLog_ConsoleEnabledType consoleOutput);
-	virtual size_t streamAppWriteComplete(void);
-
-protected:
-	virtual void lockWriteAccess(void);
-	virtual void releaseWriteAccess(void);
-	virtual void addBufferToList(void);
-
-protected:
-	//
-	// For normal output buffers, _writeStream is allocated on demand.  For
-	// critical output buffers, _writeStream is allocated by the constructor,
-	// since we don't want critical output to require memory allocation.
-	//
-	DataLog_Stream * _writeStream; 
-
-private:
-	bool	_rawStreamWriteInProgress;		// _writeStream is in use for raw write (partialWrite()) interface
-	bool  _appStreamWriteInProgress;		// _writeStream has been released to the application
-	int	_streamWriteRestartPos;			// position at which a new stream write should start if the
-													// application re-uses a DataLog_Stream reference after
-													// a call to endmsg
-
-	DataLog_ConsoleEnabledType _appConsoleOutput;
-
-#ifdef DATALOG_MULTITHREADED
-	DataLog_Lock _writeLock;
-#endif /* ifdef DATALOG_MULTITHREADED */
-};
-
-class DataLog_TraceBuffer : public DataLog_OutputBuffer
-{
-public:
-	DataLog_TraceBuffer(size_t bufferSize);
-	virtual ~DataLog_TraceBuffer() {}
-};
-
-#ifndef DATALOG_NO_NETWORK_SUPPORT
-class DataLog_ClientBuffer : public DataLog_OutputBuffer
-{
-public:
-	DataLog_ClientBuffer(size_t bufferSize);
-	virtual ~DataLog_ClientBuffer() {}
-};
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
-
-class DataLog_PeriodicBuffer : public DataLog_OutputBuffer
-{
-public:
-	DataLog_PeriodicBuffer(size_t bufferSize);
-	virtual ~DataLog_PeriodicBuffer() {}
-};
-
-class DataLog_IntBuffer : public DataLog_OutputBuffer
-{
-public:
-	DataLog_IntBuffer(size_t bufferSize);
-	virtual ~DataLog_IntBuffer() {}
-
-	virtual void lockWriteAccess(void) {}
-	virtual void releaseWriteAccess(void) {}
-};
-
-class DataLog_CriticalBuffer : public DataLog_OutputBuffer
-{
-public:
-	DataLog_CriticalBuffer(size_t bufferSize);
-	virtual ~DataLog_CriticalBuffer() {}
-
-	virtual size_t write(const DataLog_BufferData * ptr, size_t size);
+	static void modifyChainData(DataLog_BufferChain & chain, unsigned long offset, DataLog_BufferData * data, size_t size);
 };
 
 struct DataLog_HandleInfo
@@ -193,23 +93,8 @@ struct DataLog_HandleInfo
 	enum HandleType { TraceHandle, IntHandle, CriticalHandle, InvalidHandle };
 	HandleType _type;
 
-	struct TraceHandleData
-	{
-		DataLog_EnabledType _logOutput;
-		DataLog_ConsoleEnabledType _consoleOutput;
-	};
-
-	struct IntHandleData
-	{
-		DataLog_EnabledType _logOutput;
-		DataLog_IntBuffer * _buffer;
-	};
-
-	union
-	{
-		TraceHandleData    _traceData;
-		IntHandleData      _intData;
-	};
+	DataLog_EnabledType _logOutput;
+	DataLog_ConsoleEnabledType _consoleOutput;
 };
 
 struct DataLog_TaskInfo
@@ -217,11 +102,8 @@ struct DataLog_TaskInfo
 	DataLog_TaskID       		_id;
 	DataLog_ErrorType          _error;
 
-	DataLog_TraceBuffer *  		_trace;
 	DataLog_EnabledType        _logOutput;
 	DataLog_ConsoleEnabledType _consoleOutput;
-
-	DataLog_CriticalBuffer *	_critical;
 
 	DataLog_Level  _defaultLevel;
 	DataLog_Handle	_defaultHandle;
@@ -229,14 +111,15 @@ struct DataLog_TaskInfo
 	enum { MaxErrorRecursionLevel = 5 };
 	DataLog_TaskErrorHandler * _errorHandler;
 	short _errorActiveCount;
+
+	DataLog_Map<DataLog_InternalID, DataLog_Stream *> _outputStream;
 };
 
 struct DataLog_SetInfo
 {
-  enum { BUFFER_SIZE_INC = 512 };
   unsigned int _id;
 
-  double _logInterval;
+  long _logIntervalMilliSec;
   DataLog_List<DataLog_PeriodicItemBase *> _items;
   const char * _writeSignalName;
   const char * _modifiedSignalName;
@@ -259,38 +142,23 @@ public:
 	DataLog_Handle findHandle(const char * levelName);
 	void addHandle(const char * levelName, DataLog_Handle handle);
 
-	DataLog_TraceBuffer * getTaskTraceBuffer(DataLog_TaskID task);
-	DataLog_CriticalBuffer * getTaskCriticalBuffer(DataLog_TaskID task);
-
 	void setTaskError(DataLog_ErrorType error, const char * file, int line);
 	DataLog_TaskErrorHandler * getTaskErrorHandler(DataLog_TaskID task);
 	void setTaskErrorHandler(DataLog_TaskID task, DataLog_TaskErrorHandler * func);
 
-	size_t getDefaultTraceBufferSize() { return _commonData->_defaultTraceBufferSize; }
-	void setDefaultTraceBufferSize(size_t size) { _commonData->_defaultTraceBufferSize = size; }
-
-	size_t getDefaultIntBufferSize() { return _commonData->_defaultIntBufferSize; }
-	void setDefaultIntBufferSize(size_t size) { _commonData->_defaultIntBufferSize = size; }
-
-	size_t getDefaultCriticalBufferSize() { return _commonData->_defaultCriticalBufferSize; }
-	void setDefaultCriticalBufferSize(size_t size) { _commonData->_defaultCriticalBufferSize = size; }
-
-	size_t getCurrentMaxBufferSize(void);
-
-	//
-	// All critical handles use this common handle information structure
-	//
-	static const struct DataLog_HandleInfo _criticalHandleInfo;
+	static const DataLog_HandleInfo _criticalHandleInfo;
 
 public:
 	enum ConnectType { NotConnected, LogToFile, LogToNetwork };
 
 	void setLocalConnect(const char * fileName);
 	void setNetworkConnect(const char * ipAddress, int port);
+	void setCriticalReserveBuffers(unsigned long criticalReserveBuffers) { _commonData->_criticalReserveBuffers = criticalReserveBuffers; }
 
 	ConnectType connectType(void) { return _commonData->_connectType; }
 	DataLog_SharedPtr(const char) connectName(void) { return _commonData->_connectName; }
 	int connectPort(void) { return _commonData->_connectPort; }
+	unsigned long criticalReserveBuffers(void) { return _commonData->_criticalReserveBuffers; }
 
 public:
 	//
@@ -311,13 +179,11 @@ public:
 private:
 	struct CommonData
 	{
-		size_t	_defaultTraceBufferSize;
-		size_t	_defaultIntBufferSize;
-		size_t	_defaultCriticalBufferSize;
-
 		ConnectType _connectType;
 		DataLog_SharedPtr(const char) _connectName;
 		int _connectPort;
+
+		unsigned long _criticalReserveBuffers;
 	};
 
 	static void initializeCommonData(DataLog_SharedPtr(CommonData) data);
@@ -357,174 +223,6 @@ struct DataLog_NetworkPacket
 {
 	DataLog_NetworkPacketType	_type __attribute__ ((packed));
 	DataLog_UINT16					_length __attribute__ ((packed));
-};
-
-enum
-{
-	DataLog_HeaderRecordID = 0x5500,
-	DataLog_LogLevelRecordID = 0x5501,
-	DataLog_PrintOutputRecordID = 0x5502,
-	DataLog_StreamOutputRecordID = 0x5503,
-	DataLog_PeriodicOutputRecordID = 0x5504,
-	DataLog_PeriodicSetRecordID = 0x5505,
-	DataLog_PeriodicItemRecordID = 0x5506,
-	DataLog_TaskCreateRecordID = 0x5507,
-	DataLog_TaskDeleteRecordID = 0x5508,
-	DataLog_NetworkHeaderRecordID = 0x5509,
-
-	DataLog_BinaryRecordID = 0x55f0,
-	DataLog_EndOfNetworkOutputRecordID = 0x55fc,
-	DataLog_FileCloseRecordID = 0x55fd,
-	DataLog_WriteTimeRecordID = 0x55fe,
-	DataLog_MissedDataRecordID = 0x55ff
-};
-
-/*
- *	All structures for log output must be packed to insure correct format
- */
-struct DataLog_HeaderRecord
-{
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_UINT16	_charSize __attribute__ ((packed));
-	DataLog_UINT16	_intSize __attribute__ ((packed));
-	DataLog_UINT16	_longSize __attribute__ ((packed));
-	DataLog_UINT16	_floatSize __attribute__ ((packed));
-	DataLog_UINT16	_doubleSize __attribute__ ((packed));
-	DataLog_UINT16	_taskIDSize __attribute__ ((packed));
-	DataLog_TaskID	_currentTaskID __attribute__ ((packed));
-	DataLog_UINT16	_nodeIDSize __attribute__ ((packed));
-	DataLog_UINT16	_version __attribute__ ((packed));
-};
-
-struct DataLog_NetworkHeaderRecord
-{
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_NodeID _nodeID __attribute__ ((packed));
-	DataLog_TimeStampStart _start __attribute__ ((packed));
-	DataLog_UINT16 _nodeNameLen __attribute__ ((packed));
-};
-
-struct DataLog_LogLevelRecord
-{
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
-	DataLog_InternalID _levelID __attribute__ ((packed));
-	
-#ifndef DATALOG_NO_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
-
-	DataLog_UINT16	_nameLen __attribute__ ((packed));
-};
-
-struct DataLog_PrintOutputRecord
-{
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
-	DataLog_InternalID _levelID __attribute__ ((packed));
-	DataLog_TaskID	_taskID __attribute__ ((packed));
-	
-#ifndef DATALOG_NO_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
-
-	DataLog_UINT16	_formatLen __attribute__ ((packed));
-	DataLog_UINT16	_fileNameLen __attribute__ ((packed));
-	DataLog_UINT16 _lineNum __attribute__ ((packed));
-};
-
-struct DataLog_StreamOutputRecord
-{
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
-	DataLog_InternalID _levelID __attribute__ ((packed));
-	DataLog_TaskID	_taskID __attribute__ ((packed));
-	
-#ifndef DATALOG_NO_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
-
-	DataLog_UINT16	_fileNameLen __attribute__ ((packed));
-	DataLog_UINT16 _lineNum __attribute__ ((packed));
-};
-
-struct DataLog_PeriodicOutputRecord
-{
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
-	DataLog_InternalID _setID __attribute__ ((packed));
-	
-#ifndef DATALOG_NO_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
-
-	DataLog_UINT16 _itemCount __attribute__ ((packed));
-};
-
-struct DataLog_PeriodicSetRecord
-{
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
-	DataLog_InternalID _setID __attribute__ ((packed));
-	
-#ifndef DATALOG_NO_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
-
-	DataLog_UINT16	_nameLen __attribute__ ((packed));
-};
-
-struct DataLog_PeriodicItemRecord
-{
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
-	DataLog_InternalID _keyCode __attribute__ ((packed));
-	
-#ifndef DATALOG_NO_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
-
-	DataLog_UINT16	_keyLen __attribute__ ((packed));
-	DataLog_UINT16	_descLen __attribute__ ((packed));
-	DataLog_UINT16	_formatLen __attribute__ ((packed));
-};
-
-struct DataLog_TaskCreateRecord
-{
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
-	DataLog_InternalID	_levelID __attribute__ ((packed));  
-	DataLog_TaskID	_taskID __attribute__ ((packed));
-
-#ifndef DATALOG_NO_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
-
-	DataLog_UINT16	_nameLen __attribute__ ((packed));
-};
-
-struct DataLog_TaskDeleteRecord
-{
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
-	DataLog_InternalID _levelID __attribute__ ((packed));
-	DataLog_TaskID	_taskID __attribute__ ((packed));
-
-#ifndef DATALOG_NO_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
-};
-
-struct DataLog_FileCloseRecord
-{
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));	
-};
-
-struct DataLog_WriteTimeRecord
-{
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));	
 };
 
 #endif /* ifndef _DATALOG_INTERNAL_INCLUDE */

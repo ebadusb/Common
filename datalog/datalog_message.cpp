@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message.cpp 1.5 2003/02/25 16:10:14Z jl11312 Exp jl11312 $
  * $Log: datalog_message.cpp $
+ * Revision 1.4  2003/01/31 19:52:50  jl11312
+ * - new stream format for datalog
  * Revision 1.3  2002/08/28 14:37:07  jl11312
  * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.2  2002/08/15 20:53:55  jl11312
@@ -14,6 +16,7 @@
 
 #include "datalog.h"
 #include "datalog_internal.h"
+#include "datalog_records.h"
 
 DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * handle)
 {
@@ -29,8 +32,8 @@ DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * hand
 		DataLog_HandleInfo * newHandle = new DataLog_HandleInfo;
 		newHandle->_id = common.getNextInternalID();
 		newHandle->_type = DataLog_HandleInfo::TraceHandle;
-		newHandle->_traceData._logOutput = DataLog_LogEnabled;
-		newHandle->_traceData._consoleOutput = DataLog_ConsoleDisabled;
+		newHandle->_logOutput = DataLog_LogEnabled;
+		newHandle->_consoleOutput = DataLog_ConsoleDisabled;
 		common.addHandle(levelName, newHandle);
 		handleInfo = newHandle;
 
@@ -42,18 +45,24 @@ DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * hand
 		datalog_GetTimeStamp(&logLevelRecord._timeStamp);
 	   logLevelRecord._levelID = handleInfo->_id;
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 		logLevelRecord._nodeID = datalog_NodeID();
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 		logLevelRecord._nameLen = strlen(levelName);
 
-		DataLog_CriticalBuffer * buffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
-		buffer->partialWrite((DataLog_BufferData *)&logLevelRecord, sizeof(logLevelRecord));
-		buffer->partialWrite((DataLog_BufferData *)levelName, logLevelRecord._nameLen * sizeof(char));
-		size_t writeSize = buffer->partialWriteComplete();
+		DataLog_BufferChain	outputChain;
+		bool	outputOK = false;
+
+		if ( DataLog_BufferManager::createChain(outputChain) &&
+			  DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&logLevelRecord, sizeof(logLevelRecord)) &&
+			  DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)levelName, logLevelRecord._nameLen * sizeof(char)) )
+		{
+			outputOK = true;
+			DataLog_BufferManager::addChainToList(DataLog_BufferManager::CriticalList, outputChain);
+		}
  
-		if ( writeSize != sizeof(logLevelRecord) + logLevelRecord._nameLen * sizeof(char) )
+		if ( !outputOK )
 		{
 			common.setTaskError(DataLog_LevelRecordWriteFailed, __FILE__, __LINE__);
 			result = DataLog_Error;
@@ -107,18 +116,18 @@ DataLog_Result datalog_GetLevelOutputOptions(DataLog_Handle handle, DataLog_Enab
 	switch ( handle->_type )
 	{
 	case DataLog_HandleInfo::TraceHandle:
-		*log = handle->_traceData._logOutput;
-		*console = handle->_traceData._consoleOutput;
+		*log = handle->_logOutput;
+		*console = handle->_consoleOutput;
 		break;
 
 	case DataLog_HandleInfo::IntHandle:
-		*log = handle->_intData._logOutput;
+		*log = handle->_logOutput;
 		*console = DataLog_ConsoleDisabled;
 		break;
 
 	case DataLog_HandleInfo::CriticalHandle:
 		*log = DataLog_LogEnabled;
-		*console = DataLog_ConsoleDisabled;
+		*console = DataLog_ConsoleEnabled;
 		break;
 
 	default:
@@ -140,12 +149,12 @@ DataLog_Result datalog_SetLevelOutputOptions(DataLog_Handle handle, DataLog_Enab
 	switch ( handle->_type )
 	{
 	case DataLog_HandleInfo::TraceHandle:
-		((DataLog_HandleInfo *)handle)->_traceData._logOutput = log;
-		((DataLog_HandleInfo *)handle)->_traceData._consoleOutput = console;
+		((DataLog_HandleInfo *)handle)->_logOutput = log;
+		((DataLog_HandleInfo *)handle)->_consoleOutput = console;
 		break;
 
 	case DataLog_HandleInfo::IntHandle:
-		((DataLog_HandleInfo *)handle)->_intData._logOutput = log;
+		((DataLog_HandleInfo *)handle)->_logOutput = log;
 		break;
 
 	case DataLog_HandleInfo::CriticalHandle:

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.13 2003/12/05 16:33:05Z jl11312 Exp rm70006 $
  * $Log: datalog.cpp $
+ * Revision 1.9  2003/01/31 19:52:49  jl11312
+ * - new stream format for datalog
  * Revision 1.8  2002/09/23 13:54:58  jl11312
  * - added access function for current log file name
  * Revision 1.7  2002/08/28 14:37:07  jl11312
@@ -25,6 +27,7 @@
 #define DATALOG_DECLARE_ERROR_INFORMATION
 #include "datalog.h"
 #include "datalog_internal.h"
+#include "datalog_records.h"
 #include "error.h"
 
 DataLog_Map<DataLog_TaskID, DataLog_TaskInfo *> DataLog_CommonData::_tasks;
@@ -32,7 +35,8 @@ DataLog_Lock DataLog_CommonData::_tasksLock = datalog_CreateLock();
 
 DataLog_Map<DataLog_InternalID, DataLog_Handle> DataLog_CommonData::_handles;
 DataLog_Lock DataLog_CommonData::_handlesLock = datalog_CreateLock();
-const DataLog_HandleInfo DataLog_CommonData::_criticalHandleInfo = { 0, DataLog_HandleInfo::CriticalHandle };
+
+const DataLog_HandleInfo DataLog_CommonData::_criticalHandleInfo = { 0, DataLog_HandleInfo::CriticalHandle, DataLog_LogEnabled, DataLog_ConsoleDisabled };
 
 DataLog_CommonData::DataLog_CommonData(void)
 {
@@ -64,16 +68,7 @@ DataLog_TaskInfo * DataLog_CommonData::findTask(DataLog_TaskID task)
 void DataLog_CommonData::addTask(DataLog_TaskInfo * taskInfo)
 {
 	datalog_LockAccess(_tasksLock);
-	if ( _tasks.find(taskInfo->_id) != _tasks.end() )
-	{
-		DataLog_Critical	errorLog;
-		DataLog(errorLog) << "attempt to add duplicate task ignored" << endmsg;
-	}
-	else
-	{
-		_tasks[taskInfo->_id] = taskInfo;
-	}
-
+	_tasks[taskInfo->_id] = taskInfo;
 	datalog_ReleaseAccess(_tasksLock);
 }
 
@@ -82,22 +77,22 @@ void DataLog_CommonData::deleteTask(DataLog_TaskID task)
 	DataLog_TaskInfo * taskInfo = NULL;
 
 	datalog_LockAccess(_tasksLock);
-	if ( _tasks.find(task) == _tasks.end() )
-	{
-		DataLog_Critical	errorLog;
-		DataLog(errorLog) << "attempt to delete non-existent task ignored" << endmsg;
-	}
-	else
+	if ( _tasks.find(task) != _tasks.end() )
 	{
 		taskInfo = _tasks[task];
 		_tasks.erase(task);
 	}
 
 	datalog_ReleaseAccess(_tasksLock);
+
 	if ( taskInfo )
 	{
-		delete taskInfo->_critical;
-		delete taskInfo->_trace;
+		DataLog_Map<DataLog_InternalID, DataLog_Stream *>::iterator streamsIter;
+		for ( streamsIter = taskInfo->_outputStream.begin(); streamsIter != taskInfo->_outputStream.end(); ++streamsIter )
+		{
+			delete streamsIter->second;
+		}
+
 		delete taskInfo;
 	}
 }
@@ -122,30 +117,10 @@ void DataLog_CommonData::addHandle(const char * levelName, DataLog_Handle handle
 {
 	datalog_LockAccess(_handlesLock);
 	
-	if ( handle->_id == DATALOG_NULL_ID )
-	{
-		DataLog_Critical	errorLog;
-		DataLog(errorLog) << "attempt to add handle with NULL ID ignored" << endmsg;
-	}
-	else
-	{
-		registerLevelID(levelName, handle->_id);
-		_handles[handle->_id] = handle;
-	}
+	registerLevelID(levelName, handle->_id);
+	_handles[handle->_id] = handle;
 
 	datalog_ReleaseAccess(_handlesLock);
-}
-
-DataLog_TraceBuffer * DataLog_CommonData::getTaskTraceBuffer(DataLog_TaskID taskID)
-{
-	DataLog_TaskInfo * taskInfo = findTask(taskID);
-	return taskInfo->_trace;
-}
-
-DataLog_CriticalBuffer * DataLog_CommonData::getTaskCriticalBuffer(DataLog_TaskID taskID)
-{
-	DataLog_TaskInfo * taskInfo = findTask(taskID);
-	return taskInfo->_critical;
 }
 
 void DataLog_CommonData::setLocalConnect(const char * fileName)
@@ -170,13 +145,10 @@ void DataLog_CommonData::setNetworkConnect(const char * ipAddress, int port)
 
 void DataLog_CommonData::initializeCommonData(DataLog_SharedPtr(CommonData) data)
 {
-	data->_defaultTraceBufferSize = 2048;
-	data->_defaultIntBufferSize = 1024;
-	data->_defaultCriticalBufferSize = 4096;
-
 	data->_connectType = NotConnected;
 	data->_connectName = DATALOG_NULL_SHARED_PTR;
 	data->_connectPort = 0;
+	data->_criticalReserveBuffers = 0;
 }
 
 DataLog_TaskErrorHandler * DataLog_CommonData::getTaskErrorHandler(DataLog_TaskID task)
@@ -221,24 +193,6 @@ void DataLog_CommonData::setTaskError(DataLog_ErrorType error, const char * file
 	}
 
 	taskInfo->_errorActiveCount -= 1;
-}
-
-size_t DataLog_CommonData::getCurrentMaxBufferSize(void)
-{
-	size_t	maxBufferSize;
-
-	if ( _commonData->_defaultTraceBufferSize > _commonData->_defaultIntBufferSize )
-	{
-		maxBufferSize = ( _commonData->_defaultTraceBufferSize > _commonData->_defaultCriticalBufferSize ) ?
-				_commonData->_defaultTraceBufferSize : _commonData->_defaultCriticalBufferSize;
-	}
-	else
-	{
-		maxBufferSize = ( _commonData->_defaultIntBufferSize > _commonData->_defaultCriticalBufferSize ) ?
-				_commonData->_defaultIntBufferSize : _commonData->_defaultCriticalBufferSize;
-	}
-
-	return maxBufferSize;
 }
 
 DataLog_Result datalog_Error(DataLog_TaskID task, DataLog_ErrorType * error)
@@ -322,14 +276,12 @@ void datalog_TaskCreated(DataLog_TaskID taskID)
 	info->_id = taskID;
 	info->_error = DataLog_NoError;
 
-	info->_trace = new DataLog_TraceBuffer(common.getDefaultTraceBufferSize());
 	info->_logOutput = DataLog_LogDisabled;
 	info->_consoleOutput = DataLog_ConsoleDisabled;
 
-	info->_critical = new DataLog_CriticalBuffer(common.getDefaultCriticalBufferSize());
-
 	info->_defaultLevel.setHandle(&common._criticalHandleInfo);
 	info->_defaultHandle = &common._criticalHandleInfo;
+	info->_outputStream[DATALOG_NULL_ID] = new DataLog_Stream(info->_defaultLevel);
 
 	info->_errorHandler = NULL;
 	info->_errorActiveCount = 0;
@@ -342,15 +294,18 @@ void datalog_TaskCreated(DataLog_TaskID taskID)
 	taskCreateRecord._taskID = taskID;
 	taskCreateRecord._levelID = DATALOG_SYSTEM_LEVEL_ID;
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 	taskCreateRecord._nodeID = datalog_NodeID();
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 	taskCreateRecord._nameLen = strlen(tcb->name);
 
-	info->_critical->partialWrite((DataLog_BufferData *)&taskCreateRecord, sizeof(taskCreateRecord));
-	info->_critical->partialWrite((DataLog_BufferData *)tcb->name, taskCreateRecord._nameLen * sizeof(char));
-	info->_critical->partialWriteComplete();
+	DataLog_BufferChain	outputChain;
+	DataLog_BufferManager::createChain(outputChain);
+
+	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&taskCreateRecord, sizeof(taskCreateRecord));
+	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)tcb->name, taskCreateRecord._nameLen * sizeof(char));
+	DataLog_BufferManager::addChainToList(DataLog_BufferManager::CriticalList, outputChain);
 }
 
 void datalog_TaskDeleted(DataLog_TaskID taskID)
@@ -370,12 +325,15 @@ void datalog_TaskDeleted(DataLog_TaskID taskID)
 	taskDeleteRecord._taskID = taskID;
 	taskDeleteRecord._levelID = DATALOG_SYSTEM_LEVEL_ID;
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 	taskDeleteRecord._nodeID = datalog_NodeID();
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 	datalog_GetTimeStamp(&taskDeleteRecord._timeStamp);
-	taskInfo->_critical->write((DataLog_BufferData *)&taskDeleteRecord, sizeof(taskDeleteRecord));
+
+	DataLog_BufferChain	outputChain;
+	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&taskDeleteRecord, sizeof(taskDeleteRecord));
+	DataLog_BufferManager::addChainToList(DataLog_BufferManager::CriticalList, outputChain);
 
 	common.deleteTask(taskID);
 }

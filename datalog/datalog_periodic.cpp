@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_periodic.cpp 1.6 2005/05/31 20:26:46Z jheiusb Exp ms10234 $
  * $Log: datalog_periodic.cpp $
+ * Revision 1.2  2003/01/31 19:52:51  jl11312
+ * - new stream format for datalog
  * Revision 1.1  2002/08/15 21:20:57  jl11312
  * Initial revision
  *
@@ -10,6 +12,7 @@
 
 #include "datalog.h"
 #include "datalog_internal.h"
+#include "datalog_records.h"
 
 DataLog_PeriodicTask::DataLog_PeriodicTask(DataLog_SetHandle set)
 {
@@ -26,18 +29,18 @@ void DataLog_PeriodicTask::exit(int code)
 
 int DataLog_PeriodicTask::main(void)
 {
+	DataLog_CommonData common;
 	size_t	tempBufferSize = 0;
 	DataLog_BufferData * tempBuffer = NULL;
 
 	DataLog_List<DataLog_PeriodicItemBase *>::iterator itemsIter;
-	DataLog_PeriodicBuffer * logBuffer = NULL;
 
 	while ( !_isExiting )
 	{
 		datalog_WaitSignal(_set->_writeSignalName, -1);
 		if ( datalog_WaitSignal(_set->_periodUpdateSignalName, 0) )
 		{
-			datalog_SetupPeriodicSignal(_set->_writeSignalName, _set->_logInterval);
+			datalog_SetupPeriodicSignal(_set->_writeSignalName, _set->_logIntervalMilliSec);
 		}
 
 		datalog_LockAccess(_set->_outputLock);
@@ -67,22 +70,15 @@ int DataLog_PeriodicTask::main(void)
 			// Round newSize up to multiple of 256 and allocate new buffers if necessary
 			//
 			newSize = (newSize & ~0xff) + 256;
-			if ( newSize > tempBufferSize || !logBuffer )
+			if ( newSize > tempBufferSize )
 			{
 				if ( tempBuffer )
 				{
 					delete[] tempBuffer;
 				}
 
-				if ( logBuffer )
-				{
-					delete logBuffer;
-				}
-
 				tempBuffer = new DataLog_BufferData[newSize];
 				tempBufferSize = newSize;
-
-				logBuffer = new DataLog_PeriodicBuffer(tempBufferSize);
 		   }
 		}
 
@@ -141,17 +137,20 @@ int DataLog_PeriodicTask::main(void)
 
 			periodicOutputRecord._recordType = DataLog_PeriodicOutputRecordID;
 			datalog_GetTimeStamp(&periodicOutputRecord._timeStamp);
-			periodicOutputRecord._setID = _set->_id;;
+			periodicOutputRecord._setID = _set->_id;
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 			periodicOutputRecord._nodeID = datalog_NodeID();
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 			periodicOutputRecord._itemCount = itemCount;
-			
-			logBuffer->partialWrite((DataLog_BufferData *)&periodicOutputRecord, sizeof(periodicOutputRecord));
-			logBuffer->partialWrite((DataLog_BufferData *)tempBuffer, writeSize);
-			logBuffer->partialWriteComplete();
+
+			DataLog_BufferChain	outputChain;
+
+			DataLog_BufferManager::createChain(outputChain, common.criticalReserveBuffers());
+			DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&periodicOutputRecord, sizeof(periodicOutputRecord));
+			DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)tempBuffer, writeSize);
+			DataLog_BufferManager::addChainToList(DataLog_BufferManager::TraceList, outputChain);
 		}
 	}
 
@@ -165,7 +164,7 @@ DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_SetHandle
 	DataLog_SetInfo *	setInfo = new DataLog_SetInfo;
 
 	setInfo->_id = common.getNextInternalID();
-	setInfo->_logInterval = 0;
+	setInfo->_logIntervalMilliSec = 0;
 
 	size_t	setNameLen = strlen(setName);
 	const char * writeSuffix = "_W";
@@ -189,7 +188,7 @@ DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_SetHandle
 
 	setInfo->_lock = datalog_CreateLock();
 	setInfo->_outputLock = datalog_CreateLock();
-	
+
 	datalog_StartPeriodicLogTask(setInfo);
 
 	DataLog_PeriodicSetRecord	periodicSetRecord;
@@ -197,19 +196,20 @@ DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_SetHandle
 	datalog_GetTimeStamp(&periodicSetRecord._timeStamp);
 	periodicSetRecord._setID = setInfo->_id;
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 	periodicSetRecord._nodeID = datalog_NodeID();
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 	periodicSetRecord._nameLen = strlen(setName);
 
-	DataLog_CriticalBuffer * buffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
+	DataLog_BufferChain	outputChain;
+	DataLog_BufferManager::createChain(outputChain);
 
-	buffer->partialWrite((DataLog_BufferData *)&periodicSetRecord, sizeof(periodicSetRecord));
-	buffer->partialWrite((DataLog_BufferData *)setName, periodicSetRecord._nameLen * sizeof(char));
-	size_t writeSize = buffer->partialWriteComplete();
+	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&periodicSetRecord, sizeof(periodicSetRecord));
+	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)setName, periodicSetRecord._nameLen * sizeof(char));
+	DataLog_BufferManager::addChainToList(DataLog_BufferManager::CriticalList, outputChain);
 
-	if ( writeSize != sizeof(periodicSetRecord) + periodicSetRecord._nameLen * sizeof(char) )
+	if ( outputChain._missedBytes > 0 )
 	{
 		common.setTaskError(DataLog_PeriodicSetRecordWriteFailed, __FILE__, __LINE__);
 		result = DataLog_Error;
@@ -219,15 +219,15 @@ DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_SetHandle
 	return result;
 }
 
-DataLog_Result datalog_GetPeriodicOutputInterval(DataLog_SetHandle handle, double * seconds)
+DataLog_Result datalog_GetPeriodicOutputInterval(DataLog_SetHandle handle, long * milliSeconds)
 {
-	*seconds = handle->_logInterval;
+	*milliSeconds = handle->_logIntervalMilliSec;
 	return DataLog_OK;
 }
 
-DataLog_Result datalog_SetPeriodicOutputInterval(DataLog_SetHandle handle, double seconds)
+DataLog_Result datalog_SetPeriodicOutputInterval(DataLog_SetHandle handle, long milliSeconds)
 {
-	handle->_logInterval = seconds;
+	handle->_logIntervalMilliSec = milliSeconds;
 	datalog_SendSignal(handle->_periodUpdateSignalName);
 	datalog_SendSignal(handle->_writeSignalName);
 	
@@ -281,26 +281,24 @@ DataLog_PeriodicItemBase::DataLog_PeriodicItemBase(DataLog_SetHandle set, size_t
 	datalog_GetTimeStamp(&periodicItemRecord._timeStamp);
 	periodicItemRecord._keyCode = _keyCode;
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 	periodicItemRecord._nodeID = datalog_NodeID();
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 	periodicItemRecord._keyLen = strlen(key);
 	periodicItemRecord._descLen = strlen(description);
 	periodicItemRecord._formatLen = strlen(format);
 
-	DataLog_CriticalBuffer * buffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
+	DataLog_BufferChain	outputChain;
+	DataLog_BufferManager::createChain(outputChain);
 
-	buffer->partialWrite((DataLog_BufferData *)&periodicItemRecord, sizeof(periodicItemRecord));
-	buffer->partialWrite((DataLog_BufferData *)key, periodicItemRecord._keyLen * sizeof(char));
-	buffer->partialWrite((DataLog_BufferData *)description, periodicItemRecord._descLen * sizeof(char));
-	buffer->partialWrite((DataLog_BufferData *)format, periodicItemRecord._formatLen * sizeof(char));
-	size_t writeSize = buffer->partialWriteComplete();
+	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&periodicItemRecord, sizeof(periodicItemRecord));
+	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)key, periodicItemRecord._keyLen * sizeof(char));
+	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)description, periodicItemRecord._descLen * sizeof(char));
+	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)format, periodicItemRecord._formatLen * sizeof(char));
+	DataLog_BufferManager::addChainToList(DataLog_BufferManager::CriticalList, outputChain);
 
-	if ( writeSize != sizeof(periodicItemRecord) +
-                       periodicItemRecord._keyLen * sizeof(char) +
-                       periodicItemRecord._descLen * sizeof(char) +
-							  periodicItemRecord._formatLen * sizeof(char) )
+	if ( outputChain._missedBytes > 0 )
 	{
 		common.setTaskError(DataLog_PeriodicItemRecordWriteFailed, __FILE__, __LINE__);
 	}

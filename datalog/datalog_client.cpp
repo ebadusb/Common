@@ -3,17 +3,19 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_client.cpp 1.5 2003/12/09 14:14:16Z jl11312 Exp rm70006 $
  * $Log: datalog_client.cpp $
+ * Revision 1.2  2003/01/31 19:52:50  jl11312
+ * - new stream format for datalog
  * Revision 1.1  2002/08/22 20:19:03  jl11312
  * Initial revision
  *
  */
 
-#include <vxWorks.h>
+#include "datalog.h"
+
 #include <errnoLib.h>
 #include <fcntl.h>
 #include <ioLib.h>
 
-#include "datalog.h"
 #include "datalog_internal.h"
 
 DataLog_NetworkClientTask::DataLog_NetworkClientTask(int clientSocket, struct sockaddr_in * clientAddr)
@@ -21,6 +23,7 @@ DataLog_NetworkClientTask::DataLog_NetworkClientTask(int clientSocket, struct so
 	_clientSocket = clientSocket;
 	inet_ntoa_b(clientAddr->sin_addr, _asciiAddr);
 
+	_tempBuffer = new DataLog_BufferData[DataLog_BufferSize];
 	_isExiting = false;
 	_exitCode = 0;
 }
@@ -33,8 +36,6 @@ void DataLog_NetworkClientTask::exit(int code)
 
 int DataLog_NetworkClientTask::main(void)
 {
-	DataLog_CommonData	common;
-	_clientBuffer = new DataLog_ClientBuffer(common.getCurrentMaxBufferSize());
 	_state = WaitStart;
 
 	while ( !_isExiting )
@@ -56,11 +57,8 @@ void DataLog_NetworkClientTask::handlePacket(const DataLog_NetworkPacket & packe
 	case WaitStart:
 		switch ( packet._type )
 		{
-		case DataLog_NotifyBufferSize:
-			processBufferSizeRecord(packet._length);
-			break;
-
 		case DataLog_StartOutputRecord:
+			DataLog_BufferManager::createChain(_dataChain);
 			_state = WaitEnd;
 			break;
 
@@ -82,9 +80,9 @@ void DataLog_NetworkClientTask::handlePacket(const DataLog_NetworkPacket & packe
 		switch ( packet._type )
 		{
 		case DataLog_OutputRecordData:
-			if ( packet._length <= MaxDataSize && readData(_tempBuffer, packet._length) )
+			if ( packet._length <= DataLog_BufferSize && readData(_tempBuffer, packet._length) )
 			{
-				_clientBuffer->partialWrite(_tempBuffer, packet._length);
+				DataLog_BufferManager::writeToChain(_dataChain, _tempBuffer, packet._length);
 			}
 			else
 			{
@@ -93,7 +91,8 @@ void DataLog_NetworkClientTask::handlePacket(const DataLog_NetworkPacket & packe
 			break;
 
 		case DataLog_EndOutputRecord:
-			_clientBuffer->partialWriteComplete();
+			DataLog_BufferManager::addChainToList(DataLog_BufferManager::TraceList, _dataChain);
+			_dataChain._head = DATALOG_NULL_SHARED_PTR;
 			_state = WaitStart;
 			break;
 
@@ -106,19 +105,6 @@ void DataLog_NetworkClientTask::handlePacket(const DataLog_NetworkPacket & packe
 	default:
 		processInvalidPacket(packet);
 		break;
-	}
-}
-
-void DataLog_NetworkClientTask::processBufferSizeRecord(DataLog_UINT16 packetLength)
-{
-	size_t	newBufferSize;
-	if ( readData((DataLog_BufferData *)&newBufferSize, sizeof(newBufferSize)) )
-	{
-		if ( newBufferSize > _clientBuffer->size() )
-		{
-			delete _clientBuffer;
-			_clientBuffer = new DataLog_ClientBuffer(newBufferSize);
-		}
 	}
 }
 
@@ -138,7 +124,7 @@ void DataLog_NetworkClientTask::processInvalidPacket(const DataLog_NetworkPacket
 	bool	readError = false;
 	while ( bytesLeft > 0 && !readError )
 	{
-		int	bytesToRead = (bytesLeft > MaxDataSize) ? MaxDataSize : bytesLeft;
+		int	bytesToRead = (bytesLeft > DataLog_BufferSize) ? DataLog_BufferSize : bytesLeft;
 		readError = readData(_tempBuffer, bytesToRead);
 		bytesLeft -= bytesToRead;
 	}

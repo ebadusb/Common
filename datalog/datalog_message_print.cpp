@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_print.cpp 1.7 2003/02/25 16:10:17Z jl11312 Exp jl11312 $
  * $Log: datalog_message_print.cpp $
+ * Revision 1.6  2003/01/31 19:52:50  jl11312
+ * - new stream format for datalog
  * Revision 1.5  2002/11/20 16:46:47  rm70006
  * Changed va_arg statement to compile under T2.2 compiler.
  * Revision 1.4  2002/10/08 12:09:50Z  jl11312
@@ -16,10 +18,11 @@
  *
  */
 
-#include <vxWorks.h>
-#include <stdarg.h>
 #include "datalog.h"
+
+#include <stdarg.h>
 #include "datalog_internal.h"
+#include "datalog_records.h"
 
 enum PrintArg_Type
 {
@@ -59,7 +62,6 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 {
 	DataLog_Result	result = DataLog_OK;
 	DataLog_CommonData common;
-	DataLog_OutputBuffer * outputBuffer = NULL;
 	DataLog_EnabledType logOutput = DataLog_LogEnabled;
 	DataLog_ConsoleEnabledType consoleOutput = DataLog_ConsoleDisabled;
 
@@ -80,13 +82,12 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 			printOutputRecord._levelID = handle->_id;
 			printOutputRecord._taskID = datalog_CurrentTask();
 
-			logOutput = handle->_traceData._logOutput;
-			consoleOutput = handle->_traceData._consoleOutput;
+			logOutput = handle->_logOutput;
+			consoleOutput = handle->_consoleOutput;
 
 			DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
 			logOutput = ( logOutput == DataLog_LogEnabled ) ? DataLog_LogEnabled : taskInfo->_logOutput;
 			consoleOutput = ( consoleOutput == DataLog_ConsoleEnabled ) ? DataLog_ConsoleEnabled : taskInfo->_consoleOutput;
-			outputBuffer = common.getTaskTraceBuffer(DATALOG_CURRENT_TASK);
 		}
 		break;
 
@@ -95,8 +96,7 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 			printOutputRecord._levelID = handle->_id;
 			printOutputRecord._taskID = DATALOG_CURRENT_TASK;
 
-			logOutput = handle->_intData._logOutput;
-			outputBuffer = handle->_intData._buffer;
+			logOutput = handle->_logOutput;
 		}
 		break;
 
@@ -106,7 +106,6 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 			printOutputRecord._taskID = datalog_CurrentTask();
 
 			consoleOutput = DataLog_ConsoleEnabled;
-			outputBuffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
 	   }
 		break;
 
@@ -121,14 +120,13 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 
 			printOutputRecord._levelID = 0;
 			printOutputRecord._taskID = DATALOG_CURRENT_TASK;
-			outputBuffer = common.getTaskTraceBuffer(DATALOG_CURRENT_TASK);
 		}
 		break;
 	}
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 	printOutputRecord._nodeID = datalog_NodeID();
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 	printOutputRecord._formatLen = strlen(format);
 	printOutputRecord._fileNameLen = strlen(file);
@@ -136,9 +134,13 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 
 	if ( logOutput == DataLog_LogEnabled )
 	{
-		outputBuffer->partialWrite((DataLog_BufferData *)&printOutputRecord, sizeof(printOutputRecord));
-		outputBuffer->partialWrite((DataLog_BufferData *)format, printOutputRecord._formatLen * sizeof(char));
-		outputBuffer->partialWrite((DataLog_BufferData *)file, printOutputRecord._fileNameLen * sizeof(char));
+		DataLog_BufferChain	outputChain;
+		unsigned long reserveBuffers = (handle->_type == DataLog_HandleInfo::CriticalHandle) ? 0 : common.criticalReserveBuffers();
+
+		DataLog_BufferManager::createChain(outputChain, reserveBuffers);
+		DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&printOutputRecord, sizeof(printOutputRecord));
+ 		DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)format, printOutputRecord._formatLen * sizeof(char));
+		DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)file, printOutputRecord._fileNameLen * sizeof(char));
 
 		unsigned int	starModifierCount;
 		size_t			currentIndex = 0;
@@ -165,7 +167,7 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 				for ( unsigned int i=0; i<starModifierCount; i++ )
 				{
 					int	fieldLen = va_arg(argList, int);
-					outputBuffer->partialWrite((DataLog_BufferData *)&fieldLen, sizeof(int));
+					DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&fieldLen, sizeof(int));
 				}
 
 				switch ( argType )
@@ -173,21 +175,21 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 				case PrintArg_Char:
 					{
 						char	chArg = va_arg(argList, int);
-					   outputBuffer->partialWrite((DataLog_BufferData *)&chArg, sizeof(char));
+					   DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&chArg, sizeof(char));
 					}
 					break;
 
 				case PrintArg_Int:
 					{
 						int	intArg = va_arg(argList, int);
-						outputBuffer->partialWrite((DataLog_BufferData *)&intArg, sizeof(int));
+						DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&intArg, sizeof(int));
 					}
 					break;
 
 				case PrintArg_Long:
 					{
 						long	longArg = va_arg(argList, long);
-						outputBuffer->partialWrite((DataLog_BufferData *)&longArg, sizeof(long));
+						DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&longArg, sizeof(long));
 					}
 					break;
 
@@ -195,14 +197,14 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 					{
 						double	doubleArg = va_arg(argList, double);
 						float		floatArg = (float)doubleArg;
-						outputBuffer->partialWrite((DataLog_BufferData *)&floatArg, sizeof(float));
+						DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&floatArg, sizeof(float));
 					}
 					break;
 
 				case PrintArg_Double:
 					{
 						double	doubleArg = va_arg(argList, double);
-						outputBuffer->partialWrite((DataLog_BufferData *)&doubleArg, sizeof(double));
+						DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&doubleArg, sizeof(double));
 					}
 					break;
 
@@ -210,8 +212,8 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 					{
 						const char * strArg = va_arg(argList, char *);
 						DataLog_UINT16	strLen = strlen(strArg);
-						outputBuffer->partialWrite((DataLog_BufferData *)&strLen, sizeof(DataLog_UINT16));
-						outputBuffer->partialWrite((DataLog_BufferData *)strArg, strLen * sizeof(char));
+						DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&strLen, sizeof(DataLog_UINT16));
+						DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)strArg, strLen * sizeof(char));
 					}
 					break;
 
@@ -221,7 +223,8 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 			}
 		}
 
-		outputBuffer->partialWriteComplete();
+		DataLog_BufferManager::addChainToList( (handle->_type == DataLog_HandleInfo::CriticalHandle) ?
+										DataLog_BufferManager::CriticalList : DataLog_BufferManager::TraceList, outputChain);
 	}
 
 	if ( consoleOutput == DataLog_ConsoleEnabled )

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.9 2003/04/29 17:07:54Z jl11312 Exp jl11312 $
  * $Log: datalog_message_stream.cpp $
+ * Revision 1.7  2003/01/31 21:52:19  jl11312
+ * - added check for null string pointers for operator <<
  * Revision 1.6  2003/01/31 19:52:51  jl11312
  * - new stream format for datalog
  * Revision 1.5  2002/10/25 16:59:17  jl11312
@@ -19,13 +21,14 @@
  *
  */
 
-#include <vxWorks.h>
+#include "datalog.h"
+
 #include <stdarg.h>
 #include <symLib.h>
 #include <sysSymTbl.h>
 #include <typeinfo>
-#include "datalog.h"
 #include "datalog_internal.h"
+#include "datalog_records.h"
 
 DataLog_Level::DataLog_Level(void)
 {
@@ -66,7 +69,8 @@ DataLog_EnabledType DataLog_Level::logOutput(void)
 		switch ( _handle->_type )
 		{
 		case DataLog_HandleInfo::TraceHandle:
-			result = _handle->_traceData._logOutput;
+		case DataLog_HandleInfo::IntHandle:
+			result = _handle->_logOutput;
 			break;
 
 		case DataLog_HandleInfo::CriticalHandle:
@@ -97,8 +101,9 @@ DataLog_EnabledType DataLog_Level::logOutput(DataLog_EnabledType flag)
 		switch ( _handle->_type )
 		{
 		case DataLog_HandleInfo::TraceHandle:
-			result = _handle->_traceData._logOutput;
-			((DataLog_HandleInfo *)_handle)->_traceData._logOutput = flag;
+		case DataLog_HandleInfo::IntHandle:
+			result = _handle->_logOutput;
+			((DataLog_HandleInfo *)_handle)->_logOutput = flag;
 			break;
 
 		case DataLog_HandleInfo::CriticalHandle:
@@ -129,7 +134,11 @@ DataLog_ConsoleEnabledType DataLog_Level::consoleOutput(void)
 		switch ( _handle->_type )
 		{
 		case DataLog_HandleInfo::TraceHandle:
-			result = _handle->_traceData._consoleOutput;
+			result = _handle->_consoleOutput;
+			break;
+
+		case DataLog_HandleInfo::IntHandle:
+			result = DataLog_ConsoleDisabled;
 			break;
 
 		case DataLog_HandleInfo::CriticalHandle:
@@ -160,8 +169,12 @@ DataLog_ConsoleEnabledType DataLog_Level::consoleOutput(DataLog_ConsoleEnabledTy
 		switch ( _handle->_type )
 		{
 		case DataLog_HandleInfo::TraceHandle:
-			result = _handle->_traceData._consoleOutput;
-			((DataLog_HandleInfo *)_handle)->_traceData._consoleOutput = flag;
+			result = _handle->_consoleOutput;
+			((DataLog_HandleInfo *)_handle)->_consoleOutput = flag;
+			break;
+
+		case DataLog_HandleInfo::IntHandle:
+			result = DataLog_ConsoleDisabled;
 			break;
 
 		case DataLog_HandleInfo::CriticalHandle:
@@ -181,7 +194,6 @@ DataLog_ConsoleEnabledType DataLog_Level::consoleOutput(DataLog_ConsoleEnabledTy
 DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber)
 {
 	DataLog_CommonData common;
-	DataLog_OutputBuffer * outputBuffer = NULL;
 	DataLog_EnabledType logOutput = DataLog_LogEnabled;
 	DataLog_ConsoleEnabledType consoleOutput = DataLog_ConsoleDisabled;
 
@@ -191,6 +203,8 @@ DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber
 	datalog_GetTimeStamp(&streamOutputRecord._timeStamp);
 
 	DataLog_HandleInfo::HandleType handleType = (_handle != DATALOG_NULL_HANDLE) ? _handle->_type : DataLog_HandleInfo::InvalidHandle;
+	DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
+
 	switch ( handleType )
 	{
 	case DataLog_HandleInfo::TraceHandle:
@@ -198,13 +212,11 @@ DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber
 			streamOutputRecord._levelID = _handle->_id;
 			streamOutputRecord._taskID = datalog_CurrentTask();
 
-			logOutput = _handle->_traceData._logOutput;
-			consoleOutput = _handle->_traceData._consoleOutput;
+			logOutput = _handle->_logOutput;
+			consoleOutput = _handle->_consoleOutput;
 
-			DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
 			logOutput = ( logOutput == DataLog_LogEnabled ) ? DataLog_LogEnabled : taskInfo->_logOutput;
 			consoleOutput = ( consoleOutput == DataLog_ConsoleEnabled ) ? DataLog_ConsoleEnabled : taskInfo->_consoleOutput;
-			outputBuffer = taskInfo->_trace;
 		}
 		break;
 
@@ -214,7 +226,6 @@ DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber
 			streamOutputRecord._taskID = datalog_CurrentTask();
 
 			consoleOutput = DataLog_ConsoleEnabled;
-			outputBuffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
 	   }
 		break;
 
@@ -228,20 +239,28 @@ DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber
 
 			streamOutputRecord._levelID = 0;
 			streamOutputRecord._taskID = DATALOG_CURRENT_TASK;
-			outputBuffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
 		}
 		break;
 	}
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 	streamOutputRecord._nodeID = datalog_NodeID();
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 	streamOutputRecord._fileNameLen = strlen(fileName);
 	streamOutputRecord._lineNum = lineNumber;
- 
-	DataLog_Stream	& stream = outputBuffer->streamAppWriteStart(streamOutputRecord, fileName, logOutput, consoleOutput);
-	return stream;
+
+	if ( taskInfo->_outputStream.find(streamOutputRecord._levelID) == taskInfo->_outputStream.end() )
+	{
+		taskInfo->_outputStream[streamOutputRecord._levelID] = new DataLog_Stream(*this);
+	}
+
+	DataLog_Stream	* stream = taskInfo->_outputStream[streamOutputRecord._levelID];
+	stream->setLogOutput(logOutput);
+	stream->setConsoleOutput(consoleOutput);
+	stream->writeStart(&streamOutputRecord, fileName);
+
+	return *stream;
 }
 
 DataLog_Result DataLog_Level::setAsDefault(void)
@@ -265,26 +284,30 @@ DataLog_Critical::~DataLog_Critical()
 	_handle = DATALOG_NULL_HANDLE;
 }
 
-DataLog_Stream::DataLog_Stream(DataLog_OutputBuffer * output)
-				: _output(output), _buffer(NULL)
+DataLog_Stream::DataLog_Stream(const DataLog_Level & level)
 {
-	_bufferSize = (_output->size() > 0) ? _output->size() : 1024;
-	_buffer = new DataLog_BufferData[_bufferSize];
+	DataLog_CommonData common;
 
-	_bufferPos = 0;
 	_flags = f_defaultflags;
 	_precision = 5;
-	_fail = false;
+
 	_flagsChanged = false;
 	_precisionChanged = false;
 	_logOutput = DataLog_LogDisabled;
 	_consoleOutput = DataLog_ConsoleDisabled;
+
+	_critical = (level.getHandle()->_type == DataLog_HandleInfo::CriticalHandle);
+	_reserveBuffers = (_critical) ? 0 : common.criticalReserveBuffers();
 }
 
 DataLog_Stream::~DataLog_Stream()
 {
-	delete[] _buffer;
-	_buffer = NULL;
+	if ( _outputChain._head != NULL )
+	{
+		writeComplete();
+	}
+
+	DataLog_BufferManager::addChainToList(DataLog_BufferManager::FreeList, _headerChain);
 }
 
 DataLog_Stream & DataLog_Stream::operator << (char c)
@@ -350,10 +373,84 @@ DataLog_Stream & DataLog_Stream::operator << (float val)
 	return *this;
 }
 
+void DataLog_Stream::writeStart(DataLog_StreamOutputRecord * record, const char * fileName)
+{
+	if ( _outputChain._head == NULL &&
+		  _logOutput == DataLog_LogEnabled )
+	{
+		//
+		// No write in progress so setup for new write
+		//
+		if ( _headerChain._head != NULL )
+		{
+			DataLog_BufferManager::addChainToList(DataLog_BufferManager::FreeList, _headerChain);
+		}
+
+		DataLog_BufferManager::createChain(_headerChain, _reserveBuffers);
+		DataLog_BufferManager::writeToChain(_headerChain, (DataLog_BufferData *)record, sizeof(*record));
+		DataLog_BufferManager::writeToChain(_headerChain, (DataLog_BufferData *)fileName, sizeof(char) * record->_fileNameLen);
+
+		_initialFlags = _flags;
+		_initialPrecision = _precision;
+	}
+}
+
+void DataLog_Stream::writeComplete(void)
+{
+	if ( _outputChain._head != NULL )
+	{
+		if ( _outputChain._missedBytes == 0 )
+		{
+			if ( _outputChain._head->_length > 65535 )
+			{
+				//
+				// Record too large.  Free chain and build new chain record for
+				// recording the bytes missed.
+				//
+				unsigned long	length = _outputChain._head->_length;
+				DataLog_BufferManager::addChainToList(DataLog_BufferManager::FreeList, _outputChain);
+
+				_outputChain._head = NULL;
+				_outputChain._missedBytes = length;
+			}
+			else
+			{
+				//
+				// We need to update the argument length in the header record.
+				//
+				DataLog_UINT16	argLength = _outputChain._head->_length - _headerChain._head->_length - 5;
+				unsigned long argLengthOffset = _headerChain._head->_length + 3;
+
+				DataLog_BufferManager::modifyChainData(_outputChain, argLengthOffset, (DataLog_BufferData *)&argLength, 2);
+			}
+		}
+
+		DataLog_BufferManager::addChainToList( (_critical) ? DataLog_BufferManager::CriticalList : DataLog_BufferManager::TraceList, _outputChain);
+		_outputChain._head = NULL;
+
+		//
+		// Reset initial flags in case application has saved a stream reference and starts
+		// writing again without going through writeStart()
+		//
+		_initialFlags = _flags;
+		_initialPrecision = _precision;
+	}
+}
+
 DataLog_Stream & DataLog_Stream::operator << (double val)
 {
 	if ( _consoleOutput == DataLog_ConsoleEnabled ) printDouble(val);
 	if ( _logOutput == DataLog_LogEnabled) writeArg(Double, &val, sizeof(double)); return *this;
+}
+
+void DataLog_Stream::setupOutputChain(void)
+{
+	DataLog_BufferManager::copyChain(_outputChain, _headerChain);
+	DataLog_BufferManager::writeToChain(_outputChain, (DataLog_BufferData *)&_initialFlags, sizeof(_initialFlags));
+	DataLog_BufferManager::writeToChain(_outputChain, (DataLog_BufferData *)&_initialPrecision, sizeof(_initialPrecision));
+
+	DataLog_UINT16 argLength = 0;
+	DataLog_BufferManager::writeToChain(_outputChain, (DataLog_BufferData *)&argLength, sizeof(argLength));
 }
 
 void DataLog_Stream::writeArg(ArgumentType type, const void * data, DataLog_UINT16 size)
@@ -370,16 +467,9 @@ void DataLog_Stream::writeArg(ArgumentType type, const void * data, DataLog_UINT
 		writeArg(PrecisionSetting, &_precision, sizeof(_precision));
    }
 
-	if ( _bufferPos+1+size >= _bufferSize )
-	{
-		_fail = true;
-	}
-	else
-	{
-		memcpy(&_buffer[_bufferPos], &type, 1);
-		memcpy(&_buffer[_bufferPos+1], data, size);
-		_bufferPos += size+1;
-	}
+	if ( _outputChain._head == NULL ) setupOutputChain();
+	DataLog_BufferManager::writeToChain(_outputChain, (DataLog_BufferData *)&type, 1);
+	DataLog_BufferManager::writeToChain(_outputChain, (DataLog_BufferData *)data, size);
 }
 
 void DataLog_Stream::writeStringArg(ArgumentType type, const void * data, DataLog_UINT16 size)
@@ -396,17 +486,10 @@ void DataLog_Stream::writeStringArg(ArgumentType type, const void * data, DataLo
 		writeArg(PrecisionSetting, &_precision, sizeof(_precision));
    }
 
-	if ( _bufferPos+3+size >= _bufferSize )
-	{
-		_fail = true;
-	}
-	else
-	{
-		memcpy(&_buffer[_bufferPos], &type, 1);
-		memcpy(&_buffer[_bufferPos+1], &size, 2);
-		memcpy(&_buffer[_bufferPos+3], data, size);
-		_bufferPos += size+3;
-	}
+	if ( _outputChain._head == NULL ) setupOutputChain();
+	DataLog_BufferManager::writeToChain(_outputChain, (DataLog_BufferData *)&type, 1);
+	DataLog_BufferManager::writeToChain(_outputChain, (DataLog_BufferData *)&size, 2);
+	DataLog_BufferManager::writeToChain(_outputChain, (DataLog_BufferData *)data, size);
 }
 
 void DataLog_Stream::printLong(long val)
@@ -438,34 +521,26 @@ void DataLog_Stream::printDouble(double val)
 	printf(format, _precision, val);
 }
 
-void DataLog_Stream::rawWrite(const void * data, size_t size)
-{
-	if ( _bufferPos+size >= _bufferSize )
-	{
-		_fail = true;
-	}
-	else
-	{
-		memcpy(&_buffer[_bufferPos], data, size);
-		_bufferPos += size;
-	}
-}
-
 void DataLog_Stream::setFlags(unsigned int flagSetting)
 {
+	DataLog_UINT16 oldFlags = _flags;
+
 	if ( flagSetting & f_basemask ) _flags &= ~f_basemask;
 	if ( flagSetting & f_floatmask ) _flags &= ~f_floatmask;
 	_flags |= flagSetting;
-	_flagsChanged = true;
+
+	if ( oldFlags != _flags ) _flagsChanged = true;
 }
 
 void DataLog_Stream::resetFlags(unsigned int flagSetting)
 {
+	DataLog_UINT16 oldFlags = _flags;
 	_flags &= ~flagSetting;
 
 	if ( !(flagSetting & f_basemask) ) _flags |= f_defaultflags & f_basemask;
 	if ( !(flagSetting & f_floatmask) ) _flags |= f_defaultflags & f_floatmask;
-	_flagsChanged = true;
+
+	if ( oldFlags != _flags ) _flagsChanged = true;
 }
 
 DataLog_Stream & manipfunc_setprecision(DataLog_Stream & stream, int param)
@@ -516,7 +591,9 @@ DataLog_Stream & manipfunc_errnoMsg(DataLog_Stream & stream, int param)
 
 DataLog_Stream & endmsg(DataLog_Stream & stream)
 {
-	stream._output->streamAppWriteComplete();
+	if ( stream._consoleOutput == DataLog_ConsoleEnabled ) putchar('\n');
+
+	stream.writeComplete();
 	return stream;
 }
 

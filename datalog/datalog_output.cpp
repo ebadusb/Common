@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.7 2003/02/20 20:53:24 jl11312 Exp jl11312 $
+ * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.11 2003/10/03 12:35:06Z jl11312 Exp jl11312 $
  * $Log: datalog_output.cpp $
  * Revision 1.6  2003/02/06 20:41:30  jl11312
  * - added support for binary record type
@@ -20,12 +20,12 @@
  *
  */
 
-#include <vxWorks.h>
+#include "datalog.h"
+
 #include <fcntl.h>
 #include <ioLib.h>
-
-#include "datalog.h"
 #include "datalog_internal.h"
+#include "datalog_records.h"
 #include "zlib.h"
 
 DataLog_BufferData * datalog_DefaultEncryptFunc(DataLog_BufferData * input, size_t inputLength, size_t * outputLength);
@@ -66,14 +66,6 @@ void DataLog_OutputTask::exit(int code)
 int DataLog_OutputTask::main(void)
 {
 	DataLog_CommonData 	common;
-	DataLog_InputBuffer	inputBuffer;
-
-	//
-	// Setup buffer area for reading data to be output
-	//
-	size_t	maxBufferSize = common.getCurrentMaxBufferSize();
-	DataLog_BufferData	* tempBuffer = new DataLog_BufferData[maxBufferSize];
-	handleBufferSizeChange(maxBufferSize);
 
 	//
 	// Write record for system level output
@@ -99,7 +91,7 @@ int DataLog_OutputTask::main(void)
 		if ( !datalog_WaitSignal("DataLog_Output", 0) )
 		{
 			flushOutput();
-			datalog_WaitSignal("DataLog_Output", -1);
+			datalog_WaitSignal("DataLog_Output", 10000);
 		}
 
 		//
@@ -113,63 +105,36 @@ int DataLog_OutputTask::main(void)
 			writeMissedLogDataRecord();
 		}
 
-		//
-		// Clear critical output available indication if it is present, since
-		// we are about to scan the critical output buffers anyway.
-		//
-		datalog_WaitSignal("DataLog_CriticalOutput", 0);
-
-		bool	attachOK = inputBuffer.attachToFirstBuffer();
-		while ( attachOK && _isRunning )
+		DataLog_BufferChain data;
+		while ( _isRunning &&
+				  DataLog_BufferManager::getNextChain(data) )
 		{
-			//
-			// Check if the local buffer is large enough.  If not, increase the
-			// buffer size and notify the network client (if any) of the new size.
-			//
-			if ( inputBuffer.size() > maxBufferSize )
+			if ( !timeStampWritten )
 			{
-				delete[] tempBuffer;
-				maxBufferSize = inputBuffer.size();
-				tempBuffer = new DataLog_BufferData[maxBufferSize];
-				handleBufferSizeChange(maxBufferSize);
+				writeTimeStampRecord();
+				timeStampWritten = true;
 			}
 
-			//
-			// Copy data from the output buffer
-			//
-			size_t bytesRead = inputBuffer.read(tempBuffer, maxBufferSize);
-			if ( bytesRead > 0 )
-			{
-				if ( !timeStampWritten )
-				{
-					writeTimeStampRecord();
-					timeStampWritten = true;
-				}
+			startOutputRecord();
 
-				writeOutputRecord(tempBuffer, bytesRead);
+			DataLog_BufferPtr ptr = data._head;
+			size_t length = data._head->_length;
+
+			while ( ptr &&
+                 length > 0 )
+			{
+				size_t writeLength = (length > DataLog_BufferSize) ? DataLog_BufferSize : length;
+				writeOutputRecord(ptr->_data, writeLength);
+				length -= writeLength;
+				ptr = ptr->_next;
 			}
 
-			//
-			// If we have gotten a signal for critical output available, restart
-			// scan at beginning of buffer list (critical buffers are at the
-			// beginning of the list).  We also clear any pending output signal
-			// since we will be rescanning the entire buffer list.
-			//
-			if ( datalog_WaitSignal("DataLog_CriticalOutput", 0) )
-			{
-				attachOK = inputBuffer.attachToFirstBuffer();
-				datalog_WaitSignal("DataLog_Output", 0);
-			}
-			else
-			{
-				attachOK = inputBuffer.attachToNextBuffer();
-			}
+			endOutputRecord();
+			DataLog_BufferManager::addChainToList(DataLog_BufferManager::FreeList, data);
 		}
 	}
 
-	delete[] tempBuffer;
 	shutdown();
-
 	return _exitCode;
 }
 
@@ -177,7 +142,9 @@ void DataLog_OutputTask::writeMissedLogDataRecord(void)
 {
 	DataLog_UINT16	missedDataValue = 0x55ff;
 
+	startOutputRecord();
 	writeOutputRecord((DataLog_BufferData *)&missedDataValue, sizeof(missedDataValue));
+	endOutputRecord();
 }
 
 void DataLog_OutputTask::writeTimeStampRecord(void)
@@ -186,7 +153,10 @@ void DataLog_OutputTask::writeTimeStampRecord(void)
 
 	writeTimeRecord._recordType = DataLog_WriteTimeRecordID;
 	datalog_GetTimeStamp(&writeTimeRecord._timeStamp);
+
+	startOutputRecord();	
 	writeOutputRecord((DataLog_BufferData *)&writeTimeRecord, sizeof(writeTimeRecord));
+	endOutputRecord();	
 }
 
 void DataLog_OutputTask::writeSystemLevelRecord(void)
@@ -200,9 +170,9 @@ void DataLog_OutputTask::writeSystemLevelRecord(void)
 	datalog_GetTimeStamp(&systemLevelRecord._timeStamp);
 	systemLevelRecord._levelID = DATALOG_SYSTEM_LEVEL_ID;
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 	systemLevelRecord._nodeID = datalog_NodeID();
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 	systemLevelRecord._nameLen = strlen(DATALOG_SYSTEM_LEVEL_NAME);
 
@@ -210,7 +180,11 @@ void DataLog_OutputTask::writeSystemLevelRecord(void)
 	DataLog_BufferData * buffer = new DataLog_BufferData[bufferSize];
 	memcpy(buffer, &systemLevelRecord, sizeof(systemLevelRecord));
 	memcpy(&buffer[sizeof(systemLevelRecord)], DATALOG_SYSTEM_LEVEL_NAME, systemLevelRecord._nameLen * sizeof(char));
+
+	startOutputRecord();	
 	writeOutputRecord(buffer, bufferSize);
+	endOutputRecord();
+
 	delete[] buffer;
 }
 
@@ -234,7 +208,7 @@ DataLog_LocalOutputTask::DataLog_LocalOutputTask(const char * platformName, cons
 	writeLogFileHeader(platformName, nodeName);
 }
 
-void DataLog_LocalOutputTask::handleBufferSizeChange(size_t size)
+void DataLog_LocalOutputTask::startOutputRecord(void)
 {
 }
 
@@ -261,6 +235,10 @@ void DataLog_LocalOutputTask::writeOutputRecord(DataLog_BufferData * buffer, siz
 	}
 
 	gzwrite(_compressedFile, encryptedBuffer, encryptedSize);
+}
+
+void DataLog_LocalOutputTask::endOutputRecord()
+{
 }
 
 void DataLog_LocalOutputTask::shutdown(void)
@@ -309,11 +287,11 @@ void DataLog_LocalOutputTask::writeLogFileHeader(const char * platformName, cons
 		sizeof(DataLog_TaskID),
 		DATALOG_CURRENT_TASK,
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 		sizeof(DataLog_NodeID),
-#else /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#else /* ifdef DATALOG_NETWORK_SUPPORT */
 		0,
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 		(DATALOG_MAJOR_VERSION<<8) | DATALOG_MINOR_VERSION
 	};
@@ -324,20 +302,20 @@ void DataLog_LocalOutputTask::writeLogFileHeader(const char * platformName, cons
 	write(_outputFD, (char *)&platformNameLen, sizeof(DataLog_UINT16));
 	write(_outputFD, (char *)platformName, platformNameLen*sizeof(char));
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 	DataLog_NodeID nodeId = datalog_NodeID();
 	write(_outputFD, (char *)&nodeId, sizeof(DataLog_NodeID));
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 	DataLog_TimeStampStart start;
 	datalog_GetTimeStampStart(&start);
 	write(_outputFD, (char *)&start, sizeof(start));
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 	DataLog_UINT16	nodeNameLen = strlen(nodeName);
 	write(_outputFD, (char *)&nodeNameLen, sizeof(DataLog_UINT16));
 	write(_outputFD, (char *)nodeName, nodeNameLen*sizeof(char));
-#endif
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 }
 
 void DataLog_LocalOutputTask::writeFileCloseRecord(void)
@@ -346,7 +324,10 @@ void DataLog_LocalOutputTask::writeFileCloseRecord(void)
 
 	fileCloseRecord._recordType = DataLog_FileCloseRecordID;
 	datalog_GetTimeStamp(&fileCloseRecord._timeStamp);
-	writeOutputRecord((DataLog_BufferData *)&fileCloseRecord, sizeof(fileCloseRecord));	
+
+	startOutputRecord();
+	writeOutputRecord((DataLog_BufferData *)&fileCloseRecord, sizeof(fileCloseRecord));
+	endOutputRecord();
 }
 
 DataLog_NetworkOutputTask::DataLog_NetworkOutputTask(long connectTimeout, const char * nodeName)
@@ -386,20 +367,13 @@ void DataLog_NetworkOutputTask::writeLogFileNetworkHeader(const char * nodeName)
 	datalog_GetTimeStampStart(&networkHeader->_start);
 	networkHeader->_nodeNameLen = strlen(nodeName);
 	memcpy(&buffer[sizeof(DataLog_NetworkHeaderRecord)], nodeName, sizeof(char)*networkHeader->_nodeNameLen);
+
+	startOutputRecord();
 	writeOutputRecord(buffer, bufferSize);
+	endOutputRecord();
 }
 
-void DataLog_NetworkOutputTask::handleBufferSizeChange(size_t size)
-{
-	DataLog_NetworkPacket	packet;
-
-	packet._type = DataLog_NotifyBufferSize;
-	packet._length = sizeof(size_t);
-	write(_outputFD, (char *)&packet, sizeof(packet));
-	write(_outputFD, (char *)&size, sizeof(size));
-}
-
-void DataLog_NetworkOutputTask::writeOutputRecord(DataLog_BufferData * buffer, size_t size)
+void DataLog_NetworkOutputTask::startOutputRecord(void)
 {
 	DataLog_NetworkPacket	packet;
 	int	dataIndex = 0;
@@ -410,6 +384,12 @@ void DataLog_NetworkOutputTask::writeOutputRecord(DataLog_BufferData * buffer, s
 	packet._type = DataLog_StartOutputRecord;
 	packet._length = 0;
 	write(_outputFD, (char *)&packet, sizeof(packet));
+}
+
+void DataLog_NetworkOutputTask::writeOutputRecord(DataLog_BufferData * buffer, size_t size)
+{
+	DataLog_NetworkPacket	packet;
+	int	dataIndex = 0;
 
 	//
 	// Send output record data
@@ -417,15 +397,20 @@ void DataLog_NetworkOutputTask::writeOutputRecord(DataLog_BufferData * buffer, s
 	while ( dataIndex < size )
 	{
 		packet._type = DataLog_OutputRecordData;
-		packet._length = ( size-dataIndex < DataLog_NetworkClientTask::MaxDataSize ) ? size-dataIndex : DataLog_NetworkClientTask::MaxDataSize;
+		packet._length = ( size-dataIndex < DataLog_BufferSize ) ? size-dataIndex : DataLog_BufferSize;
 		write(_outputFD, (char *)&packet, sizeof(packet));
 		write(_outputFD, (char *)&buffer[dataIndex], packet._length);
 		dataIndex += packet._length;
 	}
+}
 
+void DataLog_NetworkOutputTask::endOutputRecord(void)
+{
 	//
 	// Notify network client of end of output record data
 	//
+	DataLog_NetworkPacket	packet;
+
 	packet._type = DataLog_EndOutputRecord;
 	packet._length = 0;
 	write(_outputFD, (char *)&packet, sizeof(packet));

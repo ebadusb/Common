@@ -1,8 +1,10 @@
-# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/makefile.vx 1.12 2002/08/15 20:55:08Z jl11312 Exp ms10234 $
+# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/makefile.vx 1.13 2002/12/12 18:28:27Z ms10234 Exp ms10234 $
 #
 # Makefile - makefile for router library
 #
 # $Log: makefile.vx $
+# Revision 1.12  2002/08/15 20:55:08Z  jl11312
+# - modified to use new application build templates
 # Revision 1.11  2002/07/17 18:54:02  ms10234
 # removed msgcrc.cpp from router library to the softcrc library.
 # Revision 1.10  2002/07/17 18:43:53  ms10234
@@ -57,7 +59,7 @@ include $(MAINDIR)/makefile.vxc
 # to be compiled for the library
 #
 LIB_C_FILES   = 
-LIB_CXX_FILES = dispatcher.cpp messagebase.cpp messagesystem.cpp router.cpp \
+LIB_CXX_FILES = dispatcher.cpp messagepacket.cpp messagebase.cpp messagesystem.cpp router.cpp \
                 timermessage.cpp msgsystimer.cpp objdictionary.cpp gateway.cpp \
                 messagesystemconstant.cpp spoofermessagesystem.cpp spooferdispatcher.cpp
 LIB_S_FILES =

@@ -465,16 +465,15 @@ void MsgSysTimer::checkTimers()
    // 
    // Check the top of the priority queue for entries which
    //  have expired ...
+   QueueEntry qe;
    while (    !_TimerQueue.empty()
-           && _TimerQueue.top() <= _Time+5000 )
+           && ( qe = _TimerQueue.top() ) <= _Time+5000 )
    {
-      QueueEntry qe = _TimerQueue.top();
       _TimerQueue.pop();
 
       //
       // If the timer is not disarmed...
-      if (    qe._MapEntryPtr 
-           && qe._MapEntryPtr->_Interval > 0 )
+      if ( qe._MapEntryPtr->_Interval > 0 )
       {
          //
          // Get the message packet to send off ...
@@ -523,7 +522,7 @@ void MsgSysTimer::checkTimers()
             }
          }
       }
-      else if ( qe._MapEntryPtr )
+      else 
       {
          //
          // Delete the map entry object that the queue entry points to...

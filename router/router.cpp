@@ -379,9 +379,8 @@ bool Router::initGateways()
          mp.msgData().msgLength( sizeof( short ) );
          mp.msgData().totalNum( 1 );
          mp.msgData().seqNum( 1 );
-         mp.msgData().packetLength( sizeof( short ) );
          mp.msgData().msg( (unsigned char*)&timeDelay, 
-                           sizeof( unsigned int ) );
+                           sizeof( unsigned long ) );
          mp.updateCRC();
          sendMessage( mp, _TimerQueue, taskIdSelf(), 0 );
          _GatewayConnAtmptMap[ netAddress ] = 0;

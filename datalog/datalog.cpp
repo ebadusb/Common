@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.1 2002/05/17 14:51:29 jl11312 Exp jl11312 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.13 2003/12/05 16:33:05Z jl11312 Exp rm70006 $
  * $Log: datalog.cpp $
+ * Revision 1.1  2002/05/17 14:51:29  jl11312
+ * Initial revision
  *
  */
 
@@ -25,9 +27,9 @@ DataLog_Level::~DataLog_Level()
 {
 }
 
-ologstream & DataLog_Level::operator()(const char * fileName, int lineNumber)
+ostream & DataLog_Level::operator()(const char * fileName, int lineNumber)
 {
-	return (ologstream &)cout;
+	return cout;
 }
 
 DataLog_Critical::DataLog_Critical(void)

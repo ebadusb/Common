@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/router.c 1.11 2001/05/11 19:57:01 jl11312 Exp jl11312 $
  * $Log: router.c $
+ * Revision 1.5  1999/08/01 21:06:47  BS04481
+ * Non-critical code review changes identifed in 3.2 review
  * Revision 1.4  1999/07/30 20:49:55  TD10216
  * IT4154
  * Revision 1.3  1999/07/14 22:44:21  BS04481
@@ -125,6 +127,7 @@
 #include <sys/psinfo.h>
 #include <sys/qnx_glob.h>
 #include <sys/sched.h>
+#include <sys/stat.h>
 #include <sys/trace.h>
 #include <sys/tracecod.h>
 #include <sys/types.h>
@@ -136,6 +139,8 @@
 #include "msghdr.h"
 #include "sinver.h"
 #include "mq_check.h"
+#include "shutdown.h"
+#include "router.h"
 
 
 // #defines, typedefs, enums, structs
@@ -144,6 +149,7 @@
 #define ERROR_LENGTH 132
 #define MAX_Q_MSGS  128
 #define QNX_ERROR (-1)
+#define ERROR_SIZE 300        // error buffer length
 
 typedef enum
 {
@@ -176,24 +182,9 @@ typedef struct
    unsigned char  msgs[MAX_MESSAGES];        // registered messages
 } SPOOFER;
 
-typedef struct
-{
-   char           name[NAME_LENGTH];         // task name
-   pid_t          pid;                       // pid
-   mqd_t          mq;                        // message queue
-   int            signal;                    // signal to use on kill
-} TASKKILL;
-
-enum KILLEDPROCS { 
-	TRACELOG, SAFEDRV, CTLDRV, PFSAVE, SAFEXEC, DATALOG, METER, GUI, 
-	PHOTON,EVERESTLOG,
-	// leave this be the last entry - used to loop the list
-	TASK_KILL_COUNT
-};
 
 
 // local routines
-
 static void distributeMessage( MSGHEADER* msg);
 static void processGateways( MSGHEADER* msg);
 static void openRouterQueue( char*  qname,
@@ -202,7 +193,6 @@ static void openRouterQueue( char*  qname,
                              struct sigevent* qnotify);
 static void messageDeregister( char* msg, TASKSTATUS status);
 static void messageRegister( char* msg, bounce_t bounce);
-static void shutdown(void);
 static int  spoofMessage( MSGHEADER* msg);
 static void gatewayRegister( char* msg);
 static void spooferRegister( char* msg);
@@ -221,8 +211,21 @@ static mqd_t      mq;                        // router input q
 static pid_t      gatewayPID = QNX_ERROR;    // gateway PID
 static mqd_t      gatewayQueue = QNX_ERROR;  // gateway Q
 static volatile unsigned char taskRunning=1; // task running
-static TASKKILL   taskKillTable[TASK_KILL_COUNT];
 
+#define _PROC_SHUTDOWN      39         // System shutdown
+
+typedef struct
+{
+   short unsigned  type, signum, zero[2];
+} SHUTDOWN_MESSAGE;
+
+typedef struct
+{
+   short unsigned  status;
+} SHUTDOWN_REPLY;
+static SHUTDOWN_MESSAGE msg;           // shutdown message
+static SHUTDOWN_MESSAGE reply;         // shutdown reply
+static sigset_t bits = ~0L;            // signal bits
 
 // SPECIFICATION:    signal handler, causes program to stop, called by QNX
 //                   Parameter:
@@ -245,9 +248,12 @@ void signalHandler( int signum)
 static
 void fatalError( int line, int code, char* err)
 {
-   static char rev[] = "$ProjectRevision: 1.21 $";     // rev code
+   static char rev[] = "$ProjectRevision: 5.14 $";     // rev code
+   static char buf[ERROR_SIZE]; // static to avoid stack overflow
+
+   sprintf(buf, "FATAL %.290s", err);
    
-   _LOG_ERROR( __FILE__, line, TRACE_ROUTER, code, err);
+   _LOG_ERROR_WITH_DISPLAY( __FILE__, line, TRACE_ROUTER, code, buf);
    printf("\nBuild %s. \nAn internal software error has occured.\n\n", rev);
    printf("Wait 1 minute then turn off power.  Wait 5 seconds,\n"); 
    printf("and turn power back on. Follow the disconnect procedure.\n\n");
@@ -255,92 +261,30 @@ void fatalError( int line, int code, char* err)
    shutdown();                              // shutdown router
 }
 
-
 
-// SPECIFICATION:    main entry point to start router
-//                   argc and argv are used to access the command line
-//                      parameter 1 = local queue name
-//                                2 = remote node number
-//                                3 = remote queue name
-//                   arge is used to access the environment for spawning gateway
+// SPECIFICATION:    Message handling loop
 //
 // ERROR HANDLING:   Calls fatalError().
 
 void
-main(int argc, char** argv, char** arge)
+messageLoop(pid_t gatePID, char* ownPrefix)
 {
    pid_t          pid;                       // msg received from pid
    pid_t          qproxy;                    // message queue proxy
    char           msg[BSIZE];                // receive message buffer
    MSGHEADER*     msgHeader;                 // pointer to message header
    struct sigevent qnotify;                  // q notify structure
-   struct sched_param param;                 // scheduler parameters
    int            k;                         // loop counter
 
-   // set priority and scheduling method to round robin
-   setprio( 0, 11);
-   sched_getparam( 0, &param);
-   sched_setscheduler( 0, SCHED_RR, &param);
+   gatewayPID=gatePID;
 
-   // check parameter list
-   if(argc < 4)
+   if (gatewayPID != QNX_ERROR)
    {
-      fatalError(__LINE__, 0, "Not enough parameters");
-   }
-
-   // signal handlers
-   signal( SIGHUP, signalHandler);
-   signal( SIGINT, signalHandler);
-   signal( SIGQUIT, signalHandler);          // used by procedure
-   signal( SIGTERM, signalHandler);
-   signal( SIGPWR, signalHandler);           // shutdown and power fail
-
-   // clear the message lookup table
-   for(k=0;k<MAX_MESSAGES;k++)
-      messageLookupTable[k] = NULL;
-
-   // setup the task kill table
-   for(k=0;k<TASK_KILL_COUNT;k++)
-   {
-      taskKillTable[k].pid = QNX_ERROR;
-      taskKillTable[k].mq = QNX_ERROR;
-   }
-   strcpy(taskKillTable[SAFEDRV].name,"safe_drv");
-   taskKillTable[SAFEDRV].signal = SIGHUP;
-   strcpy(taskKillTable[CTLDRV].name,"ctl_drv");
-   taskKillTable[CTLDRV].signal = SIGHUP;
-   strcpy(taskKillTable[PFSAVE].name,"pfsave");
-   taskKillTable[PFSAVE].signal = SIGKILL;
-   strcpy(taskKillTable[SAFEXEC].name,"saf_exec");
-   taskKillTable[SAFEXEC].signal = SIGKILL;
-   strcpy(taskKillTable[TRACELOG].name,"tracelogger");
-   taskKillTable[TRACELOG].signal = SIGALRM;
-   strcpy(taskKillTable[DATALOG].name,"datalogr");
-   taskKillTable[DATALOG].signal = SIGHUP;
-   strcpy(taskKillTable[METER].name,"meter");
-   taskKillTable[METER].signal = SIGHUP;
-   strcpy(taskKillTable[GUI].name,"gui");
-   taskKillTable[GUI].signal = SIGHUP;
-   strcpy(taskKillTable[PHOTON].name,"Photon");
-   taskKillTable[PHOTON].signal = SIGHUP;
-   strcpy(taskKillTable[EVERESTLOG].name,"everest_logger");
-   taskKillTable[EVERESTLOG].signal = SIGHUP;
-
-   // spawn gateway and open gateway queue
-   if( getnid() != atoi( argv[2]))           // local node not remote node
-   {
+      // build gateway q name and try to open it
       char gatewayQueueName[NAME_LENGTH];    // message queue name
 
-      // spawn gateway
-      gatewayPID = qnx_spawn( 0,NULL,0,-1,-1,0,"gateway",argv,arge,NULL,-1);
-      if(gatewayPID == QNX_ERROR)
-      {
-         fatalError( __LINE__, errno, "qnx_spawn()");
-      }
-
-      // build gateway q name and try to open it
       k = 0;
-      strcpy( gatewayQueueName, argv[1]);
+      strcpy( gatewayQueueName, ownPrefix);
       strcat( gatewayQueueName, "Gateway");
       while( gatewayQueue == QNX_ERROR)      // try for ten seconds
       {
@@ -352,15 +296,21 @@ main(int argc, char** argv, char** arge)
          }
       }
    }
-   else                                      // warn about test mode
-   {
-      _LOG_ERROR( __FILE__, __LINE__, TRACE_ROUTER, 0, "TEST MODE, no gateway started");
-   }
+   
+   // signal handlers
+   signal( SIGHUP, signalHandler);
+   signal( SIGINT, signalHandler);
+   signal( SIGQUIT, signalHandler);          // used by procedure
+   signal( SIGTERM, signalHandler);
+   signal( SIGPWR, signalHandler);           // shutdown and power fail
 
+   // clear the message lookup table
+   for(k=0;k<MAX_MESSAGES;k++)
+      messageLookupTable[k] = NULL;
 
    // open router input queue
 
-   strncpy( qName, argv[1], NAME_LENGTH-1);
+   strncpy( qName, ownPrefix, NAME_LENGTH-1);
    qName[NAME_LENGTH-1] = 0;
    openRouterQueue( qName, &mq, &qproxy, &qnotify);
 
@@ -560,7 +510,7 @@ distributeMessage( MSGHEADER* msg)
    
                qnx_psinfo( PROC_PID, t->h.taskPID, &psdata, 0, 0);
                sprintf( buffer, __FILE__ "-PID=%d, %s, queue full", t->h.taskPID, psdata.un.proc.name);
-               _LOG_ERROR( __FILE__, __LINE__, TRACE_ROUTER, t->h.taskPID, buffer);
+               _LOG_ERROR_WITH_DISPLAY( __FILE__, __LINE__, TRACE_ROUTER, t->h.taskPID, buffer);
    
                // dump queue to trace log
                while( mq_receive( t->mq, qmsg, BSIZE, 0) != QNX_ERROR)
@@ -620,7 +570,7 @@ processGateways( MSGHEADER* msg)
          }
          else
          {
-            _LOG_ERROR( __FILE__, __LINE__, TRACE_ROUTER, 0, "killed gateway");
+            _LOG_ERROR_WITH_DISPLAY( __FILE__, __LINE__, TRACE_ROUTER, 0, "killed gateway");
             taskDeregister( (char*) &g->h);
             break;
          }
@@ -684,27 +634,15 @@ static void openRouterQueue(  char* qname,
 //
 // ERROR HANDLING:   None.
 
-static void shutdown(void)
+void shutdown(void)
 {
-   int i;
    GATEWAYLIST* g = gatewayList;
    GATEWAYLIST* g1;
 
    taskRunning = 0;                 // clear task running flag
 
-   // raise the priority of this task and the tracelogger
-   qnx_scheduler(0,0,-1,26,0);
-   if (taskKillTable[TRACELOG].pid != QNX_ERROR)
-      qnx_scheduler(0,taskKillTable[TRACELOG].pid,-1,25,0);
-
-   for(i=0;i<TASK_KILL_COUNT;i++)
-   {
-      if ( (taskKillTable[i].pid != QNX_ERROR)
-         &&(taskKillTable[i].pid != 0) )
-      {
-         kill(taskKillTable[i].pid,taskKillTable[i].signal);
-      }
-   }
+   // do application specific shutdown
+   applicationShutdown();
 
    // if gateway Q active, close it
    if(gatewayQueue != QNX_ERROR)
@@ -728,8 +666,21 @@ static void shutdown(void)
       free( g1);                    // free memory
    }
    gatewayList = 0;                    // clear tasklist
-   
 
+// block all signals, if this call fails, keep going anyway
+   sigprocmask( SIG_BLOCK, &bits, 0);
+
+// send shutdown to proc
+   msg.type = _PROC_SHUTDOWN;
+   msg.signum = SIGPWR;
+   msg.zero[0] = 0;
+   msg.zero[1] = 0;
+   errno = 0;
+
+   delay(600);
+// send message to proc, if this fails, keep  going anyway
+   Send( PROC_PID, &msg, &reply, sizeof( msg), sizeof(reply));
+   
 }
 
 
@@ -946,7 +897,7 @@ static int spoofMessage( MSGHEADER* msg)
             }
             else
             {
-               _LOG_ERROR( __FILE__, __LINE__, TRACE_ROUTER, 0, "killed spoofer");
+               _LOG_ERROR_WITH_DISPLAY( __FILE__, __LINE__, TRACE_ROUTER, 0, "killed spoofer");
                kill(spoofer->h.taskPID, SIGHUP);
                free(spoofer);
                spoofer = NULL;
@@ -971,7 +922,6 @@ static void gatewayRegister( char* msg)
    GATEWAYLIST *newEntry = malloc( sizeof(GATEWAYLIST));
    struct _psinfo    psdata;                 // process data
    pid_t pid;
-	int i;
 
    if(newEntry == NULL)
    {
@@ -1009,21 +959,13 @@ static void gatewayRegister( char* msg)
       fatalError( __LINE__, 0, buffer);
    }
 
-   // if this task is one of the essential shutdown tasks, we need
-   // to capture the PID and mq
-   for(i=0;i<TASK_KILL_COUNT;i++)
-   {
-      if (strcmp(taskKillTable[i].name,basename(psdata.un.proc.name)) == 0)
-      {
-         taskKillTable[i].pid = pid;
-         taskKillTable[i].mq = newEntry->mq;
-         break;
-      }
-   }
-
    // update CRC and add to list
    updateFocusMsgCRC( newEntry);
    gatewayList = newEntry;
+
+   // if this task is one of the essential shutdown tasks, we need
+   // to capture the PID and mq
+   addEssentialTasks(pid, newEntry->mq, basename(psdata.un.proc.name));
 }
 
 
@@ -1123,9 +1065,6 @@ static void taskRegister( char* msg)
    TASKLIST *newEntry = malloc( sizeof(TASKLIST));
    struct _psinfo    psdata;                 // process data
    pid_t pid;
-   int i;
-   struct _trace_info info;
-   pid_t id;
 
    if(newEntry == NULL)
    {
@@ -1167,42 +1106,8 @@ static void taskRegister( char* msg)
 
    // if this task is one of the essential shutdown tasks, we need
    // to capture the PID and mq
-   for(i=0;i<TASK_KILL_COUNT;i++)
-   {
-      if (strcmp(taskKillTable[i].name,basename(psdata.un.proc.name)) == 0)
-      {
-         taskKillTable[i].pid = pid;
-         taskKillTable[i].mq = newEntry->mq;
-
-         // see if the tracelogger is up by now
-         if (taskKillTable[TRACELOG].pid == QNX_ERROR)
-         {
-            if (qnx_trace_info(0, &info) == -1)
-               _LOG_ERROR( __FILE__, __LINE__, TRACE_ROUTER, 0, "No trace info");
-            else if (info.reader != 0)
-            {
-               taskKillTable[TRACELOG].pid = info.reader;
-            }
-         }
-
-         break;
-      }
-   }
-   // see if Photon is up
-   if (taskKillTable[PHOTON].pid == QNX_ERROR)
-   {
-      id = 1;
-      while ( (id = qnx_psinfo(0, id, &psdata, 0, 0)) != -1) 
-      {
-         if ( (stricmp(basename(psdata.un.proc.name),"Photon")) == 0 )
-         {
-            if (id != 0)
-               taskKillTable[PHOTON].pid = id;
-            break;
-         }
-         id++;
-      }
-   }
+   addEssentialTasks(pid, newEntry->mq, basename(psdata.un.proc.name));
+   
 }
 
 
@@ -1343,19 +1248,7 @@ static void taskDeregister( char* msg)
       spoofer = NULL;
    }
 
-   // if this task is one of the essential shutdown tasks, we need
-   // to remove it from the shutdown list
-   // make sure both the PID and the name match our shutdown list
-   // before removing it
-   for(i=0;i<TASK_KILL_COUNT;i++)
-   {
-      if ( (taskKillTable[i].pid == newEntry->h.taskPID)
-         &&( strcmp(taskKillTable[i].name,basename(psdata.un.proc.name)) == 0) )
-      {
-         taskKillTable[i].pid = QNX_ERROR;
-         taskKillTable[i].mq = QNX_ERROR;
-         break;
-      }
-   }
+   // if this is one of the essential tasks, remove it from shutdown list
+   removeEssentialTasks(newEntry->h.taskPID, basename(psdata.un.proc.name));
 }
 

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/filesort.c 1.3 2003/05/13 15:01:00Z jl11312 Exp jl11312 $
  * $Log: filesort.c $
+ * Revision 1.3  2003/05/13 15:01:00Z  jl11312
+ * - fileSort no longer performs final callback with NULL file name
  * Revision 1.2  2002/12/03 19:20:43Z  jl11312
  * - corrected logic for storing file names
  * Revision 1.1  2002/09/19 22:15:43  jl11312
@@ -14,6 +16,7 @@
 #include <dirent.h>
 #include <stdio.h>
 #include "filesort.h"
+#include "readdir_stat.h"
 
 typedef struct
 {
@@ -84,7 +87,8 @@ STATUS fileSort(const char * dirName, FileSortType sortType, fileSortCallBack * 
 
 	if ( sortDir )
 	{
-		struct dirent	* dirEntry;
+		struct dirent * dirEntry;
+		struct stat	  	 fileStat;
 		char 	fullPathName[NAME_MAX+1];
 
 		size_t	fileCount = 0;
@@ -100,7 +104,7 @@ STATUS fileSort(const char * dirName, FileSortType sortType, fileSortCallBack * 
 		/*
 		 *	Scan directory
 		 */
-		while ( (dirEntry = readdir(sortDir)) != NULL )
+		while ( (dirEntry = readdir_stat(sortDir, &fileStat)) != NULL )
 		{
 			/*
 			 *	Skip . and .. directory entries
@@ -109,7 +113,6 @@ STATUS fileSort(const char * dirName, FileSortType sortType, fileSortCallBack * 
 				  strcmp(dirEntry->d_name, "..") != 0 )
 			{
 				int	fileNameLen = strlen(dirEntry->d_name);
-				struct stat	fileStat;
 
 				if ( fileCount >= fileListSize )
 				{
@@ -136,16 +139,12 @@ STATUS fileSort(const char * dirName, FileSortType sortType, fileSortCallBack * 
 				/*
 				 *	Get file information and add it to the file list
 				 */
-				buildFullPathName(fullPathName, dirName, dirEntry->d_name);
-				if ( stat(fullPathName, &fileStat) == OK )
-				{
-					strcpy(&fileNameBuffer[fileNameBufferPos], dirEntry->d_name);
-					fileList[fileCount].fileNameIndex = fileNameBufferPos;
-					fileList[fileCount].lastModifyTime = fileStat.st_mtime;
+				strcpy(&fileNameBuffer[fileNameBufferPos], dirEntry->d_name);
+				fileList[fileCount].fileNameIndex = fileNameBufferPos;
+				fileList[fileCount].lastModifyTime = fileStat.st_mtime;
 
-					fileNameBufferPos += fileNameLen+1;
-					fileCount += 1;
-				}
+				fileNameBufferPos += fileNameLen+1;
+				fileCount += 1;
 			}
 		}
 

@@ -226,7 +226,7 @@ void Router::dispatchMessages()
 
 }
 
-void Router::dump( ostream &outs )
+void Router::dump( DataLog_Stream &outs )
 {
    outs << "------------------------- Router DUMP -----------------------------" << endl;
 
@@ -1282,7 +1282,7 @@ short Router::getGatewayPort()
 }
 
 
-void Router::dumpQueue( unsigned long tId, mqd_t mqueue, ostream &out )
+void Router::dumpQueue( unsigned long tId, mqd_t mqueue, DataLog_Stream &out )
 {
    struct mq_attr old_attr;                                    // message queue attributes 
    struct mq_attr attr;                                    // message queue attributes 
@@ -1387,7 +1387,11 @@ void routerInit()
 
 void routerDump()
 {
+	DataLog_Level	routerDump("router_dump");
+	routerDump.logOutput(DataLog_LogDisabled);
+	routerDump.consoleOutput(DataLog_ConsoleEnabled);
+
    if ( Router::globalRouter() )
-      Router::globalRouter()->dump( cout );
+      Router::globalRouter()->dump( DataLog(routerDump) );
 }
 

@@ -10,13 +10,17 @@
 #include <taskHookLib.h>
 
 #include "error.h"
+#include "gateway.h"
 #include "messagesystem.h"
 #include "router.h"
+#include "systemoverrides.h"
 #include "tcpconnect.h"
+
 
 const unsigned int Router::MAX_NUM_RETRIES=1;
 const struct timespec Router::RETRY_DELAY={ 1 /* seconds */, 0 /*nanoseconds*/ };
 const unsigned int Router::DEFAULT_Q_SIZE=100;
+const unsigned int Router::CONNECT_DELAY=500; // milliseconds
 WIND_TCB *Router::_TheRouterTid=0;
 Router *Router::_TheRouter=0;
 
@@ -98,6 +102,7 @@ bool Router::init()
    struct mq_attr attr;                        // message queue attributes 
    attr.mq_maxmsg =  DEFAULT_Q_SIZE;           // set max number of messages 
    attr.mq_msgsize = sizeof( MessagePacket );  // set message size 
+   attr.mq_flags = 0;
 
    //
    // open queue
@@ -110,6 +115,14 @@ bool Router::init()
       //
       // Error ...
       _FATAL_ERROR( __FILE__, __LINE__, "Router message queue open failed" );
+      return false;
+   }
+
+   if ( initGateways() == false )
+   {
+      //
+      // Error ...
+      _FATAL_ERROR( __FILE__, __LINE__, "Router init gateways failed" );
       return false;
    }
 
@@ -126,13 +139,14 @@ void Router::dispatchMessages()
       return;
 
    int size=0;
+   int priority=0;
    char buffer[ sizeof( MessagePacket ) ];
    do
    {
       //
       // Read the queue entry ...
       unsigned int retries=0;
-      while (    ( size = mq_receive( _RouterQueue, &buffer, sizeof( MessagePacket ), 0 ) ) == ERROR 
+      while (    ( size = mq_receive( _RouterQueue, &buffer, sizeof( MessagePacket ), &priority ) ) == ERROR 
               && retries++ < MAX_NUM_RETRIES ) nanosleep( &Router::RETRY_DELAY, 0 );
       if ( size == ERROR )
       {
@@ -159,7 +173,7 @@ void Router::dispatchMessages()
          _FATAL_ERROR( __FILE__, __LINE__, buffer );
       }  
 
-      processMessage( mp );
+      processMessage( mp, priority );
 
    } while ( _StopLoop == false );
 
@@ -214,7 +228,83 @@ void Router::dump( ostream &outs )
 
 }
 
-void Router::processMessage( MessagePacket &mp )
+bool Router::initGateways()
+{
+   //
+   // Spawn all gateways and give myself messages informing me to connect
+   //  to the gateways ...
+   short localport=0;
+   short remoteport=0;
+   unsigned long netAddress=0;
+   char gateName[17];
+
+   map< short, unsigned long > portAddressMap;
+   map< short, unsigned long >::iterator paiter;
+
+   //
+   // Get the map of network connections
+   getNetworkedNodes( portAddressMap );
+
+   //
+   // Determine my connection port ...
+   for ( paiter = portAddressMap.begin() ;
+         paiter != portAddressMap.end() ;
+         paiter++ )
+   {
+      netAddress = (*paiter).second;
+      if ( netAddress == getNetworkAddress() )
+         localport = (*paiter).first;
+   }
+
+   //
+   // Connect to the other nodes ...
+   for ( paiter = portAddressMap.begin() ;
+         paiter != portAddressMap.end() && localport != 0 ;
+         paiter++ )
+   {
+      netAddress = (*paiter).second;
+      if ( netAddress != getNetworkAddress() )
+      {
+         remoteport = (*paiter).first;
+         sprintf( gateName, "tGateway%lx", netAddress );
+         if (    taskNameToId( gateName ) != ERROR
+              || (    taskNameToId( gateName ) == ERROR
+                   && taskSpawn ( gateName , 4, 0, 20000,
+                             (FUNCPTR) Gateway::Gateway_main , remoteport,0,0,0,0,0,0,0,0,0) == ERROR 
+                 )
+            )
+         {
+            //
+            // Error ...
+            char buffer[256];
+            sprintf( buffer,"Router init - could not spawn gateway for address -> %lx",
+                     netAddress );
+            _FATAL_ERROR( __FILE__, __LINE__, buffer );
+            return false;
+         }
+   
+         //
+         // Send the message packet to connect to the gateways ...
+         MessagePacket mp;
+         mp.msgData().osCode( MessageData::GATEWAY_CONNECT );
+         mp.msgData().msgId( 0 );
+         mp.msgData().nodeId( netAddress );
+         mp.msgData().taskId( taskIdSelf() );
+         mp.msgData().msgLength( sizeof( short ) );
+         mp.msgData().totalNum( 1 );
+         mp.msgData().seqNum( 1 );
+         mp.msgData().packetLength( sizeof( short ) );
+         mp.msgData().msg( (unsigned char*)&localport, sizeof( short ) );
+         mp.updateCRC();
+         sendMessage( mp, _RouterQueue, taskIdSelf(), 0 );
+
+      }
+   }
+
+   return true;
+}
+
+void Router::processMessage( MessagePacket &mp, int priority )
 {
    //
    // Determine what type of message this is ...
@@ -229,10 +319,12 @@ void Router::processMessage( MessagePacket &mp )
       break;
    case MessageData::MESSAGE_NAME_REGISTER:
       checkMessageId( mp.msgData().msgId(), (const char *)( mp.msgData().msg() ) );
+      sendMessageToGateways( mp );
       break;
    case MessageData::MESSAGE_REGISTER:
       checkMessageId( mp.msgData().msgId(), (const char *)( mp.msgData().msg() ) );
       registerMessage( mp.msgData().msgId(), mp.msgData().taskId() );
+      sendMessageToGateways( mp );
       break;
    case MessageData::MESSAGE_DEREGISTER:
       checkMessageId( mp.msgData().msgId(), (const char *)( mp.msgData().msg() ) );
@@ -252,7 +344,7 @@ void Router::processMessage( MessagePacket &mp )
    case MessageData::MESSAGE_MULTICAST_LOCAL:
    case MessageData::SPOOFED_MESSAGE:
       checkMessageId( mp.msgData().msgId() );
-      sendMessage( mp );
+      sendMessage( mp, priority );
       break;
    default:
       _FATAL_ERROR( __FILE__, __LINE__, "Unknown OSCode in message packet" );
@@ -280,12 +372,15 @@ void Router::connectWithGateway( const MessagePacket &mp )
       if ( !socketbuffer )
       {
          _FATAL_ERROR( __FILE__, __LINE__,"Create socket buffer failed");
+         return;
       }
    
       struct timeval tv;
       tv.tv_sec = 0;
-      tv.tv_usec = 250 /*milliseconds*/ * 1000;
-      int status = socketbuffer->connectWithTimeout( mp.msgData().nodeId(), 222 /*port*/, &tv );
+      tv.tv_usec = CONNECT_DELAY * 1000;
+      short port;
+      memmove( &port, mp.msgData().msg(), sizeof( short ) );
+      int status = socketbuffer->connectWithTimeout( ntohl( mp.msgData().nodeId() ), port/*port*/, &tv );
 
       //
       // If connected, add to list ...
@@ -297,7 +392,11 @@ void Router::connectWithGateway( const MessagePacket &mp )
       // If not connected, add message to the queue to try again ...
       else
       {
-         sendMessage( mp, _RouterQueue, taskIdSelf() );
+         //
+         // ... give back my socket memory.
+         delete socketbuffer;
+         
+         sendMessage( mp, _RouterQueue, taskIdSelf(), 0 );
       }
    }
    else
@@ -446,7 +545,7 @@ void Router::checkMessageId( unsigned long msgId, const char *mname )
       //    add the message Id and the message name to the list...
       //
       _MsgIntegrityMap[ msgId ] = mname;
-   }
+   } 
 
 }
 
@@ -571,7 +670,7 @@ void Router::deregisterSpooferMessage( unsigned long msgId)
 {
 }
 
-void Router::sendMessage( const MessagePacket &mp )
+void Router::sendMessage( const MessagePacket &mp, int priority )
 {
    //
    // Distribute the message to the local tasks
@@ -611,7 +710,7 @@ void Router::sendMessage( const MessagePacket &mp )
          // If the task was found to be registered ...
          else
          {
-            sendMessage( mp, (*tqiter).second, (*tqiter).first );
+            sendMessage( mp, (*tqiter).second, (*tqiter).first, priority );
          }
 
       }
@@ -624,7 +723,7 @@ void Router::sendMessage( const MessagePacket &mp )
    sendMessageToGateways( mp );
 }
 
-void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned long tId )
+void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned long tId, int priority )
 {
    //
    // Check the task's queue to see if it is full or not ...
@@ -645,7 +744,7 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
    //
    // Send message to the task ...
    unsigned int retries=0;
-   while (    mq_send( mqueue , &mp, sizeof( MessagePacket ), 0 ) == ERROR 
+   while (    mq_send( mqueue , &mp, sizeof( MessagePacket ), priority ) == ERROR 
            && retries++ < MAX_NUM_RETRIES ) nanosleep( &Router::RETRY_DELAY, 0 );
    if ( retries == MAX_NUM_RETRIES )
    {
@@ -658,10 +757,20 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
    }
 }
 
-void Router::sendMessageToGateways( const MessagePacket &mp )
+void Router::sendMessageToGateways( const MessagePacket &mpConst )
 {
-   if ( mp.msgData().osCode() == MessageData::MESSAGE_MULTICAST)
+   if (    (    mpConst.msgData().osCode() == MessageData::MESSAGE_MULTICAST
+             || mpConst.msgData().osCode() == MessageData::MESSAGE_NAME_REGISTER
+             || mpConst.msgData().osCode() == MessageData::MESSAGE_REGISTER
+             || mpConst.msgData().osCode() == MessageData::MESSAGE_DEREGISTER )
+        && mpConst.msgData().nodeId() == 0 )
    {
+      MessagePacket mp( mpConst );
+      //
+      // Assign the message packet this nodes network address
+      mp.msgData().nodeId( getNetworkAddress() );
+      mp.updateCRC();
+
       map< unsigned long, sockinetbuf* >::iterator sockiter;
       for ( sockiter  = _InetGatewayMap.begin() ;
             sockiter != _InetGatewayMap.end() ;

@@ -268,7 +268,9 @@ bool MessageBase::notify( const MessagePacket &mp )
          pckt != _PacketList.end() ;
          pckt++ ) 
    {
-      if ( (*pckt)->unopened() == false )
+      if (    (*pckt)->unopened() == false  // message packet has not came in yet 
+           || !(    (*pckt)->msgData().taskId() == mp.msgData().taskId()     // or, the message packet
+                 && (*pckt)->msgData().nodeId() == mp.msgData().nodeId() ) ) // wasn't from the same sender
          allMsgsIn = false;
    }
 

@@ -1,8 +1,10 @@
-# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/makefile.vx 1.6 2002/06/18 16:51:57 jl11312 Exp ms10234 $
+# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/makefile.vx 1.7 2002/07/01 22:36:54 ms10234 Exp ms10234 $
 #
 # Makefile - makefile for router library
 #
 # $Log: makefile.vx $
+# Revision 1.6  2002/06/18 16:51:57  jl11312
+# - removed unecessary additional include directory
 # Revision 1.5  2002/06/18 16:28:23  ms10234
 # Revisions needed for timers
 # Revision 1.4  2002/06/12 22:38:41  ms10234
@@ -41,7 +43,7 @@ include $(MAINDIR)/makefile.vxc
 #
 LIB_C_FILES   = 
 LIB_CXX_FILES = dispatcher.cpp messagebase.cpp messagesystem.cpp msgcrc.cpp router.cpp \
-                 timermessage.cpp msgsystimer.cpp objdictionary.cpp
+                 timermessage.cpp msgsystimer.cpp objdictionary.cpp gateway.cpp
 LIB_S_FILES =
 
 #

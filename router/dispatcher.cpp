@@ -11,6 +11,7 @@
 const unsigned int Dispatcher::MAX_NUM_RETRIES=1;
 const struct timespec Dispatcher::RETRY_DELAY={ 1 /* seconds */, 0 /*nanoseconds*/ };
 const unsigned int Dispatcher::MAX_MESSAGE_QUEUE_SIZE=400;
+const int Dispatcher::DEFAULT_MESSAGE_PRIORITY=15;
 
 Dispatcher :: Dispatcher( ) :
 _Blocking( true ),
@@ -134,7 +135,7 @@ void Dispatcher :: send( const MessagePacket &mp )
    //
    // Send message packet to router ...
    unsigned int retries=0;
-   while (    mq_send( _RQueue, &mp, sizeof( MessagePacket ), 0 ) == ERROR 
+   while (    mq_send( _RQueue, &mp, sizeof( MessagePacket ), DEFAULT_MESSAGE_PRIORITY ) == ERROR 
            && retries++ < MAX_NUM_RETRIES )
       nanosleep( &Dispatcher::RETRY_DELAY, 0 );
    if ( retries == MAX_NUM_RETRIES )
@@ -152,7 +153,7 @@ void Dispatcher :: sendTimerMessage( const MessagePacket &mp )
    //
    // Send message packet to timer task ...
    unsigned int retries=0;
-   while (    mq_send( _TimerQueue, &mp, sizeof( MessagePacket ), 0 ) == ERROR 
+   while (    mq_send( _TimerQueue, &mp, sizeof( MessagePacket ), DEFAULT_MESSAGE_PRIORITY ) == ERROR 
            && retries++ < MAX_NUM_RETRIES )
       nanosleep( &Dispatcher::RETRY_DELAY, 0 );
    if ( retries == MAX_NUM_RETRIES )

@@ -16,6 +16,7 @@
 
 const unsigned int MsgSysTimer::MAX_NUM_RETRIES=1;
 const struct timespec MsgSysTimer::RETRY_DELAY={ 1 /* seconds */, 0 /*nanoseconds*/ };
+const int MsgSysTimer::DEFAULT_TIMER_MESSAGE_PRIORITY=16;
 
 WIND_TCB    *MsgSysTimer::_TheTimerTid=0;
 MsgSysTimer *MsgSysTimer::_TheTimer=0;
@@ -84,6 +85,7 @@ bool MsgSysTimer::init()
    struct mq_attr attr;                                      // message queue attributes 
    attr.mq_maxmsg = 15; 
    attr.mq_msgsize = sizeof( MessagePacket );                // set message size 
+   attr.mq_flags = 0;
    
    //
    // Open the message queue for read-only ...
@@ -144,25 +146,21 @@ void MsgSysTimer::maintainTimers()
       return;
 
    int size=0;
-   char buffer[ sizeof( MessagePacket ) ];
+   MessagePacket mp;
    do
    {
       //
       // Read the queue entry ...
       unsigned int retries=0;
-      while (    ( size = mq_receive( _TimerMQ, &buffer, sizeof( MessagePacket ), 0 ) ) == ERROR 
+      while (    ( size = mq_receive( _TimerMQ, &mp, sizeof( MessagePacket ), 0 ) ) == ERROR 
               && retries++ < MAX_NUM_RETRIES ) nanosleep( &MsgSysTimer::RETRY_DELAY, 0 );
       if ( size == ERROR )
       {
          //
          // Error ...
-         _FATAL_ERROR( __FILE__, __LINE__, "Maintain timer =%lx - message queue receive failed" );
+         _FATAL_ERROR( __FILE__, __LINE__, "Maintain timers - message queue receive failed" );
+         return;
       }
-
-      //
-      // Format the data ...
-      MessagePacket mp;
-      memmove( &mp, &buffer, sizeof( MessagePacket ) );
 
       if ( mp.validCRC() == false )
       {
@@ -171,9 +169,10 @@ void MsgSysTimer::maintainTimers()
          char buffer[256];
          unsigned long crc = mp.crc();
          mp.updateCRC();
-         sprintf( buffer,"Maintain timer - message CRC validation failed for MsgId=%lx, CRC=%lx and should be %lx",
+         sprintf( buffer,"Maintain timers - message CRC validation failed for MsgId=%lx, CRC=%lx and should be %lx",
                   mp.msgData().msgId(), crc, mp.crc() );
          _FATAL_ERROR( __FILE__, __LINE__, buffer );
+         return;
       }  
 
       processMessage( mp );
@@ -181,7 +180,7 @@ void MsgSysTimer::maintainTimers()
       //
       // Check the overrun counter to see if I'm behind on tick counts...
       //  ( Log the result if I am behind )
-      unsigned long overruns = auxClockNotificationOverruns();
+      unsigned long overruns =0; // = auxClockNotificationOverruns();
       if ( overruns > 0 )
       {
          DataLog_Level logError( LOG_ERROR );
@@ -384,7 +383,8 @@ void MsgSysTimer::checkTimers()
          //
          // Send the message packet ...
          unsigned int retries=0;
-         while (    mq_send( _RouterMQ, mpPtr, sizeof( MessagePacket ), 0 ) == ERROR
+         while (    mq_send( _RouterMQ, mpPtr, sizeof( MessagePacket ), 
+                                           DEFAULT_TIMER_MESSAGE_PRIORITY ) == ERROR
                  && retries++ < MAX_NUM_RETRIES );
          if ( retries == MAX_NUM_RETRIES )
          {

@@ -3,6 +3,11 @@
  *
  * $Header: Y:/BCT_Development/Common/ROUTER/rcs/SPOOFDSP.CPP 1.3 1999/06/14 23:10:32 BS04481 Exp MS10234 $
  * $Log: SPOOFDSP.CPP $
+ * Revision 1.2  1999/05/31 20:35:15  BS04481
+ * Remove unused MSGHEADER structure from messages. 
+ * Decrease maximum message size.  Add new version of 
+ * focusBufferMsg and focusInt32Msg that do not bounce the message
+ * back to the originator.  All changes to increase free memory.
  * Revision 1.1  1999/05/24 23:29:56  TD10216
  * Initial revision
  * Revision 1.6  1998/10/23 19:38:47  TM02109
@@ -186,12 +191,12 @@ spooferDispatcher::registerMessage( routeBuffer* m)
    if(routerQueue2 != QNX_ERROR)
    {
 
-      MSGHEADER* mhdr = (MSGHEADER*) m;
+      MSGHEADER* mhdr = (MSGHEADER*) m->message;
       unsigned short mid = mhdr->msgID;
 
       // send message to router
 
-      mhdr->osCode = MESSAGE_REGISTER;          // tell router to add message
+//      mhdr->osCode = MESSAGE_REGISTER;          // tell router to add message
       mhdr->taskPID = getpid();                 // task PID
       mhdr->taskNID = getnid();                 // task NID
       clock_gettime( CLOCK_REALTIME,            // get current time
@@ -233,7 +238,7 @@ spooferDispatcher::deregisterMessage( routeBuffer* m)
    if(routerQueue2 != QNX_ERROR)
    {
 
-      MSGHEADER* mhdr = (MSGHEADER*) m;
+      MSGHEADER* mhdr = (MSGHEADER*) m->message;
 
       unsigned short mid = mhdr->msgID;
 
@@ -283,7 +288,7 @@ spooferDispatcher::send( routeBuffer* m)
 
    // range checks
 
-   MSGHEADER* mhdr = (MSGHEADER*) m;
+   MSGHEADER* mhdr = (MSGHEADER*) m->message;
    unsigned short mid = mhdr->msgID;
    if ((mid == FIRST_BUFFER_MESSAGE) || (mid >= focusInt32Msg::LAST_INT32_MESSAGE))
    {

@@ -26,7 +26,7 @@ public:
    //  armTimer - the timer is created disarmed by default
    //           - to create the timer armed, set this flag
    //
-   TimerMessage( unsigned long interval, CallbackBase &cb, bool armTimer=false );
+   TimerMessage( unsigned long interval, const CallbackBase &cb, bool armTimer=false );
 
    //
    // Destructor
@@ -40,7 +40,7 @@ public:
    //  armTimer - the timer is created disarmed by default
    //           - to create the timer armed, set this flag
    //
-   bool init( unsigned long interval, CallbackBase &cb, bool armTimer=false );
+   bool init( unsigned long interval, const CallbackBase &cb, bool armTimer=false );
 
    //
    // Call this function to start the timer if the interval

@@ -200,23 +200,6 @@ void MsgSysTimer::maintainTimers()
 
       processMessage( mp );
 
-//
-// Only do the overruns check on real hardware.  The simulator
-//  will never keep up, so don't waste logging messages on it.
-#if CPU == SIMNT
-
-      //
-      // Check the overrun counter to see if I'm behind on time ...
-      //  ( Log the result if I am behind )
-      unsigned long overruns = auxClockNotificationOverruns();
-      if ( overruns > 0 )
-      {
-         DataLog_Critical criticalLog;
-         DataLog( criticalLog ) << "TimerOverruns: " << overruns  << endmsg;
-      }
-
-#endif
-
    } while ( _StopLoop == false );
 
 }

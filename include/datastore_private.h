@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.6  2002/08/30 13:54:06Z  rm70006
+ * HISTORY:    Fixed problem with datastore initialization.
  * HISTORY:    Revision 1.5  2002/08/29 18:08:23Z  rm70006
  * HISTORY:    fixed bug in RangeElement::Set routine.
  * HISTORY:    Revision 1.4  2002/08/23 14:53:51Z  rm70006
@@ -161,7 +163,9 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, R
       }
 
       // First datastore initializes the element
-      Set(initValue);
+      // TBD.  This may need to be semaphore protected.
+      *_data = initValue;
+      //Set(initValue);
    }
 
    // Bind the spoof fp to the DataStore symbol table entry.

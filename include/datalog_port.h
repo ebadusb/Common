@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.16 2003/10/03 12:32:57Z jl11312 Exp rm70006 $
  * $Log: datalog_port.h $
+ * Revision 1.10  2002/09/23 13:54:46  jl11312
+ * - added access function for current log file name
  * Revision 1.9  2002/08/28 14:36:40  jl11312
  * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.8  2002/08/22 20:18:27  jl11312
@@ -196,8 +198,8 @@ void datalog_SetupPeriodicSignal(const char * signalName, double seconds);
 /*
  *	Data log task related functions
  */
-void datalog_StartLocalOutputTask(const char * platformName);
-void datalog_StartNetworkOutputTask(long connectTimeout);
+void datalog_StartLocalOutputTask(const char * platformName, const char * nodeName);
+void datalog_StartNetworkOutputTask(long connectTimeout, const char * nodeName);
 void datalog_StartPeriodicLogTask(DataLog_SetHandle set);
 
 #ifndef DATALOG_NO_NETWORK_SUPPORT

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.18  2003/01/31 19:52:03  jl11312
+ * - new stream format for datalog
  * Revision 1.17  2002/10/28 14:33:07  jl11312
  * - moved include for iomanip.h to C++ only section
  * Revision 1.16  2002/10/25 16:56:13  jl11312
@@ -54,7 +56,7 @@
 /*
  *	Version information
  */
-#define	DATALOG_MAJOR_VERSION	(2)
+#define	DATALOG_MAJOR_VERSION	(3)
 #define	DATALOG_MINOR_VERSION	(1)
 
 /*
@@ -82,14 +84,22 @@ extern "C" {
 /*
  * Data log initialization routines
  */
+#ifdef DATALOG_NO_NETWORK_SUPPORT
+
 DataLog_Result datalog_Init(const char * logPath, const char * platformName);
-DataLog_Result datalog_InitNet(const char * ipAddress, int port, long connectTimeout);
+
+#else /* ifdef DATALOG_NO_NETWORK_SUPPORT */
+
+DataLog_Result datalog_Init(const char * logPath, const char * platformName, const char * nodeName);
+DataLog_Result datalog_InitNet(const char * ipAddress, int port, long connectTimeout, const char * nodeName);
+
+#endif /* ifdef DATALOG_NO_NETWORK_SUPPORT */
 
 DataLog_Result datalog_SetDefaultTraceBufferSize(size_t size);
 DataLog_Result datalog_SetDefaultIntBufferSize(size_t size);
 DataLog_Result datalog_SetDefaultCriticalBufferSize(size_t size);
 
-typedef DataLog_BufferData * DataLog_EncryptFunc(DataLog_BufferData input, size_t inputLength, size_t * outputLength);
+typedef DataLog_BufferData * DataLog_EncryptFunc(DataLog_BufferData * input, size_t inputLength, size_t * outputLength);
 DataLog_Result datalog_SetEncryptFunc(DataLog_EncryptFunc * func);
 
 DataLog_Result datalog_GetCurrentLogFileName(char * fileName, int bufferLength);
@@ -133,6 +143,11 @@ DataLog_Result datalog_SetPeriodicOutputInterval(DataLog_SetHandle handle, doubl
 DataLog_Result datalog_ForcePeriodicOutput(DataLog_SetHandle handle);
 DataLog_Result datalog_DisablePeriodicOutput(DataLog_SetHandle handle);
 DataLog_Result datalog_EnablePeriodicOutput(DataLog_SetHandle handle);
+
+/*
+ * binary data interface
+ */
+DataLog_Result datalog_WriteBinaryRecord(DataLog_Handle handle, void * data, size_t size);
 
 /*
  * error interface
@@ -374,10 +389,11 @@ protected:
 	virtual void handleBufferSizeChange(size_t size) = 0;
 	virtual void writeOutputRecord(DataLog_BufferData * buffer, size_t size) = 0;
 	virtual void shutdown(void) = 0;
+	virtual void flushOutput(void) { }
 
 	void writeSystemLevelRecord(void);
 	void writeMissedLogDataRecord(void);
-	void writeTimeStampRecord(void);
+	virtual void writeTimeStampRecord(void);
 
 protected:
 	bool _isRunning;
@@ -386,25 +402,31 @@ protected:
 	int _outputFD;
 };
 
+#include "zlib.h"
+
 class DataLog_LocalOutputTask : public DataLog_OutputTask
 {
 public:
-	DataLog_LocalOutputTask(const char * platformName);
+	DataLog_LocalOutputTask(const char * platformName, const char * nodeName = NULL);
 	virtual ~DataLog_LocalOutputTask() {}
 
 protected:
 	virtual void handleBufferSizeChange(size_t size);
 	virtual void writeOutputRecord(DataLog_BufferData * buffer, size_t size);
 	virtual void shutdown(void);
+	virtual void flushOutput(void);
 
-	void writeLogFileHeader(const char * platformName);
+	void writeLogFileHeader(const char * platformName, const char * nodeName);
 	void writeFileCloseRecord(void);
+
+private:
+	gzFile  _compressedFile;
 };
 
 class DataLog_NetworkOutputTask : public DataLog_OutputTask
 {
 public:
-	DataLog_NetworkOutputTask(long connectTimeout);
+	DataLog_NetworkOutputTask(long connectTimeout, const char * nodeName);
 	virtual ~DataLog_NetworkOutputTask() {}
 
 protected:
@@ -412,7 +434,9 @@ protected:
 	virtual void writeOutputRecord(DataLog_BufferData * buffer, size_t size);
 	virtual void shutdown(void);
 
+	void writeLogFileNetworkHeader(const char * nodeName);
 	void writeConnectionEndRecord(void);
+	virtual void writeTimeStampRecord(void);
 };
 
 class DataLog_PeriodicTask

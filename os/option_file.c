@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/option_file.c 1.2 2003/11/05 19:28:49Z jl11312 Exp jl11312 $
  * $Log: option_file.c $
+ * Revision 1.2  2003/11/05 19:28:49Z  jl11312
+ * - close file at end of processing
  * Revision 1.1  2003/06/26 22:31:26Z  jl11312
  * Initial revision
  *
@@ -56,7 +58,7 @@ static STATUS processKeyword(const char * fileName, int lineNumber, char * token
 			if ( !comma ||
 				  sscanf(comma+1, "%lx", &verifyValue) != 1 )
 			{
-				fprintf(stderr, "%s(%d): missing CRC value", fileName, lineNumber);
+				fprintf(stderr, "%s(%d): missing CRC value\n", fileName, lineNumber);
 				result = ERROR;
 		   }
 
@@ -64,7 +66,7 @@ static STATUS processKeyword(const char * fileName, int lineNumber, char * token
 			crcgen32(&checkValue, (unsigned char *)token, keywordLen+settingLen+1);
          if ( checkValue != verifyValue )
 			{
-				fprintf(stderr, "%s(%d): incorrect CRC value", fileName, lineNumber);
+				fprintf(stderr, "%s(%d): incorrect CRC value\n", fileName, lineNumber);
 				result = ERROR;
 			}
 		}

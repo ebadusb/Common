@@ -67,7 +67,10 @@ void TimerMessage :: armTimer( TimerState arm )
    mp.msgData().sendTime( _SentTime );
    mp.updateCRC();
 
-   MessageSystem::MsgSystem()->dispatcher().sendTimerMessage( mp );
+   if ( MessageSystem::MsgSystem() )
+      MessageSystem::MsgSystem()->dispatcher().sendTimerMessage( mp );
+   else
+      _FATAL_ERROR( __FILE__, __LINE__, "Message system not initialized" );
 }
 
 
@@ -80,9 +83,13 @@ void TimerMessage :: interval( unsigned long interval)
 
 void TimerMessage :: deregisterTimer()
 {
-   //
-   // Deregister this timer from the dispatcher ...
-   MessageSystem::MsgSystem()->dispatcher().deregisterMessage( MessageBase::msgId(), *this );
+   if ( MessageSystem::MsgSystem() )
+      //
+      // Deregister this timer from the dispatcher ...
+      MessageSystem::MsgSystem()->dispatcher().deregisterMessage( MessageBase::msgId(), *this );
+   else
+      _FATAL_ERROR( __FILE__, __LINE__, "Message system not initialized" );
+   
 }
 
 const char *TimerMessage::genMsgName() 

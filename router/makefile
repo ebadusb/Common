@@ -32,7 +32,7 @@ CPPSRCS=\
 CPPOBJS=${CPPSRCS:.cpp=.o}
 
 CSRCS=gateway.c router.c pearlyg.c sinver.c \
-        crc.c mq_check.c error.c debug.c
+        crc.c mq_check.c error.c debug.c version.c
 COBJS=${CSRCS:.c=.o}
 
 SRCS=${CPPSRCS} ${CSRCS}
@@ -40,11 +40,11 @@ OBJS= ${CPPOBJS} ${COBJS}
 
 all: $(LIBDIR)/$(ROUTERLIB) $(PROGRAMS)
 
-$(GATEWAY): gateway.o $(LIBDIR)/$(ROUTERLIB)
-        $(LD) $(LDFLAGS) gateway.o $(ROUTERLIB) -o $(GATEWAY)
+$(GATEWAY): gateway.o version.o $(LIBDIR)/$(ROUTERLIB)
+        $(LD) $(LDFLAGS) gateway.o version.o $(ROUTERLIB) -o $(GATEWAY)
 
-$(PEARLYGATE) : pearlyg.o $(LIBDIR)/$(ROUTERLIB)
-        $(LD) $(LDFLAGS) pearlyg.o $(ROUTERLIB) -o $(PEARLYGATE)
+$(PEARLYGATE) : pearlyg.o version.o $(LIBDIR)/$(ROUTERLIB)
+        $(LD) $(LDFLAGS) pearlyg.o version.o $(ROUTERLIB) -o $(PEARLYGATE)
 
 $(LIBDIR)/$(ROUTERLIB) : new.o dispatch.o crc.o sinver.o phdspat.o kernaltime.o timedispatch.o \
                 spoofdsp.o mq_check.o error.o debugclass.o debug.o callback.o router.o

@@ -3,6 +3,9 @@
  *
  * $Header: M:/BCT_Development/vxWorks/Common/include/rcs/dispatch.hpp 1.12 2000/12/14 23:53:47 ms10234 Exp sb07663 $
  * $Log: dispatch.hpp $
+ * Revision 1.10  2000/07/19 19:49:14  td07711
+ *   IT4736 - send(), registerMessage(), and deregisterMessage() all need to
+ *   be virtual for spoofer to work.  
  * Revision 1.9  2000/06/26 18:52:05  ms10234
  * Removed unimplemented private default constructor.
  * Revision 1.8  2000/06/06 19:02:01  ms10234
@@ -121,6 +124,7 @@ class routeBuffer
    friend class dispatcher;                        // dispatcher copies data
    friend class controlDispatcher;
    friend class spooferDispatcher;
+   friend class timeDispatcher;
    friend class msglog;                            // tracks msg traffic
 
    public:
@@ -136,7 +140,7 @@ class routeBuffer
       routeBuffer( void** msg,                     // pointer to msg pointer
                    unsigned short msgLength,       // message length
                    int id)             // message id
-	  { routeBuffer(msg,msgLength,(unsigned short) id); }
+     { routeBuffer(msg,msgLength,(unsigned short) id); }
 #endif
       int init( void **msg,
                         unsigned short msgLength,
@@ -247,7 +251,7 @@ class dispatcher
                                                    // dispatchLoop to exit
       void trace( unsigned short msgID);           // trace message events
 
-	  // 12/02/96 msm method added for an2 support 
+     // 12/02/96 msm method added for an2 support 
       void send_tcp( void* );                       // tcp/ip send message for AN2 Beta 2.3
  
       char *programName( void);                    // return program name (argv[0])

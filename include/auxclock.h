@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 2002 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/auxclock.h 1.9 2004/01/26 18:51:21Z jl11312 Exp jl11312 $
+ * $Header: Q:/BCT_Development/vxWorks/Common/include/rcs/auxclock.h 1.10 2004/05/18 15:58:58Z jl11312 Exp jd11007 $
  * $Log: auxclock.h $
+ * Revision 1.9  2004/01/26 18:51:21Z  jl11312
+ * - modifications for building under Tornado 2.2
  * Revision 1.8  2003/05/07 20:06:01Z  jl11312
  * - added option to use counting semaphore for aux clock notification
  * Revision 1.7  2003/01/08 23:43:01Z  ms10234
@@ -58,7 +60,7 @@ void auxClockInit(void);
 void auxClockTimeGet(rawTime * current);
 
 /* Get the time the auxClock was initialized. */
-void auxClockInitTimeGet(timespec * initTime);
+void auxClockInitTimeGet(struct timespec * initTime);
 
 /* Enable the auxClock Semaphore to toggle every given number of microseconds. */
 typedef enum

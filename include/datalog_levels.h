@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_levels.h 1.5 2003/04/25 17:25:02Z jl11312 Exp ms10234 $
  * $Log: datalog_levels.h $
+ * Revision 1.4  2003/04/11 22:40:52Z  td07711
+ * add log levels for checkself_info, checkself_error, spoofer_info, spoofer_error.
  * Revision 1.3  2003/04/11 15:27:11Z  jl11312
  * - added support for pre-initialized critical levels and handles
  * Revision 1.2  2003/03/27 16:27:44Z  jl11312
@@ -133,5 +135,6 @@ static DataLog_InitTable	initTable[] =
 
 #endif /* ifdef DATALOG_LEVELS_INIT_TABLE */
 
+#undef LOG_DEF
 #endif /* ifndef _DATALOG_LEVELS_INCLUDE */
 

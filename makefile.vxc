@@ -1,8 +1,10 @@
-# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.vxc 1.3 2002/06/18 19:29:18 jl11312 Exp jl11312 $
+# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.vxc 1.5 2004/12/02 22:05:09Z jl11312 Exp jl11312 $
 #
 # Makefile.vxc - common makefile for common/vxWorks
 #
 # $Log: makefile.vxc $
+# Revision 1.3  2002/06/18 19:29:18  jl11312
+# - corrected comments
 # Revision 1.2  2002/05/16 17:39:25  jl11312
 # - allow for overrides of INCDIR variable
 # Revision 1.1  2002/04/18 14:27:46  jl11312
@@ -20,11 +22,17 @@ include $(MAINDIR)/makefile.flags
 # for the last build.  This is used to force a rebuild on a change
 # to these settings.
 #
+# The variables OLD_ADDN_OPT_TEST and ADDN_OPT_TEST are provided to allow
+# for application specific build settings which aren't used within the
+# common makefile templates.
+#
 SETUP_OPT_DIR := $(shell if not exist .opt mkdir .opt)
-SETUP_BUILD_TYPE_FILE := $(shell if not exist .opt\build_type echo NO DEFAULT > .opt\build_type)
-SETUP_CPU_FILE := $(shell if not exist .opt\cpu echo NO DEFAULT > .opt\cpu)
+SETUP_BUILD_TYPE_FILE := $(shell if not exist .opt\build_type echo "" > .opt\build_type)
+SETUP_CPU_FILE := $(shell if not exist .opt\cpu echo "" > .opt\cpu)
+SETUP_ADDN_FILE := $(shell if not exist .opt\addn echo "" > .opt\addn)
 OLD_BUILD_TYPE := $(strip $(shell cat .opt/build_type))
 OLD_CPU := $(strip $(shell cat .opt/cpu))
+OLD_ADDN_OPT_TEST:= $(strip $(shell cat .opt/addn))
 
 #
 # If build options have changed, we need to force a rebuild.  We do it
@@ -34,11 +42,13 @@ OLD_CPU := $(strip $(shell cat .opt/cpu))
 # depends on an object file also has the .dfile file listed as a dependency
 # (before the .o file) to insure that this works correctly.
 #
-ifneq ($(BUILD_TYPE)$(CPU), $(OLD_BUILD_TYPE)$(OLD_CPU))
-  FORCE_REBUILD := $(shell rm -f -r .dfile $(CPU) $(OLD_CPU))
-  DUMMY_VAR := $(shell echo $(BUILD_TYPE) > .opt\build_type)
-  DUMMY_VAR := $(shell echo $(CPU) > .opt\cpu)
-  DUMMY_VAR := $(shell echo $(FORCE_REBUILD) > .opt\force)
+ADDN_OPT_TEST ?=
+ifneq ("$(BUILD_TYPE)""$(CPU)""$(ADDN_OPT_TEST)", $(OLD_BUILD_TYPE)$(OLD_CPU)$(OLD_ADDN_OPT_TEST))
+  DUMMY_VAR := $(shell rm -f $(COMMON_CLEAN_FILELIST))
+  DUMMY_VAR := $(shell echo "$(BUILD_TYPE)" > .opt\build_type)
+  DUMMY_VAR := $(shell echo "$(CPU)" > .opt\cpu)
+  DUMMY_VAR := $(shell echo "$(ADDN_OPT_TEST)" > .opt\addn)
+  FORCE_REBUILD := 1
 endif
 
 #
@@ -81,11 +91,27 @@ FORCE_REBUILD_DEF ?=
 #
 .PHONY: check_opt_change
 check_opt_change:
-ifdef COMDIR_STATUS
+ifdef OPT_ERROR
+	@echo $(OPT_ERROR)
+	@exit 1 
+else
+ ifdef COMDIR_STATUS
 	@echo $(COMDIR_STATUS): $(COMDIR)
-endif
-ifdef FORCE_REBUILD
+ endif
+ ifdef FORCE_REBUILD
 	@echo Build settings changed - forcing rebuild of all targets
-	@echo Current build: $(BUILD_TYPE), $(CPU); previous build: $(OLD_BUILD_TYPE), $(OLD_CPU)
-endif 
+   ifeq ($(ADDN_OPT_TEST),)
+	@echo Current build: "$(BUILD_TYPE)" "$(CPU)"
+	@echo Previous build: $(OLD_BUILD_TYPE) $(OLD_CPU)
+   else 
+	@echo Current build: "$(BUILD_TYPE)" "$(CPU)" "$(ADDN_OPT_TEST)"
+	@echo Previous build: $(OLD_BUILD_TYPE) $(OLD_CPU) $(OLD_ADDN_OPT_TEST)
+   endif 
+ endif
+endif
 
+.DEFAULT:
+	@echo Error making target $@
+	@echo This may be due to a missing source file or to a mis-typed file name
+	@echo in a dependency list.
+	@exit 1

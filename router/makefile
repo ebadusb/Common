@@ -32,7 +32,7 @@ CPPSRCS=\
 CPPOBJS=${CPPSRCS:.cpp=.o}
 
 CSRCS=gateway.c router.c pearlyg.c sinver.c \
-        crc.c mq_check.c error.c debug.c version.c
+        crc.c mq_check.c error.c debug.c version.c hal_notify.c
 COBJS=${CSRCS:.c=.o}
 
 SRCS=${CPPSRCS} ${CSRCS}
@@ -47,10 +47,10 @@ $(PEARLYGATE) : pearlyg.o version.o $(LIBDIR)/$(ROUTERLIB)
         $(LD) $(LDFLAGS) pearlyg.o version.o $(ROUTERLIB) -o $(PEARLYGATE)
 
 $(LIBDIR)/$(ROUTERLIB) : new.o dispatch.o crc.o sinver.o phdspat.o kernaltime.o timedispatch.o \
-                spoofdsp.o mq_check.o error.o debugclass.o debug.o callback.o router.o
+                spoofdsp.o mq_check.o error.o debugclass.o debug.o callback.o router.o hal_notify.o
                 $(LIB_BLD_CMD) $(LIBDIR)/$(ROUTERLIB) +$(MQUEUE_LIB) +new.o +dispatch.o +crc.o \
                 +sinver.o +phdspat.o +spoofdsp.o +mq_check.o +error.o +router.o \
-                +kernaltime.o +timedispatch.o +debug.o +debugclass.o +callback.o
+                +kernaltime.o +timedispatch.o +debug.o +debugclass.o +callback.o +hal_notify.o
 
 #
 # setup commonsharedtargets.mk

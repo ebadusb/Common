@@ -4,8 +4,10 @@
  * FILENAME: checkself.h
  * PURPOSE: public header for checkself(), used to verify crc of self
  * CHANGELOG:
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/checkself.h 1.1 1999/05/28 01:40:22Z TD10216 Exp ms10234 $
+ * $Header: I:/BCT_Development/vxWorks/Common/include/rcs/checkself.h 1.3 2003/02/26 23:03:05Z td07711 Exp td07711 $
  * $Log: checkself.h $
+ * Revision 1.1  1999/05/28 01:40:22Z  TD10216
+ * Initial revision
  * Revision 1.2  1998/08/27 22:04:52  TD07711
  *   use #ifdef _cplusplus extern "C" to make usable by both .cpp and
  *   .c programs.
@@ -41,7 +43,7 @@ extern "C" {
 //    data you want to cover.
 //    2. checkself() must be called before the executable has a chance to modify the initialized data
 //    covered.
-int checkself(int argc, char** argv, char* start_addr, char* filename);
+int checkself(int argc, const char** argv, const char* start_addr, const char* filename);
 
 #ifdef __cplusplus
 }

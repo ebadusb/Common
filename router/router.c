@@ -3,6 +3,10 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/router.c 1.11 2001/05/11 19:57:01 jl11312 Exp jl11312 $
  * $Log: router.c $
+ * Revision 1.6  1999/08/31 17:55:29  BS04481
+ * Remove trima-specific code.  Make into a module to be linked
+ * later with machine-specific code.  Add processor shutdown for
+ * fatal error logging.
  * Revision 1.5  1999/08/01 21:06:47  BS04481
  * Non-critical code review changes identifed in 3.2 review
  * Revision 1.4  1999/07/30 20:49:55  TD10216
@@ -679,7 +683,7 @@ void shutdown(void)
 
    delay(600);
 // send message to proc, if this fails, keep  going anyway
-   Send( PROC_PID, &msg, &reply, sizeof( msg), sizeof(reply));
+//   Send( PROC_PID, &msg, &reply, sizeof( msg), sizeof(reply));
    
 }
 

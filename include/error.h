@@ -3,6 +3,9 @@
  *
  * $Header: M:/BCT_Development/TrimaVx/Common/include/rcs/error.h 1.7 2001/08/30 17:22:53 rm70006 Exp sb07663 $
  * $Log: error.h $
+ * Revision 1.2  1999/08/06 14:33:41  BS04481
+ * New logging function to add entry to log but not display on the 
+ * screen
  * Revision 1.1  1999/05/24 23:26:30  TD10216
  * Initial revision
  * Revision 1.10  1998/09/30 20:38:43  TD07711
@@ -123,8 +126,8 @@ void
 _FATAL_ERROR_DRV( char* file, int line, trace_codes_t code, int usercode, char* eString);
 
 
-// SPECIFICATION:    LOG_ERROR
-//                      logs error
+// SPECIFICATION:    LOG_ERROR_WITH_DISPLAY
+//                      logs error and displays to the screen
 //                   Parameters:
 //                   file - file name string, typically __FILE__
 //                   line - file line number, __LINE__
@@ -134,9 +137,9 @@ _FATAL_ERROR_DRV( char* file, int line, trace_codes_t code, int usercode, char* 
 //
 // ERROR HANDLING:   none.
 void
-_LOG_ERROR( char* file, int line, trace_codes_t code, int usercode, char* eString);
+_LOG_ERROR_WITH_DISPLAY( char* file, int line, trace_codes_t code, int usercode, char* eString);
 
-// SPECIFICATION:    LOG_ERROR_NO_DISPLAY
+// SPECIFICATION:    LOG_ERROR
 //                      logs error but does not display to screen
 //                   Parameters:
 //                   file - file name string, typically __FILE__
@@ -147,7 +150,7 @@ _LOG_ERROR( char* file, int line, trace_codes_t code, int usercode, char* eStrin
 //
 // ERROR HANDLING:   none.
 void
-_LOG_ERROR_NO_DISPLAY( char* file, int line, trace_codes_t code, int usercode, char* eString);
+_LOG_ERROR( char* file, int line, trace_codes_t code, int usercode, char* eString);
 
 enum ASSERT_FLAGS
 {

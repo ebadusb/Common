@@ -3,6 +3,9 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/error.c 1.7 2001/05/11 19:56:17 jl11312 Exp jl11312 $
  * $Log: error.c $
+ * Revision 1.2  1999/08/06 14:33:45  BS04481
+ * New logging function to add entry to log but not display on the 
+ * screen
  * Revision 1.1  1999/05/24 23:29:33  TD10216
  * Initial revision
  * Revision 1.19  1998/10/23 21:04:22  bs04481
@@ -89,6 +92,9 @@ static char* Filename = "";
 static int Line = 0;
 static trace_codes_t Domain = TRACE_TEST1;
 static char FormattedBuf[ERROR_SIZE] = {'E', 'R', 'R', 'O', 'R', ' '};
+static int displayStatusKnown = 0;
+static char* displayStatus;
+static char displayDefault[10] = "NODISPLAY";
 // used to format varargs info, ERROR prefix only used by log_error()
 
 
@@ -102,14 +108,14 @@ static void
 fatal_handling(char* file, int line, trace_codes_t code, int usercode, char* eString)
 {
 
-    static char rev[] = "$ProjectRevision: 1.21 $";     // rev code
+    static char rev[] = "$ProjectRevision: 5.33 $";     // rev code
     static char buf[ERROR_SIZE]; // static to avoid stack overflow
     static struct _psinfo psdata; // this big struct is static to avoid stack overflow
     char *name;
     pid_t id;
 
     sprintf(buf, "FATAL %.290s", eString);
-    _LOG_ERROR( file, line, code, usercode, buf);
+    _LOG_ERROR_WITH_DISPLAY( file, line, code, usercode, buf);
     printf("\nBuild %s. \nAn internal software error has occured.\n\n", rev);
     printf("Wait 1 minute then turn off power.  Wait 5 seconds,\n");
     printf("and turn power back on. Follow the disconnect procedure.\n\n");
@@ -175,7 +181,7 @@ _FATAL_ERROR_DRV( char* file, int line, trace_codes_t code, int usercode, char* 
 }
 
 
-// SPECIFICATION:    Logs to trace buffer.
+// SPECIFICATION:    Logs to trace buffer.  Display on screen
 //                   Parameters:
 //                   line - source code line number
 //                   error - error string
@@ -183,7 +189,7 @@ _FATAL_ERROR_DRV( char* file, int line, trace_codes_t code, int usercode, char* 
 //
 // ERROR HANDLING:   none.
 void
-_LOG_ERROR( char* file, int line, trace_codes_t code, int usercode, char* eString)
+_LOG_ERROR_WITH_DISPLAY( char* file, int line, trace_codes_t code, int usercode, char* eString)
 {
    static char eBuff[ERROR_SIZE];                             // fixed length error buffer
 
@@ -205,7 +211,7 @@ _LOG_ERROR( char* file, int line, trace_codes_t code, int usercode, char* eStrin
 //
 // ERROR HANDLING:   none.
 void
-_LOG_ERROR_NO_DISPLAY( char* file, int line, trace_codes_t code, int usercode, char* eString)
+_LOG_ERROR( char* file, int line, trace_codes_t code, int usercode, char* eString)
 {
    static char eBuff[ERROR_SIZE];                             // fixed length error buffer
 
@@ -213,6 +219,20 @@ _LOG_ERROR_NO_DISPLAY( char* file, int line, trace_codes_t code, int usercode, c
 
    // send to trace log
    Trace3b( code, _TRACE_SEVERE, line, errno, usercode, strlen( eBuff) + 1, eBuff);
+
+   if (displayStatusKnown == 0)
+   {
+      displayStatus = getenv( "DISPLAYSTATUS" );
+      if (displayStatus == NULL)
+         displayStatus = &displayDefault;
+      displayStatusKnown = 1;
+   }
+   else
+   {
+      if (strcmp(displayStatus,"DISPLAY") == 0)
+         // display on console for debug
+         printf("%s @ %d, errno=%d, usercode=%d, %s\n", file, line, errno, usercode, eString);
+   }
 
 }
 

@@ -233,52 +233,52 @@ void MsgSysTimer::maintainTimers()
 
 void MsgSysTimer::dump( ostream &outs )
 {
-   outs << "??????????????????????? MsgSysTimer DUMP ??????????????????????????" << endl;
+   outs << "??????????????????????? MsgSysTimer DUMP ??????????????????????????" << endmsg;
    // mq_attr qattributes;
    // if ( _TimerMQ != (mqd_t)0 ) mq_getattr( _TimerMQ, &qattributes );
    outs << " MsgSysTimerQueue: " << hex << (long)_TimerMQ 
         // << "  flags " << qattributes.mq_flags
         // << "  size " << qattributes.mq_curmsgs
         // << "  maxsize " << qattributes.mq_maxmsg 
-        << endl;
+        << endmsg;
    // if ( _RouterMQ != (mqd_t)0 ) mq_getattr( _RouterMQ, &qattributes );
    outs << " RouterQueue: " << hex << (long)_RouterMQ 
         // << "  flags " << qattributes.mq_flags
         // << "  size " << qattributes.mq_curmsgs
         // << "  maxsize " << qattributes.mq_maxmsg 
-        << endl;
+        << endmsg;
 
-   outs << endl 
-        << " Time: " << dec << ((unsigned long)_Time) << endl;
-   outs << " StopLoop: " << _StopLoop << endl;
+   outs << endmsg 
+        << " Time: " << dec << ((unsigned long)_Time) << endmsg;
+   outs << " StopLoop: " << _StopLoop << endmsg;
 
-   outs << " Timer Message Map: size " << dec << _TimerMsgMap.size() << endl;
+   outs << " Timer Message Map: size " << dec << _TimerMsgMap.size() << endmsg;
    map< unsigned long, MapEntry* >::iterator miter;
    for ( miter  = _TimerMsgMap.begin() ;
          miter != _TimerMsgMap.end() ;
          miter++ )
    {
       outs << "  Mid " << hex << (*miter).first << " interval: " << dec << ((*miter).second)->_Interval << "msecs" 
-                       << hex << " message_pckt: " << ((*miter).second)->_TimerMessage << dec << endl;
+                       << hex << " message_pckt: " << ((*miter).second)->_TimerMessage << dec << endmsg;
       if ( ((*miter).second)->_TimerMessage )
          ((*miter).second)->_TimerMessage->dump( outs );
    }
 
-   outs << " PriorityQueue: size " << dec <<  _TimerQueue.size() << endl;
+   outs << " PriorityQueue: size " << dec <<  _TimerQueue.size() << endmsg;
    if ( !_TimerQueue.empty() )
    {
-      outs << "  top: exp. time " <<  dec << ((unsigned long)_TimerQueue.top()._ExpirationTime) << "usecs"<< endl;
+      outs << "  top: exp. time " <<  dec << ((unsigned long)_TimerQueue.top()._ExpirationTime) << "usecs"<< endmsg;
       outs << "       map_entry " << hex << _TimerQueue.top()._MapEntryPtr;
       if ( _TimerQueue.top()._MapEntryPtr )
       {
          outs << " : interval " << dec << _TimerQueue.top()._MapEntryPtr->_Interval << "msecs ";
-         outs << " : message_pckt " << hex << _TimerQueue.top()._MapEntryPtr->_TimerMessage <<  dec << endl;
+         outs << " : message_pckt " << hex << _TimerQueue.top()._MapEntryPtr->_TimerMessage <<  dec << endmsg;
          if ( _TimerQueue.top()._MapEntryPtr->_TimerMessage )
             _TimerQueue.top()._MapEntryPtr->_TimerMessage->dump( outs );
       }
    }
 
-   outs << "???????????????????????????????????????????????????????????????????" << endl;
+   outs << "???????????????????????????????????????????????????????????????????" << endmsg;
 }
 
 void MsgSysTimer::processMessage( const MessagePacket &mp )

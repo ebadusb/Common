@@ -5,6 +5,8 @@
  * CHANGELOG:
  *   $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/MQ_CHECK.C 1.3 1999/08/06 14:33:50 BS04481 Exp BS04481 $
  *   $Log: MQ_CHECK.C $
+ *   Revision 1.1  1999/05/24 23:29:43  TD10216
+ *   Initial revision
  *   Revision 1.1  1998/08/03 20:29:45  TD07711
  *   Initial revision
  *   07/24/98 - dyes - initial version
@@ -20,6 +22,7 @@
 
 const int Absolute_limit = 2; // log warning if queue has space for 2 or fewer messages
 const float Percent_limit = 0.10; // log warning if queue space remaining <= 10%
+static int High_water_mark = 0;  // greatest number of messages every in queue
 
 // FUNCTION: mq_check
 // PURPOSE: logs warning to the tracelog if specified msg queue is nearing overflow.
@@ -56,6 +59,9 @@ void mq_check(mqd_t mqdes)
         limit = Absolute_limit;
     }
 
+    if ( (mqstat.mq_curmsgs+1) > High_water_mark)
+       High_water_mark = mqstat.mq_curmsgs +1;
+
     //
     // check queue space remaining and log warning if check fails
     //
@@ -65,3 +71,13 @@ void mq_check(mqd_t mqdes)
         _LOG_ERROR(__FILE__, __LINE__, TRACE_DISPATCHER, getpid(), buf);
     }
 }
+
+void mq_highWater()
+{
+   char eString[256];
+   sprintf(eString,"High water mark for PID %d: %d messages"
+           , getpid()
+           , High_water_mark);
+   _LOG_ERROR(__FILE__, __LINE__, TRACE_DISPATCHER, 0, eString);
+}
+

@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/BUFFMSG.HPP 1.2 1999/05/31 20:34:42 BS04481 Exp MS10234 $
  * $Log: BUFFMSG.HPP $
+ * Revision 1.1  1999/05/24 23:26:14  TD10216
+ * Initial revision
  * Revision 1.25  1999/04/03 14:53:10  TD10216
  * Revision 1.24  1998/10/23 19:38:42  TM02109
  * Modified to allow for inclusion of the buffmsgs.h and intmsgs.h files
@@ -152,6 +154,14 @@ class focusBufferMsg : public routeBuffer
                       (short)id)
       {
       };
+      inline focusBufferMsg( BUFFER_MESSAGES id, bounce_t bounce) :
+         routeBuffer( (void**) &message,
+                      sizeof( Type) + sizeof( MSGHEADER),
+                      (short)id, 
+                      (bounce_t)bounce)
+      {
+      };
+
 
       // destructor
       inline ~focusBufferMsg()

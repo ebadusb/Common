@@ -3,6 +3,8 @@
  *
  * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/MSGHDR.H 1.2 1999/05/31 20:35:00 BS04481 Exp TD10216 $
  * $Log: MSGHDR.H $
+ * Revision 1.1  1999/05/24 23:26:41  TD10216
+ * Initial revision
  * Revision 1.12  1999/03/29 17:10:12  TD10216
  * Revision 1.11  1999/03/15 18:10:05  MS10234
  * Change max message size to allow for bigger messages in the
@@ -67,7 +69,15 @@ typedef long         nid_t;            /* Used for network IDs         */
 #endif
 
 #define MAX_MESSAGES   1024            // max number of messages
-#define BSIZE          512             // max message size
+#define BSIZE          304             // max message size
+
+enum BOUNCE_FLAG
+{
+   BOUNCE=1,                                 // bounce message back to originator
+   NO_BOUNCE=2                               // originator does not want to see message
+};
+typedef enum BOUNCE_FLAG bounce_t;
+
 
 typedef struct
 {
@@ -91,7 +101,9 @@ enum OSCODE
    MESSAGE_TRACE,                      // trace message events
    SPOOFED_MESSAGE,                    // spoofer has modified message
    SPOOFER_REGISTER,                   // register the spoofer task
-   GATEWAY_REGISTER                    // register a gateway task
+   GATEWAY_REGISTER,                   // register a gateway task
+   MESSAGE_REGISTER_NO_BOUNCE          // register message with instructions not
+                                       // to bounce it back to the originator
 };
 
 #ifdef WIN32

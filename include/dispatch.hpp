@@ -3,6 +3,8 @@
  *
  * $Header: Y:/BCT_Development/Common/INCLUDE/rcs/DISPATCH.HPP 1.7 2000/05/31 17:14:59 BD10648 Exp ms10234 $
  * $Log: dispatch.hpp $
+ * Revision 1.1  1999/05/24 23:26:27  TD10216
+ * Initial revision
  * Revision 1.7  1999/03/29 17:10:10  TD10216
  * Revision 1.6  1996/12/30 18:59:39  SS03309
  * Added program name to fatal error prints
@@ -102,6 +104,10 @@ class routeBuffer
       routeBuffer( void** msg,                     // pointer to msg pointer
                    unsigned short msgLength,       // message length
                    unsigned short id);             // message id
+      routeBuffer( void** msg,                     // pointer to msg pointer
+                   unsigned short msgLength,       // message length
+                   unsigned short id,              // message id
+                   bounce_t bounce);               // handling of message back to originator
 #if ENUMSAREINTS
       routeBuffer( void** msg,                     // pointer to msg pointer
                    unsigned short msgLength,       // message length
@@ -164,6 +170,7 @@ class dispatcher
  
       char *programName( void);                    // return program name (argv[0])
       void fError(int line, int usercode, char* msg); // fatal error handling
+      int   iExist;                                // 1=active, 0=inactive
 
    protected:
       friend int input_funct( void*, pid_t, void*, size_t);    // photon hook

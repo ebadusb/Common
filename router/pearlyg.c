@@ -3,6 +3,8 @@
  *
  * $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/PEARLYG.C 1.2 1999/05/31 20:35:10 BS04481 Exp TD10216 $
  * $Log: pearlyg.c $
+ * Revision 1.1  1999/05/24 23:29:49  TD10216
+ * Initial revision
  * Revision 1.4  1998/08/21 19:44:11  MS10234
  * Removed tracelog deletion capabilities
  * Revision 1.3  1996/09/24 19:44:35  SS03309
@@ -90,6 +92,7 @@ main()
    short  signal;                            // signal code
    long   exitStatus;                        // exit status
    struct sched_param param;                 // scheduler parameters
+   char eString[256];
 
 // set priority and scheduling method to round robin
    setprio( 0, 11);
@@ -145,10 +148,11 @@ main()
 
             if ((signal != 0) || (exitStatus != 0))
             {
-               if( status == QNX_ERROR)         // no name found
+               if ( (status == QNX_ERROR)
+                  ||(psdata.pid != pid) )         // no name found
                {
                   Trace3b( TRACE_PGATE, _TRACE_SEVERE,
-                     pid, signal, exitStatus, 1, "");
+                     pid, signal, exitStatus, 20, "Not in process list");
                }
                else                             // name in psdata struct
                {
@@ -158,6 +162,14 @@ main()
                }  // end of status check
             }  // end of signal test
          }  // end of message type check
+         else
+         {
+            sprintf(eString,"Type: %d, subtype: %d");
+            Trace3b( TRACE_PGATE, _TRACE_SEVERE,
+               pid, 0, 0,
+               strlen( eString) + 1, eString);
+
+         }
       }  // end of sin ver check
    }  // end of while(1)
 }

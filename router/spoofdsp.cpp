@@ -3,6 +3,8 @@
  *
  * $Header: Y:/BCT_Development/Common/ROUTER/rcs/SPOOFDSP.CPP 1.3 1999/06/14 23:10:32 BS04481 Exp MS10234 $
  * $Log: SPOOFDSP.CPP $
+ * Revision 1.1  1999/05/24 23:29:56  TD10216
+ * Initial revision
  * Revision 1.6  1998/10/23 19:38:47  TM02109
  * Modified to allow for inclusion of the buffmsgs.h and intmsgs.h files
  * without getting the entire array of class definitions.
@@ -184,7 +186,7 @@ spooferDispatcher::registerMessage( routeBuffer* m)
    if(routerQueue2 != QNX_ERROR)
    {
 
-      MSGHEADER* mhdr = (MSGHEADER*) m->message;
+      MSGHEADER* mhdr = (MSGHEADER*) m;
       unsigned short mid = mhdr->msgID;
 
       // send message to router
@@ -231,7 +233,7 @@ spooferDispatcher::deregisterMessage( routeBuffer* m)
    if(routerQueue2 != QNX_ERROR)
    {
 
-      MSGHEADER* mhdr = (MSGHEADER*) m->message;
+      MSGHEADER* mhdr = (MSGHEADER*) m;
 
       unsigned short mid = mhdr->msgID;
 
@@ -281,7 +283,7 @@ spooferDispatcher::send( routeBuffer* m)
 
    // range checks
 
-   MSGHEADER* mhdr = (MSGHEADER*) m->message;
+   MSGHEADER* mhdr = (MSGHEADER*) m;
    unsigned short mid = mhdr->msgID;
    if ((mid == FIRST_BUFFER_MESSAGE) || (mid >= focusInt32Msg::LAST_INT32_MESSAGE))
    {

@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/Common/ROUTER/rcs/MSG.CPP 1.3 1999/06/02 16:24:42 BS04481 Exp MS10234 $
  * $Log: MSG.CPP $
+ * Revision 1.1  1999/05/24 23:29:46  TD10216
+ * Initial revision
  * Revision 1.13  1999/04/03 14:53:15  TD10216
  * Revision 1.12  1997/03/24 21:00:58  SS03309
  * Changes message numbering tables to allow for fixed
@@ -140,6 +142,13 @@ focusTimerMsg::interval( unsigned long tinterval)
 // we dont have any messages >65536. Our enums are integers. make the cast.
 focusInt32Msg::focusInt32Msg( INT32_MESSAGES mID) :
    routeBuffer( (void**) &message, sizeof( MSG), (unsigned short) mID)
+{
+   message->data.value = 0;
+};
+
+focusInt32Msg::focusInt32Msg( INT32_MESSAGES mID, bounce_t bounce) :
+   routeBuffer( (void**) &message, sizeof( MSG), 
+               (unsigned short) mID, (bounce_t) bounce)
 {
    message->data.value = 0;
 };

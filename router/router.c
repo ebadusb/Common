@@ -3,6 +3,8 @@
  *
  * $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/ROUTER.C 1.3 1999/07/14 22:44:21 BS04481 Exp TD10216 $
  * $Log: router.c $
+ * Revision 1.1  1999/05/24 23:29:53  TD10216
+ * Initial revision
  * Revision 1.26  1998/09/23 18:27:34  bs04481
  * Add Photon to the kill list when router is shutting down.  Add "Call
  * Cobe etc" message to fatal error
@@ -146,6 +148,7 @@ typedef struct
    MSGHEADER      h;                         // message header
    mqd_t          mq;                        // messsage queue
    int            counter;                   // times pid is register for this msgid
+   bounce_t       bounce;                    // bounce back to originator of message?
    void*          next;                      // next in chain
 } TASKLIST;
 
@@ -192,7 +195,7 @@ static void openRouterQueue( char*  qname,
                              pid_t* qproxy,
                              struct sigevent* qnotify);
 static void messageDeregister( char* msg, TASKSTATUS status);
-static void messageRegister( char* msg);
+static void messageRegister( char* msg, bounce_t bounce);
 static void shutdown(void);
 static int  spoofMessage( MSGHEADER* msg);
 static void gatewayRegister( char* msg);
@@ -236,7 +239,7 @@ void signalHandler( int signum)
 static
 void fatalError( int line, int code, char* err)
 {
-   static char rev[] = "$ProjectRevision: 1.3 $";     // rev code
+   static char rev[] = "$ProjectRevision: 1.10 $";     // rev code
    
    _LOG_ERROR( __FILE__, line, TRACE_ROUTER, code, err);
    printf("\nBuild %s. \nAn internal software error has occured.\n\n", rev);
@@ -324,7 +327,7 @@ main(int argc, char** argv, char** arge)
       gatewayPID = qnx_spawn( 0,NULL,0,-1,-1,0,"gateway",argv,arge,NULL,-1);
       if(gatewayPID == QNX_ERROR)
       {
-         fatalError( __LINE__, 0, "qnx_spawn()");
+         fatalError( __LINE__, errno, "qnx_spawn()");
       }
 
       // build gateway q name and try to open it
@@ -337,7 +340,7 @@ main(int argc, char** argv, char** arge)
          gatewayQueue = mq_open( gatewayQueueName, O_WRONLY, 0, 0);
          if(k++ > 10)
          {
-            fatalError( __LINE__, 0, "mq_open()");
+            fatalError( __LINE__, errno, "mq_open()");
          }
       }
    }
@@ -408,7 +411,7 @@ main(int argc, char** argv, char** arge)
                msgHeader = (MSGHEADER*) msg;
                sprintf( buffer, "-bad message CRC, NID=%d, PID=%d, MsgID=%d",
                         msgHeader->taskNID, msgHeader->taskPID, msgHeader->msgID);
-               fatalError( __LINE__, 0, buffer);
+               fatalError( __LINE__,0 , buffer);
             }
             else
             {
@@ -432,7 +435,7 @@ main(int argc, char** argv, char** arge)
                   taskDeregister( msg);
                   break;
                case MESSAGE_REGISTER:        // register message
-                  messageRegister( msg);
+                  messageRegister( msg, BOUNCE);
                   break;
                case MESSAGE_DEREGISTER:      // deregister message from an active task
                   messageDeregister( msg, ACTIVE);
@@ -449,6 +452,9 @@ main(int argc, char** argv, char** arge)
                   break;
                case SPOOFED_MESSAGE:
                   distributeMessage( (MSGHEADER*) msg);
+                  break;
+               case MESSAGE_REGISTER_NO_BOUNCE: // register message
+                  messageRegister( msg, NO_BOUNCE);
                   break;
                default:
                   fatalError( __LINE__, msgHeader->osCode, "bad message type");
@@ -478,6 +484,7 @@ distributeMessage( MSGHEADER* msg)
    TASKLIST*   t;                         // task list
    short k;                               // counter
    unsigned    msgID = msg->msgID;        // message id
+   pid_t       origPID = msg->taskPID;    // pid of originator
 
    if(msg == NULL)                       // internal error check
    {
@@ -524,43 +531,47 @@ distributeMessage( MSGHEADER* msg)
       k=0;
 
       mq_check(t->mq);
-      while((mq_send( t->mq, msg, msg->length, 0) == QNX_ERROR) &&
-            (taskRunning) )
+      if ( (t->bounce == BOUNCE)
+         ||( (t->bounce == NO_BOUNCE) && (t->h.taskPID != origPID) ) )
       {
-         if((errno== EINTR) && (k<3))  // signal
+         while( (mq_send( t->mq, msg, msg->length, 0) == QNX_ERROR) 
+              &&(taskRunning) )
          {
-            k++;
-         }
-         else
-            if(errno == EAGAIN)          // queue full
-         {
-            char buffer[ERROR_LENGTH]; // error message
-            char qmsg[BSIZE];          // queue dump buffer
-            struct _psinfo psdata;     // process data
-
-            // get task name
-
-            qnx_psinfo( PROC_PID, t->h.taskPID, &psdata, 0, 0);
-            sprintf( buffer, __FILE__ "-PID=%d, %s, queue full", t->h.taskPID, psdata.un.proc.name);
-            _LOG_ERROR( __FILE__, __LINE__, TRACE_ROUTER, t->h.taskPID, buffer);
-
-            // dump queue to trace log
-            while( mq_receive( t->mq, qmsg, BSIZE, 0) != QNX_ERROR)
+            if((errno== EINTR) && (k<3))  // signal
             {
-               MSGHEADER* h = (MSGHEADER*) qmsg;
-               sprintf( buffer,"%02d %05d %03d %d.%d",
-                        h->taskNID,                      // task NID
-                        h->taskPID,                      // PID
-                        h->msgID,                        // message ID
-                        h->sendTime.tv_sec % 10,         // time, sec
-                        h->sendTime.tv_nsec/1000000);    // time, ms
-               _LOG_ERROR( __FILE__, __LINE__, TRACE_ROUTER, t->h.taskPID, buffer);
+               k++;
             }
-            fatalError( __LINE__, errno, "-mq_send()");
-         }
-         else                             // any other error is fatal
-         {
-            fatalError( __LINE__, errno, "-mq_send()");
+            else
+               if(errno == EAGAIN)          // queue full
+            {
+               char buffer[ERROR_LENGTH]; // error message
+               char qmsg[BSIZE];          // queue dump buffer
+               struct _psinfo psdata;     // process data
+   
+               // get task name
+   
+               qnx_psinfo( PROC_PID, t->h.taskPID, &psdata, 0, 0);
+               sprintf( buffer, __FILE__ "-PID=%d, %s, queue full", t->h.taskPID, psdata.un.proc.name);
+               _LOG_ERROR( __FILE__, __LINE__, TRACE_ROUTER, t->h.taskPID, buffer);
+   
+               // dump queue to trace log
+               while( mq_receive( t->mq, qmsg, BSIZE, 0) != QNX_ERROR)
+               {
+                  MSGHEADER* h = (MSGHEADER*) qmsg;
+                  sprintf( buffer,"%02d %05d %03d %d.%d",
+                           h->taskNID,                      // task NID
+                           h->taskPID,                      // PID
+                           h->msgID,                        // message ID
+                           h->sendTime.tv_sec % 10,         // time, sec
+                           h->sendTime.tv_nsec/1000000);    // time, ms
+                  _LOG_ERROR( __FILE__, __LINE__, TRACE_ROUTER, t->h.taskPID, buffer);
+               }
+               fatalError( __LINE__, errno, "-mq_send()");
+            }
+            else                             // any other error is fatal
+            {
+               fatalError( __LINE__, errno, "-mq_send()");
+            }
          }
       }                                   // end while
       // move to next PID in list
@@ -635,14 +646,14 @@ static void openRouterQueue(  char* qname,
    *mqd = mq_open( qname, O_RDWR | O_CREAT, 0666, &attr);
    if(*mqd == QNX_ERROR)
    {
-      fatalError(__LINE__, 0, "mq_open()");
+      fatalError(__LINE__, errno, "mq_open()");
    }
 
    // create proxy for message queue
    *qproxy = qnx_proxy_attach( 0, 0, 0, -1);
    if(*qproxy == QNX_ERROR)
    {
-      fatalError( __LINE__, 0, "qnx_proxy_attach()");
+      fatalError( __LINE__,errno , "qnx_proxy_attach()");
    }
 
    // setup queue notify
@@ -721,7 +732,7 @@ static void shutdown(void)
 //
 // ERROR HANDLING:   Terminates program.
 
-static void messageRegister( char* msg)
+static void messageRegister( char* msg, bounce_t bounce)
 {
    MSGHEADER* mhdr = (MSGHEADER*) msg;
    unsigned spoofMsg = 0;
@@ -764,6 +775,10 @@ static void messageRegister( char* msg)
                   ml->counter++;
                   found = 1;
 
+                  // if any instance is set to bounce, all will bounce
+                  if (ml->bounce == NO_BOUNCE)
+                     ml->bounce = bounce;
+
                   // update the CRC for this entry
                   updateFocusMsgCRC( ml);
                   break;
@@ -792,6 +807,9 @@ static void messageRegister( char* msg)
                // set the counter
                newEntry->counter = 1;
 
+               // set the bounce instruction
+               newEntry->bounce = bounce;
+
                // get the queue from the task queue list
                newEntry->mq = t->mq;
 
@@ -803,7 +821,6 @@ static void messageRegister( char* msg)
 
                // reset table head
                messageLookupTable[msgID] = newEntry;
-
             }
             break;                           // break while loop
          }
@@ -1055,7 +1072,7 @@ static void spooferRegister( char* msg)
    spoofer->mq = mq_open(msg, O_RDWR | O_NONBLOCK, 0, 0);
    if(spoofer->mq == QNX_ERROR)
    {
-      fatalError( __LINE__, 0, "mq_open()");
+      fatalError( __LINE__, errno, "mq_open()");
    }
 
    if(setenv( "MQ_NODE", NULL, 1) != 0)  // set remote node
@@ -1122,7 +1139,7 @@ static void taskRegister( char* msg)
    newEntry->mq = mq_open(msg, O_RDWR | O_NONBLOCK, 0, 0);
    if(newEntry->mq == QNX_ERROR)
    {
-      fatalError( __LINE__, 0, "mq_open()");
+      fatalError( __LINE__, errno, "mq_open()");
    }
 
    // update CRC and add to list
@@ -1148,32 +1165,32 @@ static void taskRegister( char* msg)
                taskKillTable[TRACELOG].pid = info.reader;
             }
          }
-         // see if Photon is up
-         if (taskKillTable[PHOTON].pid == QNX_ERROR)
-         {
-            id = 1;
-            while ( (id = qnx_psinfo(0, id, &psdata, 0, 0)) != -1) 
-            {
-               //Find the last forward slash and compare the name to Photon
-               name = strrchr(psdata.un.proc.name,'/');
-               if ( name != NULL )
-               {
-                  name++;
-                  if ( (stricmp(name,"Photon")) == 0 )
-                  {
-                     if (id != 0)
-                     {
-                        taskKillTable[PHOTON].pid = id;
-                        found = 1;
-                     }
-                     break;
-                  }
-               }
-               id++;
-            }
-         }
 
          break;
+      }
+   }
+   // see if Photon is up
+   if (taskKillTable[PHOTON].pid == QNX_ERROR)
+   {
+      id = 1;
+      while ( (id = qnx_psinfo(0, id, &psdata, 0, 0)) != -1) 
+      {
+         //Find the last forward slash and compare the name to Photon
+         name = strrchr(psdata.un.proc.name,'/');
+         if ( name != NULL )
+         {
+            name++;
+            if ( (stricmp(name,"Photon")) == 0 )
+            {
+               if (id != 0)
+               {
+                  taskKillTable[PHOTON].pid = id;
+                  found = 1;
+               }
+               break;
+            }
+         }
+         id++;
       }
    }
 }

@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/MSG.HPP 1.2 1999/05/31 20:34:57 BS04481 Exp MS10234 $
  * $Log: MSG.HPP $
+ * Revision 1.1  1999/05/24 23:26:40  TD10216
+ * Initial revision
  * Revision 1.22  1998/10/23 19:38:45  TM02109
  * Modified to allow for inclusion of the buffmsgs.h and intmsgs.h files
  * without getting the entire array of class definitions.
@@ -166,16 +168,17 @@ class focusInt32Msg : public routeBuffer
 //
 #include "intmsgs.h"
 //
-      focusInt32Msg( INT32_MESSAGES id);  // constructor
-      virtual ~focusInt32Msg();     // destructor
-      long get() const;             // get current value
-      void set( long newValue);     // set and send message with new value
-      void set();                   // send message with old values
+   focusInt32Msg( INT32_MESSAGES id);                    // constructor
+   focusInt32Msg( INT32_MESSAGES id, bounce_t bounce);   // constructor
+   virtual ~focusInt32Msg();                             // destructor
+   long get() const;                                     // get current value
+   void set( long newValue);                             // set and send message with new value
+   void set();                                           // send message with old values
 
-   private:
-      focusInt32Msg();              // default ctr disabled
-      focusInt32Msg( focusInt32Msg const &);
-      focusInt32Msg& operator=( focusInt32Msg const &);
+private:
+   focusInt32Msg();                                      // default ctr disabled
+   focusInt32Msg( focusInt32Msg const &);
+   focusInt32Msg& operator=( focusInt32Msg const &);
       
       struct MSGDATA
       {

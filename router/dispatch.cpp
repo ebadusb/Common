@@ -3,6 +3,8 @@
  *
  * $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/DISPATCH.CPP 1.2 1999/05/31 20:35:02 BS04481 Exp BS04481 $
  * $Log: dispatch.cpp $
+ * Revision 1.1  1999/05/24 23:29:31  TD10216
+ * Initial revision
  * Revision 1.35  1999/03/24 21:50:48  BS04481
  * Change hardware version information to provide base version of
  * hardware plus computer type, board rev and FPGA revision byte.
@@ -117,34 +119,90 @@ routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short i
 {
 
 // range checks
+   if (dispatch->iExist == 1)
+   {
 
-   if (msgLength < sizeof( MSGHEADER))
-   {
-      dispatch->fError( __LINE__, 0, "message length");
-   }
-   if (msgLength + sizeof(MSGHEADER) > BSIZE)
-   {
-      dispatch->fError( __LINE__, msgLength, "message length to big");
-   }
-   if ((id == FIRST_BUFFER_MESSAGE) || (id >= focusInt32Msg::LAST_INT32_MESSAGE))
-   {
-      dispatch->fError( __LINE__, id, "message id");
-   }
+      if (msgLength < sizeof( MSGHEADER))
+      {
+         dispatch->fError( __LINE__, 0, "message length");
+      }
+      if (msgLength > BSIZE)
+      {
+         dispatch->fError( __LINE__, msgLength, "message length to big");
+      }
+      if ((id == FIRST_BUFFER_MESSAGE) || (id >= focusInt32Msg::LAST_INT32_MESSAGE))
+      {
+         dispatch->fError( __LINE__, id, "message id");
+      }
 
 // create message, fill in data
 
-   message = new char[msgLength];
-   *msg = message;
-   MSGHEADER * hdr = (MSGHEADER*) message;
-   hdr->osCode = MESSAGE_REGISTER;        // router code
-   hdr->length = msgLength;               // total length, bytes
-   hdr->msgID = id;                       // msg id
-   hdr->taskPID = getpid();               // PID from OS
-   hdr->taskNID = getnid();               // network node
-   clock_gettime( CLOCK_REALTIME, &(hdr->sendTime));
+      message = new char[msgLength];
+      *msg = message;
+      MSGHEADER * hdr = (MSGHEADER*) message;
+      hdr->osCode = MESSAGE_REGISTER;        // router code
+      hdr->length = msgLength;               // total length, bytes
+      hdr->msgID = id;                       // msg id
+      hdr->taskPID = getpid();               // PID from OS
+      hdr->taskNID = getnid();               // network node
+      clock_gettime( CLOCK_REALTIME, &(hdr->sendTime));
 
-   updateFocusMsgCRC( hdr);               // update CRC
-   dispatch->registerMessage( this);      // register message
+      updateFocusMsgCRC( hdr);               // update CRC
+      dispatch->registerMessage( this);      // register message
+   }
+};
+
+
+
+// SPECIFICATION:    routeBuffer constructor  (see above)
+//                   this version allows the originator to instruct
+//                   the router to not bounce the message back
+//                   Parameter:
+//                   msg - pointer to message pointer
+//                   msgLength - length of message
+//                   id - message id
+//                   bounce - flag to indicate bounce or not
+//
+// ERROR HANDLING:   _FATAL_ERROR.
+routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short id, bounce_t bounce) :
+   _msgID( id)
+{
+   if (dispatch->iExist == 1)
+   {
+
+// range checks
+
+      if (msgLength < sizeof( MSGHEADER))
+      {
+         dispatch->fError( __LINE__, 0, "message length");
+      }
+      if (msgLength > BSIZE)
+      {
+         dispatch->fError( __LINE__, msgLength, "message length to big");
+      }
+      if ((id == FIRST_BUFFER_MESSAGE) || (id >= focusInt32Msg::LAST_INT32_MESSAGE))
+      {
+         dispatch->fError( __LINE__, id, "message id");
+      }
+   
+// create message, fill in data
+
+      message = new char[msgLength];
+      *msg = message;
+      MSGHEADER * hdr = (MSGHEADER*) message;
+      if (bounce == NO_BOUNCE)
+         hdr->osCode = MESSAGE_REGISTER_NO_BOUNCE;        // router code
+      else
+         hdr->osCode = MESSAGE_REGISTER;                 // router code
+      hdr->length = msgLength;                           // total length, bytes
+      hdr->msgID = id;                                   // msg id
+      hdr->taskPID = getpid();                           // PID from OS
+      hdr->taskNID = getnid();                           // network node
+      clock_gettime( CLOCK_REALTIME, &(hdr->sendTime));
+   
+      updateFocusMsgCRC( hdr);               // update CRC
+      dispatch->registerMessage( this);      // register message
+   }
 };
 
 // SPECIFICATION:    destructor
@@ -153,8 +211,11 @@ routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short i
 
 routeBuffer::~routeBuffer()
 {
-   dispatch->deregisterMessage( this);    // remove this message
-   delete [] message;                     // delete storage
+   if (dispatch->iExist == 1)
+   {
+      dispatch->deregisterMessage( this);    // remove this message
+      delete [] message;                     // delete storage
+   }
 };
 
 
@@ -172,7 +233,8 @@ virtual void routeBuffer::notify()
 
 void routeBuffer::send()
 {
-   dispatch->send( this);                 // send message to router
+   if (dispatch->iExist == 1)
+      dispatch->send( this);                 // send message to router
 };
 
 // SPECIFICATION:    get message id
@@ -326,9 +388,10 @@ dispatcher::dispatcher( int argc, char** argv, int maxMessages)
       }
       else                                   // all other errors
       {
-         fError( __LINE__, 0, "mq_send()");
+         fError( __LINE__, errno, "mq_send()");
       }
    }
+   iExist=1;
 };
 
 
@@ -339,7 +402,9 @@ dispatcher::dispatcher( int argc, char** argv, int maxMessages)
 dispatcher::~dispatcher()
 {
 // deregister this task with local router
-
+   
+   mq_highWater();
+   iExist=0;
    if (signalNumber != SIGPWR)
    {
       TASKLIST tl;
@@ -374,7 +439,7 @@ dispatcher::~dispatcher()
 
       // close and remove queue
       mq_close( mq);
-      mq_unlink( queueName);
+      mq_unlink(queueName);
    }
 };
 
@@ -432,7 +497,7 @@ dispatcher::registerMessage( routeBuffer* m)
 
 // send message to router
 
-   mhdr->osCode = MESSAGE_REGISTER;          // tell router to add message
+//   mhdr->osCode = MESSAGE_REGISTER;          // tell router to add message
    mhdr->taskPID = getpid();                 // task PID
    mhdr->taskNID = getnid();                 // task NID
    clock_gettime( CLOCK_REALTIME,            // get current time
@@ -444,7 +509,7 @@ dispatcher::registerMessage( routeBuffer* m)
 // place message in router's input queue
    mq_check(routerQueue);
    while((mq_send( routerQueue, mhdr, mhdr->length, 0) == MQ_ERROR) &&
-         (taskRunning))
+         (taskRunning) && (iExist))
    {
       if((errno==EINTR) && (k<RETRY_COUNT))  // signals
       {
@@ -498,7 +563,7 @@ dispatcher::deregisterMessage( routeBuffer* m)
 // place message in router's input queue
    mq_check(routerQueue);
    while((mq_send( routerQueue, mhdr, mhdr->length, 0) == MQ_ERROR) &&
-         (taskRunning))
+         (taskRunning) && (iExist) )
    {
       if((errno==EINTR) && (k<MQ_ERROR))     // signals
       {
@@ -597,7 +662,7 @@ dispatcher::send( routeBuffer* m)
 // place message in router's input queue
    mq_check(routerQueue);
    while((mq_send( routerQueue, mhdr, mhdr->length, 0) == MQ_ERROR) &&
-         (taskRunning))
+         (taskRunning) && (iExist))
    {
       if((errno==EINTR) && (k<RETRY_COUNT))  // signals
       {
@@ -662,7 +727,7 @@ dispatcher::send_tcp( void* m)
 // place message in router's input queue
    mq_check(routerQueue);
    while((mq_send( routerQueue, mhdr, mhdr->length, 0) == MQ_ERROR) &&
-         (taskRunning))
+         (taskRunning) && (iExist) )
    {
       if((errno==EINTR) && (k<RETRY_COUNT))  // signals
       {
@@ -693,7 +758,8 @@ dispatcher::logData( long line, long msgID, long code)
    {
       Trace3( TRACE_DISPATCHER, _TRACE_SEVERE, line, msgID, code);
    }
-};
+};                                
+
 
 // SPECIFICATION:    timer functions
 //                   clear (destruct) timer entry from table
@@ -705,36 +771,39 @@ dispatcher::logData( long line, long msgID, long code)
 void
 dispatcher::clearTimerEntry( pid_t proxy)
 {
-   timerEntry* t;                            // next pointer
-   timerEntry* oneBack;                      // one back
+   if (iExist)
+   {
+      timerEntry* t;                            // next pointer
+      timerEntry* oneBack;                      // one back
 
-   logData( __LINE__, proxy, TIMER_DELETE);  // internal data logging
-   t = timerList;                            // start at top
-   if (t->proxy == proxy)                    // head of chain?
-   {
-      timerList = t->next;
-      delete t;
-   }
-   else                                      // run down linked list
-   {
-      oneBack = timerList;                   // start at second entry
-      t = timerList->next;
-      while((t) && (taskRunning))
+      logData( __LINE__, proxy, TIMER_DELETE);  // internal data logging
+      t = timerList;                            // start at top
+      if (t->proxy == proxy)                    // head of chain?
       {
-         if (t->proxy == proxy)              // match?
+         timerList = t->next;
+         delete t;
+      }
+      else                                      // run down linked list
+      {
+         oneBack = timerList;                   // start at second entry
+         t = timerList->next;
+         while((t) && (taskRunning))
          {
-            oneBack->next = t->next;         // remove entry
-            delete t;                        // de-allocate memory
-            updateFocusMsgCRC( oneBack);     // update CRC
-            t = oneBack->next;               // get next link
-            if (t)                           // if not NULL
+            if (t->proxy == proxy)              // match?
             {
-               updateFocusMsgCRC( t);        // update CRC
+               oneBack->next = t->next;         // remove entry
+               delete t;                        // de-allocate memory
+               updateFocusMsgCRC( oneBack);     // update CRC
+               t = oneBack->next;               // get next link
+               if (t)                           // if not NULL
+               {
+                  updateFocusMsgCRC( t);        // update CRC
+               }
+               break;
             }
-            break;
+            oneBack = t;                        // move down list
+            t = t->next;
          }
-         oneBack = t;                        // move down list
-         t = t->next;
       }
    }
 };
@@ -750,23 +819,26 @@ dispatcher::clearTimerEntry( pid_t proxy)
 void
 dispatcher::setTimerEntry( pid_t proxy, class focusTimerMsg* tmsg)
 {
-   timerEntry* t = new timerEntry;
-   if (t == NULL)
+   if (iExist)
    {
-      fError( __LINE__, 0, "failed memory allocation");
+      timerEntry* t = new timerEntry;
+      if (t == NULL)
+      {
+         fError( __LINE__, 0, "failed memory allocation");
+      }
+      if (tmsg == NULL)
+      {
+         fError( __LINE__, 0, "tmsg==NULL");
+      }
+      logData( __LINE__, proxy, TIMER_CREATE);  // internal data logging
+      t->osCode = MESSAGE_REGISTER;             // build timer entry
+      t->length = sizeof( timerEntry);          // set length
+      t->proxy = proxy;                         // set proxy PID
+      t->tm = tmsg;                               // set message pointer
+      t->next = timerList;                      // insert on front
+      updateFocusMsgCRC( t);                    // update CRC
+      timerList = t;                            // add to front
    }
-   if (tmsg == NULL)
-   {
-      fError( __LINE__, 0, "tmsg==NULL");
-   }
-   logData( __LINE__, proxy, TIMER_CREATE);  // internal data logging
-   t->osCode = MESSAGE_REGISTER;             // build timer entry
-   t->length = sizeof( timerEntry);          // set length
-   t->proxy = proxy;                         // set proxy PID
-   t->tm = tmsg;                               // set message pointer
-   t->next = timerList;                      // insert on front
-   updateFocusMsgCRC( t);                    // update CRC
-   timerList = t;                            // add to front
 };
 
 
@@ -848,97 +920,100 @@ dispatcher::processMessage( pid_t pid)
    timerEntry* t;                               // timer pointer
    char msg[BSIZE];                             // message buffer
 
+   if (iExist)
+   {
 // check for timers
 
-   if (pid != qproxy)                           // if not queue proxy, try timers
-   {
-      t = timerList;
-      while((t) && (taskRunning))               // scan list
+      if (pid != qproxy)                           // if not queue proxy, try timers
       {
-         if (!validFocusMsgCRC( t))             // internal CRC check
+         t = timerList;
+         while((t) && (taskRunning))               // scan list
          {
-            fError( __LINE__, 0, "CRC fail in timer processing");
+            if (!validFocusMsgCRC( t))             // internal CRC check
+            {
+               fError( __LINE__, 0, "CRC fail in timer processing");
+            }
+   
+            if (t->proxy == pid)                   // match found
+            {
+               logData( __LINE__, pid, TIMER_CALLING_NOTIFY);
+               t->tm->notify();                    // call notify function
+               logData( __LINE__, pid, TIMER_NOTIFY_RETURN);
+               break;
+            }
+            t = t->next;                           // next in chain
          }
-
-         if (t->proxy == pid)                   // match found
-         {
-            logData( __LINE__, pid, TIMER_CALLING_NOTIFY);
-            t->tm->notify();                    // call notify function
-            logData( __LINE__, pid, TIMER_NOTIFY_RETURN);
-            break;
-         }
-         t = t->next;                           // next in chain
       }
-   }
-   else                                         // message queue
-   {
+      else                                         // message queue
+      {
 // reset notify for next time
 
-      if (mq_notify( mq, &qnotify) == MQ_ERROR)
-      {
-         if ( (errno != EBUSY) && (errno != EINTR) )
+         if (mq_notify( mq, &qnotify) == MQ_ERROR)
          {
-            fError(__LINE__, 0, "mq_notify()");
+            if ( (errno != EBUSY) && (errno != EINTR) )
+            {
+               fError(__LINE__, 0, "mq_notify()");
+            }
          }
-      }
-
+   
 // pull all data from queue
 
-      while( taskRunning)                       // process all data from queue
-      {
-         if (mq_receive( mq, msg, BSIZE, 0) != MQ_ERROR)
+         while( taskRunning)                       // process all data from queue
          {
-            if (validFocusMsgCRC( msg))         // message CRC check
+            if (mq_receive( mq, msg, BSIZE, 0) != MQ_ERROR)
             {
-               // get message header info
-               unsigned int mlen = ((MSGHEADER*) msg)->length;
-               unsigned short mid = ((MSGHEADER*) msg)->msgID;
-               linked* lptr = messageTable[mid];      // get table entry
-
-               // find matching message(s)
-               while ((lptr) && (taskRunning))        // run down chain
+               if (validFocusMsgCRC( msg))         // message CRC check
                {
-                  if (!validFocusMsgCRC( lptr)) // internal CRC check
+                  // get message header info
+                  unsigned int mlen = ((MSGHEADER*) msg)->length;
+                  unsigned short mid = ((MSGHEADER*) msg)->msgID;
+                  linked* lptr = messageTable[mid];      // get table entry
+   
+                  // find matching message(s)
+                  while ((lptr) && (taskRunning))        // run down chain
                   {
-                     fError( __LINE__, 0, "CRC error\n");
+                     if (!validFocusMsgCRC( lptr)) // internal CRC check
+                     {
+                        fError( __LINE__, 0, "CRC error\n");
+                     }
+   
+                     // verify message lengths
+                     unsigned int tlen = ((MSGHEADER*)lptr->msg->message)->length;
+                     if (tlen != mlen)
+                     {
+                        fError( __LINE__, 0, "msg length");
+                     }
+   
+                     // copy message and verify
+                     memcpy( lptr->msg->message, msg, mlen);
+                     if (memcmp( lptr->msg->message, msg, mlen) != 0)
+                     {
+                        fError( __LINE__, 0, "copy error");
+                     }
+   
+                     // call notify function
+                     logData( __LINE__, mid, MSG_CALLING_NOTIFY);
+                     linked* next = lptr->next;      // get next pointer
+                     lptr->msg->notify();
+                     logData( __LINE__, mid, MSG_NOTIFY_RETURN);
+   
+                     // move to next entry
+                     lptr = next;
                   }
-
-                  // verify message lengths
-                  unsigned int tlen = ((MSGHEADER*)lptr->msg->message)->length;
-                  if (tlen != mlen)
-                  {
-                     fError( __LINE__, 0, "msg length");
-                  }
-
-                  // copy message and verify
-                  memcpy( lptr->msg->message, msg, mlen);
-                  if (memcmp( lptr->msg->message, msg, mlen) != 0)
-                  {
-                     fError( __LINE__, 0, "copy error");
-                  }
-
-                  // call notify function
-                  logData( __LINE__, mid, MSG_CALLING_NOTIFY);
-                  linked* next = lptr->next;      // get next pointer
-                  lptr->msg->notify();
-                  logData( __LINE__, mid, MSG_NOTIFY_RETURN);
-
-                  // move to next entry
-                  lptr = next;
                }
+               else
+               {
+                  fError( __LINE__, 0, "bad message CRC");
+               }                                   // end CRC test
             }
-            else
+            else                                   // queue error
             {
-               fError( __LINE__, 0, "bad message CRC");
-            }                                   // end CRC test
-         }
-         else                                   // queue error
-         {
-            if (errno == EAGAIN) break;         // no more data
-            if (errno == EINTR) continue;       // signal
-            fError( __LINE__, 0, "mq_receive()");
-         }                                      // end if mq_receive
-      }                                         // end while taskRunning
-   }                                            // end pid test
+               if (errno == EAGAIN) break;         // no more data
+               if (errno == EINTR) continue;       // signal
+               fError( __LINE__, 0, "mq_receive()");
+            }                                      // end if mq_receive
+         }                                         // end while taskRunning
+      }                                            // end pid test
+   }
 };
 

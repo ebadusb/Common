@@ -3,6 +3,7 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.3  2004/10/29 15:11:14Z  rm10919
  * Revision 1.2  2004/10/22 20:14:34Z  rm10919
  * CGUIButton updates and changes.
  * Revision 1.1  2004/09/20 18:18:08Z  rm10919
@@ -30,18 +31,18 @@ CGUIText::CGUIText(CGUIDisplay & display, CGUIWindow * parent)
    parent->addObjectToFront(this);
 }
 
-CGUIText::CGUIText(CGUIDisplay & display, CGUIWindow * parent, TextItem * textItem, StylingRecord * stylingRecord)
+CGUIText::CGUIText(CGUIDisplay & display, CGUIWindow * parent, CGUITextItem * CGUITextItem, StylingRecord * stylingRecord)
 : CGUIWindowObject(display), _requestedRegion(stylingRecord->region), _textString(NULL)
 {
-   initializeData(parent, textItem, stylingRecord);
+   initializeData(parent, CGUITextItem, stylingRecord);
 }
 
 
-CGUIText::CGUIText(CGUIDisplay & display, CGUIWindow * parent, TextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord)
+CGUIText::CGUIText(CGUIDisplay & display, CGUIWindow * parent, CGUITextItem * CGUITextItem, CGUIColor backgroundColor, StylingRecord * stylingRecord)
 : CGUIWindowObject(display), _requestedRegion(stylingRecord->region), _textString(NULL)
 {
 
-   initializeData(parent, textItem, stylingRecord);
+   initializeData(parent, CGUITextItem, stylingRecord);
    setBackgroundColor(backgroundColor);
 }
 
@@ -55,14 +56,14 @@ CGUIText::~CGUIText()
 }
 
 
-void CGUIText::initializeData(CGUIWindow * parent, TextItem * textItem, StylingRecord * stylingRecord)
+void CGUIText::initializeData(CGUIWindow * parent, CGUITextItem * CGUITextItem, StylingRecord * stylingRecord)
 {
-   _textItem =  * textItem;
+   _CGUITextItem =  * CGUITextItem;
    _stylingRecord = * stylingRecord;
 
-   if (_textItem.isInitialized())
+   if (_CGUITextItem.isInitialized())
    {
-      const StringChar * string = _textItem.getText(_textItem.getLanguageId());
+      const StringChar * string = _CGUITextItem.getText(_CGUITextItem.getLanguageId());
 
       if (string)
       {
@@ -132,7 +133,7 @@ void CGUIText::setLanguage(LanguageId configLanguage)
    // language module is developed.
    //
    _configLanguage = configLanguage;
-   _textItem.setLanguageId(configLanguage);
+   _CGUITextItem.setLanguageId(configLanguage);
    _languageSetByApp = true;
 }
 
@@ -146,13 +147,13 @@ void CGUIText::setStylingRecord (StylingRecord * stylingRecord)
 }
 
 
-void CGUIText::setText(TextItem * textItem)
+void CGUIText::setText(CGUITextItem * CGUITextItem)
 {
-   _textItem =  * textItem;
+   _CGUITextItem =  * CGUITextItem;
 
-   if (_textItem.isInitialized())
+   if (_CGUITextItem.isInitialized())
    {
-      const StringChar * string = _textItem.getText(_textItem.getLanguageId());
+      const StringChar * string = _CGUITextItem.getText(_CGUITextItem.getLanguageId());
 
       if (string)
       {
@@ -243,7 +244,7 @@ void CGUIText::getText(char &bufferPtr)
    // text string in the string database.        
    const StringChar * string;
 
-   string = _textItem.getText(_configLanguage);
+   string = _CGUITextItem.getText(_configLanguage);
 }
 
 

@@ -3,6 +3,7 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.13 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.h $
+ * Revision 1.5  2004/10/29 15:11:14Z  rm10919
  * Revision 1.4  2004/10/07 22:47:02Z  cf10242
  * Revision 1.3  2004/10/07 18:52:19Z  cf10242
  * Revision 1.2  2004/09/30 17:00:52Z  cf10242
@@ -102,12 +103,12 @@ extern int currentLanguage;
 //
 
 
-class TextItem
+class CGUITextItem
 {
 public:
-   TextItem();
-   TextItem(const char * id);
-   virtual ~ TextItem();
+   CGUITextItem();
+   CGUITextItem(const char * id);
+   virtual ~ CGUITextItem();
 
    
    void setId(const char * id);

@@ -1,8 +1,9 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: L:/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.8 2004/10/29 15:11:14Z rm10919 Exp cf10242 $
+ * $Header: L:/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.10 2004/11/12 14:53:10Z rm10919 Exp cf10242 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.8  2004/10/29 15:11:14Z  rm10919
  * Revision 1.7  2004/10/22 20:14:34Z  rm10919
  * CGUIButton updates and changes.
  * Revision 1.6  2004/10/07 22:47:02Z  cf10242
@@ -216,25 +217,25 @@ void CGUIRegion::convertToUGLRect(UGL_RECT & rect) const
 }
 
 
-int TextItem::_defaultLanguageId = 0;
+int CGUITextItem::_defaultLanguageId = 0;
 
-TextItem::TextItem()
+CGUITextItem::CGUITextItem()
 :_id(NULL), _string(NULL)
 {
 }
 
-TextItem::TextItem(const char * id)
+CGUITextItem::CGUITextItem(const char * id)
 :_id(id), _string(NULL)
 {
 }
 
-TextItem::~ TextItem()
+CGUITextItem::~ CGUITextItem()
 {
    delete _id;
    delete _string;
 }
 
-void TextItem::setText(const char * string, LanguageId = currentLanguage)
+void CGUITextItem::setText(const char * string, LanguageId = currentLanguage)
 {
    int stringLength = 0;
 
@@ -257,7 +258,7 @@ void TextItem::setText(const char * string, LanguageId = currentLanguage)
    }
 }
 
-void TextItem::setText(const StringChar * string, LanguageId = currentLanguage)
+void CGUITextItem::setText(const StringChar * string, LanguageId = currentLanguage)
 {
    int stringLength = 0;
 
@@ -272,7 +273,7 @@ void TextItem::setText(const StringChar * string, LanguageId = currentLanguage)
    }
 }
 
-const StringChar * TextItem::getText(LanguageId languageId = currentLanguage)
+const StringChar * CGUITextItem::getText(LanguageId languageId = currentLanguage)
 {
 //   const StringChar * string;
 //   StringChar * stringNonsense=NULL;
@@ -301,11 +302,11 @@ const StringChar * TextItem::getText(LanguageId languageId = currentLanguage)
 }
 
 
-void TextItem::setId(const char * id)
+void CGUITextItem::setId(const char * id)
 {
 }
 
-bool TextItem::isInitialized(void)
+bool CGUITextItem::isInitialized(void)
 {
    if (_id)
    {

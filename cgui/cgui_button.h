@@ -6,6 +6,7 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.4  2004/10/29 15:11:13Z  rm10919
  *  Revision 1.3  2004/10/22 20:14:34Z  rm10919
  *  CGUIButton updates and changes.
  *  Revision 1.2  2004/09/30 17:00:52Z  cf10242
@@ -57,15 +58,15 @@ public:
       unsigned short hMargin;            // where any button labels are allowed to start
 
       CGUIBitmapInfo * enabledBitmapId;  // enabled state bitmap id
-      TextItem       * enabledTextItem;  // label text (if any) used in enabled state
+      CGUITextItem       * enabledCGUITextItem;  // label text (if any) used in enabled state
       CGUIText::StylingRecord * enabledTextStyle; // label text styling information in enabled state
 
       CGUIBitmapInfo * disabledBitmapId; // disableded state bitmap id
-      TextItem       * disabledTextItem; // attributes for label text used in disabled state
+      CGUITextItem       * disabledCGUITextItem; // attributes for label text used in disabled state
       CGUIText::StylingRecord * disabledTextStyle; // label text styling information in disableded state
 
       CGUIBitmapInfo * pressedBitmapId;  // pressed state bitmap id
-      TextItem       * pressedTextItem;  // label text used in pressed state
+      CGUITextItem       * pressedCGUITextItem;  // label text used in pressed state
       CGUIText::StylingRecord * pressedTextStyle; // label text styling information in pressed state
 
       ButtonBehavior type;               // button behavior  
@@ -231,7 +232,7 @@ public:
    // SET TEXT
    // set the text associated with the button.  
 //   void setText(CGUIText *textid); // ptr to a text object associated with the button
-   void setText(const char * string = NULL, TextItem * textItem = NULL); // ptr to a text object associated with the button
+   void setText(const char * string = NULL, CGUITextItem * CGUITextItem = NULL); // ptr to a text object associated with the button
   
    void setEnabledText(const char * string);
    void setDisabledText(const char * string);

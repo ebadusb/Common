@@ -6,6 +6,7 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.2  2004/10/29 15:11:13Z  rm10919
  *  Revision 1.1  2004/10/22 20:16:19Z  rm10919
  *  Initial revision
  *
@@ -66,9 +67,9 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       addObjectToFront(_pressedBitmap);
    }
 
-   if (buttonData.enabledTextItem)
+   if (buttonData.enabledCGUITextItem)
    {
-      _enabledText = new CGUIText(display, this, buttonData.enabledTextItem, buttonData.enabledTextStyle);
+      _enabledText = new CGUIText(display, this, buttonData.enabledCGUITextItem, buttonData.enabledTextStyle);
       _enabledText->setCaptureBackgroundColor();
    }
    else
@@ -76,9 +77,9 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _enabledText = NULL;
    }
 
-   if (buttonData.disabledTextItem)
+   if (buttonData.disabledCGUITextItem)
    {
-      _disabledText = new CGUIText(display, this, buttonData.disabledTextItem, buttonData.disabledTextStyle);
+      _disabledText = new CGUIText(display, this, buttonData.disabledCGUITextItem, buttonData.disabledTextStyle);
       _disabledText->setCaptureBackgroundColor();
       _disabledText->setVisible(false);
    }
@@ -87,9 +88,9 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _disabledText = NULL;
    }
 
-   if (buttonData.pressedTextItem)
+   if (buttonData.pressedCGUITextItem)
    {
-      _pressedText = new CGUIText(display, this, buttonData.pressedTextItem, buttonData.pressedTextStyle);
+      _pressedText = new CGUIText(display, this, buttonData.pressedCGUITextItem, buttonData.pressedTextStyle);
       _pressedText->setCaptureBackgroundColor();
       _pressedText->setVisible(false);
    }
@@ -419,7 +420,7 @@ void CGUIButton::setAudio (Message<long> *audioObject)
 // SET TEXT
 // set the text associated with the button.  
 //void CGUIButton::setText (CGUIText *textid) // ptr to a text object associated with the button
-void CGUIButton::setText (const char * string = NULL, TextItem * textItem = NULL) // ptr to a text object associated with the button
+void CGUIButton::setText (const char * string = NULL, CGUITextItem * CGUITextItem = NULL) // ptr to a text object associated with the button
 {
    if (string)
    {
@@ -433,18 +434,18 @@ void CGUIButton::setText (const char * string = NULL, TextItem * textItem = NULL
          _enabledText->setText(string);
       }      
    }
-   if (textItem)
+   if (CGUITextItem)
    {
       if (_enabledText)
       {
-         _enabledText->setText(textItem);
+         _enabledText->setText(CGUITextItem);
       }
       else
       {
-         _enabledText = new CGUIText(_display, this, textItem);
+         _enabledText = new CGUIText(_display, this, CGUITextItem);
       }      
    }
-   if (!string && !textItem)
+   if (!string && !CGUITextItem)
    {
       // NOT GOOD!!! Nothing to do.
    }

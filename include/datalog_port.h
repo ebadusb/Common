@@ -3,6 +3,9 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.16 2003/10/03 12:32:57Z jl11312 Exp rm70006 $
  * $Log: datalog_port.h $
+ * Revision 1.2  2002/03/27 16:43:25  jl11312
+ * - updated to allow multiple data sets for periodic logging
+ * - updated error handling interface
  * Revision 1.1  2002/03/19 16:11:35  jl11312
  * Initial revision
  *
@@ -28,9 +31,12 @@ enum DataLog_ErrorType
 /*
  * Trima on vxWorks platform
  */
- 
 typedef int DataLog_TaskID;
 #define DATALOG_CURRENT_TASK 0
+
+#define DataLog_SharedPtr(type) type *
+
+typedef unsigned char DataLog_BufferData;
 
 #else
 #error "Unknown platform - no definition for DataLog_TaskID type"

@@ -3,6 +3,9 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.4  2002/03/27 16:43:25  jl11312
+ * - updated to allow multiple data sets for periodic logging
+ * - updated error handling interface
  * Revision 1.3  2002/03/20 16:37:27  jl11312
  * - redefined template functions as inline
  * Revision 1.2  2002/03/19 16:27:20  jl11312
@@ -34,13 +37,31 @@ enum DataLog_Result { DataLog_OK, DataLog_Error };
 DataLog_Result datalog_Init(const char * logPath);
 DataLog_Result datalog_InitNet(const char * ipAddress, double seconds);
 
+DataLog_Result datalog_SetDefaultTraceBufferSize(size_t size);
+DataLog_Result datalog_SetDefaultIntBufferSize(size_t size);
+DataLog_Result datalog_SetDefaultCriticalBufferSize(size_t size);
+
+typedef DataLog_SharedPtr(DataLog_BufferData) DataLog_EncryptFunc(DataLog_SharedPtr(DataLog_BufferData) input, size_t inputLength, size_t * outputLength);
+DataLog_Result datalog_SetEncryptFunc(DataLog_EncryptFunc * func);
+
 /*
  * Data log level creation
  */
-typedef void * DataLog_Handle;
+struct DataLog_HandleInfo;
+typedef DataLog_HandleInfo * DataLog_Handle;
 #define NULL_DATALOG_HANDLE   NULL
 
 DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * handle);
+
+/*
+ * Interrupt log level creation
+ */
+DataLog_Result datalog_CreateIntLevel(const char * levelName, DataLog_Handle * handle);
+
+/*
+ * Critical log level functions
+ */
+DataLog_Handle datalog_GetCriticalHandle(void);
 
 /*
  * Data log option control
@@ -48,22 +69,21 @@ DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * hand
 enum DataLog_EnabledType { LogEnabled, LogDisabled };
 enum DataLog_ConsoleEnabledType { ConsoleEnabled, ConsoleDisabled };
 
-DataLog_Result datalog_GetTaskLevelOptions(DataLog_TaskID task, DataLog_Handle handle, DataLog_EnabledType * log, DataLog_ConsoleEnabledType * console);
-DataLog_Result datalog_SetTaskLevelOptions(DataLog_TaskID task, DataLog_Handle handle, DataLog_EnabledType log, DataLog_ConsoleEnabledType console);
-DataLog_Result datalog_GetGlobalLevelOptions(DataLog_Handle handle, DataLog_EnabledType * log, DataLog_ConsoleEnabledType * console);
-DataLog_Result datalog_SetGlobalLevelOptions(DataLog_Handle handle, DataLog_EnabledType log, DataLog_ConsoleEnabledType console);
-DataLog_Result datalog_EnableIntPrint(DataLog_Handle handle);
+DataLog_Result datalog_GetTaskOutputOptions(DataLog_TaskID task, DataLog_EnabledType * log, DataLog_ConsoleEnabledType * console);
+DataLog_Result datalog_SetTaskOutputOptions(DataLog_TaskID task, DataLog_EnabledType log, DataLog_ConsoleEnabledType console);
+DataLog_Result datalog_GetLevelOptions(DataLog_Handle handle, DataLog_EnabledType * log, DataLog_ConsoleEnabledType * console);
+DataLog_Result datalog_SetLevelOptions(DataLog_Handle handle, DataLog_EnabledType log, DataLog_ConsoleEnabledType console);
 
 /*
  * printf-like interface for data log output
  */
 DataLog_Result datalog_Print(DataLog_Handle handle, const char * file, int line, const char * format, ...);
-DataLog_Result datalog_IntPrint(DataLog_Handle handle, const char * file, int line, const char * msg);
 
 /*
  * periodic logging routines
  */
-typedef void * DataLog_Set;
+struct DataLog_SetInfo;
+typedef DataLog_SetInfo * DataLog_Set;
 #define NULL_DATALOG_SET   NULL
 DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_Set * handle);
 
@@ -86,8 +106,12 @@ const char * datalog_ErrorMessage(DataLog_ErrorType error);
 void datalog_ClearError(DataLog_TaskID task);
 
 typedef void DataLog_AppErrorHandler(const char * file, int line, DataLog_ErrorType error, const char * msg, int continuable);
-DataLog_Result datalog_GetAppErrorHandler(DataLog_AppErrorHandler * func);
-DataLog_Result datalog_SetAppErrorHandler(DataLog_AppErrorHandler * func);
+DataLog_Result datalog_GetAppErrorHandler(DataLog_TaskID task, DataLog_AppErrorHandler ** func);
+DataLog_Result datalog_SetAppErrorHandler(DataLog_TaskID task, DataLog_AppErrorHandler * func);
+
+DataLog_Result datalog_GetBytesBuffered(size_t * byteCount);
+DataLog_Result datalog_GetBytesWritten(size_t * byteCount);
+DataLog_Result datalog_GetBytesMissed(size_t * byteCount);
 
 #ifdef __cplusplus
 }; // extern "C"
@@ -123,6 +147,13 @@ public:
 	DataLog_ConsoleEnabledType globalConsoleFlag(DataLog_ConsoleEnabledType flag);
 
    ologstream & operator()(const char * fileName, int lineNumber);
+};
+
+class DataLog_Critical : public DataLog_Level
+{
+public:
+	DataLog_Critical(void);
+	virtual ~DataLog_Critical();
 };
 
 #define DataLog(instance) (instance)(__FILE__, __LINE__)

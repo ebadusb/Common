@@ -78,6 +78,9 @@ public:
    unsigned long originTask( ) const;
    // Get the message's last sent time
    struct timespec sentTime( ) const;
+   //
+   // Return the latency between sentTime and currentTime in milliseconds
+   unsigned long latency() const;
 
    //
    // Dump the contents of the class ...

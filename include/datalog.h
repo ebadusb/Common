@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.11  2002/08/15 20:54:52  jl11312
+ * - added support for periodic logging
  * Revision 1.10  2002/07/18 21:20:05  jl11312
  * - added support for default log levels
  * Revision 1.9  2002/07/17 20:31:51  jl11312
@@ -31,6 +33,9 @@
 #ifndef _DATALOG_INCLUDE
 #define _DATALOG_INCLUDE
 
+#include <in.h>
+#include <inetLib.h>
+#include <sockLib.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -66,7 +71,7 @@ extern "C" {
  * Data log initialization routines
  */
 DataLog_Result datalog_Init(const char * logPath, const char * platformName);
-DataLog_Result datalog_InitNet(const char * ipAddress, double seconds);
+DataLog_Result datalog_InitNet(const char * ipAddress, int port, long connectTimeout);
 
 DataLog_Result datalog_SetDefaultTraceBufferSize(size_t size);
 DataLog_Result datalog_SetDefaultIntBufferSize(size_t size);
@@ -199,7 +204,7 @@ public:
 class DataLog_OutputTask
 {
 public:
-	DataLog_OutputTask(const char * platformName);
+	DataLog_OutputTask(void);
 	virtual ~DataLog_OutputTask() {}
 
 	int main(void);
@@ -207,20 +212,49 @@ public:
 	void resume(void) { _isRunning = true; }
 	void exit(int code);
 
-private:
-	void notifyNetworkBufferSize(size_t size);
-	void shutdown(void);
-	void writeLogFileHeader(const char * platformName);
+protected:
+	virtual void handleBufferSizeChange(size_t size) = 0;
+	virtual void writeOutputRecord(DataLog_BufferData * buffer, size_t size) = 0;
+	virtual void shutdown(void) = 0;
+
+	void writeSystemLevelRecord(void);
 	void writeMissedLogDataRecord(void);
-	void writeOutputRecord(DataLog_BufferData * buffer, size_t size);
-	void writeFileCloseRecord(void);
 	void writeTimeStampRecord(void);
 
-private:
+protected:
 	bool _isRunning;
 	bool _isExiting;
 	int  _exitCode;
-	int _outputFile;
+	int _outputFD;
+};
+
+class DataLog_LocalOutputTask : public DataLog_OutputTask
+{
+public:
+	DataLog_LocalOutputTask(const char * platformName);
+	virtual ~DataLog_LocalOutputTask() {}
+
+protected:
+	virtual void handleBufferSizeChange(size_t size);
+	virtual void writeOutputRecord(DataLog_BufferData * buffer, size_t size);
+	virtual void shutdown(void);
+
+	void writeLogFileHeader(const char * platformName);
+	void writeFileCloseRecord(void);
+};
+
+class DataLog_NetworkOutputTask : public DataLog_OutputTask
+{
+public:
+	DataLog_NetworkOutputTask(long connectTimeout);
+	virtual ~DataLog_NetworkOutputTask() {}
+
+protected:
+	virtual void handleBufferSizeChange(size_t size);
+	virtual void writeOutputRecord(DataLog_BufferData * buffer, size_t size);
+	virtual void shutdown(void);
+
+	void writeConnectionEndRecord(void);
 };
 
 class DataLog_PeriodicTask
@@ -243,6 +277,60 @@ private:
 	int  _exitCode;
 
 	DataLog_SetHandle	_set;
+};
+
+class DataLog_NetworkClientTask;
+class DataLog_NetworkTask
+{
+public:
+	DataLog_NetworkTask(int port);
+	virtual ~DataLog_NetworkTask() {}
+
+	int main(void);
+	void exit(int code);
+
+private:
+	void createClientTask(int clientSocket, struct sockaddr_in * clientAddr);
+
+	DataLog_List<DataLog_NetworkClientTask *> _clientTaskList;
+	bool _isExiting;
+	int  _exitCode;
+	int  _port; 
+};
+
+class DataLog_ClientBuffer;
+struct DataLog_NetworkPacket;
+class DataLog_NetworkClientTask
+{
+public:
+	DataLog_NetworkClientTask(int clientSocket, struct sockaddr_in * clientAddr);
+	virtual ~DataLog_NetworkClientTask() {}
+
+	int main(void);
+	void exit(int code);
+
+public:
+	enum { MaxDataSize = 1024 };
+
+private:
+	void handlePacket(const DataLog_NetworkPacket & packet);
+	void processBufferSizeRecord(DataLog_UINT16 packetLength);
+	void processInvalidPacket(const DataLog_NetworkPacket & packet);
+	bool readData(DataLog_BufferData * buffer, size_t size);
+
+private:
+	int _clientSocket;
+	char	_asciiAddr[INET_ADDR_LEN];
+
+	DataLog_ClientBuffer * _clientBuffer;
+	DataLog_BufferData _tempBuffer[MaxDataSize];
+	DataLog_Stream * _dataStream;
+
+	enum State { WaitStart, WaitEnd };
+	State	_state;
+
+	bool _isExiting;
+	int  _exitCode;
 };
 
 #endif /* ifdef __cplusplus */

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.16 2003/10/03 12:32:57Z jl11312 Exp rm70006 $
  * $Log: datalog_port.h $
+ * Revision 1.7  2002/08/15 20:54:52  jl11312
+ * - added support for periodic logging
  * Revision 1.6  2002/07/18 21:20:05  jl11312
  * - added support for default log levels
  * Revision 1.5  2002/07/17 20:31:51  jl11312
@@ -33,6 +35,7 @@ typedef enum
 
 	DataLog_BadNetworkClientData,
 	DataLog_MultipleInitialization,
+	DataLog_NetworkConnectionFailed,
 	DataLog_NoSuchTask,
 	DataLog_InvalidHandle,
 	DataLog_LevelNotInitialized,
@@ -67,6 +70,7 @@ DataLog_ErrorInformation	datalog_ErrorInformation[DataLog_LastError] =
 	{ DataLog_NoError, "no error", 1 },
 	{ DataLog_BadNetworkClientData, "bad network client data", 1 },
 	{ DataLog_MultipleInitialization, "multiple initialization", 1 },
+	{ DataLog_NetworkConnectionFailed, "network connection failed", 0 },
 	{ DataLog_NoSuchTask, "no such task", 0 },
 	{ DataLog_InvalidHandle, "invalid handle", 1 },
 	{ DataLog_LevelNotInitialized, "level not initialized", 1 },
@@ -188,8 +192,14 @@ void datalog_SetupPeriodicSignal(const char * signalName, double seconds);
 /*
  *	Data log task related functions
  */
-void datalog_StartOutputTask(const char * platformName);
+void datalog_StartLocalOutputTask(const char * platformName);
+void datalog_StartNetworkOutputTask(long connectTimeout);
 void datalog_StartPeriodicLogTask(DataLog_SetHandle set);
+
+#ifndef DATALOG_NO_NETWORK_SUPPORT
+void datalog_StartNetworkTask(void);
+void datalog_StartNetworkClientTask(int clientSocket, struct sockaddr_in * clientAddr);
+#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
 
 /*
  *	Time stamp related functions.  Note that the related structures

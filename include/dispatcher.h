@@ -49,6 +49,8 @@ public:
    int dispatchMessages();          
    void stopLoop() { _StopLoop=true; }
    void allowLoop() { if ( _Blocking ) _StopLoop=false; }
+   void enableQueue(); // enable the mqueue on the router/timer side for message reception
+   void disableQueue(); // disable the mqueue from receiving messages
 
    //
    // register the message
@@ -56,6 +58,12 @@ public:
    void registerMessage( const unsigned long messageId, const MessageBase &mb );
    virtual void deregisterMessage( const MessageBase &mb, MessagePacket &mp );
            void deregisterMessage( const unsigned long messageId, const MessageBase &mb );
+
+   //
+   // Set/Get the signal received by the signal handler
+   //
+   void receivedSignal( int sig ) { _ReceivedSignal = sig; }
+   int receivedSignal() { return _ReceivedSignal; }
 
    void dump( DataLog_Stream &outs );
 
@@ -120,6 +128,14 @@ protected:
    //
    // Flag to free the dispatcher from the loop...
    bool _StopLoop;
+   //
+   // Flag to signify the message queue has been enabled ...
+   bool _QueueEnabled;
+
+   //
+   // Save the signal received by the signal handler 
+   int _ReceivedSignal;
+
 };
 
 

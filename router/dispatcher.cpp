@@ -25,7 +25,9 @@ _MessageHighWaterMarkPerPeriod( 0 ),
 _PrevMessageHighWaterMarkPerPeriod( 0 ),
 _MessageMap( ),
 _Blocking( true ),
-_StopLoop( false )
+_StopLoop( false ),
+_QueueEnabled( false ),
+_ReceivedSignal( 0 )
 {
 }
 
@@ -152,7 +154,10 @@ void Dispatcher :: sendTimerMessage( const MessagePacket &mp, const int priority
 
 int Dispatcher :: dispatchMessages()
 {
-
+   //
+   // Enable our mqueue for receiving messages ...
+   enableQueue();
+   
    //
    // mq_receive loop ...
    int size;
@@ -162,8 +167,12 @@ int Dispatcher :: dispatchMessages()
    {
       retries=0;
       while (    ( size = mq_receive( _MyQueue, &mp, sizeof( MessagePacket ), 0 ) ) == ERROR 
-              && (_Blocking || errno != EAGAIN ) 
+              && ( errno != EAGAIN && errno != EINTR ) 
               && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
+
+      if ( _ReceivedSignal != 0 )
+         DataLog( log_level_message_system_info ) << "signal received: " << _ReceivedSignal << " " << size << " " << retries << " " << errnoMsg << endmsg;
+
       if ( size != ERROR )
       {
 			DBG_LogReceivedMessage((int)mp.msgData().taskId(), taskIdSelf(), mp.msgData().msgId());
@@ -171,7 +180,8 @@ int Dispatcher :: dispatchMessages()
       }
       else
       {
-         if ( errno == EAGAIN )
+         if (    errno == EAGAIN 
+              || errno == EINTR )
          {
             continue;
          }
@@ -217,6 +227,58 @@ int Dispatcher :: dispatchMessages()
    mq_getattr( _MyQueue, &qattributes );
 
    return (int)qattributes.mq_curmsgs;
+}
+
+void Dispatcher :: enableQueue()
+{
+   if ( !_QueueEnabled )
+   {
+      //
+      // Register this task ...
+      MessagePacket mp;
+      mp.msgData().osCode( MessageData::ENABLE_MESSAGE_QUEUE );
+      mp.msgData().taskId( taskIdSelf() );
+      mp.msgData().totalNum( 1 );
+      mp.msgData().seqNum( 1 );
+      mp.updateTime();
+      mp.updateCRC();
+
+      //
+      // Send register message to router ...
+      send( mp, MessageSystemConstant::DEFAULT_REGISTER_PRIORITY );
+      sendTimerMessage( mp, MessageSystemConstant::DEFAULT_REGISTER_PRIORITY );
+
+      //
+      // Set our flag to indicate we have enabled our queue ...
+      //
+      _QueueEnabled = true;
+   }
+}
+
+void Dispatcher :: disableQueue()
+{
+   if ( _QueueEnabled )
+   {
+      //
+      // Register this task ...
+      MessagePacket mp;
+      mp.msgData().osCode( MessageData::DISABLE_MESSAGE_QUEUE );
+      mp.msgData().taskId( taskIdSelf() );
+      mp.msgData().totalNum( 1 );
+      mp.msgData().seqNum( 1 );
+      mp.updateTime();
+      mp.updateCRC();
+
+      //
+      // Send register message to router ...
+      send( mp, MessageSystemConstant::DEFAULT_REGISTER_PRIORITY );
+      sendTimerMessage( mp, MessageSystemConstant::DEFAULT_REGISTER_PRIORITY );
+
+      //
+      // Set our flag to indicate the queue has been disabled
+      //
+      _QueueEnabled = false;
+   }
 }
 
 void Dispatcher :: registerMessage( const MessageBase &mb, MessagePacket &mp )
@@ -492,6 +554,9 @@ void Dispatcher :: shutdown()
    mq_close( _TimerQueue );
    _TimerQueue = (mqd_t)0;
 
+   //
+   // Disable the queue ...
+   _QueueEnabled = false;
 }
 
 void Dispatcher :: cleanup()

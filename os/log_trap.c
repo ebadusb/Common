@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/log_trap.c 1.3 2003/06/19 20:05:59Z jl11312 Exp jl11312 $
  * $Log: log_trap.c $
+ * Revision 1.2  2003/05/21 20:00:30Z  jl11312
+ * - enhanced memory protection (IT 6091)
  * Revision 1.1  2003/04/30 14:54:39Z  jl11312
  * Initial revision
  */
@@ -98,7 +100,7 @@ int logTrapRead(char * buffer, size_t bufferSize)
 		memcpy(buffer, &logBuffer[logBufferReadIdx], sizeCopy);
 		if ( newReadIdx >= logBufferEndIdx )
 		{
-			newReadIdx = logBufferEndIdx;
+			newReadIdx = 0;
 		}
 
 		logBufferReadIdx = newReadIdx;

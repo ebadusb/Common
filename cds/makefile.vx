@@ -1,0 +1,127 @@
+# $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cds/rcs/makefile.vx 1.1 2002/06/24 20:33:44 rm70006 Exp ms10234 $
+#
+# Makefile - makefile for the CDS library
+#
+# $Log: makefile.vx $
+# Revision 1.1  2002/06/24 19:24:25Z  rm70006
+# Initial revision
+#
+
+#
+# MAINDIR should be set to the relative path from this makefile directory
+# to the base trima project directory.  MAINDIR must use \ (DOS/Windows
+# style) directory separators if they are needed.
+#
+MAINDIR = ..
+COMDIR  = ..
+
+#
+# Define include directories needed for apps built in this directory
+#
+ADDN_INCDIR = -I$(COMDIR)/include
+
+#
+# Define location for Trima libraries
+#
+LIBDIR = $(COMDIR)/lib
+COMLIBDIR = $(COMDIR)/lib
+
+.PHONY: all local_build
+all: check_opt_change local_build
+include $(COMDIR)/makefile.vxc
+
+#
+# Check if this is the first invocation, or one of the recursive
+# invocations for building the individual applications.
+#
+ifndef APP_NAME
+
+#
+# These variables must be set to a list of all C++ and C files used
+# in the applications defined in this makefile.
+#
+ALL_CXX_FILES :=
+ALL_C_FILES :=
+
+
+#
+# Definitions required for building CDS Test
+#
+CDS_NAME = cds_common.out
+CDS_DIR  = ..\lib
+CDS_MAP  = cds_common.map
+CDS_LIBS = $(addprefix $(COMLIBDIR)/lib, datalog.a)
+CDS_C_FILES =
+CDS_CXX_FILES = datastore.cpp
+
+ALL_C_FILES += $(CDS_C_FILES)
+ALL_CXX_FILES += $(CDS_CXX_FILES)
+
+
+#
+# Need to build dependency file list for all source files
+#
+ALL_DEPEND := $(addprefix .dfile/, $(notdir $(ALL_CXX_FILES:.cpp=.d))) \
+              $(addprefix .dfile/, $(notdir $(ALL_C_FILES:.c=.d))) 
+
+
+#
+# The idea here is to build common items needed for the applications.
+# Dependency files needed for any application source file should also
+# by built here.
+#
+COMMON_TARGET_DEPEND := libs $(ALL_DEPEND)
+
+
+#
+# This is the primary target for this makefile.  Additional applications
+# should be added to the list of target dependencies, along with the
+# target for the application and the required make commands below.
+# If adding an application, be sure to include the application output
+# and map files under the clean: target as well.
+#
+local_build: $(COMMON_TARGET_DEPEND) $(CDS_NAME)
+
+$(CDS_NAME): $(COMMON_TARGET_DEPEND)
+	@rm -f .opt\cds_libs .opt\cds_c_files .opt\cds_cxx_files
+ifneq ($(strip $(CDS_LIBS)),)
+	@echo $(CDS_LIBS) > .opt\cds_libs
+endif 
+ifneq ($(strip $(CDS_C_FILES)),)
+	@echo $(CDS_C_FILES) > .opt\cds_c_files
+endif
+ifneq ($(strip $(CDS_CXX_FILES)),)
+	@echo $(CDS_CXX_FILES) > .opt\cds_cxx_files
+endif
+	@$(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) APP_NAME=$(CDS_NAME) APP_DIR=$(CDS_DIR) APP_MAP=$(CDS_MAP) APP_LIBS_CAT=cds_libs APP_C_CAT=cds_c_files APP_CXX_CAT=cds_cxx_files
+	@rm -f .opt\cds_libs .opt\cds_c_files .opt\cds_cxx_files
+
+#
+# cd must use \ (DOS/Windows # style) directory separators if they are needed.
+#
+.PHONY: libs
+libs:
+	@cd ..\datalog && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
+
+
+.PHONY: clean
+clean:
+	rm -f $(addprefix $(CPU)/, $(notdir $(ALL_C_FILES:.cpp=.o))) $(addprefix .dfile/, $(notdir $(ALL_C_FILES:.cpp=.d)))
+	rm -f $(addprefix $(CPU)/, $(notdir $(ALL_CXX_FILES:.cpp=.o))) $(addprefix .dfile/, $(notdir $(ALL_CXX_FILES:.cpp=.d)))
+	rm -f $(CDS_DIR)/$(CDS_NAME)
+ifneq ($(strip $(CDS_MAP)),)
+	rm -f $(CDS_DIR)/$(CDS_MAP)
+endif 
+
+else
+
+#
+# APP_NAME was defined, so this is a recursive make command to build one
+# of the applications defined in this file.  makefile.app takes care
+# of rules needed to build the app, so we just need to include it in
+# the list of dependencies for local_build (defined above).
+#
+local_build: $(APP_DIR)/$(APP_NAME)
+include $(COMDIR)/makefile.app
+
+endif

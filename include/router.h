@@ -39,9 +39,6 @@ public:
    static Router *globalRouter();
 
    //
-   // Function called whenever any task gets created ...
-   static int taskCreateHook( WIND_TCB *pTcb );
-   //
    // Function called whenever any task gets deleted ...
    static int taskDeleteHook( WIND_TCB *pTcb );
 

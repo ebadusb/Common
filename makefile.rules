@@ -3,6 +3,8 @@
 # Makefile.rules - common makefile rules for vxWorks
 #
 # $Log: makefile.rules $
+# Revision 1.6  2002/09/11 16:10:57  jl11312
+# - corrected file suffix for assembly language files
 # Revision 1.5  2002/09/06 13:08:47  jl11312
 # - correct dependency generation rule to properly handle source files not in the current directory
 # Revision 1.4  2002/08/28 16:46:13  sb07663
@@ -24,10 +26,6 @@ $(CPU)/%.o:%.c
 
 $(CPU)/%.o:%.cpp
 	@if not exist $(CPU) mkdir $(CPU)
-	$(CXX) $(CXXFLAGS) $< -o $@
-
-bin/%.o:%.cpp
-	@if not exist bin mkdir bin
 	$(CXX) $(CXXFLAGS) $< -o $@
 
 $(CPU)/%.o:%.s

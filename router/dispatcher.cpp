@@ -356,7 +356,7 @@ void Dispatcher :: send( mqd_t mqueue,  const MessagePacket &mp, const int prior
                            << dec << qattributes.mq_curmsgs << " messages)" 
                            << ", (" << strerror( errorNo ) << ")"
                            << endmsg;
-#if !( BUILD_TYPE==DEBUG ) && !( CPU==SIMNT )
+#if !DEBUG_BUILD && CPU != SIMNT 
       _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
 #endif // #if CPU!=SIMNT && BUILD_TYPE!=DEBUG
       return;

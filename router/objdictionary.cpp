@@ -8,6 +8,7 @@
 #include <vxWorks.h>
 
 #include "datalog.h"
+#include "datalog_levels.h"
 #include "error.h"
 #include "objdictionary.h"
 
@@ -114,8 +115,7 @@ void *ObjDictionary :: create( const char *n)
    ObjDictionaryEntry *e = findEntry( n );
    if ( !e )
    {
-      DataLog_Level log(LOG_ERROR);
-      DataLog(log) << "Object not found -> " << n << endmsg;
+      DataLog( log_level_message_system_error ) << "Object not found -> " << n << endmsg;
       return 0;
    }
    return e->newObject( );

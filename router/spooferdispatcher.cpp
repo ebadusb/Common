@@ -10,6 +10,7 @@
 #include <time.h>
 
 #include "datalog.h"
+#include "datalog_levels.h"
 #include "spooferdispatcher.h"
 
 
@@ -36,9 +37,8 @@ void SpooferDispatcher :: spoofMessage( MessageBase &mb )
 
 void SpooferDispatcher :: spoofMessage( MessageBase &mb, const CallbackBase &cb )
 {
-   DataLog_Level slog( "Spoofer" );
-   slog( __FILE__, __LINE__ ) << "Spoofing message " << hex << mb.msgId() 
-                              << " (" << mb.messageName() << ")" << endmsg;
+   DataLog( log_level_message_spoof_info ) << "Spoofing message " << hex << mb.msgId() 
+                                           << " (" << mb.messageName() << ")" << endmsg;
 
    //
    // Change the message packet list for the MessageBase object ...
@@ -78,9 +78,8 @@ void SpooferDispatcher :: spoofMessage( MessageBase &mb, const CallbackBase &cb 
 
 void SpooferDispatcher :: despoofMessage( MessageBase &mb )
 {
-   DataLog_Level slog( "Spoofer" );
-   slog( __FILE__, __LINE__ ) << "Despoofing message " << hex << mb.msgId() 
-                              << " (" << mb.messageName() << ")" << endmsg;
+   DataLog( log_level_message_spoof_info ) << "Despoofing message " << hex << mb.msgId() 
+                                           << " (" << mb.messageName() << ")" << endmsg;
 
    //
    // Remove the message entry from the spoofed messages list ...

@@ -20,6 +20,7 @@
 #include "messagesystemconstant.h"
 #include "router.h"
 #include "systemoverrides.h"
+#include "datalog_levels.h"
 
 
 WIND_TCB *Router::_TheRouterTid=0;
@@ -480,8 +481,6 @@ void Router::processMessage( MessagePacket &mp, int priority )
 
 void Router::connectWithGateway( const MessagePacket &mp )
 {
-   DataLog_Critical elog;
-
    //
    // Find gateway in list ...
    map< unsigned long, int >::iterator sockiter;
@@ -843,9 +842,8 @@ void Router::registerMessageWithGateway( unsigned long msgId, unsigned long node
 
 void Router::registerSpooferMessage( unsigned long msgId, unsigned long tId )
 {
-   DataLog_Level slog( "Spoofer" );
-   slog( __FILE__, __LINE__ ) << "Spoofer task " << hex << tId 
-                              << " registered for message " << hex << msgId << endmsg;
+   DataLog( log_level_router_info ) << "Spoofer task " << hex << tId 
+                                    << " registered for message " << hex << msgId << endmsg;
 
    //
    // Add the message Id to the map ...
@@ -947,8 +945,7 @@ void Router::deregisterMessageWithGateway( unsigned long msgId, unsigned long no
 
 void Router::deregisterSpooferMessage( unsigned long msgId)
 {
-   DataLog_Level slog( "Spoofer" );
-   slog( __FILE__, __LINE__ ) << "Deregistering Spoofer for message " << hex << msgId << endmsg;
+   DataLog( log_level_router_info ) << "Deregistering Spoofer for message " << hex << msgId << endmsg;
 
    //
    // Find the message Id in the list ...
@@ -1050,12 +1047,11 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
                            << " queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
                            << ", (" << strerror( errorNo ) << ")"
                            << endmsg;
-      DataLog_Level logError( LOG_ERROR );
-      dumpQueue( tId, mqueue, DataLog( logError ) );
+      dumpQueue( tId, mqueue, DataLog( log_level_router_error ) );
 
-#if !( BUILD_TYPE==DEBUG ) 
+#if !DEBUG_BUILD && CPU != SIMNT
       _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
-#endif // #if BUILD_TYPE!=DEBUG
+#endif // #if BUILD_TYPE!=DEBUG && CPU!=SIMNT
 
    }
 
@@ -1369,7 +1365,7 @@ void Router::dumpQueue( unsigned long tId, mqd_t mqueue, DataLog_Stream &out )
    while ( mq_receive( mqueue, &buffer, sizeof( MessagePacket ), &priority ) != ERROR )
    {
 
-#if !( BUILD_TYPE==DEBUG )
+#if !DEBUG_BUILD && CPU != SIMNT
       //
       // Format the data ...
       MessagePacket mp;
@@ -1385,7 +1381,7 @@ void Router::dumpQueue( unsigned long tId, mqd_t mqueue, DataLog_Stream &out )
          out << hex << (int)(unsigned char)buffer[i] << " "; 
       }
       out << endmsg;
-#endif // #if BUILD_TYPE!=DEBUG 
+#endif // #if BUILD_TYPE!=DEBUG && CPU!=SIMNT
 
    }
    mq_setattr( mqueue, &old_attr, 0 );
@@ -1458,11 +1454,10 @@ void routerInit()
 
 void routerDump()
 {
-	DataLog_Level	routerDump("router_dump");
-	routerDump.logOutput(DataLog_LogDisabled);
-	routerDump.consoleOutput(DataLog_ConsoleEnabled);
+	log_level_router_info.logOutput(DataLog_LogDisabled);
+	log_level_router_info.consoleOutput(DataLog_ConsoleEnabled);
 
    if ( Router::globalRouter() )
-      Router::globalRouter()->dump( DataLog(routerDump) );
+      Router::globalRouter()->dump( DataLog( log_level_router_info ) );
 }
 

@@ -221,7 +221,7 @@ void Gateway::sendMsgToRouter( const MessagePacket &mp )
                            << " - Router queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
                            << ", (" << strerror( errorNo ) << ")"
                            << endmsg;
-#if !( BUILD_TYPE==DEBUG ) && !( CPU==SIMNT )
+#if !DEBUG_BUILD && CPU != SIMNT
       _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
 #endif // #if CPU!=SIMNT && BUILD_TYPE!=DEBUG
       return;

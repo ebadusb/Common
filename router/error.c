@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/error.c 1.7 2001/05/11 19:56:17 jl11312 Exp jl11312 $
  * $Log: error.c $
+ * Revision 1.5  2000/05/03 16:28:35  BD10648
+ * Added Process ID to LOG_ERROR string.
  * Revision 1.4  1999/09/29 18:07:55  TD10216
  * IT4333 - changes for microsoft compiler
  * Revision 1.3  1999/08/31 17:50:03  BS04481
@@ -227,6 +229,41 @@ void
 _LOG_ERROR( char* file, int line, trace_codes_t code, int usercode, char* eString)
 {
     DoLog( file, line, code, usercode, eString );
+
+   if (displayStatusKnown == 0)
+   {
+      displayStatus = getenv( "DISPLAYSTATUS" );
+      if (displayStatus == NULL)
+         displayStatus = (char *) &displayDefault;
+      displayStatusKnown = 1;
+   }
+   else
+   {
+      if (strcmp(displayStatus,"DISPLAY") == 0)
+         // display on console for debug
+         printf("%s @ %d, errno=%d, usercode=%d, %s\n", file, line, errno, usercode, eString);
+   }
+
+}
+
+
+// SPECIFICATION:    Logs to trace buffer for drivers.  No display to screen. 
+//                   No kernel calls after the first pass (getenv) unless DISPLAY is set
+//                   Parameters:
+//                   line - source code line number
+//                   error - error string
+// NOTE: this function is really a misnomer.  It logs any string to tracelog, not just errors.
+//
+// ERROR HANDLING:   none.
+void
+_LOG_ERROR_DRV( char* file, int line, trace_codes_t code, int usercode, char* eString)
+{
+   static char eBuff[ERROR_SIZE];                             // fixed length error buffer
+
+   sprintf(eBuff, "%.25s %.270s", file, eString);
+
+   // send to trace log
+   Trace3b( code, _TRACE_SEVERE, line, errno, usercode, strlen( eBuff) + 1, eBuff);
 
    if (displayStatusKnown == 0)
    {

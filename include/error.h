@@ -3,6 +3,7 @@
  *
  * $Header: M:/BCT_Development/TrimaVx/Common/include/rcs/error.h 1.7 2001/08/30 17:22:53 rm70006 Exp sb07663 $
  * $Log: error.h $
+ * Revision 1.4  2000/05/03 16:27:30  BD10648
  * Revision 1.3  1999/08/31 17:49:59  BS04481
  * Change _log_error to not display to screen unless the env var
  * DISPLAYSTATUS=DISPLAY.
@@ -154,6 +155,20 @@ _LOG_ERROR_WITH_DISPLAY( char* file, int line, trace_codes_t code, int usercode,
 // ERROR HANDLING:   none.
 void
 _LOG_ERROR( char* file, int line, trace_codes_t code, int usercode, char* eString);
+
+// SPECIFICATION:    LOG_ERROR_DRV
+//                      logs error but does not display to screen
+//                      no kernel calls in normal operation
+//                   Parameters:
+//                   file - file name string, typically __FILE__
+//                   line - file line number, __LINE__
+//                   code - trace code from above
+//                   usercode - user data
+//                   eString - error string
+//
+// ERROR HANDLING:   none.
+void
+_LOG_ERROR_DRV( char* file, int line, trace_codes_t code, int usercode, char* eString);
 
 enum ASSERT_FLAGS
 {

@@ -57,7 +57,7 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    }
    while (    _MyQueue == (mqd_t)ERROR 
-           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
+           && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
 
    if ( _MyQueue == (mqd_t)ERROR )
    {
@@ -76,7 +76,7 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    } 
    while (    _RQueue == (mqd_t)ERROR 
-           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
+           && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
 
    if ( _RQueue == (mqd_t)ERROR )
    {
@@ -95,7 +95,7 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    } 
    while (    _TimerQueue == (mqd_t)ERROR 
-           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
+           && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
 
    if ( _TimerQueue == (mqd_t)ERROR )
    {
@@ -254,9 +254,9 @@ void Dispatcher :: deregisterMessage( const unsigned long mId, const MessageBase
 
 }
 
-void Dispatcher :: dump( ostream &outs )
+void Dispatcher :: dump( DataLog_Stream &outs )
 {                  
-   outs << "************************* Dispatcher DUMP *************************" << endl;
+   outs << "************************* Dispatcher DUMP *************************" << endmsg;
    set< MessageBase* >::iterator siter;
    map< unsigned long, set< MessageBase* > >::iterator miter;
 
@@ -366,7 +366,7 @@ void Dispatcher :: send( mqd_t mqueue,  const MessagePacket &mp, const int prior
    // Send message packet to router ...
    unsigned int retries=0;
    while (    mq_send( mqueue, &mp, sizeof( MessagePacket ), priority ) == ERROR 
-           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES )
+           && ++retries < MessageSystemConstant::MAX_NUM_RETRIES )
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
    {

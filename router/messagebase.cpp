@@ -11,6 +11,7 @@
 
 #include "auxclock.h"
 #include "datalog.h"
+#include "datalog_levels.h"
 #include "error.h"
 #include "messagebase.h"
 #include "messagesystem.h"
@@ -155,14 +156,21 @@ void MessageBase::send()
 
    if ( MessageSystem::MsgSystem() )
    {
+      //
+      // reset my task and node Ids to my own because I am the last sender ...
+      _TaskId = taskIdSelf();
+      _NodeId = 0;
+
       list< MessagePacket* >::iterator pckt;
       for ( pckt  = _PacketList.begin();
             pckt != _PacketList.end() ;
             pckt++ ) 
       {
          //
-         // Set the sent time in the message packets ...
+         // Set the sent time, task, and node in the message packets ...
          (*pckt)->updateTime();
+         (*pckt)->msgData().taskId( _TaskId );
+         (*pckt)->msgData().nodeId( _NodeId );
          (*pckt)->updateCRC();
    
          //
@@ -239,9 +247,9 @@ unsigned long MessageBase::latency() const
    return ( msecs < 0 ? 0 : msecs );
 }
 
-void MessageBase::dump( ostream &outs ) 
+void MessageBase::dump( DataLog_Stream &outs ) 
 {
-   outs << "========================== Message Base ===========================" << endl;
+   outs << "========================== Message Base ===========================" << endmsg;
    outs << "Name: " << _MessageName << " ";
    outs << "DisType: " << _DistributionType << " RegFlag: " << (bool)_RegisteredFlag 
         << " MsgId: " << hex << _MsgId << " NodeId: " << hex << _NodeId  << " Tid: " << hex << _TaskId 
@@ -385,7 +393,7 @@ bool MessageBase :: findAndCopy( const MessagePacket &mp )
             DataLog(criticalLog) << "Message CRC validation failed for MsgId=" << hex << (*pckt)->msgData().msgId() 
                                  << ", CRC=" << crc << " and should be " <<  (*pckt)->crc() << endmsg;
             _FATAL_ERROR( __FILE__, __LINE__, "CRC check failed" );
-            (*pckt)->dump(cerr);
+            (*pckt)->dump( DataLog( log_level_message_system_error ) );
             return false;
          }
 

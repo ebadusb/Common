@@ -89,15 +89,15 @@ unsigned short MessageData::sizeOfData() const
    return size;
 }
 
-void MessageData::dump( ostream &outs )
+void MessageData::dump( DataLog_Stream &outs )
 {
    outs << "NetSeqNum: " << _NetSequenceNum << " ";
    outs << "OSCode: " << _OSCode << " MsgId: " << hex << _MsgId << dec << " ";
    outs << "Length: " << _Length << " Node: " << hex << _NodeId << " ";
    outs << "Tid: " << hex << _TaskId << " Time: " << dec << _SendTime.tv_sec << " " << _SendTime.tv_nsec << " ";
    outs << "Seq: " << _SeqNum << " Tot: " << _TotNum << " ";
-   outs << "PcktLngth: " << _PacketLength << endl;
-   outs << " MsgId: " << hex << _MsgId << dec << " (cont.) Msg: " << _Msg << endl;
+   outs << "PcktLngth: " << _PacketLength << endmsg;
+   outs << " MsgId: " << hex << _MsgId << dec << " (cont.) Msg: " << _Msg << endmsg;
 }
 
 MessagePacket::MessagePacket() : _MessageData(), _CRC( 0 ), _Unopened( false )
@@ -176,13 +176,14 @@ bool MessagePacket::validCRC() const
    return true;
 }
 
-void MessagePacket::dump( ostream &outs )
+void MessagePacket::dump( DataLog_Stream &outs )
 {
    _MessageData.dump( outs );
    outs << "RawMsgData: "; 
    unsigned char *tPtr = (unsigned char*)&_MessageData;
    for ( int i=0;i<sizeof( MessageData );i++ )                          
-      outs << setw(2) << setfill('0') << hex << (int)tPtr[i]; outs << endl;
-   outs << "MessagePacket:: CRC: " << hex << _CRC << dec << " Unopened: " << _Unopened << endl;
+      // outs << setw(2) << setfill('0') << hex << (int)tPtr[i]; outs << endmsg;
+      outs << hex << (int)tPtr[i]; outs << endmsg;
+   outs << "MessagePacket:: CRC: " << hex << _CRC << dec << " Unopened: " << _Unopened << endmsg;
 }
 

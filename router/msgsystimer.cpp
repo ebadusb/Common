@@ -13,6 +13,7 @@
 
 #include "auxclock.h"
 #include "datalog.h"
+#include "datalog_levels.h"
 #include "error.h"
 #include "messagesystemconstant.h"
 #include "msgsystimer.h"
@@ -175,7 +176,7 @@ void MsgSysTimer::maintainTimers()
       // Read the queue entry ...
       unsigned int retries=0;
       while (    ( size = mq_receive( _TimerMQ, &mp, sizeof( MessagePacket ), 0 ) ) == ERROR 
-              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
+              && ++retries < MessageSystemConstant::MAX_NUM_RETRIES ) 
          nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
       if ( size == ERROR )
       {
@@ -204,7 +205,7 @@ void MsgSysTimer::maintainTimers()
 
 }
 
-void MsgSysTimer::dump( ostream &outs )
+void MsgSysTimer::dump( DataLog_Stream &outs )
 {
    outs << "??????????????????????? MsgSysTimer DUMP ??????????????????????????" << endmsg;
    // mq_attr qattributes;
@@ -215,7 +216,7 @@ void MsgSysTimer::dump( ostream &outs )
         // << "  maxsize " << qattributes.mq_maxmsg 
         << endmsg;
 
-   outs << "   Task Queue Map: size " << dec << _TaskQueueMap.size() << endl;
+   outs << "   Task Queue Map: size " << dec << _TaskQueueMap.size() << endmsg;
    map< unsigned long, mqd_t >::iterator tqiter;                                  // _TaskQueueMap;
    for ( tqiter  = _TaskQueueMap.begin() ;
          tqiter != _TaskQueueMap.end() ;
@@ -226,7 +227,7 @@ void MsgSysTimer::dump( ostream &outs )
            // << "  flags " << qattributes.mq_flags
            // << "  size " << qattributes.mq_curmsgs
            // << "  maxsize " << qattributes.mq_maxmsg 
-           << endl;
+           << endmsg;
    }
    outs << endmsg 
         << " Ticks: " << dec << _Ticks << endmsg;
@@ -327,7 +328,7 @@ void MsgSysTimer::registerTask( unsigned long tId, const char *qName )
       mqd_t tQueue = (mqd_t)ERROR;
       unsigned int retries=0;
       while ( ( tQueue = mq_open( qName, O_RDWR ) ) == (mqd_t)ERROR 
-              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
+              && ++retries < MessageSystemConstant::MAX_NUM_RETRIES ) nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
 
       //
       // If opened ...
@@ -537,7 +538,7 @@ void MsgSysTimer::checkTimers()
             unsigned int retries=0;
             while (    mq_send( (*tqiter).second, mpPtr, sizeof( MessagePacket ), 
                                 MessageSystemConstant::DEFAULT_TIMER_MESSAGE_PRIORITY ) == ERROR
-                    && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
+                    && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
             if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
             {
                DataLog_Critical criticalLog;
@@ -690,5 +691,5 @@ void msgsystimerInit()
 void msgsystimerDump()
 {
    if ( MsgSysTimer::globalMsgSysTimer() )
-      MsgSysTimer::globalMsgSysTimer()->dump( cout );
+      MsgSysTimer::globalMsgSysTimer()->dump( DataLog( log_level_message_system_timer_info ) );
 }

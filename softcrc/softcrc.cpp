@@ -7,6 +7,8 @@
  * CHANGELOG:
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.cpp 1.6 2002/09/20 19:30:23Z td07711 Exp rm70006 $
  * $Log: softcrc.cpp $
+ * Revision 1.1  1999/05/24 23:32:16  TD10216
+ * Initial revision
  * Revision 1.1  1999/03/20 00:45:01  TD10216
  * Initial revision
  * Revision 1.13  1998/11/03 02:54:28  TM02109
@@ -275,6 +277,26 @@ int main(int argc, char** argv)
          logerrno("fprintf failed to update -update filename\n");
          exit(-1);
       }
+
+      if (fp != NULL)
+      {
+         if (fclose(fp) != NULL)
+         {
+            sprintf(buf, "fclose failed on %.100s\n", UpdateFile);
+            logerrno(buf);
+            exit(-1);
+         }
+         else
+         {
+            if (chmod(UpdateFile, (S_IRUSR|S_IRGRP|S_IROTH)) != 0)
+            {
+               sprintf(buf, "chmod failed on %.100s, cannot change permission", UpdateFile);
+               logerrno(buf);
+               exit(-1);
+            }
+         }
+      }
+
       if (Verbosity > 0) {
          sprintf(buf, "%.100s updated with new crc=0x%08x\n", UpdateFile, InitCRC);
          loginfo(buf);

@@ -80,7 +80,6 @@ bool MessageSystem::init( const char *qname, const unsigned int qsize, const boo
 
       //
       // Set up the task variable
-      cout << endl << " MsgSys-> " << (int*)&_TheMessageSystem << endl << endl;
       if ( taskVarAdd( 0, (int *)&_TheMessageSystem ) != OK )
       {
          //

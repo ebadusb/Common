@@ -74,18 +74,12 @@
 
 void sock_error (const char* classname, const char* msg)
 {
-   int errorNumber = errnoGet();
+   DataLog_Critical _fatal;
 
-   if (errorNumber)
-   {
-      cerr << classname << ' ' << msg << " <" << strerror(errorNumber) << ">" << endl;
-      //printErrno(errorNumber);
-   }
-   else
-      cerr << classname << ' ' << msg << endl;
-
-   errnoSet(0);
+   DataLog(_fatal) << classname << ' ' << msg << " <" << errnoMsg << ">" << endmsg;
 }
+
+
 
 void sockAddr::error (const char* msg) const
 {
@@ -129,7 +123,10 @@ sockbuf::sockbuf (int domain, sockbuf::type socket_type, int proto) :
 #endif
    
    if (rep->sock == -1)
-      perror ("sockbuf::sockbuf");
+      DataLog(_fatal) << "sockbuf::sockbuf(" 
+                      << "domain( " << domain << "), " 
+                      << "socket_type(" << socket_type << "), " 
+                      << "proto(" << proto << ").  " << errnoMsg << endmsg;
 
    xsetflags (_S_LINE_BUF);
 }
@@ -173,13 +170,22 @@ sockbuf& sockbuf::operator = (const sockbuf& sb)
    return *this;
 }
 
+
+
 sockbuf::~sockbuf ()
 {
    overflow (EOF);
-   if(rep->cnt == 1 && !(xflags () & _S_DELETE_DONT_CLOSE)) close ();
+
+   if ( (rep->cnt == 1) && !(xflags() & _S_DELETE_DONT_CLOSE) )
+      close ();
+
    delete [] base ();
-   if(--rep->cnt == 0) delete rep;
+
+   if (--(rep->cnt) == 0) 
+      delete rep;
 }
+
+
 
 sockbuf* sockbuf::open (type, int)
 {
@@ -212,16 +218,23 @@ int sockbuf::flush_output()
 // return 0 when there is nothing to flush or when the flush is a success
 // return EOF when it could not flush
 {
-   if(pptr () <= pbase ()) return 0;
+   if (pptr () <= pbase ())
+      return 0;
+
    if(!(xflags () & _S_NO_WRITES))
    {
       int wlen   = pptr () - pbase ();
       int wval   = sys_write (pbase (), wlen);
       int status = (wval == wlen)? 0: EOF;
-      if(unbuffered()) setp (pbase (), pbase ());
-      else setp (pbase (), pbase () + BUFSIZ);
+
+      if (unbuffered())
+         setp (pbase (), pbase ());
+      else
+         setp (pbase (), pbase () + BUFSIZ);
+
       return status;
    }
+
    return EOF;
 }
 
@@ -241,28 +254,35 @@ int sockbuf::doallocate ()
 
       buf += BUFSIZ;
       setp (buf, buf+BUFSIZ);
+
       return 1;
    }
+
    return 0;
 }
 
 int sockbuf::underflow ()
 {
-   if(xflags () & _S_NO_READS) return EOF;
+   if (xflags () & _S_NO_READS)
+      return EOF;
 
-   if(gptr () < egptr ()) return *(unsigned char*)gptr ();
+   if (gptr () < egptr ())
+      return *(unsigned char*)gptr ();
 
-   if(base () == 0 && doallocate () == 0) return EOF;
+   if (base () == 0 && doallocate () == 0)
+      return EOF;
 
    int bufsz = unbuffered () ? 1: BUFSIZ;
    int rval = sys_read (base (), bufsz);
-   if(rval == EOF)
+
+   if (rval == EOF)
    {
       xsetflags (_S_EOF_SEEN);
       return EOF;
    }
-   else if(rval == 0)
+   else if (rval == 0)
       return EOF;
+
    setg (eback (), base (), base () + rval);
    return *(unsigned char*)gptr ();
 }
@@ -273,18 +293,22 @@ int sockbuf::overflow (int c)
 // return (flush_output()==EOF)? EOF: c;     
 // otherwise insert c into the buffer and return c
 {
-   if(c == EOF) return flush_output ();
+   if (c == EOF)
+      return flush_output ();
 
-   if(xflags () & _S_NO_WRITES) return EOF;
+   if (xflags () & _S_NO_WRITES)
+      return EOF;
 
-   if(pbase () == 0 && doallocate () == 0) return EOF;
+   if (pbase () == 0 && doallocate () == 0)
+      return EOF;
 
-   if(pptr () >= epptr() && flush_output () == EOF)
+   if (pptr () >= epptr() && flush_output () == EOF)
       return EOF;
 
    xput_char (c);
-   if((unbuffered () || linebuffered () && c == '\n' || pptr () >= epptr ())
-      && flush_output () == EOF)
+
+   if ((unbuffered () || linebuffered () && c == '\n' || pptr () >= epptr ())
+       && flush_output () == EOF)
       return EOF;
 
    return c;
@@ -344,10 +368,15 @@ int sockbuf::connectWithTimeout( sockAddr& sa, timeval *tv )
    return 0;
 }
 
-void sockbuf::listen (int num)
+int sockbuf::listen (int num)
 {
    if(::listen (rep->sock, num) == -1)
+   {
       error ("sockbuf::listen");
+      return -1;
+   }
+   else
+      return 0;
 }
 
 sockbuf  sockbuf::accept (sockAddr& sa)
@@ -604,16 +633,21 @@ void sockbuf::shutdown (shuthow sh)
 
 int sockbuf::getopt (option op, void* buf, int len, level l) const
 {
+   DataLog_Critical fatal;
    int rlen = len;
+
    if(::getsockopt (rep->sock, l, op, (char*) buf, &rlen) == -1)
-      perror ("sockbuf::getopt");
+      DataLog(fatal) << "sockbuf::getopt(" << op << ").  " << errnoMsg << endmsg;
+
    return rlen;
 }
 
-void sockbuf::setopt (option op, void* buf, int len, level l) const
+void sockbuf::setopt (option op, const void *buf, int len, level l) const
 {
-   if(::setsockopt (rep->sock, l, op, (char*) buf, len) == -1)
-      perror ("sockbuf::setopt");
+   DataLog_Critical fatal;
+
+   if(::setsockopt (rep->sock, l, op, (char*)buf, len) == -1)
+      DataLog(fatal) << "sockbuf::setopt(" << op << ").  " << errnoMsg << endmsg;
 }
 
 sockbuf::type sockbuf::gettype () const

@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.9  2002/09/18 22:13:21Z  rm70006
+ * HISTORY:    Change Get and Set to have built in locking.
  * HISTORY:    Revision 1.8  2002/09/13 20:09:04Z  rm70006
  * HISTORY:    Fix bug with lock/unlock.
  * HISTORY:    Revision 1.7  2002/09/04 18:31:28Z  rm70006
@@ -97,6 +99,7 @@ public:
    virtual ~BaseElement();
 
    virtual dataType Get() const;
+   virtual void     Get(dataType *item) const;  // Faster version.  Better for large data items.
 
    virtual bool     Set(const dataType &data);
 

@@ -3,6 +3,8 @@
  *
  * $Header: L:/vxWorks/Common/cgui/rcs/cgui_text.h 1.7 2004/11/18 22:31:41Z rm10919 Exp cf10242 $
  * $Log: cgui_text.h $
+ * Revision 1.6  2004/11/04 20:19:09Z  rm10919
+ * Common updates and changes.
  * Revision 1.5  2004/11/01 17:27:24Z  cf10242
  * Change TextItem to CGUITextItem
  * Revision 1.4  2004/10/22 20:14:34Z  rm10919
@@ -179,7 +181,7 @@ public:
    // calling each individual method.
    //
    void setStylingRecord(StylingRecord * stylingRecord);
-   void getStylingRecord(StylingRecord copyofStylingRecord) { copyofStylingRecord = _stylingRecord;};
+   StylingRecord * getStylingRecord(void) { return &_stylingRecord;};
 
    //
    // SET_TEXT

@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.8  2002/09/13 20:09:05Z  rm70006
+ * HISTORY:    Fix bug with lock/unlock.
  * HISTORY:    Revision 1.7  2002/08/30 15:26:30Z  rm70006
  * HISTORY:    Don't use set in register init routine.  
  * HISTORY:    Revision 1.6  2002/08/30 13:54:06Z  rm70006
@@ -180,30 +182,72 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, R
 //
 // Get method
 //
-template <class dataType> const dataType & BaseElement<dataType>::Get() const
+template <class dataType> inline dataType BaseElement<dataType>::Get() const
 {
    // If calling instance is spoofer or no spoof has been registered, return real value
    if ( (_role == ROLE_SPOOFER) || (*_fp == NULL) )
    {
-      return *_data;
+      _ds->Lock();
+      dataType temp = *_data;
+      _ds->Unlock();
+      return temp;
    }
    else
    {
       FP fp = *_fp;
-      return (fp(*this));   // Give control to spoofer to return "spoofed" value.
+      _ds->Lock();
+      dataType temp = fp(*this);
+      _ds->Unlock();
+
+      return temp;   // Give control to spoofer to return "spoofed" value.
    }
 }
+
+
+
+#define NOLOCK_GET(T)                                                                      \
+template<> inline T BaseElement<T>::Get() const                                            \
+{                                                                                          \
+   /* If calling instance is spoofer or no spoof has been registered, return real value */ \
+   if ( (_role == ROLE_SPOOFER) || (*_fp == NULL) )                                        \
+   {                                                                                       \
+      T temp = *_data;                                                                     \
+      return temp;                                                                         \
+   }                                                                                       \
+   else                                                                                    \
+   {                                                                                       \
+      FP fp = *_fp;                                                                        \
+      T temp = fp(*this);                                                                  \
+                                                                                           \
+      return temp;   /* Give control to spoofer to return "spoofed" value. */              \
+   }                                                                                       \
+}
+
+
+
+//
+// Get Specializations.
+// The following types are "safe" and do not require locking as a read operation is atomic.
+//
+NOLOCK_GET(int);
+NOLOCK_GET(char);
+NOLOCK_GET(bool);
+NOLOCK_GET(float);
+NOLOCK_GET(double);
 
 
 
 //
 // Set method
 //
-template <class dataType> bool BaseElement<dataType>::Set(const dataType &data)
+template <class dataType> inline bool BaseElement<dataType>::Set(const dataType &data)
 {
    if (_role != ROLE_RO)
    {
+      _ds->Lock(); 
       *_data = data;
+      _ds->Unlock();
+
       return true;
    }
    else
@@ -217,6 +261,39 @@ template <class dataType> bool BaseElement<dataType>::Set(const dataType &data)
 
 
 
+#define NOLOCK_SET(T)                                                             \
+template<> inline bool BaseElement<T>::Set(const T &data)                         \
+{                                                                                 \
+   if (_role != ROLE_RO)                                                          \
+   {                                                                              \
+      *_data = data;                                                              \
+                                                                                  \
+      return true;                                                                \
+   }                                                                              \
+   else                                                                           \
+   {                                                                              \
+      /* Log Fatal Error */                                                       \
+      DataLog(*(_ds->_fatal)) << "BaseElement: Set Failed in " << _ds->Name() \
+                              << ".  Role is RO." << endmsg;                      \
+      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");                            \
+      return false;                                                               \
+   }                                                                              \
+}
+
+
+
+//
+// Set Specializations.
+// The following types are "safe" and do not require locking as a read operation is atomic.
+//
+NOLOCK_SET(int);
+NOLOCK_SET(char);
+NOLOCK_SET(bool);
+NOLOCK_SET(float);
+NOLOCK_SET(double);
+
+
+
 //
 // ReadSelf method
 //
@@ -225,6 +302,13 @@ template <class dataType> void BaseElement<dataType>::ReadSelf (ifstream &pfrfil
    pfrfile.read(_data, sizeof(dataType));
    //pfrfile >> _data;
    //DataLog(_ds->*_debug) << "Reading value " << *_data << ", size " << sizeof(dataType) << endmsg;
+
+   if (!pfrfile.good())
+   {
+      DataLog(*(_ds->_fatal)) << "ReadSelf failed in " << _ds->Name()
+                              << ".  status is: " << pfrfile.rdstate() << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  ReadSelf failed.");
+   }
 }
    
 
@@ -237,6 +321,13 @@ template <class dataType> void BaseElement<dataType>::WriteSelf (ofstream &pfrfi
    //DataLog(_ds->*_debug) << "Writing value " << *_data << ", size " << sizeof(dataType) << endmsg;
    pfrfile.write(_data, sizeof(dataType));
    //pfrfile << _data;
+
+   if (!pfrfile.good())
+   {
+      DataLog(*(_ds->_fatal)) << "WriteSelf failed in " << _ds->Name()
+                              << ".  status is: " << pfrfile.rdstate() << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  WriteSelf failed.");
+   }
 }
 
 

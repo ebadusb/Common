@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.8  2002/09/13 20:09:04Z  rm70006
+ * HISTORY:    Fix bug with lock/unlock.
  * HISTORY:    Revision 1.7  2002/09/04 18:31:28Z  rm70006
  * HISTORY:    Added accessor function for role.
  * HISTORY:    Revision 1.6  2002/09/03 14:36:33Z  rm70006
@@ -94,7 +96,7 @@ public:
 
    virtual ~BaseElement();
 
-   virtual const dataType & Get() const;
+   virtual dataType Get() const;
 
    virtual bool     Set(const dataType &data);
 
@@ -201,7 +203,8 @@ public:
    const        Role      & GetRole () const { return _role; }
    void                     GetSymbolName (string &s, const BIND_ITEM_TYPE item);
 
-
+   static void turn_on_logging(void)  { _logging = true; };
+   static void turn_off_logging(void) { _logging = false; };
    
 // Class Methods
 protected:
@@ -210,7 +213,6 @@ protected:
 
    void DeleteElement (ElementType *member);
    virtual void CheckForMultipleWriters() = 0;
-
 
 // Data Members
 protected:
@@ -251,6 +253,7 @@ private:
    static DATASTORE_LISTTYPE _datastoreList;
    static SYMTAB_ID          _datastoreTable;
 
+   static bool _logging;
 };
 
 

@@ -27,17 +27,18 @@ MessageBase::MessageBase( ) :
    _NodeId( 0 ),
    _TaskId( 0 ),
    _MessageName(),
-   _PacketList(),
-   _InUse( false ),
-   _DeleteMe( false )
+   _PacketList()
 {
 }
 
 MessageBase::~MessageBase()
 {
    if ( _RegisteredFlag == true )
+   {
       deregisterMsg();
+   }
    cleanup();
+
 }
 
 bool MessageBase::init( const SendType st )
@@ -296,19 +297,6 @@ void MessageBase::dump( DataLog_Stream &outs )
    outs << "===================================================================" << endmsg;
 }
 
-void MessageBase::operator delete( void *me )
-{
-   MessageBase *t = (MessageBase*)me;
-   if ( t->_InUse )
-   {
-      t->_DeleteMe = true;
-   }
-   else
-   {
-      ::delete me; 
-   }
-}
-
 void MessageBase::postConstructInit()
 {
    genMsgName();
@@ -368,16 +356,17 @@ unsigned long MessageBase::genMsgId()
    return 0;
 }
 
-bool MessageBase::notify( const MessagePacket &mp )
+bool MessageBase::notify( MessageBase &me, const MessagePacket &mp )
 {
-   return notify( mp, _VirtualNotify );
+   CallbackBase copy = me._VirtualNotify;
+   return notify( me, mp, copy );
 }
 
-bool MessageBase::notify( const MessagePacket &mp, const CallbackBase &cb )
+bool MessageBase::notify( MessageBase &me, const MessagePacket &mp, const CallbackBase &cb )
 {
    //
    // Copy the message packet into the packet list ...
-   if ( findAndCopy( mp ) == false )
+   if ( me.findAndCopy( mp ) == false )
    {
       //
       // Application error 
@@ -386,8 +375,8 @@ bool MessageBase::notify( const MessagePacket &mp, const CallbackBase &cb )
 
    bool allMsgsIn = true;
    list< MessagePacket* >::iterator pckt;
-   for ( pckt  = _PacketList.begin();
-         pckt != _PacketList.end() ;
+   for ( pckt  = me._PacketList.begin();
+         pckt != me._PacketList.end() ;
          ++pckt ) 
    {
       if ( (*pckt)->unopened() == false ) // message packet has not came in yet 
@@ -413,19 +402,17 @@ bool MessageBase::notify( const MessagePacket &mp, const CallbackBase &cb )
    {
       //
       // Put the data into T ...
-      retrieveMsgData();
+      me.retrieveMsgData();
 
       //
       // Put the header info into myself ...
-      _NodeId = mp.msgData().nodeId();
-      _TaskId = mp.msgData().taskId();
-      _SentTime = mp.msgData().sendTime();
+      me._NodeId = mp.msgData().nodeId();
+      me._TaskId = mp.msgData().taskId();
+      me._SentTime = mp.msgData().sendTime();
 
-      _InUse = true;
       //
       // and notify the application ...
       cb();
-      _InUse = false;
    }
 
    return true;

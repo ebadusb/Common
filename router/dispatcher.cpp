@@ -27,7 +27,9 @@ _MessageMap( ),
 _Blocking( true ),
 _StopLoop( false ),
 _QueueEnabled( false ),
-_ReceivedSignal( 0 )
+_ReceivedSignal( 0 ),
+_MessagesToDeregister(),
+_MessageMapInUse( false )
 {
 }
 
@@ -341,23 +343,32 @@ void Dispatcher :: deregisterMessage( const MessageBase &mb, MessagePacket &mp )
 
 void Dispatcher :: deregisterMessage( const unsigned long mId, const MessageBase &mb )
 {
-   map< unsigned long, set< MessageBase* > >::iterator miter;
-
-   miter = _MessageMap.find( mId ); // find the message in the reg. messages list ...
-
    //
-   // If anyone registered for this message ...
-   if ( miter != _MessageMap.end() )
+   // If we are not currently in a message callback ...
+   //
+   if ( _MessageMapInUse )
    {
-      //
-      // Remove this message from the set ...
-      set< MessageBase* > &rSet = (*miter).second;
-      rSet.erase( (MessageBase*) &mb );
-
-      if ( rSet.empty() == true )
-         _MessageMap.erase( miter );
+      _MessagesToDeregister.insert( ((MessageBase*)(&mb)) );
    }
+   else
+   {
+      map< unsigned long, set< MessageBase* > >::iterator miter;
 
+      miter = _MessageMap.find( mId ); // find the message in the reg. messages list ...
+
+      //
+      // If anyone registered for this message ...
+      if ( miter != _MessageMap.end() )
+      {
+         //
+         // Remove this message from the set ...
+         set< MessageBase* > &rSet = (*miter).second;
+         rSet.erase( ((MessageBase*)(&mb)) );
+   
+         if ( rSet.empty() == true )
+            _MessageMap.erase( miter );
+      }
+   }
 }
 
 void Dispatcher :: dump( DataLog_Stream &outs )
@@ -412,6 +423,7 @@ void Dispatcher :: processMessage( MessagePacket &mp )
       set< MessageBase* >::iterator siter;
       map< unsigned long, set< MessageBase* > >::iterator miter;
 
+      _MessageMapInUse = true;
       miter = _MessageMap.find( mp.msgData().msgId() ); // find the message in the reg. messages list ...
 
       //
@@ -420,27 +432,22 @@ void Dispatcher :: processMessage( MessagePacket &mp )
       {
          //
          // Distribute the message ...
-         MessageBase *tempPtr = 0;
-         set< MessageBase* >::iterator tempIter = (*miter).second.end();
          for ( siter = (*miter).second.begin() ; siter != (*miter).second.end() ; ++siter )
          {
-            if ( tempPtr != 0 && tempIter != (*miter).second.end() )
-            {
-               (*miter).second.erase( tempIter ); tempIter = (*miter).second.end();
-               delete tempPtr; tempPtr = 0;
-            }
-            if ( ((MessageBase*)(*siter))->notify( mp ) == false )
+            if ( MessageBase::notify( (*(MessageBase*)(*siter)), mp ) == false )
             {
                DataLog( log_level_critical ) << "Message notification failed for MsgId=" << hex << mp.msgData().msgId() << endmsg;
                _FATAL_ERROR( __FILE__, __LINE__, "Message notification failed" );
             }
-            if ( ((MessageBase*)(*siter))->deleteMe() == true )
-            {
-               tempPtr = ((MessageBase*)(*siter));
-               tempIter = siter;
-            }
          }
       }
+      _MessageMapInUse = false;
+
+      for ( siter = _MessagesToDeregister.begin() ; siter != _MessagesToDeregister.end() ; ++siter )
+      {
+         deregisterMessage( mp.msgData().msgId(), (*(MessageBase*)(*siter)) );
+      }
+      _MessagesToDeregister.clear();
    }
    else
    {

@@ -86,16 +86,6 @@ public:
    // Dump the contents of the class ...
    void dump( DataLog_Stream &outs );
 
-   //
-   // Protection from deleting while in use ...
-   //
-   void operator delete( void * );
-
-   //
-   // Get for the delete me flag ...
-   //
-   bool deleteMe() { return _DeleteMe; }
-
 protected:
 
    //
@@ -143,8 +133,8 @@ protected:
    // Function called by the dispatcher to notify this message
    //  that it has been received.  If the message data was
    //  corrupt, the function returns 'false'
-   bool notify( const MessagePacket &mp );
-   bool notify( const MessagePacket &mp, const CallbackBase &cb );
+   static bool notify( MessageBase &me, const MessagePacket &mp );
+   static bool notify( MessageBase &me, const MessagePacket &mp, const CallbackBase &cb );
 
    //
    // This function finds the given message packet in the
@@ -184,11 +174,6 @@ protected:
    list< MessagePacket* > _PacketList; // List of packets that make up the data 
                                        //  for this message
   
-private:
-
-   bool             _InUse;
-   bool             _DeleteMe;
-
 };
 
 #endif

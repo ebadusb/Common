@@ -136,6 +136,11 @@ protected:
    // Save the signal received by the signal handler 
    int _ReceivedSignal;
 
+private:
+
+   set< MessageBase* > _MessagesToDeregister;
+   bool                _MessageMapInUse;
+
 };
 
 

@@ -1,8 +1,10 @@
-# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.6 2002/06/24 19:30:15 rm70006 Exp ms10234 $
+# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.12 2002/09/19 21:42:40Z jl11312 Exp ms10234 $
 #
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.6  2002/06/24 19:30:15  rm70006
+# Added CDS to make list.
 # Revision 1.5  2002/06/18 16:51:40Z  jl11312
 # - removed COMDIR overrides from recursive make commands
 # Revision 1.4  2002/06/18 16:31:28  pn02526
@@ -16,28 +18,56 @@
 #
 
 .PHONY: all
-all: check_opt_change common
+all: check_opt_change libs app
 
 MAINDIR = .
 include $(MAINDIR)/makefile.vxc
 
-.PHONY: common
-common:
+INCLUDED_LIBS = $(MAINDIR)\socket++\lib\libsocket++.a $(MAINDIR)\router\lib\librouter.a \
+$(MAINDIR)\softcrc\lib\libsoftcrc.a $(MAINDIR)\clocks\lib\libclocks.a $(MAINDIR)\cds\lib\libcds.a
+
+.PHONY: libs
+libs:
 	@cd datalog && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
-#	@cd convert && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd clocks && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd cds && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 
+#
+# The following should define the location of the resulting application.  Note
+# that APP_DIR is used in DOS shell commands, and must use \ directory
+# separators.
+#
+APP_NAME = common.out
+APP_DIR = $(MAINDIR)\bin
+APP_LIBS = @.opt/lib_objs $(MAINDIR)\datalog\lib\libdatalog.a
+
+.PHONY: @.opt/lib_objs
+@.opt/lib_objs:
+	for %l in ($(INCLUDED_LIBS)) do $(AR) t %l >> .opt\lib_objs_tmp
+	sed "s@^@$(CPU)/@" < .opt\lib_objs_tmp > .opt\lib_objs
+	rm -f .opt\lib_objs_tmp 
+	@if not exist $(MAINDIR)\$(CPU) mkdir $(MAINDIR)\$(CPU)
+	cd $(CPU) && for %l in ($(INCLUDED_LIBS)) do $(AR) x ..\%l 
+
+app : $(APP_DIR)/$(APP_NAME)
+
 .PHONY: clean
 clean:
 	@cd datalog && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
 	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
-#	@cd convert && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
 	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
 	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
 	@cd clocks && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
 	@cd cds && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
- 
+	rm -f $(addprefix $(APP_DIR_CPU)/, $(notdir $(APP_C_FILES:.cpp=.o))) $(addprefix .dfile/, $(notdir $(APP_C_FILES:.cpp=.d)))
+	rm -f $(addprefix $(APP_DIR_CPU)/, $(notdir $(APP_CXX_FILES:.cpp=.o))) $(addprefix .dfile/, $(notdir $(APP_CXX_FILES:.cpp=.d)))
+	rm -f $(addprefix $(APP_DIR)/, $(APP_NAME))
+
+#
+# This is the standard makefile for applications
+#
+include $(MAINDIR)/makefile.app
+

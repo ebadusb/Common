@@ -3,15 +3,24 @@
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags $
+# Revision 1.1  2002/04/10 14:39:55  jl11312
+# Initial revision
 #
 
 #
-# Default to a DEBUG build.  To get a production build (optimized,
-# no debug symbols) use BUILD_TYPE=PRODUCTION on the make command
+# Default to a PRODUCTION build.  To get a debug build (not optimized,
+# debug symbols included) use BUILD_TYPE=DEBUG on the make command
 # line.
 #
 ifndef BUILD_TYPE
-  BUILD_TYPE=DEBUG
+  BUILD_TYPE=PRODUCTION
+endif
+
+#
+# Default to a 486 processor
+#
+ifndef CPU
+  CPU=I80486
 endif
 
 #

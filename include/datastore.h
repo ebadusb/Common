@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.5  2002/08/23 14:53:21Z  rm70006
+ * HISTORY:    Changed binditem to work with 486 compiler bug.
  * HISTORY:    Revision 1.4  2002/07/16 21:05:02Z  rm70006
  * HISTORY:    Fix bug in check for multiple writers.
  * HISTORY:    Revision 1.3  2002/07/02 19:29:37Z  rm70006
@@ -68,6 +70,7 @@ protected:
    Role       _role;
    PfrType    _pfrType;
    DataStore *_ds;
+   //string     _name;
 };
 
 
@@ -161,6 +164,11 @@ enum BIND_ITEM_TYPE
    ITEM_WRITER_DECLARED
 };
 
+
+
+//
+// Base Datastore class
+//
 class DataStore
 {
 // Data Members
@@ -179,13 +187,14 @@ public:
    void Lock();
    void Unlock();
 
-   const string & Name () const {return _name; }
-
-   void GetSymbolName (string &s, const BIND_ITEM_TYPE item);
-
    void AddElement (ElementType *member);
 
+   // Accessor functions
    static const SYMTAB_ID & getTable() { return _datastoreTable; }
+   const        string    & Name () const {return _name; }
+   void                     GetSymbolName (string &s, const BIND_ITEM_TYPE item);
+
+
    
 // Class Methods
 protected:
@@ -193,15 +202,21 @@ protected:
    virtual ~DataStore();
 
    void DeleteElement (ElementType *member);
-   virtual void CheckForMultipleWriters();
+   virtual void CheckForMultipleWriters() = 0;
+
+
+// Data Members
+protected:
+   bool *_writerDeclared;
+   
 
 // Class Methods
 private:
    DataStore();    // Base Constructor not available
 
 
-private:
 // Data Members
+private:
 
    // instance vars
    Role _role;
@@ -209,10 +224,9 @@ private:
    
    int _refCount;
    int _spoofCount;
-
-   // instance vars connected to the global symbol table
-   bool *_writerDeclared;
    
+   // instance vars connected to the global symbol table
+
    // Mutex control flags
    int *_signalWrite;
    int *_readCount;
@@ -232,6 +246,29 @@ private:
 
 
 
+//
+// Single Write Datastore
+// This Datastore type only allows one writer per derived datastore
+//
+class SingleWriteDataStore : public DataStore
+{
+// Class Methods
+protected:
+   SingleWriteDataStore (char *name, Role role);
+   virtual ~SingleWriteDataStore();
+
+   virtual void CheckForMultipleWriters();
+
+private:
+   SingleWriteDataStore();    // Base Constructor not available
+};
+
+
+
+//
+// Multi-Write Datastore
+// This Datastore type allows any number of writers.
+//
 class MultWriteDataStore : public DataStore
 {
 // Class Methods

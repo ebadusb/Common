@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.13  2002/10/18 20:00:50  rm70006
+ * HISTORY:    Add new cds type for proc.  this version allows dynamic roles.
  * HISTORY:    Revision 1.12  2002/09/25 16:04:32Z  rm70006
  * HISTORY:    Fixed bugs with fatal error check logging.
  * HISTORY:    Revision 1.11  2002/09/24 16:47:18Z  rm70006
@@ -212,8 +214,8 @@ template <class dataType> inline void BaseElement<dataType>::Get(dataType *item)
    }
    else
    {
-      FP fp = *_fp;
-      *item = fp(*this);
+       pair< dataType*, const dataType* > toFrom( item, _data );
+       (*(*_fp))( &toFrom );  // runs spoofer callback
    }
 
    _ds->Unlock();
@@ -236,8 +238,8 @@ template<> inline void BaseElement<T>::Get(T *item) const                       
    }                                                                                       \
    else                                                                                    \
    {                                                                                       \
-      FP fp = *_fp;                                                                        \
-      *item = fp(*this);                                                                   \
+      pair< T*, const T* > toFrom( item, _data );                                          \
+      (*(*_fp))( &toFrom );  /* runs spoofer callback */                                   \
    }                                                                                       \
 }
 
@@ -276,12 +278,14 @@ template <class dataType> inline dataType BaseElement<dataType>::Get() const
    }
    else
    {
-      FP fp = *_fp;
+      dataType temp;
+      pair< dataType*, const dataType* > toFrom( &temp, _data );
       _ds->Lock();
-      dataType temp = fp(*this);
+ 
+      (*(*_fp))( &toFrom );  // runs spoofer callback
+ 
       _ds->Unlock();
-
-      return temp;   // Give control to spoofer to return "spoofed" value.
+      return temp;
    }
 }
 
@@ -303,10 +307,10 @@ template<> inline T BaseElement<T>::Get() const                                 
    }                                                                                       \
    else                                                                                    \
    {                                                                                       \
-      FP fp = *_fp;                                                                        \
-      T temp = fp(*this);                                                                  \
-                                                                                           \
-      return temp;   /* Give control to spoofer to return "spoofed" value. */              \
+      T temp;                                                                              \
+      pair< T*, const T* > toFrom( &temp, _data );                                         \
+      (*(*_fp))( &toFrom );  /* runs spoofer callback */                                    \
+      return temp;                                                                         \
    }                                                                                       \
 }
 
@@ -434,7 +438,7 @@ template <class dataType> void BaseElement<dataType>::WriteSelf (ofstream &pfrfi
 //
 // SetSpoof
 //
-template <class dataType> void BaseElement<dataType>::SetSpoof (FP fp)
+template <class dataType> void BaseElement<dataType>::SetSpoof (const CallbackBase* fp)
 {
    *_fp  = fp;
 }

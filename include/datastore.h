@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.14  2002/10/18 20:00:49  rm70006
+ * HISTORY:    Add new cds type for proc.  this version allows dynamic roles.
  * HISTORY:    Revision 1.13  2002/10/17 20:14:47Z  rm70006
  * HISTORY:    Added = and access routines that provide implicit get and set.
  * HISTORY:    Revision 1.12  2002/09/25 16:03:16Z  rm70006
@@ -52,6 +54,8 @@
 
 #include <fstream.h>
 #include <string>
+
+#include "callback.h"
 
 
 enum PfrType {PFR_RECOVER, NO_PFR};
@@ -99,7 +103,6 @@ template <class dataType> class BaseElement : public ElementType
 {
 // Class Methods
 public:
-   typedef const dataType & (*FP)(const ElementType &);
 
    BaseElement ();
 
@@ -114,7 +117,7 @@ public:
 
    dataType operator = (const dataType &data) { Set(data); return Get();}  // Implicit Set call.
 
-   void SetSpoof   (FP fp);
+   void SetSpoof   (const CallbackBase* fp);
    void ClearSpoof ();
 
    virtual void Register (DataStore *ds, PfrType pfr);
@@ -130,7 +133,7 @@ protected:
 // Data Members
 private:
    dataType *_data;  // Points to the Symbol Table entry
-   FP       *_fp;    // Points to the Symbol Table entry
+   const CallbackBase** _fp;    // Points to the Symbol Table entry
 };
 
 

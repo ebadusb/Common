@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.10  2004/12/17 15:10:18Z  rm10919
+ *  Change disableIcon to public not protected.
  *  Revision 1.9  2004/11/19 18:14:47Z  cf10242
  *  Integration checkin
  *  Revision 1.8  2004/11/18 22:33:37Z  rm10919
@@ -131,6 +133,9 @@ public:
    // ENABLE
    // set the state of the button to enabled.  If currently invisible, the button is made visible
    void enable(void);
+
+	// ENABLEPRESSED
+	void enablePressed(void);
 
    // DISABLE
    // set the state of the button to disabled.  If currently invisible, the button is made visible

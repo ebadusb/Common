@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.7  2004/11/19 18:14:45Z  cf10242
+ *  Integration checkin
  *  Revision 1.6  2004/11/18 22:33:37Z  rm10919
  *  Added ability to modify button text.
  *  Revision 1.5  2004/11/04 20:19:08Z  rm10919
@@ -58,9 +60,7 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
    }
    else
    {
-      //
-      // Region not set for button so a button won't show on display!!!!!
-      //
+		_enabledBitmap = NULL;
    }
 
    if (buttonData.disabledBitmapId)
@@ -74,6 +74,8 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
          addObjectToBack(_disabledBitmap);
       }
    }
+	else
+		_disabledBitmap = NULL;
    
    if (buttonData.pressedBitmapId)
    {
@@ -86,6 +88,8 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
          addObjectToBack(_pressedBitmap);
       }
    }
+	else
+		_pressedBitmap = NULL;
    
    if (buttonData.enabledTextItem)
    {
@@ -185,7 +189,8 @@ void CGUIButton::enable(void)
 		if (_pressedBitmap) moveObjectToBack(_pressedBitmap);
       if (_enabledBitmap) moveObjectToFront(_enabledBitmap);
 
-      if (_iconPointer) moveObjectToFront(_iconPointer);
+	   if (_iconPointer) moveObjectToFront(_iconPointer);
+
 
       if (_disabledText) _disabledText->setVisible(false);
       if (_pressedText)  _pressedText->setVisible(false);
@@ -197,6 +202,29 @@ void CGUIButton::enable(void)
       }
 }
 
+// ENABLEPRESSED
+//  Set the state of the button to enabled and already pressed.  
+void CGUIButton::enablePressed(void)
+{
+      _enabled = true;
+      if (_disabledBitmap) moveObjectToBack(_disabledBitmap);
+		if (_enabledBitmap) moveObjectToBack(_enabledBitmap);
+      if (_pressedBitmap) moveObjectToFront(_pressedBitmap);
+
+	   if (_iconPointer) moveObjectToFront(_iconPointer);
+
+
+      if (_disabledText) _disabledText->setVisible(false);
+      if (_enabledText)  _enabledText->setVisible(false);
+
+      if (_pressedText)
+      {
+         _pressedText->setVisible(true);
+         _pressedText->setCaptureBackgroundColor();
+      }
+}
+
+
 // DISABLE
 //  Set the state of the button to disabled.
 //  If currently invisible, the button is made visible.
@@ -207,8 +235,6 @@ void CGUIButton::disable()
       _enabled = false;
       if (_enabledBitmap) moveObjectToBack(_enabledBitmap);
       if (_disabledBitmap) moveObjectToFront(_disabledBitmap);
-
-      if (_iconPointer) moveObjectToBack(_iconPointer);
 
       if (_enabledText)  _enabledText->setVisible(false);
       if (_pressedText)  _pressedText->setVisible(false);
@@ -720,15 +746,21 @@ void CGUIButton::setIcon (CGUIBitmapInfo * iconId,  // ptr to bitmap object for 
 // Set a previously set icon as visible on the button
 void CGUIButton::enableIcon ()
 {
-   _iconPointer->setVisible(true);
-   moveObjectToFront(_iconPointer);
+	if(_iconPointer)
+	{
+		_iconPointer->setVisible(true);
+		moveObjectToFront(_iconPointer);
+	}
 }
 
 // DISABLE ICON
 // Set a previously set icon as invisible
 void CGUIButton::disableIcon ()
 {
-   _iconPointer->setVisible(false);
+	if(_iconPointer)
+	{
+		_iconPointer->setVisible(false);
+	}
 }
 
 // The following methods are called when state of the button is changed.  These can be overriden
@@ -811,7 +843,7 @@ void CGUIButton::doOnEnable()
 {
    if (_enabled)
    {
-      moveObjectToFront(_enabledBitmap);
+      if(_enabledBitmap) moveObjectToFront(_enabledBitmap);
       // deleteObject(_pressedBitmap);
 
       if (_iconPointer) moveObjectToFront(_iconPointer);
@@ -838,6 +870,7 @@ void CGUIButton::doOnEnable()
 //  display text in "disabled" text style
 void CGUIButton::doOnDisable()
 {
+	/***  I don't think this is ever called
    if (!_enabled)
    {
       moveObjectToFront(_disabledBitmap);
@@ -861,6 +894,7 @@ void CGUIButton::doOnDisable()
       invalidateObjectRegion(_enabledBitmap);
       _pressed = false;
    }
+	**/
 }
 
 // DO ON INVISIBLE

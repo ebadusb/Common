@@ -148,6 +148,15 @@ void MessageBase::deregisterMsg( )
 
 void MessageBase::send()
 {  
+   if ( _DistributionType == SNDRCV_RECEIVE_ONLY )
+   {
+      postConstructInit();
+      char buffer[80];
+      sprintf( buffer, "Message Id %lx ( %s ) not initialized for sending", _MsgId, _MessageName.data() );
+      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+      return;
+   }
+
    if ( MessageSystem::MsgSystem() )
    {
       //

@@ -33,10 +33,10 @@
 //
 sockinetaddr::sockinetaddr () 
 {
-   sin_len         = sizeof (struct in_addr);
-   sin_family      = sockinetbuf::af_inet;
-   sin_addr.s_addr = htonl(INADDR_ANY);
-   sin_port        = 0;
+   sin_len         = sizeof (struct in_addr);    // Correct value
+   sin_family      = sockinetbuf::af_inet;       // Correct value
+   sin_addr.s_addr = htonl(INADDR_ANY);          // Default Values.  Need to be set to correct value.
+   sin_port        = 0;                          // Default Values.  Need to be set to correct value.
 }
 
 
@@ -73,6 +73,23 @@ sockinetaddr::sockinetaddr(const char *addr, unsigned short port_no)
    {
       // (Fatal?) Error.
    }
+}
+
+
+
+void sockinetaddr::setaddr(const char *inet_addr)
+{
+   if (inet_aton ((char *)inet_addr, &sin_addr) != OK)   // Stupid VxWorks doesn't have const in prototype
+   {
+      // (Fatal?) Error.
+   }
+}
+
+
+
+void sockinetaddr::setaddr(unsigned long addr)
+{
+   sin_addr.s_addr = htonl(addr);
 }
 
 

@@ -10,7 +10,7 @@
 #ifndef _SYSTEM_OVERRIDES_H_
 #define _SYSTEM_OVERRIDES_H_
 
-#include <set>
+#include <map>
 
 /*
  The functions in this header file must be provide to handle non-recoverable
@@ -25,17 +25,20 @@ unsigned long getNetworkAddress( void );
 
 /*
  This function takes in a user provided set.  The function will fill
-  the set with all nodes for which the network must connect.  
+  the map with all nodes for which the network must connect.  
+  * The map will be keyed on the socket port for with the TCP 
+    connection will be made.  The port must be distinct for each 
+    node from all other connections on the system.
   * The data in the set must assigned the IP address of the networked
     processors.  
-  * Do not add the local node's network address to this set.  Only 
-    add remote addreses to the set.  
+  * Add the local network address and port for which remote users can
+    connect.
   * This function will get called upon Router task initialization.  
     Do not add any functionality which will not be usable when the 
     Router is started. i.e. Everything used in this function must be 
     available and initialized befor the Router and Gateway tasks 
     start.
 */
-void getNetworkedNodes( set< unsigned long > &nodes );
+void getNetworkedNodes( map< short, unsigned long > &nodesAndPorts );
                    
 #endif

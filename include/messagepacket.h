@@ -142,8 +142,8 @@ public:
    {
       outs << "######################### Message Data ############################" << endl;
       outs << "OSCode: " << _OSCode << " MsgId: " << hex << _MsgId << dec << " ";
-      outs << "Length: " << _Length << " Node: " << _NodeId << " ";
-      outs << "Tid: " << _TaskId << " Time: " << _SendTime.tv_sec << " " << _SendTime.tv_nsec << " ";
+      outs << "Length: " << _Length << " Node: " << hex << _NodeId << " ";
+      outs << "Tid: " << hex << _TaskId << " Time: " << dec << _SendTime.tv_sec << " " << _SendTime.tv_nsec << " ";
       outs << "Seq: " << _SeqNum << " Tot: " << _TotNum << " ";
       outs << "PcktLngth: " << _PacketLength << " Msg: " << _Msg << endl;
       outs << "###################################################################" << endl;

@@ -29,6 +29,10 @@ public:
    //
    // Time delay between retries ...
    static const struct timespec RETRY_DELAY;
+   //
+   // Default priority of timer message notifications ( 1-31, regular message priority
+   //  is defined in the Dispatcher ) ...
+   static const int DEFAULT_TIMER_MESSAGE_PRIORITY;
 
 public:
 

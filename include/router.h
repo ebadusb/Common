@@ -18,6 +18,7 @@
 #include <mqueue.h>
 #include <string.h>
 #include <string>
+#include <taskLib.h>
 
 #include "messagepacket.h"
 #include "sockinet.h"
@@ -36,6 +37,9 @@ public:
    //
    // default Q size
    static const unsigned int DEFAULT_Q_SIZE;
+   //
+   // Gateway connection delay time in milliseconds
+   static const unsigned int CONNECT_DELAY; 
 
 public:
    //
@@ -87,10 +91,15 @@ public:
 protected:
 
    //
+   // This function creates and starts the connection process with all the
+   //  systems gateways
+   bool initGateways();
+
+   //
    // This function handles the processing of the message.  This processing includes
    //  determining where it needs to go and/or determining how to update the internal 
    //  router structures
-   void processMessage( MessagePacket &mp );
+   void processMessage( MessagePacket &mp, int priority=0 );
 
    //
    // This function will be called to register a task in the task maps
@@ -134,8 +143,8 @@ protected:
 
    //
    // This function sends the message packet to registered tasks.
-   void sendMessage( const MessagePacket &mp );
-   void sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned long tId );
+   void sendMessage( const MessagePacket &mp, int priority=0 );
+   void sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned long tId, int priority=0 );
 
    //
    // This function sends the message packet to the registered gateways.

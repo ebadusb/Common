@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.16  2002/10/21 20:19:16  rm70006
+ * HISTORY:    Added = operator for ranged element type.
  * HISTORY:    Revision 1.15  2002/10/18 23:16:01Z  td07711
  * HISTORY:    use CallbackBase class for spoofing callback
  * HISTORY:    Revision 1.14  2002/10/18 20:00:49  rm70006
@@ -136,6 +138,7 @@ protected:
 private:
    dataType *_data;  // Points to the Symbol Table entry
    const CallbackBase** _fp;    // Points to the Symbol Table entry
+   bool *_spooferCacheIsValid; // if true, spoofer get() is bypassed to avoid unecessary copy 
 };
 
 
@@ -192,7 +195,8 @@ enum BIND_ITEM_TYPE
    ITEM_SIGNAL_READ,
    ITEM_SIGNAL_WRITE,
    ITEM_READ_COUNT,
-   ITEM_WRITER_DECLARED
+   ITEM_WRITER_DECLARED,
+   ITEM_SPOOF_CACHE
 };
 
 

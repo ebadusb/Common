@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.14  2002/10/18 23:15:19  td07711
+ * HISTORY:    use CallbackBase class for spoofing callback
  * HISTORY:    Revision 1.13  2002/10/18 20:00:50  rm70006
  * HISTORY:    Add new cds type for proc.  this version allows dynamic roles.
  * HISTORY:    Revision 1.12  2002/09/25 16:04:32Z  rm70006
@@ -122,7 +124,8 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
 template <class dataType> BaseElement<dataType>::BaseElement() :
    ElementType(),
    _fp(NULL),
-   _data(NULL)
+   _data(NULL),
+   _spooferCacheIsValid(NULL)
 {
 }
 
@@ -158,6 +161,10 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, P
    // Bind the spoof fp to the DataStore symbol table entry.
    BindItem(ds, &_fp, ITEM_SPOOF, created);
    *_fp = NULL;
+
+   // Bind the spoof cacheIsValid flag to the DataStore symbol table entry.
+   BindItem(ds, &_spooferCacheIsValid, ITEM_SPOOF_CACHE, created);
+   *_spooferCacheIsValid = false;
 }
 
 
@@ -191,6 +198,10 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, P
    // Bind the spoof fp to the DataStore symbol table entry.
    BindItem(ds, &_fp, ITEM_SPOOF, created);
    *_fp = NULL;
+
+   // Bind the spoof cacheIsValid flag to the DataStore symbol table entry.
+   BindItem(ds, &_spooferCacheIsValid, ITEM_SPOOF_CACHE, created);
+   *_spooferCacheIsValid = false;
 }
 
 
@@ -205,20 +216,27 @@ template <class dataType> inline void BaseElement<dataType>::Get(dataType *item)
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");
    }
 
-   _ds->Lock();
-
    // If calling instance is spoofer or no spoof has been registered, return real value
-   if ( (_ds->GetRole() == ROLE_SPOOFER) || (*_fp == NULL) )
+   if( *_fp == NULL )
    {
-      *item = *_data;
+       _ds->Lock();
+       *item = *_data;
+       _ds->Unlock();
+   }
+   else if( _ds->GetRole() == ROLE_SPOOFER && *_spooferCacheIsValid == false )
+   {
+       _ds->Lock();
+       *( const_cast<bool*> (_spooferCacheIsValid) ) = true;
+       *item = *_data;
+       _ds->Unlock();
    }
    else
    {
+       _ds->Lock();
        pair< dataType*, const dataType* > toFrom( item, _data );
        (*(*_fp))( &toFrom );  // runs spoofer callback
+       _ds->Unlock();
    }
-
-   _ds->Unlock();
 }
 
 
@@ -232,9 +250,14 @@ template<> inline void BaseElement<T>::Get(T *item) const                       
    }                                                                                       \
                                                                                            \
    /* If calling instance is spoofer or no spoof has been registered, return real value */ \
-   if ( (_ds->GetRole() == ROLE_SPOOFER) || (*_fp == NULL) )                               \
+   if ( *_fp == NULL )                                                                     \
    {                                                                                       \
       *item = *_data;                                                                      \
+   }                                                                                       \
+   else if( _ds->GetRole() == ROLE_SPOOFER && *_spooferCacheIsValid == false )             \
+   {                                                                                       \
+       *( const_cast<bool*> (_spooferCacheIsValid) ) = true;                               \
+       *item = *_data;                                                                     \
    }                                                                                       \
    else                                                                                    \
    {                                                                                       \
@@ -269,12 +292,20 @@ template <class dataType> inline dataType BaseElement<dataType>::Get() const
    }
 
    // If calling instance is spoofer or no spoof has been registered, return real value
-   if ( (_ds->GetRole() == ROLE_SPOOFER) || (*_fp == NULL) )
+   if ( *_fp == NULL ) 
    {
       _ds->Lock();
       dataType temp = *_data;
       _ds->Unlock();
       return temp;
+   }
+   else if( _ds->GetRole() == ROLE_SPOOFER && (*_spooferCacheIsValid == false) )
+   {
+       _ds->Lock();
+       *( const_cast<bool*> (_spooferCacheIsValid) ) = true;
+       dataType temp = *_data;
+       _ds->Unlock();
+       return temp;
    }
    else
    {
@@ -300,8 +331,14 @@ template<> inline T BaseElement<T>::Get() const                                 
    }                                                                                       \
                                                                                            \
    /* If calling instance is spoofer or no spoof has been registered, return real value */ \
-   if ( (_ds->GetRole() == ROLE_SPOOFER) || (*_fp == NULL) )                               \
+   if ( *_fp == NULL )                                                                     \
    {                                                                                       \
+      T temp = *_data;                                                                     \
+      return temp;                                                                         \
+   }                                                                                       \
+   else if ( _ds->GetRole() == ROLE_SPOOFER && *_spooferCacheIsValid == false )            \
+   {                                                                                       \
+      *( const_cast<bool*> (_spooferCacheIsValid) ) = true;                                \
       T temp = *_data;                                                                     \
       return temp;                                                                         \
    }                                                                                       \
@@ -309,7 +346,7 @@ template<> inline T BaseElement<T>::Get() const                                 
    {                                                                                       \
       T temp;                                                                              \
       pair< T*, const T* > toFrom( &temp, _data );                                         \
-      (*(*_fp))( &toFrom );  /* runs spoofer callback */                                    \
+      (*(*_fp))( &toFrom );  /* runs spoofer callback */                                   \
       return temp;                                                                         \
    }                                                                                       \
 }
@@ -340,7 +377,8 @@ template <class dataType> inline bool BaseElement<dataType>::Set(const dataType 
 
    if (_ds->GetRole() != ROLE_RO)
    {
-      _ds->Lock(); 
+      _ds->Lock();
+      *_spooferCacheIsValid = false;
       *_data = data;
       _ds->Unlock();
 
@@ -367,6 +405,7 @@ template<> inline bool BaseElement<T>::Set(const T &data)                       
                                                                                      \
    if (_ds->GetRole() != ROLE_RO)                                                    \
    {                                                                                 \
+      *_spooferCacheIsValid = false;                                                 \
       *_data = data;                                                                 \
                                                                                      \
       return true;                                                                   \
@@ -440,6 +479,7 @@ template <class dataType> void BaseElement<dataType>::WriteSelf (ofstream &pfrfi
 //
 template <class dataType> void BaseElement<dataType>::SetSpoof (const CallbackBase* fp)
 {
+   *_spooferCacheIsValid = false;
    *_fp  = fp;
 }
 
@@ -545,7 +585,8 @@ const char DATASTORE_SIGNAL_READ[]       = "_DataStore_%s_signalread";
 const char DATASTORE_SIGNAL_WRITE[]      = "_DataStore_%s_signalwrite";
 const char DATASTORE_READ_COUNT[]        = "_DataStore_%s_readcount";
 const char DATASTORE_WRITER_DECLARED[]   = "_DataStore_%s_writer_declared";
+const char DATASTORE_SPOOF_CACHE_NAME[]  = "%s_spoof_cache";
 
-const int DATASTORE_SYMTBL_SIZE = 9;
+const int DATASTORE_SYMTBL_SIZE = 10;
 
 

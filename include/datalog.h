@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.28 2003/12/09 14:15:02Z jl11312 Exp rm70006 $
  * $Log: datalog.h $
+ * Revision 1.21  2003/02/25 20:40:08  jl11312
+ * - added support for logging platform specific information in log header
  * Revision 1.20  2003/02/25 16:12:00  jl11312
  * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.19  2003/02/06 20:42:01  jl11312
@@ -148,7 +150,7 @@ DataLog_Result datalog_EnablePeriodicOutput(DataLog_SetHandle handle);
 /*
  * binary data interface
  */
-DataLog_Result datalog_WriteBinaryRecord(DataLog_Handle handle, void * data, size_t size);
+DataLog_Result datalog_WriteBinaryRecord(DataLog_Handle handle, DataLog_UINT16 type, DataLog_UINT16 subType, void * data, size_t size);
 
 /*
  * error interface

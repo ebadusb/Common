@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message.cpp 1.5 2003/02/25 16:10:14Z jl11312 Exp jl11312 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message.cpp 1.7 2003/11/24 23:06:11Z jl11312 Exp ms10234 $
  * $Log: datalog_message.cpp $
+ * Revision 1.5  2003/02/25 16:10:14  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.4  2003/01/31 19:52:50  jl11312
  * - new stream format for datalog
  * Revision 1.3  2002/08/28 14:37:07  jl11312
@@ -73,10 +75,11 @@ DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * hand
 	return result;
 }
 
-DataLog_Handle datalog_GetCriticalHandle(void)
+DataLog_Result datalog_CreateCriticalLevel(DataLog_Handle * handle)
 {
 	DataLog_CommonData	common;
-	return &common._criticalHandleInfo;
+	*handle = &common._criticalHandleInfo;
+	return DataLog_OK;
 }
 
 DataLog_Result datalog_SetDefaultLevel(DataLog_Handle handle)

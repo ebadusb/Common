@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/gateway.c 1.4 2001/05/11 19:56:38 jl11312 Exp jl11312 $
  * $Log: gateway.c $
+ * Revision 1.1  1999/05/24 23:29:37  TD10216
+ * Initial revision
  * Revision 1.6  1998/09/23 18:27:56  bs04481
  * Add "Call Cobe etc" message to fatal error
  * Revision 1.5  1998/07/14 18:02:41  bs04481
@@ -67,6 +69,7 @@
 
 #define Q_LENGTH 80           // queue name length
 #define MAX_MSGS 64           // max msgs in queue
+#define ERROR_SIZE 300        // error buffer length
 
 static volatile unsigned char taskRunning=1; // task running
 static mqd_t    mq=-1;                       // router input q
@@ -102,12 +105,14 @@ void signalHandler( int signum)
 static
 void fatalError( int line, int code, char* err)
 {
-   static char rev[] = "$ProjectRevision: 1.21 $";     // rev code
+   static char rev[] = "$ProjectRevision: 5.33 $";     // rev code
+   static char buf[ERROR_SIZE]; // static to avoid stack overflow
    
    mq_close( mq);                                  // close remote router queue
    mq_close( gq);                                  // close gateway queue
    mq_unlink( gatewayQueueName);                   // remove it
-   _LOG_ERROR( __FILE__, line, TRACE_GATEWAY, code, err);
+   sprintf(buf, "FATAL %.290s", err);
+   _LOG_ERROR_WITH_DISPLAY( __FILE__, line, TRACE_GATEWAY, code, buf);
    printf("\nBuild %s. \nAn internal software error has occured.\n\n", rev);
    printf("Wait 1 minute then turn off power.  Wait 5 seconds,\n"); 
    printf("and turn power back on. Follow the disconnect procedure.\n\n");

@@ -5,6 +5,9 @@
  * CHANGELOG:
  *   $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/MQ_CHECK.C 1.3 1999/08/06 14:33:50 BS04481 Exp BS04481 $
  *   $Log: MQ_CHECK.C $
+ *   Revision 1.3  1999/08/06 14:33:50  BS04481
+ *   New logging function to add entry to log but not display on the 
+ *   screen
  *   Revision 1.2  1999/05/31 20:35:05  BS04481
  *   Remove unused MSGHEADER structure from messages. 
  *   Decrease maximum message size.  Add new version of 
@@ -83,6 +86,6 @@ void mq_highWater()
    sprintf(eString,"High water mark for PID %d: %d messages"
            , getpid()
            , High_water_mark);
-   _LOG_ERROR_NO_DISPLAY(__FILE__, __LINE__, TRACE_DISPATCHER, 0, eString);
+   _LOG_ERROR(__FILE__, __LINE__, TRACE_DISPATCHER, 0, eString);
 }
 

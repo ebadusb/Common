@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message.cpp 1.7 2003/11/24 23:06:11Z jl11312 Exp ms10234 $
  * $Log: datalog_message.cpp $
+ * Revision 1.6  2003/02/28 22:10:40Z  jl11312
+ * - added type/sub-type for binary record
  * Revision 1.5  2003/02/25 16:10:14  jl11312
  * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.4  2003/01/31 19:52:50  jl11312
@@ -72,6 +74,19 @@ DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * hand
 	}
 
 	*handle = handleInfo;
+	return result;
+}
+
+DataLog_Result datalog_CreateIntLevel(const char * levelName, DataLog_Handle * handle)
+{
+	DataLog_Result result = datalog_CreateLevel(levelName, handle);
+	if ( result == DataLog_OK )
+	{
+		DataLog_HandleInfo * hInfo = (DataLog_HandleInfo *)*handle;
+		hInfo->_type = DataLog_HandleInfo::IntHandle;
+		hInfo->_consoleOutput = DataLog_ConsoleDisabled;
+	}
+
 	return result;
 }
 

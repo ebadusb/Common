@@ -143,13 +143,19 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
 void Dispatcher :: send( const MessagePacket &mp, const int priority )
 {
 	DBG_LogSentMessage(taskIdSelf(), (int)mp.msgData().osCode(), mp.msgData().msgId());
-   send( _RQueue, mp, priority );
+   if ( !send( _RQueue, mp, priority ) )
+   {
+      DataLog( log_level_message_system_error ) << "Send to Router task failed" << endmsg;
+   }
 }
 
 void Dispatcher :: sendTimerMessage( const MessagePacket &mp, const int priority  )
 {
 	DBG_LogSentMessage(taskIdSelf(), (int)mp.msgData().osCode(), mp.msgData().msgId());
-   send( _TimerQueue, mp, priority );
+   if ( !send( _TimerQueue, mp, priority ) )
+   {
+      DataLog( log_level_message_system_error ) << "Send to Timer task failed" << endmsg;
+   }
 }
 
 int Dispatcher :: dispatchMessages()
@@ -217,7 +223,7 @@ int Dispatcher :: dispatchMessages()
          }
       }
 
-      _NumMessages++;
+      ++_NumMessages;
 
    } while ( _StopLoop == false );
 
@@ -382,11 +388,11 @@ void Dispatcher :: dump( DataLog_Stream &outs )
    outs << "Map size = " << dec << _MessageMap.size() << " " << (int)(_MessageMap.begin() == _MessageMap.end()) << endmsg;
    for ( miter = _MessageMap.begin() ; 
          miter != _MessageMap.end() ;
-         miter++ )
+         ++miter )
    {
       for ( siter = (*miter).second.begin() ;
             siter != (*miter).second.end() ;
-            siter++ )
+            ++siter )
       {
          ( (MessageBase*)(*siter) )->dump( outs );
       }
@@ -411,16 +417,30 @@ void Dispatcher :: processMessage( MessagePacket &mp )
       //
       // If anyone registered for this message ...
       if ( miter != _MessageMap.end() )
+      {
          //
          // Distribute the message ...
-         for ( siter = (*miter).second.begin() ; siter != (*miter).second.end() ; siter++ )
+         MessageBase *tempPtr = 0;
+         set< MessageBase* >::iterator tempIter = (*miter).second.end();
+         for ( siter = (*miter).second.begin() ; siter != (*miter).second.end() ; ++siter )
          {
+            if ( tempPtr != 0 && tempIter != (*miter).second.end() )
+            {
+               (*miter).second.erase( tempIter ); tempIter = (*miter).second.end();
+               delete tempPtr; tempPtr = 0;
+            }
             if ( ((MessageBase*)(*siter))->notify( mp ) == false )
             {
                DataLog( log_level_critical ) << "Message notification failed for MsgId=" << hex << mp.msgData().msgId() << endmsg;
                _FATAL_ERROR( __FILE__, __LINE__, "Message notification failed" );
             }
+            if ( ((MessageBase*)(*siter))->deleteMe() == true )
+            {
+               tempPtr = ((MessageBase*)(*siter));
+               tempIter = siter;
+            }
          }
+      }
    }
    else
    {
@@ -435,7 +455,7 @@ void Dispatcher :: processMessage( MessagePacket &mp )
    }
 }
 
-void Dispatcher :: send( mqd_t mqueue,  const MessagePacket &mp, const int priority )
+bool Dispatcher :: send( mqd_t mqueue,  const MessagePacket &mp, const int priority )
 {
    //
    // Check the task's queue to see if it is full or not ...
@@ -458,7 +478,14 @@ void Dispatcher :: send( mqd_t mqueue,  const MessagePacket &mp, const int prior
 #if !DEBUG_BUILD && CPU != SIMNT 
       _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
 #endif // #if CPU!=SIMNT && BUILD_TYPE!=DEBUG
-      return;
+      return false;
+   }
+   else if ( qattributes.mq_curmsgs >= qattributes.mq_maxmsg/10 )
+   {
+      DataLog( log_level_message_system_info ) << "Sending message=" << hex << mp.msgData().msgId() 
+                           << " - " << mqueue << " queue contains " 
+                           << dec << qattributes.mq_curmsgs << " messages" 
+                           << endmsg;
    }
 
    //
@@ -472,9 +499,10 @@ void Dispatcher :: send( mqd_t mqueue,  const MessagePacket &mp, const int prior
       //
       // Error ...
       _FATAL_ERROR( __FILE__, __LINE__, "Message queue send failed" );
-      return;
+      return false;
    }
 
+   return true;
 }
 
 void Dispatcher::dumpQueue( mqd_t mqueue, DataLog_Stream &out )
@@ -503,7 +531,7 @@ void Dispatcher::dumpQueue( mqd_t mqueue, DataLog_Stream &out )
                                                                       << " p# "    << hex << mp.msgData().seqNum()
                                                                       << " tot# "  << hex << mp.msgData().totalNum()  
                                                                       << " msg -> ";
-      for (int i=0;i<30;i++) 
+      for (int i=0;i<30;++i) 
       {
          out << hex << (int)(unsigned char)buffer[i] << " "; 
       }

@@ -5,6 +5,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/failure_debug.h 1.5 2004/03/26 19:26:01Z jl11312 Exp jl11312 $
  * $Log: failure_debug.h $
+ * Revision 1.5  2004/03/26 19:26:01Z  jl11312
+ * - added support for logging historical network stats and raw network packet upon system failure (IT 6910)
  * Revision 1.4  2004/03/24 19:48:14Z  ms10234
  * 6910 - added network message debug logging
  * Revision 1.3  2003/06/25 17:09:56Z  jl11312
@@ -38,7 +40,7 @@ typedef struct
 {
 	int	oldTID __attribute__ ((packed));
 	int	newTID __attribute__ ((packed));
-	DataLog_TimeStamp	timeStamp __attribute__ ((packed));
+	DataLog_TimeStamp	timeStamp;
 } DBG_TaskSwitchRecord;
 
 typedef struct
@@ -53,7 +55,7 @@ typedef struct
 	int	sendTID __attribute__ ((packed));
 	int	receiveTID __attribute__ ((packed));
 	unsigned long msgID __attribute__ ((packed));
-	DataLog_TimeStamp	timeStamp __attribute__ ((packed));
+	DataLog_TimeStamp	timeStamp;
 } DBG_MessageRecord;
 
 typedef struct

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.10 2002/12/16 18:30:25Z jl11312 Exp ms10234 $
  * $Log: auxclock.cpp $
+ * Revision 1.7  2002/08/16 16:27:05  pn02526
+ * Clear overrun counter when user requests its value.  Per request from Mark Scott to prevent overlogging the event per Scott Butzke.
  * Revision 1.6  2002/07/18 13:18:37  pn02526
  * Change notification interface to use microseconds rather than ticks.
  * Revision 1.5  2002/07/02 10:06:04  ms10234
@@ -57,11 +59,11 @@
 #include "messagepacket.h"
 
 /* Free-running counters */
-static rawTick auxClockTicks;
-static long long int auxClockMuSec; /* microseconds */
+static volatile rawTick auxClockTicks;
+static volatile long long int auxClockMuSec; /* microseconds */
 
 /* Notification microsecond accumulator  */
-static long long int auxClockNotifyMuSec;
+static volatile long long int auxClockNotifyMuSec;
 
 /* Microsecond counter/accumulator increment */
 static long long int auxClockMuSecPerTick;
@@ -75,10 +77,10 @@ static char auxClockTicksStr[21];
 static unsigned int auxClockNotifyExpected;
 static mqd_t auxClockMsgPktQDes;
 static MessagePacket auxClockMsgPacket;
-static unsigned long int auxClockNotifyCount;
-static unsigned long int auxClockNotifyOverruns;
-static unsigned long int auxClockNotifyFailedAt;
-static int auxClockNotifyErrno;
+static volatile unsigned long int auxClockNotifyCount;
+static volatile unsigned long int auxClockNotifyOverruns;
+static volatile unsigned long int auxClockNotifyFailedAt;
+static volatile int auxClockNotifyErrno;
 
 /*                                                            */
 /* Interrupt Service Routine for the vanilla (non-notification) auxClockTicks counter. */

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.14  2002/09/19 21:26:37  jl11312
+ * - added errnoMsg manipulator function
  * Revision 1.13  2002/08/28 14:36:40  jl11312
  * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.12  2002/08/22 20:18:26  jl11312
@@ -83,6 +85,8 @@ DataLog_Result datalog_SetDefaultCriticalBufferSize(size_t size);
 
 typedef DataLog_BufferData * DataLog_EncryptFunc(DataLog_BufferData input, size_t inputLength, size_t * outputLength);
 DataLog_Result datalog_SetEncryptFunc(DataLog_EncryptFunc * func);
+
+DataLog_Result datalog_GetCurrentLogFileName(char * fileName, int bufferLength);
 
 /*
  * Data log handle routines

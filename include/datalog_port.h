@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.16 2003/10/03 12:32:57Z jl11312 Exp rm70006 $
  * $Log: datalog_port.h $
+ * Revision 1.9  2002/08/28 14:36:40  jl11312
+ * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.8  2002/08/22 20:18:27  jl11312
  * - added network support
  * Revision 1.7  2002/08/15 20:54:52  jl11312
@@ -49,7 +51,8 @@ typedef enum
 	DataLog_PrintFormatError,
 	DataLog_InternalWriteError,
 	DataLog_PeriodicWriteError,
-	DataLog_UnterminatedStreamOutput,
+	DataLog_NotLogToFile,
+	DataLog_BufferTooSmall,
 
 	DataLog_LastError				/* must be last entry */
 } DataLog_ErrorType;
@@ -83,7 +86,8 @@ DataLog_ErrorInformation	datalog_ErrorInformation[DataLog_LastError] =
 	{ DataLog_PrintFormatError, "print format error", 1 },
 	{ DataLog_InternalWriteError, "internal write error", 1 },
 	{ DataLog_PeriodicWriteError, "periodic write error", 1 },
-	{ DataLog_UnterminatedStreamOutput, "unterminated stream output", 1 }
+	{ DataLog_NotLogToFile, "connection type not log to file", 1 },
+	{ DataLog_BufferTooSmall, "supplied buffer too small", 1 }
 };
 
 #endif /* ifdef DATALOG_DECLARE_ERROR_INFORMATION */

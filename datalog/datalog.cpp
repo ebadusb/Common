@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.13 2003/12/05 16:33:05Z jl11312 Exp rm70006 $
  * $Log: datalog.cpp $
+ * Revision 1.7  2002/08/28 14:37:07  jl11312
+ * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.6  2002/08/22 20:19:10  jl11312
  * - added network support
  * Revision 1.5  2002/08/15 20:53:54  jl11312
@@ -253,6 +255,28 @@ DataLog_Result datalog_ClearError(DataLog_TaskID task)
 
 	taskInfo->_error = DataLog_NoError;
 	return DataLog_OK;
+}
+
+DataLog_Result datalog_GetCurrentLogFileName(char * fileName, int bufferLength)
+{
+	DataLog_CommonData	common;
+	DataLog_Result			result = DataLog_Error;
+
+	if ( common.connectType() != DataLog_CommonData::LogToFile )
+	{
+		common.setTaskError(DataLog_NotLogToFile, __FILE__, __LINE__);
+	}
+	else if ( strlen(common.connectName()) >= bufferLength )
+	{
+		common.setTaskError(DataLog_BufferTooSmall, __FILE__, __LINE__);
+	}
+	else
+	{
+		strcpy(fileName, common.connectName());
+		result = DataLog_OK;
+	}
+
+	return result;
 }
 
 const char * datalog_ErrorMessage(DataLog_ErrorType error)

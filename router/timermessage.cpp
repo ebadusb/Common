@@ -16,13 +16,15 @@
 
 TimerMessage :: TimerMessage()
 :  Message< unsigned long >(), 
-   _TimerArmed( DISARMED )
+   _TimerArmed( DISARMED ),
+   _DisarmedCallback()
 {
 }
 
 TimerMessage :: TimerMessage( unsigned long interval, const CallbackBase &cb, TimerState armTimer )
 :  Message< unsigned long >(), 
-   _TimerArmed( DISARMED )
+   _TimerArmed( DISARMED ),
+   _DisarmedCallback()
 {
    init( interval, cb, armTimer );
 }

@@ -5,8 +5,10 @@
  * included as part of the build for an vxWorks OS image and is not intended
  * to be compiled separately.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/os/rcs/rtc.c 1.1 2002/05/30 13:00:52Z jl11312 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/os/rcs/rtc.c 1.1 2002/05/30 13:00:52Z jl11312 Exp $
  * $Log: rtc.c $
+ * Revision 1.1  2002/05/30 13:00:52Z  jl11312
+ * Initial revision
  *
  */
 
@@ -155,11 +157,10 @@ static void setRTCReg(int regAddr, int value)
 	__asm__ volatile ("sti");
 }
 
-STATUS setCurrentTimeFromRTC(void)
+STATUS getCurrentTimeFromRTC( struct timespec *clockTime)
 {
 	struct tm			rtcTime;
 	time_t				currTime;
-	struct timespec	clockTime;
 	int	 				retry;
 	int					rtcReadOK = 0;
 	
@@ -172,7 +173,7 @@ STATUS setCurrentTimeFromRTC(void)
 	{
 		if ( checkRTCUpdating() )
 		{
-			taskDelay(1);
+			taskDelay(0);
 		}
 
 		memset((void *)&rtcTime, 0, sizeof(rtcTime));
@@ -214,10 +215,8 @@ STATUS setCurrentTimeFromRTC(void)
 	}
 
 	currTime = mktime(&rtcTime);
-   clockTime.tv_sec = currTime;
-   clockTime.tv_nsec = 0;
-   clock_settime(CLOCK_REALTIME, &clockTime);
-   return OK;
+   clockTime->tv_sec = currTime;
+   clockTime->tv_nsec = 0;
 }
 
 STATUS setRTCFromCurrentTime(void)

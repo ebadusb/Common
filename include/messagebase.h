@@ -86,6 +86,16 @@ public:
    // Dump the contents of the class ...
    void dump( DataLog_Stream &outs );
 
+   //
+   // Protection from deleting while in use ...
+   //
+   void operator delete( void * );
+
+   //
+   // Get for the delete me flag ...
+   //
+   bool deleteMe() { return _DeleteMe; }
+
 protected:
 
    //
@@ -174,6 +184,11 @@ protected:
    list< MessagePacket* > _PacketList; // List of packets that make up the data 
                                        //  for this message
   
+private:
+
+   bool             _InUse;
+   bool             _DeleteMe;
+
 };
 
 #endif

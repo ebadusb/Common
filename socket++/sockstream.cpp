@@ -92,9 +92,15 @@ void sockAddr::error (const char* msg) const
    sock_error("class sockAddr", msg);
 }
 
-sockbuf::sockbuf (int soc)
-: rep (new sockcnt (soc, 1)),
-stmo (-1), rtmo (-1)
+
+
+//
+// Constructor taking existing socket descriptor.
+//
+sockbuf::sockbuf (int descriptor) :
+   rep (new sockcnt (descriptor, 1)),
+   stmo (-1),
+   rtmo (-1)
 {
 #ifdef _S_NOLIBGXX
    xflags (0);
@@ -102,20 +108,42 @@ stmo (-1), rtmo (-1)
    xsetflags (_S_LINE_BUF);
 }
 
-sockbuf::sockbuf (int domain, sockbuf::type st, int proto)
-: streambuf(), rep (0), stmo (-1), rtmo (-1)
+
+
+//
+// Constructor taking domain (address family), socket type, and protocol
+//
+sockbuf::sockbuf (int domain, sockbuf::type socket_type, int proto) :
+   streambuf(),
+   rep (0),
+   stmo (-1),
+   rtmo (-1)
 {
-   int soc = ::socket (domain, st, proto);
-   rep = new sockcnt (soc, 1);
+   // Create the socket.
+   int soc = ::socket (domain, socket_type, proto);
+   
+   // socket counter.
+   rep = new sockcnt (soc, 1); 
 #ifdef _S_NOLIBGXX
    xflags (0);
 #endif
-   if(rep->sock == -1) perror ("sockbuf::sockbuf");
+   
+   if (rep->sock == -1)
+      perror ("sockbuf::sockbuf");
+
    xsetflags (_S_LINE_BUF);
 }
 
-sockbuf::sockbuf (const sockbuf& sb)
-: streambuf(), rep (sb.rep), stmo (sb.stmo), rtmo (sb.rtmo)
+
+
+//
+// Copy constructor
+//
+sockbuf::sockbuf (const sockbuf& sb) :
+   streambuf(),
+   rep (sb.rep),
+   stmo (sb.stmo),
+   rtmo (sb.rtmo)
 {
 #ifdef _S_NOLIBGXX
    xflags (0);
@@ -123,6 +151,9 @@ sockbuf::sockbuf (const sockbuf& sb)
    rep->cnt++;
    xsetflags (_S_LINE_BUF);
 }
+
+
+
 
 sockbuf& sockbuf::operator = (const sockbuf& sb)
 {

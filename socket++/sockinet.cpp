@@ -28,12 +28,25 @@
 //EXTERN_C_END
 
 
+
+
+//
 sockinetaddr::sockinetaddr () 
 {
    sin_len         = sizeof (struct in_addr);
    sin_family      = sockinetbuf::af_inet;
    sin_addr.s_addr = htonl(INADDR_ANY);
    sin_port        = 0;
+}
+
+
+
+sockinetaddr::sockinetaddr (unsigned short port_no) 
+{
+   sin_len         = sizeof (struct in_addr);
+   sin_family      = sockinetbuf::af_inet;
+   sin_addr.s_addr = htonl(INADDR_ANY);
+   sin_port        = htons(port_no);
 }
 
 
@@ -55,41 +68,40 @@ sockinetaddr::sockinetaddr(const char *addr, unsigned short port_no)
    sin_len    = sizeof (struct in_addr);
    sin_family = sockinetbuf::af_inet;
    sin_port   = htons(port_no);
-   
+
    if (inet_aton ((char *)addr, &sin_addr) != OK)   // Stupid VxWorks doesn't have const in prototype
    {
       // (Fatal?) Error.
    }
 }
 
-/* NOT SUPPORTED BY VXWORKS
+
+
+
+#if 0  // NOT SUPPORTED BY VXWORKS
 sockinetaddr::sockinetaddr(unsigned long addr, const char* sn, const char* pn)
 // addr is in host byte order
 {
-  sin_family      = sockinetbuf::af_inet;
-  sin_addr.s_addr = htonl (addr); // Added by cgay@cs.uoregon.edu May 29, 1993
-  setport(sn, pn);
+   sin_family      = sockinetbuf::af_inet;
+   sin_addr.s_addr = htonl (addr); // Added by cgay@cs.uoregon.edu May 29, 1993
+   setport(sn, pn);
 }
-*/
 
 
-/* NOT SUPPORTED BY VXWORKS
 sockinetaddr::sockinetaddr (const char* host_name, int port_no)
 // port_no is in host byte order
 {
-  setaddr(host_name);
-  sin_port = htons(port_no);
+   setaddr(host_name);
+   sin_port = htons(port_no);
 }
-*/
 
 
-/* NOT SUPPORTED BY VXWORKS
 sockinetaddr::sockinetaddr(const char* hn, const char* sn, const char* pn)
 {
-  setaddr(hn);
-  setport(sn, pn);
+   setaddr(hn);
+   setport(sn, pn);
 }
-*/
+#endif
 
 
 sockinetaddr::sockinetaddr (const sockinetaddr& sina)
@@ -100,7 +112,36 @@ sockinetaddr::sockinetaddr (const sockinetaddr& sina)
 }   
 
 
-/* NOT SUPPORTED BY VXWORKS
+
+bool operator == (const sockinetaddr &lhs, const sockinetaddr &rhs)
+{
+   if ( (lhs.sin_len         == rhs.sin_len)    &&
+        (lhs.sin_family      == rhs.sin_family) &&
+        (lhs.sin_port        == rhs.sin_port)   &&
+        (lhs.sin_addr.s_addr == rhs.sin_addr.s_addr)
+      )
+   {
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+
+
+ostream & operator << (ostream &os, const sockinetaddr &sa)
+{
+   os << "(" << inet_ntoa(sa.sin_addr) << ", " << sa.sin_port << ")";
+
+   return os;
+}
+
+
+
+
+#if 0 // NOT SUPPORTED BY VXWORKS
 void sockinetaddr::setport(const char* sn, const char* pn)
 {
    error ("sockinetaddr: setport not supported.");
@@ -114,7 +155,7 @@ void sockinetaddr::setport(const char* sn, const char* pn)
   }
   sin_port = sp->s_port;
 }
-*/
+#endif
 
 
 
@@ -124,7 +165,7 @@ int sockinetaddr::getport () const
 }
 
 
-/* NOT SUPPORTED BY VXWORKS
+#if 0  // NOT SUPPORTED BY VXWORKS
 void sockinetaddr::setaddr(const char* host_name)
 {
    error ("sockinetaddr: setaddr not supported.");
@@ -140,15 +181,15 @@ void sockinetaddr::setaddr(const char* host_name)
   }else
     sin_family = sockinetbuf::af_inet;
 }
-*/
+#endif
 
 
 
 const char* sockinetaddr::gethostname () const
 {
    return inet_ntoa(sin_addr.s_addr);
-   
-   /*
+
+/*
    if (sin_addr.s_addr == htonl(INADDR_ANY))
    {
       static char hostname[64];
@@ -164,9 +205,7 @@ const char* sockinetaddr::gethostname () const
 
    perror("in sockinetaddr::gethostname, host not found.");
    return "";
-*/
 
-/* NOT SUPPORTED BY VXWORKS
   hostent* hp = gethostbyaddr((const char*) &sin_addr,
                sizeof(sin_addr),
                family());
@@ -179,6 +218,11 @@ const char* sockinetaddr::gethostname () const
 */
 }
 
+
+
+//
+// SOCKINETBUF
+//
 
 sockinetbuf::sockinetbuf(sockbuf::type ty, int proto)
 : sockbuf(af_inet, ty, proto)
@@ -207,27 +251,27 @@ sockinetaddr sockinetbuf::localaddr() const
 {
    sockinetaddr sin;
    int len = sin.size();
-   
-   if(::getsockname(rep->sock, sin.addr (), &len) == -1)
+
+   if (::getsockname(rep->sock, sin.addr (), &len) == -1)
       perror("sockinetbuf::localaddr()");
-   
+
    return sin;
 }
 
 int sockinetbuf::localport() const
 {
    sockinetaddr sin = localaddr();
-   if(sin.family() != af_inet) return -1;
+   if (sin.family() != af_inet) return -1;
    return sin.getport();
 }
 
 const char* sockinetbuf::localhost() const
 {
    sockinetaddr sin = localaddr();
-   
+
    if (sin.family() != af_inet)
-       return "";
-   
+      return "";
+
    return sin.gethostname();
 }
 
@@ -236,7 +280,7 @@ sockinetaddr sockinetbuf::peeraddr() const
 {
    sockinetaddr sin;
    int len = sin.size();
-   if(::getpeername(rep->sock, sin.addr (), &len) == -1)
+   if (::getpeername(rep->sock, sin.addr (), &len) == -1)
       perror("sockinetbuf::peeraddr()");
    return sin;
 }
@@ -244,14 +288,14 @@ sockinetaddr sockinetbuf::peeraddr() const
 int sockinetbuf::peerport() const
 {
    sockinetaddr sin = peeraddr();
-   if(sin.family() != af_inet) return -1;
+   if (sin.family() != af_inet) return -1;
    return sin.getport();
 }
 
 const char* sockinetbuf::peerhost() const
 {
    sockinetaddr sin = peeraddr();
-   if(sin.family() != af_inet) return "";
+   if (sin.family() != af_inet) return "";
    return sin.gethostname();
 }
 
@@ -261,13 +305,13 @@ int sockinetbuf::bind_until_success (int portno)
 // c. if failure and errno is EADDRINUSE, portno++ and go to step a.
 // d. return errno.
 {
-   for(;;)
+   for (;;)
    {
       sockinetaddr sa ((unsigned long) INADDR_ANY, portno++);
       int eno = bind (sa);
-      if(eno == 0)
+      if (eno == 0)
          return 0;
-      if(eno != EADDRINUSE)
+      if (eno != EADDRINUSE)
          return eno;
    }
 }
@@ -290,16 +334,13 @@ int sockinetbuf::bind (unsigned long addr, int port_no)
    return bind (sa);
 }
 
-/* NOT SUPPORTED BY VXWORKS
+#if 0   // NOT SUPPORTED BY VXWORKS
 int sockinetbuf::bind (const char* host_name, int port_no)
 {
   sockinetaddr sa (host_name, port_no);
   return bind (sa);
 }
-*/
 
-
-/* NOT SUPPORTED BY VXWORKS
 int sockinetbuf::bind (unsigned long addr,
              const char* service_name,
              const char* protocol_name)
@@ -307,9 +348,8 @@ int sockinetbuf::bind (unsigned long addr,
   sockinetaddr sa (addr, service_name, protocol_name);
   return bind (sa);
 }
-*/
 
-/* NOT SUPPORTED BY VXWORKS
+
 int sockinetbuf::bind (const char* host_name,
              const char* service_name,
              const char* protocol_name)
@@ -317,7 +357,7 @@ int sockinetbuf::bind (const char* host_name,
   sockinetaddr sa (host_name, service_name, protocol_name);
   return bind (sa);
 }
-*/
+#endif
 
 
 int sockinetbuf::connect (sockAddr& sa)
@@ -365,7 +405,7 @@ int sockinetbuf::connectWithTimeout (const char* host_name, int port_no, timeval
 }
 
 
-/* NOT SUPPORTED BY VXWORKS
+#if 0  // NOT SUPPORTED BY VXWORKS
 int sockinetbuf::connect (unsigned long addr,
            const char* service_name,
            const char* protocol_name)
@@ -373,10 +413,8 @@ int sockinetbuf::connect (unsigned long addr,
   sockinetaddr sa (addr, service_name, protocol_name);
   return connect (sa);
 }
-*/
 
 
-/* NOT SUPPORTED BY VXWORKS
 int sockinetbuf::connect (const char* host_name,
            const char* service_name,
            const char* protocol_name)
@@ -384,7 +422,7 @@ int sockinetbuf::connect (const char* host_name,
   sockinetaddr sa (host_name, service_name, protocol_name);
   return connect (sa);
 }
-*/
+#endif
 
 
 isockinet::isockinet (sockbuf::type ty, int proto)

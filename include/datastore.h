@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.24  2003/06/19 18:38:29Z  ms10234
+ * HISTORY:    5829 - Changes for PFR
  * HISTORY:    Revision 1.23  2003/05/19 17:11:06Z  ms10234
  * HISTORY:    5816 - changed Access function to be usable with const objects
  * HISTORY:    Revision 1.22  2003/04/07 14:46:59Z  rm70006
@@ -260,6 +262,7 @@ public:
    unsigned int SetPfData(  unsigned char *memBlock ); // return length
    bool RetrievePfData( unsigned char *memBlock );
    bool RestorePfData();
+   bool ForgetPfData();
 
    string _name;
 
@@ -311,6 +314,7 @@ public:
    //
    // Non-static PFR method
    bool RestorePfData() { return _handle->RestorePfData(); }
+   bool ForgetPfData() { return _handle->ForgetPfData(); }
 
    // Accessor functions
    static const SYMTAB_ID & getTable() { return _datastoreTable; }

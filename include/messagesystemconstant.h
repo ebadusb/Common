@@ -42,6 +42,15 @@ public:
    // Default priority of timer message notifications ( 1-31 )
    static const int DEFAULT_TIMER_MESSAGE_PRIORITY;
    //
+   // Default priority of timer message notifications ( 1-31 )
+   static const int GATEWAY_CONNECT_PRIORITY;
+   //
+   // Default priority of timer message notifications ( 1-31 )
+   static const int GATEWAY_MESSAGE_PRIORITY;
+   //
+   // Default priority of timer message notifications ( 1-31 )
+   static const int REMOTE_NODE_SYNCH_PRIORITY;
+   //
    // Size of the user data inside the message packets
    enum {MAX_MESSAGE_SIZE = 127};
 

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/dispatch.cpp 1.11 2001/05/24 22:41:08 jl11312 Exp jl11312 $
  * $Log: dispatch.cpp $
+ * Revision 1.7  2000/06/06 19:07:33  ms10234
+ * Removed message enumerations from the common project.
  * Revision 1.6  1999/09/30 04:02:15  BS04481
  * Port fix from Spectra.  Avoids SIGSEV which can occur if a 
  * message object is deleted from inside of a notify for another
@@ -186,11 +188,6 @@ int routeBuffer::init( void** msg,
          dispatch->fError( __LINE__, msgLength, "message length to big");
          return 0;
       }
-      // if ((id == FIRST_BUFFER_MESSAGE) || (id >= focusInt32Msg::LAST_INT32_MESSAGE))
-      // {
-         // dispatch->fError( __LINE__, id, "message id");
-         // return 0;
-      // }
 
 // create message, fill in data
 
@@ -645,10 +642,6 @@ dispatcher::registerMessage( routeBuffer* m)
    }
    MSGHEADER* mhdr = (MSGHEADER*) m->message;
    unsigned short mid = mhdr->msgID;
-   // if ((mid == FIRST_BUFFER_MESSAGE) || (mid >= focusInt32Msg::LAST_INT32_MESSAGE))
-   // {
-      // fError( __LINE__, mid, "message id");
-   // }
 
 // add to linked list
 
@@ -707,10 +700,6 @@ dispatcher::deregisterMessage( routeBuffer* m)
    MSGHEADER* mhdr = (MSGHEADER*) m->message;
 
    unsigned short mid = mhdr->msgID;
-   // if ((mid == FIRST_BUFFER_MESSAGE) || (mid >= focusInt32Msg::LAST_INT32_MESSAGE))
-   // {
-      // fError( __LINE__, mid, "message id");
-   // }
    logData( __LINE__, mid, MSG_DELETE);
 
 // send message to router
@@ -832,10 +821,6 @@ dispatcher::send_tcp( void* m)
 
    MSGHEADER* mhdr = (MSGHEADER*) m;
    unsigned short mid = mhdr->msgID;
-   // if ((mid == FIRST_BUFFER_MESSAGE) || (mid >= focusInt32Msg::LAST_INT32_MESSAGE))
-   // {
-      // fError( __LINE__, mid, "message id");
-   // }
    logData( __LINE__, mid, MSG_SEND);
    unsigned int mLen = mhdr->length;
    if (mLen > BSIZE)

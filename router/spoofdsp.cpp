@@ -1,8 +1,11 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Y:/BCT_Development/Common/ROUTER/rcs/SPOOFDSP.CPP 1.3 1999/06/14 23:10:32 BS04481 Exp MS10234 $
+ * $Header: Y:/BCT_Development/Common/ROUTER/rcs/SPOOFDSP.CPP 1.3 1999/06/14 23:10:32 BS04481 Exp $
  * $Log: SPOOFDSP.CPP $
+ * Revision 1.3  1999/06/14 23:10:32  BS04481
+ * Made an unnecessary change to the spoof dispatcher for the
+ * change to message headers and broke the spoofer.  This fixes it.
  * Revision 1.2  1999/05/31 20:35:15  BS04481
  * Remove unused MSGHEADER structure from messages. 
  * Decrease maximum message size.  Add new version of 
@@ -57,11 +60,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "buffmsg.hpp"
 #include "crc.h"
 #include "spoofdsp.hpp"
 #include "error.h"
-#include "msg.hpp"
 #include "sinver.h"
 
 
@@ -290,10 +291,6 @@ spooferDispatcher::send( routeBuffer* m)
 
    MSGHEADER* mhdr = (MSGHEADER*) m->message;
    unsigned short mid = mhdr->msgID;
-   if ((mid == FIRST_BUFFER_MESSAGE) || (mid >= focusInt32Msg::LAST_INT32_MESSAGE))
-   {
-      _FATAL_ERROR( __FILE__, __LINE__, TRACE_DISPATCHER, mid, "message id");
-   }
    logData( __LINE__, mid, MSG_SEND);
    unsigned int mLen = mhdr->length;
    if(mLen > BSIZE)

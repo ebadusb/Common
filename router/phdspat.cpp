@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Y:/BCT_Development/Common/ROUTER/rcs/PHDSPAT.CPP 1.1 1999/05/24 23:29:50 TD10216 Exp MS10234 $
+ * $Header: K:/BCT_Development/Common/router/rcs/phdspat.cpp 1.2 2000/06/06 19:09:45 ms10234 Exp jl11312 $
  * $Log: phdspat.cpp $
+ * Revision 1.1  1999/05/24 23:29:50  TD10216
+ * Initial revision
  * Revision 1.12  1996/07/24 19:49:57  SS03309
  * fix MKS 
  * Revision 1.11  1996/06/28 17:24:45  SS03309
@@ -39,10 +41,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-// focus messages
+// messages
 #include "crc.h"
 #include "dispatch.hpp"
-#include "msg.hpp"
 #include "phdspat.hpp"
 #include "sinver.h"
 

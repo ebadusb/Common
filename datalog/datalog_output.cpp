@@ -1,8 +1,11 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.13 2003/12/09 14:14:34Z jl11312 Exp rm70006 $
+ * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.15 2008/05/19 21:14:02Z estausb Exp jl11312 $
  * $Log: datalog_output.cpp $
+ * Revision 1.13  2003/12/09 14:14:34Z  jl11312
+ * - corrected time stamp problem (IT 6668)
+ * - removed obsolete code/data types (IT 6664)
  * Revision 1.12  2003/11/10 17:46:20Z  jl11312
  * - corrections from data log unit tests (see IT 6598)
  * Revision 1.11  2003/10/03 12:35:06Z  jl11312
@@ -34,7 +37,7 @@
 #include "datalog.h"
 
 #include <fcntl.h>
-#include <ioLib.h>
+
 #include "datalog_internal.h"
 #include "datalog_records.h"
 #include "zlib.h"
@@ -63,7 +66,7 @@ DataLog_OutputTask::DataLog_OutputTask(void)
 {
 	_state = Run;
 	_outputSignal = datalog_CreateSignal("DataLog_Output");
-	_dataLostSignal = datalog_CreateSignal("DataLog_DataLog");
+	_dataLostSignal = datalog_CreateSignal("DataLog_DataLost");
 }
 
 void DataLog_OutputTask::exit(void)
@@ -203,6 +206,7 @@ void DataLog_OutputTask::writeSystemLevelRecord(void)
 	delete[] buffer;
 }
 
+
 DataLog_LocalOutputTask::DataLog_LocalOutputTask(const char * platformName, const char * nodeName, const char * platformInfo)
 {
 	DataLog_CommonData common;
@@ -221,7 +225,6 @@ DataLog_LocalOutputTask::DataLog_LocalOutputTask(const char * platformName, cons
 	}
 	else
 	{
-		ftruncate(_outputFD, 0);
 		writeLogFileHeader(platformName, nodeName, platformInfo);
 	}
 }
@@ -235,7 +238,7 @@ void DataLog_LocalOutputTask::writeOutputRecord(DataLog_BufferData * buffer, siz
 	if ( !_compressedFile )
 	{
 		_compressedFile = gzdopen(_outputFD, "wb1");
-		if ( !_compressedFile < 0 )
+		if ( !_compressedFile )
 		{
 			DataLog_CommonData	common;
 
@@ -423,7 +426,7 @@ void DataLog_NetworkOutputTask::startOutputRecord(bool isCritical)
 void DataLog_NetworkOutputTask::writeOutputRecord(DataLog_BufferData * buffer, size_t size)
 {
 	DataLog_NetworkPacket	packet;
-	int	dataIndex = 0;
+	size_t dataIndex = 0;
 
 	//
 	// Send output record data

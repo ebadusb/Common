@@ -1,8 +1,11 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_network.cpp 1.5 2003/12/09 14:14:28Z jl11312 Exp rm70006 $
+ * $Header: I:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_network.cpp 1.5 2003/12/09 14:14:28Z jl11312 Exp $
  * $Log: datalog_network.cpp $
+ * Revision 1.5  2003/12/09 14:14:28Z  jl11312
+ * - corrected time stamp problem (IT 6668)
+ * - removed obsolete code/data types (IT 6664)
  * Revision 1.4  2003/03/27 16:27:02Z  jl11312
  * - added support for new datalog levels
  * Revision 1.3  2003/02/25 16:10:21Z  jl11312
@@ -16,10 +19,7 @@
 
 #include "datalog.h"
 
-#include <errnoLib.h>
 #include <fcntl.h>
-#include <ioLib.h>
-#include <sysLib.h>
 #include "datalog_internal.h"
 
 #ifdef DATALOG_LEVELS_INIT_SUPPORT

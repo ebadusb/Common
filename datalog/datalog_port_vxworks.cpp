@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.12 2003/12/16 21:56:59Z jl11312 Exp rm70006 $
  * $Log: datalog_port_vxworks.cpp $
+ * Revision 1.12  2003/12/16 21:56:59Z  jl11312
+ * - replaced binary semaphore with mutex semaphore to avoid potential priority inversion
  * Revision 1.11  2003/12/09 14:14:40Z  jl11312
  * - corrected time stamp problem (IT 6668)
  * - removed obsolete code/data types (IT 6664)
@@ -376,19 +378,26 @@ void datalog_FreeSharedMem(DataLog_SharedPtr(void) ptr)
 	free(ptr);
 }
 
-DataLog_Lock datalog_CreateLock(void)
+DataLog_Lock datalog_CreateMLock(void)
 {
 	return semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
 }
+
+/*
+DataLog_Lock datalog_CreateBLock(void)
+{
+	return semBCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
+}
+*/
 
 void datalog_DeleteLock(DataLog_Lock lock)
 {
 	semDelete(lock);  
 }
 
-void datalog_LockAccess(DataLog_Lock lock)
+int datalog_LockAccess(DataLog_Lock lock, int delay)
 {
-	semTake(lock, WAIT_FOREVER);
+	return semTake(lock, WAIT_FOREVER);
 }
 
 void datalog_ReleaseAccess(DataLog_Lock lock)
@@ -676,5 +685,34 @@ unsigned long DataLog_BufferManager::avgBufferCount(DataLog_BufferManager::Buffe
 DataLog_BufferManager::DataLog_BufferList * DataLog_BufferManager::getInternalList(BufferList list)
 {
 	return getListPtr(list);
+}
+    
+
+DataLog_Stream & manipfunc_errnoMsg(DataLog_Stream & stream, int param)
+{
+	bool	decodeOK = false; 
+
+	if ( statSymTbl != NULL )
+	{
+		SYM_TYPE	type;
+		char  	errName[MAX_SYS_SYM_LEN+1];
+		int		errValue;
+
+		if ( symFindByValue(statSymTbl, param, errName, &errValue, &type) == OK )
+		{
+			if ( errValue == param )
+			{
+				stream << errName;
+				decodeOK = true;
+			}
+		}
+	}
+
+	if ( !decodeOK )
+	{
+		stream << "errno=" << param;
+	}
+
+	return stream;
 }
 

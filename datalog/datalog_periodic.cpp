@@ -3,6 +3,9 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_periodic.cpp 1.6 2005/05/31 20:26:46Z jheiusb Exp ms10234 $
  * $Log: datalog_periodic.cpp $
+ * Revision 1.4  2003/10/03 12:35:09Z  jl11312
+ * - improved DataLog_Handle lookup time
+ * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
  * Revision 1.3  2003/02/25 16:10:24Z  jl11312
  * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.2  2003/01/31 19:52:51  jl11312
@@ -188,8 +191,8 @@ DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_SetHandle
    strcat(signalName, periodUpdateSuffix);
    setInfo->_periodUpdateSignal = datalog_CreateSignal(signalName);
 
-	setInfo->_lock = datalog_CreateLock();
-	setInfo->_outputLock = datalog_CreateLock();
+	setInfo->_lock = datalog_CreateMLock();
+	setInfo->_outputLock = datalog_CreateMLock();
 
 	datalog_StartPeriodicLogTask(setInfo);
 
@@ -268,7 +271,7 @@ DataLog_PeriodicItemBase::DataLog_PeriodicItemBase(DataLog_SetHandle set, size_t
 	_oldAllocSize = 0;
 
 	_set = set;
-	_lock = datalog_CreateLock();
+	_lock = datalog_CreateMLock();
 
 	DataLog_CommonData common;
 	_keyCode = common.getNextInternalID();

@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.13 2003/12/05 16:33:05Z jl11312 Exp rm70006 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.15 2005/05/31 20:26:41Z jheiusb Exp ms10234 $
  * $Log: datalog.cpp $
+ * Revision 1.13  2003/12/05 16:33:05Z  jl11312
+ * - removed non-portable calls
  * Revision 1.12  2003/10/03 12:34:58Z  jl11312
  * - improved DataLog_Handle lookup time
  * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
@@ -43,7 +45,7 @@
 
 
 DataLog_Map<DataLog_TaskID, DataLog_TaskInfo *> DataLog_CommonData::_tasks;
-DataLog_Lock DataLog_CommonData::_tasksLock = datalog_CreateLock();
+DataLog_Lock DataLog_CommonData::_tasksLock = datalog_CreateMLock();
 
 const DataLog_HandleInfo DataLog_CommonData::_criticalHandleInfo = { 0, DataLog_HandleInfo::CriticalHandle, DataLog_LogEnabled, DataLog_ConsoleDisabled };
 
@@ -200,7 +202,7 @@ DataLog_Result datalog_ClearError(DataLog_TaskID task)
 	return DataLog_OK;
 }
 
-DataLog_Result datalog_GetCurrentLogFileName(char * fileName, int bufferLength)
+DataLog_Result datalog_GetCurrentLogFileName(char * fileName, size_t bufferLength)
 {
 	DataLog_CommonData	common;
 	DataLog_Result			result = DataLog_Error;

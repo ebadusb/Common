@@ -1,8 +1,11 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.12 2003/12/09 14:14:23Z jl11312 Exp rm70006 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.13 2004/10/26 20:19:01Z rm70006 Exp ms10234 $
  * $Log: datalog_internal.h $
+ * Revision 1.12  2003/12/09 14:14:23Z  jl11312
+ * - corrected time stamp problem (IT 6668)
+ * - removed obsolete code/data types (IT 6664)
  * Revision 1.11  2003/11/10 17:46:12Z  jl11312
  * - corrections from data log unit tests (see IT 6598)
  * Revision 1.10  2003/10/03 12:35:02Z  jl11312
@@ -94,7 +97,6 @@ public:
 
 	static void modifyChainData(DataLog_BufferChain & chain, unsigned long offset, DataLog_BufferData * data, size_t size);
 
-private:
 	struct DataLog_BufferList
 	{
 		DataLog_BufferPtr _head;
@@ -113,6 +115,7 @@ private:
 	#endif /* ifdef DATALOG_BUFFER_STATISTICS */
 	};
 
+private:
 	static DataLog_BufferList * getInternalList(BufferList list);
 };
 
@@ -144,6 +147,7 @@ struct DataLog_TaskInfo
 
 	DataLog_Map<DataLog_InternalID, DataLog_Stream *> _outputStream;
 };
+
 
 struct DataLog_SetInfo
 {
@@ -243,10 +247,10 @@ enum DataLog_NetworkPacketType
 	DataLog_EndConnection
 };
 
-struct DataLog_NetworkPacket
+Packing_Structure_Directive struct DataLog_NetworkPacket
 {
-	DataLog_NetworkPacketType	_type __attribute__ ((packed));
-	DataLog_UINT16					_length __attribute__ ((packed));
+	DataLog_NetworkPacketType	_type Packing_Element_Directive;
+	DataLog_UINT16				_length Packing_Element_Directive;
 };
 
 #endif /* ifndef _DATALOG_INTERNAL_INCLUDE */

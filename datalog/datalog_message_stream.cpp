@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.12 2003/11/25 16:10:03Z jl11312 Exp rm70006 $
  * $Log: datalog_message_stream.cpp $
+ * Revision 1.12  2003/11/25 16:10:03Z  jl11312
+ * - corrected output of unsigned char data
  * Revision 1.11  2003/11/24 23:06:46Z  jl11312
  * - corrected handling of interrupt output
  * Revision 1.10  2003/11/10 17:46:16Z  jl11312
@@ -32,8 +34,6 @@
 #include "datalog.h"
 
 #include <stdarg.h>
-#include <symLib.h>
-#include <sysSymTbl.h>
 #include <typeinfo>
 #include "datalog_internal.h"
 #include "datalog_records.h"
@@ -581,37 +581,10 @@ DataLog_Stream & manipfunc_resetflags(DataLog_Stream & stream, int param)
 	return stream;
 }
 
-DataLog_Stream & manipfunc_errnoMsg(DataLog_Stream & stream, int param)
-{
-	bool	decodeOK = false; 
-
-	if ( statSymTbl != NULL )
-	{
-		SYM_TYPE	type;
-		char  	errName[MAX_SYS_SYM_LEN+1];
-		int		errValue;
-
-		if ( symFindByValue(statSymTbl, param, errName, &errValue, &type) == OK )
-		{
-			if ( errValue == param )
-			{
-				stream << errName;
-				decodeOK = true;
-			}
-		}
-	}
-
-	if ( !decodeOK )
-	{
-		stream << "errno=" << param;
-	}
-
-	return stream;
-}
-
 DataLog_Stream & endmsg(DataLog_Stream & stream)
 {
-	if ( stream._consoleOutput == DataLog_ConsoleEnabled ) putc('\n', datalog_ConsoleFile());
+	if ( stream._consoleOutput == DataLog_ConsoleEnabled )
+		putc('\n', datalog_ConsoleFile());
 
 	stream.writeComplete();
 	return stream;

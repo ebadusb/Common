@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_records.h 1.2 2004/06/07 16:55:54Z jl11312 Exp rm70006 $
+ * $Header: I:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_records.h 1.2 2004/06/07 16:55:54Z jl11312 Exp $
  * $Log: datalog_records.h $
+ * Revision 1.2  2004/06/07 16:55:54Z  jl11312
+ * - correct compiler wanrings for simpc under VXWorks 5.5
  * Revision 1.1  2003/02/26 16:11:18Z  jl11312
  * Initial revision
  *
@@ -41,148 +43,148 @@ enum
 /*
  *	All structures for log output must be packed to insure correct format
  */
-struct DataLog_HeaderRecord
+Packing_Structure_Directive struct DataLog_HeaderRecord
 {
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_UINT16	_charSize __attribute__ ((packed));
-	DataLog_UINT16	_intSize __attribute__ ((packed));
-	DataLog_UINT16	_longSize __attribute__ ((packed));
-	DataLog_UINT16	_floatSize __attribute__ ((packed));
-	DataLog_UINT16	_doubleSize __attribute__ ((packed));
-	DataLog_UINT16	_taskIDSize __attribute__ ((packed));
-	DataLog_TaskID	_currentTaskID __attribute__ ((packed));
-	DataLog_UINT16	_nodeIDSize __attribute__ ((packed));
-	DataLog_UINT16	_version __attribute__ ((packed));
+	DataLog_UINT16	_recordType Packing_Element_Directive;
+	DataLog_UINT16	_charSize Packing_Element_Directive;
+	DataLog_UINT16	_intSize Packing_Element_Directive;
+	DataLog_UINT16	_longSize Packing_Element_Directive;
+	DataLog_UINT16	_floatSize Packing_Element_Directive;
+	DataLog_UINT16	_doubleSize Packing_Element_Directive;
+	DataLog_UINT16	_taskIDSize Packing_Element_Directive;
+	DataLog_TaskID	_currentTaskID Packing_Element_Directive;
+	DataLog_UINT16	_nodeIDSize Packing_Element_Directive;
+	DataLog_UINT16	_version Packing_Element_Directive;
 };
 
-struct DataLog_NetworkHeaderRecord
+Packing_Structure_Directive struct DataLog_NetworkHeaderRecord
 {
-	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_NodeID _nodeID __attribute__ ((packed));
+	DataLog_UINT16	_recordType Packing_Element_Directive;
+	DataLog_NodeID _nodeID Packing_Element_Directive;
 	DataLog_TimeStampStart _start;
-	DataLog_UINT16 _nodeNameLen __attribute__ ((packed));
+	DataLog_UINT16 _nodeNameLen Packing_Element_Directive;
 };
 
-struct DataLog_LogLevelRecord
+Packing_Structure_Directive struct DataLog_LogLevelRecord
 {
-	DataLog_UINT16	_recordType __attribute__ ((packed));
+	DataLog_UINT16	_recordType Packing_Element_Directive;
 	DataLog_TimeStamp _timeStamp;
 	DataLog_InternalID _levelID;
 	
 #ifdef DATALOG_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
+	DataLog_NodeID _nodeID Packing_Element_Directive;
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
-	DataLog_UINT16	_nameLen __attribute__ ((packed));
+	DataLog_UINT16	_nameLen Packing_Element_Directive;
 };
 
-struct DataLog_PrintOutputRecord
+Packing_Structure_Directive struct DataLog_PrintOutputRecord
 {
-	DataLog_UINT16	_recordType __attribute__ ((packed));
+	DataLog_UINT16	_recordType Packing_Element_Directive;
 	DataLog_TimeStamp _timeStamp;
 	DataLog_InternalID _levelID;
-	DataLog_TaskID	_taskID __attribute__ ((packed));
+	DataLog_TaskID	_taskID Packing_Element_Directive;
 	
 #ifdef DATALOG_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
+	DataLog_NodeID _nodeID Packing_Element_Directive;
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
-	DataLog_UINT16	_formatLen __attribute__ ((packed));
-	DataLog_UINT16	_fileNameLen __attribute__ ((packed));
-	DataLog_UINT16 _lineNum __attribute__ ((packed));
+	DataLog_UINT16	_formatLen Packing_Element_Directive;
+	DataLog_UINT16	_fileNameLen Packing_Element_Directive;
+	DataLog_UINT16 _lineNum Packing_Element_Directive;
 };
 
-struct DataLog_StreamOutputRecord
+Packing_Structure_Directive struct DataLog_StreamOutputRecord
 {
-	DataLog_UINT16	_recordType __attribute__ ((packed));
+	DataLog_UINT16	_recordType Packing_Element_Directive;
 	DataLog_TimeStamp _timeStamp;
 	DataLog_InternalID _levelID;
-	DataLog_TaskID	_taskID __attribute__ ((packed));
+	DataLog_TaskID	_taskID Packing_Element_Directive;
 	
 #ifdef DATALOG_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
+	DataLog_NodeID _nodeID Packing_Element_Directive;
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
-	DataLog_UINT16	_fileNameLen __attribute__ ((packed));
-	DataLog_UINT16 _lineNum __attribute__ ((packed));
+	DataLog_UINT16	_fileNameLen Packing_Element_Directive;
+	DataLog_UINT16 _lineNum Packing_Element_Directive;
 };
 
-struct DataLog_PeriodicOutputRecord
+Packing_Structure_Directive struct DataLog_PeriodicOutputRecord
 {
-	DataLog_UINT16	_recordType __attribute__ ((packed));
+	DataLog_UINT16	_recordType Packing_Element_Directive;
 	DataLog_TimeStamp _timeStamp;
-	DataLog_InternalID _setID __attribute__ ((packed));
+	DataLog_InternalID _setID Packing_Element_Directive;
 	
 #ifdef DATALOG_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
+	DataLog_NodeID _nodeID Packing_Element_Directive;
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
-	DataLog_UINT16 _itemCount __attribute__ ((packed));
+	DataLog_UINT16 _itemCount Packing_Element_Directive;
 };
 
-struct DataLog_PeriodicSetRecord
+Packing_Structure_Directive struct DataLog_PeriodicSetRecord
 {
-	DataLog_UINT16	_recordType __attribute__ ((packed));
+	DataLog_UINT16	_recordType Packing_Element_Directive;
 	DataLog_TimeStamp _timeStamp;
-	DataLog_InternalID _setID __attribute__ ((packed));
+	DataLog_InternalID _setID Packing_Element_Directive;
 	
 #ifdef DATALOG_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
+	DataLog_NodeID _nodeID Packing_Element_Directive;
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
-	DataLog_UINT16	_nameLen __attribute__ ((packed));
+	DataLog_UINT16	_nameLen Packing_Element_Directive;
 };
 
-struct DataLog_PeriodicItemRecord
+Packing_Structure_Directive struct DataLog_PeriodicItemRecord
 {
-	DataLog_UINT16	_recordType __attribute__ ((packed));
+	DataLog_UINT16	_recordType Packing_Element_Directive;
 	DataLog_TimeStamp _timeStamp;
-	DataLog_InternalID _keyCode __attribute__ ((packed));
+	DataLog_InternalID _keyCode Packing_Element_Directive;
 	
 #ifdef DATALOG_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
+	DataLog_NodeID _nodeID Packing_Element_Directive;
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
-	DataLog_UINT16	_keyLen __attribute__ ((packed));
-	DataLog_UINT16	_descLen __attribute__ ((packed));
-	DataLog_UINT16	_formatLen __attribute__ ((packed));
+	DataLog_UINT16	_keyLen Packing_Element_Directive;
+	DataLog_UINT16	_descLen Packing_Element_Directive;
+	DataLog_UINT16	_formatLen Packing_Element_Directive;
 };
 
-struct DataLog_TaskCreateRecord
+Packing_Structure_Directive struct DataLog_TaskCreateRecord
 {
-	DataLog_UINT16	_recordType __attribute__ ((packed));
+	DataLog_UINT16	_recordType Packing_Element_Directive;
 	DataLog_TimeStamp _timeStamp;
 	DataLog_InternalID	_levelID;
-	DataLog_TaskID	_taskID __attribute__ ((packed));
+	DataLog_TaskID	_taskID Packing_Element_Directive;
 
 #ifdef DATALOG_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
+	DataLog_NodeID _nodeID Packing_Element_Directive;
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
-	DataLog_UINT16	_nameLen __attribute__ ((packed));
+	DataLog_UINT16	_nameLen Packing_Element_Directive;
 };
 
-struct DataLog_TaskDeleteRecord
+Packing_Structure_Directive struct DataLog_TaskDeleteRecord
 {
-	DataLog_UINT16	_recordType __attribute__ ((packed));
+	DataLog_UINT16	_recordType Packing_Element_Directive;
 	DataLog_TimeStamp _timeStamp;
 	DataLog_InternalID _levelID;
-	DataLog_TaskID	_taskID __attribute__ ((packed));
+	DataLog_TaskID	_taskID Packing_Element_Directive;
 
 #ifdef DATALOG_NETWORK_SUPPORT
-	DataLog_NodeID _nodeID __attribute__ ((packed));
+	DataLog_NodeID _nodeID Packing_Element_Directive;
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 };
 
-struct DataLog_FileCloseRecord
+Packing_Structure_Directive struct DataLog_FileCloseRecord
 {
-	DataLog_UINT16	_recordType __attribute__ ((packed));
+	DataLog_UINT16	_recordType Packing_Element_Directive;
 	DataLog_TimeStamp _timeStamp;
 };
 
-struct DataLog_WriteTimeRecord
+Packing_Structure_Directive struct DataLog_WriteTimeRecord
 {
-	DataLog_UINT16	_recordType __attribute__ ((packed));
+	DataLog_UINT16	_recordType Packing_Element_Directive;
 	DataLog_TimeStamp _timeStamp;
 };
 

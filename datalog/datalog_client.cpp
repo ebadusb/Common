@@ -1,8 +1,11 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_client.cpp 1.5 2003/12/09 14:14:16Z jl11312 Exp rm70006 $
+ * $Header: I:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_client.cpp 1.5 2003/12/09 14:14:16Z jl11312 Exp $
  * $Log: datalog_client.cpp $
+ * Revision 1.5  2003/12/09 14:14:16Z  jl11312
+ * - corrected time stamp problem (IT 6668)
+ * - removed obsolete code/data types (IT 6664)
  * Revision 1.4  2003/03/27 16:26:57Z  jl11312
  * - added support for new datalog levels
  * Revision 1.3  2003/02/25 16:10:09Z  jl11312
@@ -16,9 +19,7 @@
 
 #include "datalog.h"
 
-#include <errnoLib.h>
 #include <fcntl.h>
-#include <ioLib.h>
 #include "datalog_internal.h"
 
 #ifdef DATALOG_LEVELS_INIT_SUPPORT
@@ -144,7 +145,7 @@ void DataLog_NetworkClientTask::processInvalidPacket(const DataLog_NetworkPacket
 
 bool DataLog_NetworkClientTask::readData(DataLog_BufferData * buffer, size_t size)
 {
-	int	bytesRead = 0;
+	size_t	bytesRead = 0;
 	bool	readError = false;
 
 	while ( bytesRead < size && !readError )

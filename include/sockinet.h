@@ -71,6 +71,13 @@ public:
 
    int          getport() const;
    const char * gethostname() const;
+
+   // Sets the port number of the internet address
+   void setport(unsigned short port) { sin_port = htons(port); };
+
+   // Sets the address in standard IP dot notation (no host names)
+   void setaddr(const char *inet_addr);
+   void setaddr(unsigned long addr);
 };
 
 

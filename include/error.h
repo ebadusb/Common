@@ -3,6 +3,8 @@
  *
  * $Header: M:/BCT_Development/TrimaVx/Common/include/rcs/error.h 1.7 2001/08/30 17:22:53 rm70006 Exp sb07663 $
  * $Log: error.h $
+ * Revision 1.5  2000/05/05 21:41:02  BS04481
+ * New _log_error function for drivers
  * Revision 1.4  2000/05/03 16:27:30  BD10648
  * Revision 1.3  1999/08/31 17:49:59  BS04481
  * Change _log_error to not display to screen unless the env var
@@ -87,7 +89,8 @@ enum TRACE_CODES
    TRACE_SPECTRA2 =    (910<<12 | 20),
    TRACE_SPECTRA3 =    (910<<12 | 21),
    TRACE_SPECTRA4 =    (910<<12 | 22),
-   TRACE_SPECTRA5 =    (910<<12 | 23)
+   TRACE_SPECTRA5 =    (910<<12 | 23),
+   TRACE_TCPIP    =    (910<<12 | 24)
 };
 typedef enum TRACE_CODES trace_codes_t;
 
@@ -261,6 +264,8 @@ void fatal_error(char* format, ...);
 #define PROC_SLOGERROR(x)    _LOG_ERROR( __FILE__, __LINE__, TRACE_PROC, 0, x )
 #define PROC_ULOGERROR(u,x)  _LOG_ERROR( __FILE__, __LINE__, TRACE_PROC, u, x )
 
+#define TCPIP_DLOGERROR(x)    _LOG_ERROR_WITH_DISPLAY( __FILE__, __LINE__, TRACE_TCPIP, 0, x )
+#define TCPIP_FLOGERROR(x)    _FATAL_ERROR( __FILE__, __LINE__, TRACE_TCPIP, 0, x )
 
 #ifdef __cplusplus
 };

@@ -7,7 +7,6 @@
 
 #include <vxWorks.h>
 
-#include <errnoLib.h>
 #include <stdio.h>
 #include <taskHookLib.h>
 
@@ -150,8 +149,7 @@ bool MsgSysTimer::init()
    unsigned long	minMilliSecPerTick = 1000/auxClockRateGet();
    if ( MilliSecPerTick < minMilliSecPerTick)
 	{
-      DataLog_Critical critical;
-      DataLog(critical) << "MsgSysTimer increased tick time from " <<
+      DataLog( log_level_critical ) << "MsgSysTimer increased tick time from " <<
 									MilliSecPerTick << " to " << minMilliSecPerTick << " msec" << endmsg;
 		
 		MilliSecPerTick = minMilliSecPerTick;
@@ -196,8 +194,7 @@ void MsgSysTimer::maintainTimers()
          // Error ...
          unsigned long crc = mp.crc();
          mp.updateCRC();
-         DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Maintain timers - message CRC validation failed for MsgId=" << hex << mp.msgData().msgId() 
+         DataLog( log_level_critical ) << "Maintain timers - message CRC validation failed for MsgId=" << hex << mp.msgData().msgId() 
                               << ", CRC=" << crc << " and should be " << mp.crc() << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "CRC check failed" );
          return;
@@ -377,8 +374,7 @@ void MsgSysTimer::registerTask( unsigned long tId, const char *qName )
          //  before connecting to the router.
          //
          // Error ...
-         DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Register task=" << hex << tId << "(" << taskName( tId ) << ") - message queue open failed" 
+         DataLog( log_level_critical ) << "Register task=" << hex << tId << "(" << taskName( tId ) << ") - message queue open failed" 
                               << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "mq_open failed" );
       }
@@ -526,8 +522,7 @@ void MsgSysTimer::checkTimers()
          {
             //
             // Error ...
-            DataLog_Critical criticalLog;
-            DataLog(criticalLog) << "Sending message=" << hex << mpPtr->msgData().msgId() 
+            DataLog( log_level_critical ) << "Sending message=" << hex << mpPtr->msgData().msgId() 
                                  << "- Task Id=" << mpPtr->msgData().taskId() 
                                  << "(" << taskName( mpPtr->msgData().taskId() ) << ")"
                                  << " not found in task list" << endmsg;
@@ -547,13 +542,11 @@ void MsgSysTimer::checkTimers()
                // The task's queue is full!
                //
                // Error ...
-               int errorNo = errno;
-               DataLog_Critical criticalLog;
-               DataLog(criticalLog) << "Sending message=" << hex << mpPtr->msgData().msgId() 
+               DataLog( log_level_critical ) << "Sending message=" << hex << mpPtr->msgData().msgId() 
                                     << "- Task Id=" << mpPtr->msgData().taskId() 
                                     << "(" << taskName( mpPtr->msgData().taskId() ) << ")"
                                     << " queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
-                                    << ", (" << strerror( errorNo ) << ")"
+                                    << ", (" << errnoMsg << ")"
                                     << endmsg;
 #if !DEBUG_BUILD && CPU != SIMNT
                _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
@@ -570,9 +563,8 @@ void MsgSysTimer::checkTimers()
                     && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
             if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
             {
-               DataLog_Critical criticalLog;
-               DataLog(criticalLog) << "Check timers - timer Id=" << hex << mpPtr->msgData().msgId() 
-                                    << ", send failed for error-" << strerror( errnoGet() ) << endmsg;
+               DataLog( log_level_critical ) << "Check timers - timer Id=" << hex << mpPtr->msgData().msgId() 
+                                    << ", send failed for error-" << errnoMsg << endmsg;
                _FATAL_ERROR( __FILE__, __LINE__, "mq_send failed" );
             }
          }

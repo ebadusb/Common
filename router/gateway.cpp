@@ -8,7 +8,6 @@
  
 #include <vxWorks.h>
 
-#include <errnoLib.h>
 #include <ioLib.h>
 #include <stdlib.h>
 #include <time.h>
@@ -60,8 +59,6 @@ Gateway::~Gateway()
 
 bool Gateway::init( short port )
 {
-   DataLog_Critical criticalLog;
-
    //
    // Install the datalog error handler ...
    datalog_SetTaskErrorHandler( taskIdSelf(), &Gateway::datalogErrorHandler );
@@ -77,7 +74,7 @@ bool Gateway::init( short port )
    {
       //
       // Error ...
-      DataLog(criticalLog) << "Gateway::init : router mq_open failed, error->" << strerror( errnoGet() ) << endmsg;
+      DataLog( log_level_critical ) << "Gateway::init : router mq_open failed, error->" << errnoMsg << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Router message queue open failed" );
       return false;
    }
@@ -87,7 +84,7 @@ bool Gateway::init( short port )
    {
       //
       // Error ...
-      DataLog(criticalLog) << "Gateway::init : socket create failed, error->" << strerror( errnoGet() ) << endmsg;
+      DataLog( log_level_critical ) << "Gateway::init : socket create failed, error->" << errnoMsg << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket create failed" );
       return false;
    }
@@ -102,7 +99,7 @@ bool Gateway::init( short port )
    {
       //
       // Error ...
-      DataLog(criticalLog) << "Gateway::init : socket bind failed, error->" << strerror( errnoGet() ) << endmsg;
+      DataLog( log_level_critical ) << "Gateway::init : socket bind failed, error->" << errnoMsg << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket bind failed" );
       return false;
    }
@@ -110,11 +107,14 @@ bool Gateway::init( short port )
 	struct sockaddr_in	clientAddr;
 	int 	clientAddrSize = sizeof(clientAddr);
 
+   DataLog( log_level_gateway_info ) << "Gateway TCP socket fd " << dec << serverSocket << ": port " << port << " - listen for connection" 
+                    << endmsg;
+
    if ( listen( serverSocket, 0 ) == ERROR )
    {
       //
       // Error ...
-      DataLog(criticalLog) << "Gateway::init : socket listen failed, error->" << strerror( errnoGet() ) << endmsg;
+      DataLog( log_level_critical ) << "Gateway::init : socket listen failed, error->" << errnoMsg << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket listen failed" );
       return false;
    }
@@ -123,10 +123,13 @@ bool Gateway::init( short port )
    {
       //
       // Error ...
-      DataLog(criticalLog) << "Gateway::init : socket accept failed, error->" << strerror( errnoGet() ) << endmsg;
+      DataLog( log_level_critical ) << "Gateway::init : socket accept failed, error->" << errnoMsg << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket accept failed" );
       return false;
    }
+
+   DataLog( log_level_gateway_info ) << "Gateway TCP socket fd " << dec << serverSocket << ": port " << port << " - accept connection" 
+                    << endmsg;
 
    //
    //
@@ -135,7 +138,7 @@ bool Gateway::init( short port )
    {
       //
       // Error ...
-      DataLog(criticalLog) << "Gateway::init : socket set receive buffer size option SO_RCVBUF failed, error->" << strerror( errnoGet() ) << endmsg;
+      DataLog( log_level_critical ) << "Gateway::init : socket set receive buffer size option SO_RCVBUF failed, error->" << errnoMsg << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket set option failed" );
       return false;
    }
@@ -145,7 +148,7 @@ bool Gateway::init( short port )
    {
       //
       // Error ...
-      DataLog(criticalLog) << "Gateway::init : socket set option SO_KEEPALIVE failed, error->" << strerror( errnoGet() ) << endmsg;
+      DataLog( log_level_critical ) << "Gateway::init : socket set option SO_KEEPALIVE failed, error->" << errnoMsg << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket set option failed" );
       return false;
    }
@@ -153,7 +156,7 @@ bool Gateway::init( short port )
    {
       //
       // Error ...
-      DataLog(criticalLog) << "Gateway::init : socket set option TCP_NODELAY failed, error->" << strerror( errnoGet() ) << endmsg;
+      DataLog( log_level_critical ) << "Gateway::init : socket set option TCP_NODELAY failed, error->" << errnoMsg << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket set option failed" );
       return false;
    }
@@ -184,8 +187,7 @@ void Gateway::receiveLoop()
    
          if ( byteCount == ERROR )
          {
-            DataLog_Critical criticalLog;
-            DataLog(criticalLog) << "Gateway::receiveLoop : socket receive failed, error->" << strerror( errnoGet() ) << endmsg;
+            DataLog( log_level_critical ) << "Gateway::receiveLoop : socket receive failed, error->" << errnoMsg << endmsg;
             _FATAL_ERROR( __FILE__, __LINE__, "socket receive failed" );
             return;
          }
@@ -193,8 +195,7 @@ void Gateway::receiveLoop()
       }
       if ( msgSize <= 0 )
       {
-         DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Gateway::receiveLoop : invalid message size" << endmsg;
+         DataLog( log_level_critical ) << "Gateway::receiveLoop : invalid message size" << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "invalid message size" );
          return;
       }
@@ -206,8 +207,7 @@ void Gateway::receiveLoop()
 
 			if ( byteCount == ERROR )
 			{
-				DataLog_Critical criticalLog;
-				DataLog(criticalLog) << "Gateway::receiveLoop : socket receive failed, error->" << strerror( errnoGet() ) << endmsg;
+				DataLog( log_level_critical ) << "Gateway::receiveLoop : socket receive failed, error->" << errnoMsg << endmsg;
 				_FATAL_ERROR( __FILE__, __LINE__, "socket receive failed" );
 				return;
 		   }
@@ -224,8 +224,7 @@ void Gateway::receiveLoop()
 
       if ( msgBegin != 0xeeeeeeee || msgEnd != 0xeeeeeeee )
       {
-         DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Gateway::receiveLoop : receive failure (" << hex 
+         DataLog( log_level_critical ) << "Gateway::receiveLoop : receive failure (" << hex 
                               << msgBegin << "-" << msgEnd << ")" << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "receive failure" );
          return;
@@ -251,11 +250,9 @@ void Gateway::sendMsgToRouter( const MessagePacket &mp )
       // The queue is full!
       //
       // Error ...
-      int errorNo = errno;
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+      DataLog( log_level_critical ) << "Sending message=" << hex << mp.msgData().msgId() 
                            << " - Router queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
-                           << ", (" << strerror( errorNo ) << ")"
+                           << ", (" << errnoMsg << ")"
                            << endmsg;
 #if !DEBUG_BUILD && CPU != SIMNT
       _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );

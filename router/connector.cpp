@@ -118,10 +118,6 @@ int Connector_main( unsigned long netAddress, int sock )
       return ERROR;
    }
 
-   DataLog( log_level_router_info ) << "Connector (" << hex << netAddress
-                    << ") TCP socket " << dec << sock << ":" << getGatewayPort() << " sending router status message" 
-                    << endmsg;
-
    //
    // Send message packet to router ...
    retries=0;

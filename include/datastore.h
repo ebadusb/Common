@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.17  2002/10/25 20:45:21Z  td07711
+ * HISTORY:    support spoofer caching mechanism
  * HISTORY:    Revision 1.16  2002/10/21 20:19:16  rm70006
  * HISTORY:    Added = operator for ranged element type.
  * HISTORY:    Revision 1.15  2002/10/18 23:16:01Z  td07711
@@ -117,7 +119,7 @@ public:
 
    operator dataType () const { return Get(); } // Implicit get call.
 
-   virtual bool     Set(const dataType &data);
+   virtual bool Set(const dataType &data);
 
    dataType operator = (const dataType &data) { Set(data); return Get();}  // Implicit Set call.
 
@@ -129,16 +131,29 @@ public:
 
 // Class Methods
 protected:
-   const dataType & GetRef() const { return *_data; };
+   const dataType & GetRef() const { return *_handle->_data; };
 
    virtual void ReadSelf  (ifstream &pfrfile);
    virtual void WriteSelf (ofstream &pfrfile);
 
+// Class Methods
+private:
+   void CreateSymbolTableEntry();
+
 // Data Members
 private:
-   dataType *_data;  // Points to the Symbol Table entry
-   const CallbackBase** _fp;    // Points to the Symbol Table entry
-   bool *_spooferCacheIsValid; // if true, spoofer get() is bypassed to avoid unecessary copy 
+
+   //
+   // data element instance vars connected to the global symbol table
+   //
+   typedef struct
+   {
+      dataType *_data;             // Pointer to data
+      const CallbackBase** _fp;    // Points to the Symbol Table entry
+      bool *_spooferCacheIsValid;  // if true, spoofer get() is bypassed to avoid unecessary copy 
+   } BaseElementSymbolContainer;
+
+   BaseElementSymbolContainer *_handle;
 };
 
 
@@ -182,22 +197,13 @@ private:
 // Forward Reference
 class DataStore;
 
-typedef list<ElementType *> ELEMENT_LISTTYPE;
-typedef list<DataStore *>   DATASTORE_LISTTYPE;
+
 
 enum BIND_ITEM_TYPE
-{  ITEM_DATA,
-   ITEM_SPOOF,
-   ITEM_PFR_LIST,
-   ITEM_MUTEX_SEMAPHORE,
-   ITEM_READ_SEMAPHORE,
-   ITEM_WRITE_SEMAPHORE,
-   ITEM_SIGNAL_READ,
-   ITEM_SIGNAL_WRITE,
-   ITEM_READ_COUNT,
-   ITEM_WRITER_DECLARED,
-   ITEM_SPOOF_CACHE
+{  ITEM_DATASTORE_SYMBOL_CONTAINER,
+   ITEM_BASE_ELEMENT_SYMBOL_CONTAINER
 };
+
 
 
 
@@ -208,8 +214,8 @@ class DataStore
 {
 // Data Members
 public:
-   static DataLog_Level    *_debug;
-   static DataLog_Critical *_fatal;
+   DataLog_Level    _debug;
+   DataLog_Critical _fatal;
 
 
 // Class Methods
@@ -238,7 +244,7 @@ public:
    
 // Class Methods
 protected:
-   DataStore (char *name, Role role);
+   DataStore (const char *name, Role role);
    virtual ~DataStore();
 
    void DeleteElement (ElementType *member);
@@ -246,38 +252,48 @@ protected:
 
 // Data Members
 protected:
-   bool *_writerDeclared;
-   Role  _role;
-   
+   typedef list<ElementType *> ELEMENT_LISTTYPE;
+   typedef list<DataStore *>   DATASTORE_LISTTYPE;
+
+   //
+   // datastore instance vars connected to the global symbol table
+   //
+   typedef struct
+   {
+      // List of PFR elements
+      ELEMENT_LISTTYPE *_pfrList;
+      
+      // Mutex semaphores
+      SEM_ID *_mutexSemaphore;
+      SEM_ID *_readSemaphore;
+      SEM_ID *_writeSemaphore;
+      
+      // Mutex control flags
+      bool *_signalRead;
+      bool *_signalWrite;
+      int  *_readCount;
+
+      // Flag tracking number of writers.
+      bool *_writerDeclared;
+   } DataStoreSymbolContainer;
+
+   // instance vars connected to the global symbol table
+   DataStoreSymbolContainer *_handle;
+
+   Role _role;
 
 // Class Methods
 private:
    DataStore();    // Base Constructor not available
 
+   void CreateSymbolTableEntry();
 
 // Data Members
 private:
-
    // instance vars
    string _name;
    
    int _refCount;
-   int _spoofCount;
-   
-   // instance vars connected to the global symbol table
-
-   // Mutex control flags
-   bool *_signalRead;
-   bool *_signalWrite;
-   int *_readCount;
-
-   // Mutex semaphores
-   SEM_ID *_readSemaphore;
-   SEM_ID *_writeSemaphore;
-   SEM_ID *_mutexSemaphore;
-
-   // List of PFR elements
-   ELEMENT_LISTTYPE *_pfrList;
    
    // static class vars
    static DATASTORE_LISTTYPE _datastoreList;
@@ -296,7 +312,7 @@ class SingleWriteDataStore : public DataStore
 {
 // Class Methods
 protected:
-   SingleWriteDataStore (char *name, Role role);
+   SingleWriteDataStore (const char *name, Role role);
    virtual ~SingleWriteDataStore();
 
    virtual void CheckForMultipleWriters();
@@ -315,7 +331,7 @@ class MultWriteDataStore : public DataStore
 {
 // Class Methods
 protected:
-   MultWriteDataStore (char *name, Role role);
+   MultWriteDataStore (const char *name, Role role);
    virtual ~MultWriteDataStore();
 
    virtual void CheckForMultipleWriters() { };
@@ -341,10 +357,8 @@ public:
 
 // Class Methods
 protected:
-   DynamicSingleWriteDataStore (char *name, Role role);
+   DynamicSingleWriteDataStore (const char *name, Role role);
    virtual ~DynamicSingleWriteDataStore();
-
-   //virtual void CheckForMultipleWriters();
 
 private:
    DynamicSingleWriteDataStore();    // Base Constructor not available

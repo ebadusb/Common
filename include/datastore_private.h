@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.15  2002/10/25 20:45:08Z  td07711
+ * HISTORY:    support spoofer caching mechanism
  * HISTORY:    Revision 1.14  2002/10/18 23:15:19  td07711
  * HISTORY:    use CallbackBase class for spoofing callback
  * HISTORY:    Revision 1.13  2002/10/18 20:00:50  rm70006
@@ -64,7 +66,6 @@
 //template <class T> void DataStore::BindItem(T** dataPtr, BIND_ITEM_TYPE item, bool &created)
 template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item, bool &created)
 {
-   //char nameKey[SYM_NAME_SIZE];
    string nameKey(SYM_NAME_SIZE, ' ');
 
    SYM_TYPE symbolType;
@@ -84,7 +85,7 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
 
       if (ds->is_logging())
       {
-         DataLog(*(ds->_debug)) << "Attaching item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
+         DataLog(ds->_debug) << "Attaching item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
       }
    }
    else
@@ -97,13 +98,13 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
 
       if (ds->is_logging())
       {
-         DataLog(*(ds->_debug)) << "Creating item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
+         DataLog(ds->_debug) << "Creating item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
       }
 
       if (status == ERROR)
       {
          // Log Fatal Error
-         DataLog(*(ds->_fatal)) << "BindItem: symAdd failed in CDS " << ds->Name() << "." << endmsg;
+         DataLog(ds->_fatal) << "BindItem: symAdd failed in CDS " << ds->Name() << "." << endmsg;
          _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
       }
 
@@ -123,9 +124,7 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
 //
 template <class dataType> BaseElement<dataType>::BaseElement() :
    ElementType(),
-   _fp(NULL),
-   _data(NULL),
-   _spooferCacheIsValid(NULL)
+   _handle(0)
 {
 }
 
@@ -149,22 +148,16 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, P
 
    ElementType::Register(ds, pfr);
 
-   // Bind the data element to the DataStore symbol table entry.
-   BindItem(ds, &_data, ITEM_DATA, created);
+   BindItem(ds, &_handle, ITEM_BASE_ELEMENT_SYMBOL_CONTAINER, created);
 
    // Only add the element if PFR is desired and it didn't exist in the list (avoid duplicates).
    if ( created && (_pfrType == PFR_RECOVER) )
    {
+      // Create the items in the symbol table entry
+      CreateSymbolTableEntry();
+
       _ds->AddElement(this);
    }
-
-   // Bind the spoof fp to the DataStore symbol table entry.
-   BindItem(ds, &_fp, ITEM_SPOOF, created);
-   *_fp = NULL;
-
-   // Bind the spoof cacheIsValid flag to the DataStore symbol table entry.
-   BindItem(ds, &_spooferCacheIsValid, ITEM_SPOOF_CACHE, created);
-   *_spooferCacheIsValid = false;
 }
 
 
@@ -178,11 +171,13 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, P
 
    ElementType::Register(ds, pfr);
 
-   // Bind the data element to the DataStore symbol table entry.
-   BindItem(ds, &_data, ITEM_DATA, created);
+   BindItem(ds, &_handle, ITEM_BASE_ELEMENT_SYMBOL_CONTAINER, created);
 
    if (created)
    {
+      // Create the items in the symbol table entry
+      CreateSymbolTableEntry();
+
       // Only add the element if PFR is desired and it didn't exist in the list (avoid duplicates).
       if (_pfrType == PFR_RECOVER)
       {
@@ -191,17 +186,9 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, P
 
       // First datastore initializes the element
       // TBD.  This may need to be semaphore protected.
-      *_data = initValue;
+      *_handle->_data = initValue;
       //Set(initValue);
    }
-
-   // Bind the spoof fp to the DataStore symbol table entry.
-   BindItem(ds, &_fp, ITEM_SPOOF, created);
-   *_fp = NULL;
-
-   // Bind the spoof cacheIsValid flag to the DataStore symbol table entry.
-   BindItem(ds, &_spooferCacheIsValid, ITEM_SPOOF_CACHE, created);
-   *_spooferCacheIsValid = false;
 }
 
 
@@ -217,24 +204,24 @@ template <class dataType> inline void BaseElement<dataType>::Get(dataType *item)
    }
 
    // If calling instance is spoofer or no spoof has been registered, return real value
-   if( *_fp == NULL )
+   if( *_handle->_fp == NULL )
    {
        _ds->Lock();
-       *item = *_data;
+       *item = *_handle->_data;
        _ds->Unlock();
    }
-   else if( _ds->GetRole() == ROLE_SPOOFER && *_spooferCacheIsValid == false )
+   else if( _ds->GetRole() == ROLE_SPOOFER && *_handle->_spooferCacheIsValid == false )
    {
        _ds->Lock();
-       *( const_cast<bool*> (_spooferCacheIsValid) ) = true;
-       *item = *_data;
+       *( const_cast<bool*> (_handle->_spooferCacheIsValid) ) = true;
+       *item = *_handle->_data;
        _ds->Unlock();
    }
    else
    {
        _ds->Lock();
-       pair< dataType*, const dataType* > toFrom( item, _data );
-       (*(*_fp))( &toFrom );  // runs spoofer callback
+       pair< dataType*, const dataType* > toFrom( item, _handle->_data );
+       (*(*_handle->_fp))( &toFrom );  // runs spoofer callback
        _ds->Unlock();
    }
 }
@@ -250,19 +237,19 @@ template<> inline void BaseElement<T>::Get(T *item) const                       
    }                                                                                       \
                                                                                            \
    /* If calling instance is spoofer or no spoof has been registered, return real value */ \
-   if ( *_fp == NULL )                                                                     \
+   if ( *_handle->_fp == NULL )                                                                     \
    {                                                                                       \
-      *item = *_data;                                                                      \
+      *item = *_handle->_data;                                                                      \
    }                                                                                       \
-   else if( _ds->GetRole() == ROLE_SPOOFER && *_spooferCacheIsValid == false )             \
+   else if( _ds->GetRole() == ROLE_SPOOFER && *_handle->_spooferCacheIsValid == false )             \
    {                                                                                       \
-       *( const_cast<bool*> (_spooferCacheIsValid) ) = true;                               \
-       *item = *_data;                                                                     \
+       *( const_cast<bool*> (_handle->_spooferCacheIsValid) ) = true;                               \
+       *item = *_handle->_data;                                                                     \
    }                                                                                       \
    else                                                                                    \
    {                                                                                       \
-      pair< T*, const T* > toFrom( item, _data );                                          \
-      (*(*_fp))( &toFrom );  /* runs spoofer callback */                                   \
+      pair< T*, const T* > toFrom( item, _handle->_data );                                          \
+      (*(*_handle->_fp))( &toFrom );  /* runs spoofer callback */                                   \
    }                                                                                       \
 }
 
@@ -292,28 +279,28 @@ template <class dataType> inline dataType BaseElement<dataType>::Get() const
    }
 
    // If calling instance is spoofer or no spoof has been registered, return real value
-   if ( *_fp == NULL ) 
+   if ( *_handle->_fp == NULL ) 
    {
       _ds->Lock();
-      dataType temp = *_data;
+      dataType temp = *_handle->_data;
       _ds->Unlock();
       return temp;
    }
-   else if( _ds->GetRole() == ROLE_SPOOFER && (*_spooferCacheIsValid == false) )
+   else if( _ds->GetRole() == ROLE_SPOOFER && (*_handle->_spooferCacheIsValid == false) )
    {
        _ds->Lock();
-       *( const_cast<bool*> (_spooferCacheIsValid) ) = true;
-       dataType temp = *_data;
+       *( const_cast<bool*> (_handle->_spooferCacheIsValid) ) = true;
+       dataType temp = *_handle->_data;
        _ds->Unlock();
        return temp;
    }
    else
    {
       dataType temp;
-      pair< dataType*, const dataType* > toFrom( &temp, _data );
+      pair< dataType*, const dataType* > toFrom( &temp, _handle->_data );
       _ds->Lock();
  
-      (*(*_fp))( &toFrom );  // runs spoofer callback
+      (*(*_handle->_fp))( &toFrom );  // runs spoofer callback
  
       _ds->Unlock();
       return temp;
@@ -331,22 +318,22 @@ template<> inline T BaseElement<T>::Get() const                                 
    }                                                                                       \
                                                                                            \
    /* If calling instance is spoofer or no spoof has been registered, return real value */ \
-   if ( *_fp == NULL )                                                                     \
+   if ( *_handle->_fp == NULL )                                                                     \
    {                                                                                       \
-      T temp = *_data;                                                                     \
+      T temp = *_handle->_data;                                                                     \
       return temp;                                                                         \
    }                                                                                       \
-   else if ( _ds->GetRole() == ROLE_SPOOFER && *_spooferCacheIsValid == false )            \
+   else if ( _ds->GetRole() == ROLE_SPOOFER && *_handle->_spooferCacheIsValid == false )            \
    {                                                                                       \
-      *( const_cast<bool*> (_spooferCacheIsValid) ) = true;                                \
-      T temp = *_data;                                                                     \
+      *( const_cast<bool*> (_handle->_spooferCacheIsValid) ) = true;                                \
+      T temp = *_handle->_data;                                                                     \
       return temp;                                                                         \
    }                                                                                       \
    else                                                                                    \
    {                                                                                       \
       T temp;                                                                              \
-      pair< T*, const T* > toFrom( &temp, _data );                                         \
-      (*(*_fp))( &toFrom );  /* runs spoofer callback */                                   \
+      pair< T*, const T* > toFrom( &temp, _handle->_data );                                         \
+      (*(*_handle->_fp))( &toFrom );  /* runs spoofer callback */                                   \
       return temp;                                                                         \
    }                                                                                       \
 }
@@ -378,8 +365,8 @@ template <class dataType> inline bool BaseElement<dataType>::Set(const dataType 
    if (_ds->GetRole() != ROLE_RO)
    {
       _ds->Lock();
-      *_spooferCacheIsValid = false;
-      *_data = data;
+      *_handle->_spooferCacheIsValid = false;
+      *_handle->_data = data;
       _ds->Unlock();
 
       return true;
@@ -387,7 +374,7 @@ template <class dataType> inline bool BaseElement<dataType>::Set(const dataType 
    else
    {
       // Log Fatal Error
-      DataLog(*(_ds->_fatal)) << "BaseElement: Set Failed in CDS " << _ds->Name() << ".  Role is RO." << endmsg;
+      DataLog(_ds->_fatal) << "BaseElement: Set Failed in CDS " << _ds->Name() << ".  Role is RO." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
       return false;
    }
@@ -405,15 +392,15 @@ template<> inline bool BaseElement<T>::Set(const T &data)                       
                                                                                      \
    if (_ds->GetRole() != ROLE_RO)                                                    \
    {                                                                                 \
-      *_spooferCacheIsValid = false;                                                 \
-      *_data = data;                                                                 \
+      *_handle->_spooferCacheIsValid = false;                                                 \
+      *_handle->_data = data;                                                                 \
                                                                                      \
       return true;                                                                   \
    }                                                                                 \
    else                                                                              \
    {                                                                                 \
       /* Log Fatal Error */                                                          \
-      DataLog(*(_ds->_fatal)) << "BaseElement: Set Failed in " << _ds->Name()        \
+      DataLog(_ds->_fatal) << "BaseElement: Set Failed in " << _ds->Name()        \
                               << ".  Role is RO." << endmsg;                         \
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");                               \
       return false;                                                                  \
@@ -439,14 +426,14 @@ NOLOCK_SET(double);
 //
 template <class dataType> void BaseElement<dataType>::ReadSelf (ifstream &pfrfile)
 {
-   pfrfile.read(_data, sizeof(dataType));
+   pfrfile.read(_handle->_data, sizeof(dataType));
    //pfrfile >> _data;
    
    //DataLog(_ds->*_debug) << "Reading value " << *_data << ", size " << sizeof(dataType) << endmsg;
 
    if (!pfrfile.good())
    {
-      DataLog(*(_ds->_fatal)) << "ReadSelf failed in " << _ds->Name()
+      DataLog(_ds->_fatal) << "ReadSelf failed in " << _ds->Name()
                               << ".  status is: " << pfrfile.rdstate() << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  ReadSelf failed.");
    }
@@ -461,12 +448,12 @@ template <class dataType> void BaseElement<dataType>::WriteSelf (ofstream &pfrfi
 {
    //DataLog(_ds->*_debug) << "Writing value " << *_data << ", size " << sizeof(dataType) << endmsg;
 
-   pfrfile.write(_data, sizeof(dataType));
+   pfrfile.write(_handle->_data, sizeof(dataType));
    //pfrfile << _data;
 
    if (!pfrfile.good())
    {
-      DataLog(*(_ds->_fatal)) << "WriteSelf failed in " << _ds->Name()
+      DataLog(_ds->_fatal) << "WriteSelf failed in " << _ds->Name()
                               << ".  status is: " << pfrfile.rdstate() << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  WriteSelf failed.");
    }
@@ -479,8 +466,8 @@ template <class dataType> void BaseElement<dataType>::WriteSelf (ofstream &pfrfi
 //
 template <class dataType> void BaseElement<dataType>::SetSpoof (const CallbackBase* fp)
 {
-   *_spooferCacheIsValid = false;
-   *_fp  = fp;
+   *_handle->_spooferCacheIsValid = false;
+   *_handle->_fp  = fp;
 }
 
 
@@ -491,9 +478,26 @@ template <class dataType> void BaseElement<dataType>::SetSpoof (const CallbackBa
 //
 template <class dataType> void BaseElement<dataType>::ClearSpoof ()
 {
-   *_fp = NULL;
+   *_handle->_fp = NULL;
 }
 
+
+
+//
+// CreateSymbolTableEntry
+//
+template <class dataType> void BaseElement<dataType>::CreateSymbolTableEntry()
+{
+   // Create the data element
+   _handle->_data = new dataType;
+
+   // Create the spoof fp 
+   _handle->_fp = new (const CallbackBase *);
+   *_handle->_fp = NULL;
+
+   // Create the spoof cacheIsValid flag 
+   _handle->_spooferCacheIsValid = new bool(false);
+}
 
 
 
@@ -559,7 +563,7 @@ template <class dataType> bool RangedElement<dataType>::Set(const dataType &data
    else
    {
       // Log Error
-      DataLog(*(_ds->_debug)) << "RangedElement: Set Failed in datastore " << _ds->Name() 
+      DataLog(_ds->_debug) << "RangedElement: Set Failed in datastore " << _ds->Name() 
            << ".  Value is out of Range.  Value=" << data 
            << " Range=" << _min << "->" << _max << endmsg;
       return false;
@@ -571,22 +575,11 @@ template <class dataType> bool RangedElement<dataType>::Set(const dataType &data
 //
 // DataStore
 //
-
 const unsigned int SYM_NAME_SIZE = 200;
 
+const char DATASTORE_SYMBOL_CONTAINER[]    = "_DataStore_%s_container";
+const char BASE_ELEMENT_SYMBOL_CONTAINER[] = "_Base_Element_%s_ref_%d";
 
-const char DATASTORE_DATA_NAME[]         = "%s_ref_%d";
-const char DATASTORE_SPOOF_NAME[]        = "%s_spoof_%d";
-const char DATASTORE_LIST_NAME[]         = "_DataStore_%s_list";
-const char DATASTORE_MUTEX_SEM[]         = "_DataStore_%s_mutexsem";
-const char DATASTORE_READ_SEM[]          = "_DataStore_%s_readsem";
-const char DATASTORE_WRITE_SEM[]         = "_DataStore_%s_writesem";
-const char DATASTORE_SIGNAL_READ[]       = "_DataStore_%s_signalread";
-const char DATASTORE_SIGNAL_WRITE[]      = "_DataStore_%s_signalwrite";
-const char DATASTORE_READ_COUNT[]        = "_DataStore_%s_readcount";
-const char DATASTORE_WRITER_DECLARED[]   = "_DataStore_%s_writer_declared";
-const char DATASTORE_SPOOF_CACHE_NAME[]  = "%s_spoof_cache";
-
-const int DATASTORE_SYMTBL_SIZE = 10;
+const int DATASTORE_SYMTBL_SIZE = 6;   // Create Max 64 datastore derived classes
 
 

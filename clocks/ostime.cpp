@@ -3,6 +3,9 @@
  *
  * $Header: //Bctquad3/HOME/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.8 2001/04/05 14:16:14 jl11312 Exp pn02526 $
  * $Log: ostime.cpp $
+ * Revision 1.4  1999/10/08 18:34:59  BS04481
+ * Reference the variable that controls the watchdogs during time 
+ * setting via a function instead of directly.
  * Revision 1.3  1999/09/30 04:08:00  BS04481
  * Remove message send and receive functions from the driver 
  * service loop. 
@@ -138,8 +141,8 @@ osTime::howLongAndUpdate(timeFromTick* then)
 
    snapshotTime(&now);
    
-   delta = ( ( (now.sec * 1000) + (now.nanosec / 1000000) )
-           - ( (then->sec * 1000) + (then->nanosec / 1000000) ) );
+   delta = ( (now.sec - then->sec) * 1000)
+         + ( (now.nanosec - then->nanosec) / 1000000);
 
    then->sec = now.sec;
    then->nanosec = now.nanosec;
@@ -162,8 +165,8 @@ osTime::howLongMicroAndUpdate(timeFromTick* then)
 
    snapshotTime(&now);
    
-   delta = ( ( (now.sec * 1000000) + (now.nanosec / 1000) )
-           - ( (then->sec * 1000000) + (then->nanosec / 1000) ) );
+   delta = ( (now.sec - then->sec) * 1000000)
+         + ( (now.nanosec - then->nanosec) / 1000);
 
    then->sec = now.sec;
    then->nanosec = now.nanosec;
@@ -186,8 +189,8 @@ osTime::howLong(timeFromTick then)
 
    snapshotTime(&now);
    
-   delta = ( ( (now.sec * 1000) + (now.nanosec / 1000000) )
-           - ( (then.sec * 1000) + (then.nanosec / 1000000) ) );
+   delta = ( (now.sec - then.sec) * 1000)
+         + ( (now.nanosec - then.nanosec) / 1000000);
 
    return(delta);
 };
@@ -206,8 +209,8 @@ osTime::howLongMicro(timeFromTick then)
 
    snapshotTime(&now);
    
-   delta = ( ( (now.sec * 1000000) + (now.nanosec / 1000) )
-           - ( (then.sec * 1000000) + (then.nanosec / 1000) ) );
+   delta = ( (now.sec - then.sec) * 1000000)
+         + ( (now.nanosec - then.nanosec) / 1000);
 
    return(delta);
 };
@@ -217,23 +220,28 @@ osTime::howLongMicro(timeFromTick then)
 //                   osTime method to delay without using a kernel call.
 //                   Use sparingly as this holds the processor for the
 //                   requested time.
+//                   Will not function if deltaTime is greater than 99ms
 //
 // ERROR HANDLING:   none.
 
 void
 osTime::delayTime(int deltaTime)
 {
+   ASSERT(deltaTime<100);
+
    timeFromTick now, start;
    int delta=0;
 
    snapshotTime(&start);
-   
+
    while(delta < deltaTime)
    {
       snapshotTime(&now);
       
-      delta = ( ( (now.sec * 1000) + (now.nanosec / 1000000) )
-              - ( (start.sec * 1000) + (start.nanosec / 1000000) ) );
+      delta = ( (now.sec - start.sec) * 1000)
+            + ( (now.nanosec - start.nanosec) / 1000000);
+      if ( (delta < 0) || (delta > 100) )
+         snapshotTime(&start);
    }
 
 };

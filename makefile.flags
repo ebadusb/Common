@@ -3,6 +3,8 @@
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags $
+# Revision 1.11  2003/09/10 14:42:24Z  jl11312
+# - force float storage to insure floating point compares work properly
 # Revision 1.10  2003/03/12 15:53:41Z  ms10234
 # changed grep command line options for new version
 # Revision 1.9  2003/02/25 14:59:40Z  jl11312
@@ -227,3 +229,17 @@ endif
 # removed by a make BUILD_TYPE=CLEAN
 #
 COMMON_CLEAN_FILELIST = .dfile/*.d .opt/* I80486/*.* SIMNT/*.*
+
+#
+# The float-store flag was added to correct a problem with inconsistent
+# floating point compare operations, and must always be enabled  (see IT 6150).
+# The following checks that the flag has not been inadvertently removed.
+#
+ifeq (,$(findstring -ffloat-store,$(CXX_ARCH_FLAGS)))
+	makefile_error "missing -ffloat-store flag"
+endif
+
+ifeq (,$(findstring -ffloat-store,$(CC_ARCH_FLAGS)))
+   makefile_error "missing -ffloat-store flag"
+endif
+

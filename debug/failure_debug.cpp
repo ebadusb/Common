@@ -5,6 +5,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/debug/rcs/failure_debug.cpp 1.11 2004/02/24 22:31:40Z jl11312 Exp ms10234 $
  * $Log: failure_debug.cpp $
+ * Revision 1.2  2003/05/05 14:14:53Z  jl11312
+ * - enabled message debug logging (IT 5915)
  * Revision 1.1  2003/02/28 22:07:52Z  jl11312
  * Initial revision
  *
@@ -38,7 +40,7 @@ void DBG_EnableTaskSwitchLogging(unsigned int recordCount)
 		taskSwitchInfo.recordCount = recordCount;
 		memset(taskSwitchInfo.record, 0, recordCount*sizeof(DBG_TaskSwitchRecord));
 
-		taskSpawn("idle", 255, 0, 2000, (FUNCPTR)idleTask, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		taskStart("idle", 255, 2000, (FUNCPTR)idleTask, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		idleTaskStarted = true;
 
 		taskSwitchHookAdd((FUNCPTR)taskSwitchHook);
@@ -53,7 +55,7 @@ void DBG_EnableMessageLogging(unsigned int recordCount)
 		messageInfo.recordCount = recordCount;
 		memset(messageInfo.record, 0, recordCount*sizeof(DBG_MessageRecord));
 
-		semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+		messageInfo.updateLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
 	}
 }
 

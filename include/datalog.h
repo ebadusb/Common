@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.28 2003/12/09 14:15:02Z jl11312 Exp rm70006 $
  * $Log: datalog.h $
+ * Revision 1.23  2003/06/18 18:55:43Z  jl11312
+ * - handle both SIGINT and SIGQUIT
  * Revision 1.22  2003/02/28 22:10:15Z  jl11312
  * - added type/sub-type for binary record
  * Revision 1.21  2003/02/25 20:40:08  jl11312
@@ -135,14 +137,6 @@ DataLog_Result datalog_PrintToDefault(const char * file, int line, const char * 
  * periodic logging routines
  */
 DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_SetHandle * handle);
-
-void datalog_AddPtr(DataLog_SetHandle handle, void * ptr, size_t size, const char * key, const char * description);
-void datalog_AddCharPtr(DataLog_SetHandle handle, const char * const * ptr, const char * key, const char * description);
-void datalog_AddIntFunc(DataLog_SetHandle handle, int (* func)(void *), void * arg, const char * key, const char * description);
-void datalog_AddLongFunc(DataLog_SetHandle handle, long (* func)(void *), void * arg, const char * key, const char * description);
-void datalog_AddDoubleFunc(DataLog_SetHandle handle, double (* func)(void *), void * arg, const char * key, const char * description);
-void datalog_AddCharPtrFunc(DataLog_SetHandle handle, const char * (* func)(void *), void * arg, const char * key, const char * description);
-
 DataLog_Result datalog_GetPeriodicOutputInterval(DataLog_SetHandle handle, long * milliSeconds);
 DataLog_Result datalog_SetPeriodicOutputInterval(DataLog_SetHandle handle, long milliSeconds);
 DataLog_Result datalog_ForcePeriodicOutput(DataLog_SetHandle handle);

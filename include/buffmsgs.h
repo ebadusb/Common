@@ -2,6 +2,8 @@
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
  * $Log: BUFFMSGS.H $
+ * Revision 1.11  2000/05/25 18:43:27  MS10234
+ * Added optimizer to proc message ...
  * Revision 1.10  2000/04/14 19:37:02  MS10234
  * Added OverrideAlarmMsg enum
  * Revision 1.8  2000/03/24 18:08:05  BS04481
@@ -197,9 +199,17 @@ enum BUFFER_MESSAGES
     HalOrdersMsg,           // sent to hal task
     ArcCalibrationMsg,      // Cal.dat message from Archive
     ArcConfigMsg,           // Config.dat message to/from Archive
-    ProcDonorMsg,
+    ProcDonorMsg,           // Within proc donor message
     OverrideAlarmMsg,
     Opt2ProcMsg,
+    VistaDonorMsg,          // Vista to Gui donor message
+    AdjustmentsMsg,         // Adjustments section message
+    LangUnitMsg,            // Config Lang/Unit section message
+    ProcedureConfigMsg,     // Config Procedure section message
+    PredictionConfigMsg,    // Config Prediction section message
+    ProductTemplatesMsg,    // Config Product Templates section message
+    ProductDefinitionMsg,   // Config Lang/Unit section message
+    BasicMachineCfgMsg,     // Config Lang/Unit section message
 
    LAST_BUFFER_MESSAGE           // don't change this entry
 };

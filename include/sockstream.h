@@ -129,7 +129,8 @@ public:
    };   
    enum level
    {
-      sol_socket = SOL_SOCKET
+      sol_socket = SOL_SOCKET,
+      ipproto_tcp = IPPROTO_TCP
    };
    enum msgflag
    {

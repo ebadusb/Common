@@ -27,6 +27,9 @@ public:
    // Gateway connection delay time in milliseconds
    static const unsigned int CONNECT_DELAY;
    //
+   // Gateway connection delay time in milliseconds
+   static const unsigned int CONNECT_RETRY_DELAY;
+   //
    // Number of retries before error for messaging operations ...
    static const unsigned int MAX_NUM_RETRIES;
    //

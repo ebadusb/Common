@@ -33,6 +33,7 @@ public:
       GATEWAY_CONNECT,                          // register a gateway task
       GATEWAY_DISCONNECT,                       // deregister a gateway task
       GATEWAY_MESSAGE_SYNCH,                    // synchronize messages with a gateway task
+      GATEWAY_MESSAGE_SYNCH_COMPLETE,           // synchronization of messages with a gateway task completed
       SPOOF_MSG_REGISTER,                       // register the spoofer task
       SPOOF_MSG_DEREGISTER,                     // deregister the spoofer task
 
@@ -62,6 +63,10 @@ public:
    void osCode( const OperationType v ) { _OSCode = v; } 
    const OperationType osCode() const { return _OSCode; } 
 
+   //
+   // Set/Get for the network sending sequence number
+   void netSequenceNum( const unsigned long n ) { _NetSequenceNum = n; } 
+   const unsigned long netSequenceNum() const { return _NetSequenceNum; }
    //
    // Set/Get for the message Id
    void msgId( const unsigned long v ) { _MsgId = v; } 
@@ -117,6 +122,7 @@ public:
 
 protected:
 
+   unsigned long   _NetSequenceNum __attribute__ ((packed));// network packet sequence number
    unsigned long   _MsgId __attribute__ ((packed));         // hashed message id
    unsigned long   _NodeId __attribute__ ((packed));        // node ID number
    unsigned long   _TaskId __attribute__ ((packed));        // task PID number

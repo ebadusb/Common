@@ -18,7 +18,6 @@
 #include <taskLib.h>
 
 #include "messagepacket.h"
-#include "sockinet.h"
 
 class Gateway
 {
@@ -69,12 +68,11 @@ protected:
 
    //
    // The socket connection to the remote router.
-   sockinetbuf _ServerSocket;
-   sockbuf     _ClientSocket;
+   int   _ClientSocket;
 
    //
    // The local router's message queue.
-   mqd_t       _RouterQueue;
+   mqd_t _RouterQueue;
 
 };
 

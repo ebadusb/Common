@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.20  2002/11/18 18:29:28Z  jl11312
+ * HISTORY:    - modifications to improve compile speed, reduce inline function sizes
  * HISTORY:    Revision 1.19  2002/11/07 00:11:53Z  td07711
  * HISTORY:    modified spoofer caching
  * HISTORY:    Revision 1.18  2002/11/06 15:42:48  rm70006
@@ -112,7 +114,7 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
       {
          // Log Fatal Error
          DataLog(ds->_fatal) << "BindItem: symAdd failed in CDS " << ds->Name() << "." << endmsg;
-         _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
+         _FATAL_ERROR(__FILE__, __LINE__, "BindItem failed");
       }
 
       created = true;
@@ -231,7 +233,7 @@ template <class dataType> void BaseElement<dataType>::Get(dataType *item) const
 {
    if (_ds == 0)
    {
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");
+      _FATAL_ERROR(__FILE__, __LINE__, "Element failed to register");
    }
 
    // If calling instance is spoofer or no spoof has been registered, return real value
@@ -259,7 +261,7 @@ template <class dataType> dataType BaseElement<dataType>::Get() const
 
    if (_ds == 0)
    {
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");
+      _FATAL_ERROR(__FILE__, __LINE__, "Element failed to register");
    }
 
    // If calling instance is spoofer or no spoof has been registered, return real value
@@ -291,7 +293,7 @@ template <class dataType> bool BaseElement<dataType>::Set(const dataType &data)
 {
    if (_ds == 0)
    {
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");
+      _FATAL_ERROR(__FILE__, __LINE__, "Element failed to register");
    }
 
    if (_ds->GetRole() != ROLE_RO)
@@ -305,7 +307,7 @@ template <class dataType> bool BaseElement<dataType>::Set(const dataType &data)
    {
       // Log Fatal Error
       DataLog(_ds->_fatal) << "BaseElement: Set Failed in CDS " << _ds->Name() << ".  Role is RO." << endmsg;
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
+      _FATAL_ERROR(__FILE__, __LINE__, "BaseElement Set failed");
    }
 
    return true;
@@ -328,7 +330,7 @@ template <class dataType> void BaseElement<dataType>::ReadSelf (ifstream &pfrfil
    {
       DataLog(_ds->_fatal) << "ReadSelf failed in " << _ds->Name()
                               << ".  status is: " << pfrfile.rdstate() << endmsg;
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  ReadSelf failed.");
+      _FATAL_ERROR(__FILE__, __LINE__, "ReadSelf failed.");
    }
 }
    
@@ -348,7 +350,7 @@ template <class dataType> void BaseElement<dataType>::WriteSelf (ofstream &pfrfi
    {
       DataLog(_ds->_fatal) << "WriteSelf failed in " << _ds->Name()
                               << ".  status is: " << pfrfile.rdstate() << endmsg;
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  WriteSelf failed.");
+      _FATAL_ERROR(__FILE__, __LINE__, "WriteSelf failed.");
    }
 }
 

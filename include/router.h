@@ -22,7 +22,6 @@
 
 #include "datalog.h"
 #include "messagepacket.h"
-#include "sockinet.h"
 
 
 class Router 
@@ -142,7 +141,7 @@ protected:
    void sendMessageToGateways( const MessagePacket &mp );
    //
    // This function sends the message packet to this specific gateway.
-   void sendMessageToGateway( sockinetbuf *sockbuffer, const MessagePacket &mpConst );
+   void sendMessageToGateway( unsigned long nodeId, const MessagePacket &mpConst );
 
    //
    // This function sends the message packet to the Spoofer task.
@@ -150,8 +149,8 @@ protected:
 
    //
    // This function will synchronize the remote node's registered messages with my list
-   void synchUpRemoteNode( const MessagePacket &mp );
-   void synchUpRemoteNode( sockinetbuf *sockbuffer, unsigned long msgId );
+   void synchUpRemoteNode( unsigned long nodeId );
+   void synchUpRemoteNode( unsigned long nodeId, unsigned long msgId );
 
    //
    // This function will return the TCP port to which all requests to remote
@@ -184,6 +183,7 @@ protected:
    //  together with the message name.  This imposes an implicite length restriction on 
    //  message names of MAX_MESSAGE_SIZE.
    map< unsigned long, string >                                 _MsgIntegrityMap;
+   map< unsigned long, set< unsigned long > >                   _MsgToGatewaySynchMap;
    //
    // This structure will be used to map the message Ids with the tasks that have registered
    //  to receive them.  The map will be indexed on message Id.  The second item in the map 
@@ -208,8 +208,10 @@ protected:
    // This structure will hold the socket connections for all the given gateways.  The map
    //  will be indexed on gateway inet address.  The second entry in the map will contain
    //  the socket connection to the gateway.
-   map< unsigned long, sockinetbuf* >                           _InetGatewayMap;
-   map< unsigned long, unsigned int >                           _GatewayConnAtmptMap;
+   map< unsigned long, int >                                    _InetGatewayMap;
+
+   enum GatewaySynched { Incomplete, LocalComplete, RemoteComplete, Synched };
+   map< unsigned long, GatewaySynched >                         _GatewayConnSynchedMap;
 
    //
    // This structure will hold the message Ids of the messages the spoofer wants.  The map
@@ -219,6 +221,10 @@ protected:
    //
    // This flag, when set to true, will drop the router out of its message loop.
    bool _StopLoop;
+
+   //
+   // This number will contain the sequence number of the network packet for tracking purposes.
+   unsigned long _NetSequenceNum;
 
 };
 

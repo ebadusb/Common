@@ -11,6 +11,7 @@
 #include "datalog_levels.h"
 #include "dispatcher.h"
 #include "error.h"
+#include "failure_debug.h"
 #include "messagesystemconstant.h"
 
 
@@ -139,11 +140,13 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
 
 void Dispatcher :: send( const MessagePacket &mp, const int priority )
 {
+	DBG_LogSentMessage(taskIdSelf(), (int)mp.msgData().osCode(), mp.msgData().msgId());
    send( _RQueue, mp, priority );
 }
 
 void Dispatcher :: sendTimerMessage( const MessagePacket &mp, const int priority  )
 {
+	DBG_LogSentMessage(taskIdSelf(), (int)mp.msgData().osCode(), mp.msgData().msgId());
    send( _TimerQueue, mp, priority );
 }
 
@@ -163,6 +166,7 @@ int Dispatcher :: dispatchMessages()
               && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
       if ( size != ERROR )
       {
+			DBG_LogReceivedMessage((int)mp.msgData().taskId(), taskIdSelf(), mp.msgData().msgId());
          processMessage( mp );
       }
       else

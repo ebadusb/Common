@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/HOME/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.11 2002/09/25 11:11:36 jl11312 Exp pn02526 $
  * $Log: ostime.cpp $
+ * Revision 1.9  2002/06/19 16:56:44  pn02526
+ * Updates for VxWorks: remove/replace system level includes; remove the sensitivity to time-of-day changes; modify to use auxClock as a time base.
  * Revision 1.8  2001/04/05 14:16:14  jl11312
  * - internal timer handling changes required for versa logic CPU board
  * Revision 1.7  2000/03/17 16:41:25  BS04481
@@ -198,7 +200,7 @@ osTime::howLongRaw(rawTick then)
    deltaRaw = now - then;
 
    // convert to msec
-   deltaMsec = (int) ( deltaRaw *  (unsigned long)_NanoSecondsPerTick / MILLION ); 
+   deltaMsec = (int) ( ( deltaRaw *  (unsigned long)_NanoSecondsPerTick ) / MILLION ); 
    
    return(deltaMsec);
 };

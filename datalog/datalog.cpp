@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.13 2003/12/05 16:33:05Z jl11312 Exp rm70006 $
  * $Log: datalog.cpp $
+ * Revision 1.6  2002/08/22 20:19:10  jl11312
+ * - added network support
  * Revision 1.5  2002/08/15 20:53:54  jl11312
  * - added support for periodic logging
  * Revision 1.4  2002/07/18 21:20:29  jl11312
@@ -26,6 +28,7 @@ DataLog_Lock DataLog_CommonData::_tasksLock = datalog_CreateLock();
 
 DataLog_Map<DataLog_InternalID, DataLog_Handle> DataLog_CommonData::_handles;
 DataLog_Lock DataLog_CommonData::_handlesLock = datalog_CreateLock();
+const DataLog_HandleInfo DataLog_CommonData::_criticalHandleInfo = { 0, DataLog_HandleInfo::CriticalHandle };
 
 DataLog_CommonData::DataLog_CommonData(void)
 {
@@ -34,7 +37,7 @@ DataLog_CommonData::DataLog_CommonData(void)
 		_FATAL_ERROR(__FILE__, __LINE__, "datalog system not initialized");
 	}
 
-	setCommonDataPtr();
+	setCommonDataPtr(); 
 }
 
 DataLog_TaskInfo * DataLog_CommonData::findTask(DataLog_TaskID task)
@@ -44,10 +47,9 @@ DataLog_TaskInfo * DataLog_CommonData::findTask(DataLog_TaskID task)
 	datalog_LockAccess(_tasksLock);
 	if ( _tasks.find(searchTask) == _tasks.end() )
 	{
-		//
-		// Non-continuable error if the task isn't available
-		//
-		setTaskError(DataLog_NoSuchTask, __FILE__, __LINE__);
+		datalog_ReleaseAccess(_tasksLock);
+		datalog_TaskCreated(datalog_CurrentTask());
+		datalog_LockAccess(_tasksLock);
 	}
 
 	DataLog_TaskInfo * result = _tasks[searchTask];
@@ -300,14 +302,8 @@ void datalog_TaskCreated(DataLog_TaskID taskID)
 
 	info->_critical = new DataLog_CriticalBuffer(common.getDefaultCriticalBufferSize());
 
-	info->_criticalHandle = new DataLog_HandleInfo;
-	info->_criticalHandle->_id = DATALOG_NULL_ID;
-	info->_criticalHandle->_type = DataLog_HandleInfo::CriticalHandle;
-	info->_criticalHandle->_criticalData._taskID = taskID;
-	info->_criticalHandle->_criticalData._buffer = info->_critical;
-
-	info->_defaultLevel.setHandle(info->_criticalHandle);
-	info->_defaultHandle = info->_criticalHandle;
+	info->_defaultLevel.setHandle(&common._criticalHandleInfo);
+	info->_defaultHandle = &common._criticalHandleInfo;
 
 	info->_errorHandler = NULL;
 	info->_errorActiveCount = 0;

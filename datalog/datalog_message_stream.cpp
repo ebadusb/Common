@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.9 2003/04/29 17:07:54Z jl11312 Exp jl11312 $
  * $Log: datalog_message_stream.cpp $
+ * Revision 1.2  2002/08/15 20:53:56  jl11312
+ * - added support for periodic logging
  * Revision 1.1  2002/07/18 21:20:57  jl11312
  * Initial revision
  *
@@ -85,7 +87,7 @@ DataLog_EnabledType DataLog_Level::logOutput(DataLog_EnabledType flag)
 		{
 		case DataLog_HandleInfo::TraceHandle:
 			result = _handle->_traceData._logOutput;
-			_handle->_traceData._logOutput = flag;
+			((DataLog_HandleInfo *)_handle)->_traceData._logOutput = flag;
 			break;
 
 		case DataLog_HandleInfo::CriticalHandle:
@@ -148,7 +150,7 @@ DataLog_ConsoleEnabledType DataLog_Level::consoleOutput(DataLog_ConsoleEnabledTy
 		{
 		case DataLog_HandleInfo::TraceHandle:
 			result = _handle->_traceData._consoleOutput;
-			_handle->_traceData._consoleOutput = flag;
+			((DataLog_HandleInfo *)_handle)->_traceData._consoleOutput = flag;
 			break;
 
 		case DataLog_HandleInfo::CriticalHandle:
@@ -230,10 +232,10 @@ DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber
 	case DataLog_HandleInfo::CriticalHandle:
 		{
 			streamOutputRecord._levelID = 0;
-			streamOutputRecord._taskID = _handle->_criticalData._taskID;
+			streamOutputRecord._taskID = datalog_CurrentTask();
 
 			outputControl.consoleOutput = DataLog_ConsoleEnabled;
-			outputBuffer = _handle->_criticalData._buffer;
+			outputBuffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
 	   }
 		break;
 
@@ -284,9 +286,7 @@ DataLog_Result DataLog_Level::setAsDefault(void)
 DataLog_Critical::DataLog_Critical(void)
 {
 	DataLog_CommonData common;
-	DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
-
-	_handle = taskInfo->_criticalHandle;
+	_handle = &common._criticalHandleInfo;
 }
 
 DataLog_Critical::~DataLog_Critical()

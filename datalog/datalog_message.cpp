@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message.cpp 1.5 2003/02/25 16:10:14Z jl11312 Exp jl11312 $
  * $Log: datalog_message.cpp $
+ * Revision 1.2  2002/08/15 20:53:55  jl11312
+ * - added support for periodic logging
  * Revision 1.1  2002/07/18 21:20:54  jl11312
  * Initial revision
  *
@@ -15,19 +17,20 @@ DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * hand
 {
 	DataLog_Result result = DataLog_OK;
 	DataLog_CommonData common;
-	DataLog_HandleInfo * handleInfo = common.findHandle(levelName);
+	const DataLog_HandleInfo * handleInfo = common.findHandle(levelName);
 
 	if ( !handleInfo )
 	{
 		//
 		// Create new log level
 		//
-		handleInfo = new DataLog_HandleInfo;
-		handleInfo->_id = common.getNextInternalID();
-		handleInfo->_type = DataLog_HandleInfo::TraceHandle;
-		handleInfo->_traceData._logOutput = DataLog_LogEnabled;
-		handleInfo->_traceData._consoleOutput = DataLog_ConsoleDisabled;
-		common.addHandle(levelName, handleInfo);
+		DataLog_HandleInfo * newHandle = new DataLog_HandleInfo;
+		newHandle->_id = common.getNextInternalID();
+		newHandle->_type = DataLog_HandleInfo::TraceHandle;
+		newHandle->_traceData._logOutput = DataLog_LogEnabled;
+		newHandle->_traceData._consoleOutput = DataLog_ConsoleDisabled;
+		common.addHandle(levelName, newHandle);
+		handleInfo = newHandle;
 
 		//
 		// Write record to log showing addition of new log level
@@ -64,9 +67,7 @@ DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * hand
 DataLog_Handle datalog_GetCriticalHandle(void)
 {
 	DataLog_CommonData	common;
-	DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
-
-	return taskInfo->_criticalHandle;
+	return &common._criticalHandleInfo;
 }
 
 DataLog_Result datalog_SetDefaultLevel(DataLog_Handle handle)
@@ -139,12 +140,12 @@ DataLog_Result datalog_SetLevelOutputOptions(DataLog_Handle handle, DataLog_Enab
 	switch ( handle->_type )
 	{
 	case DataLog_HandleInfo::TraceHandle:
-		handle->_traceData._logOutput = log;
-		handle->_traceData._consoleOutput = console;
+		((DataLog_HandleInfo *)handle)->_traceData._logOutput = log;
+		((DataLog_HandleInfo *)handle)->_traceData._consoleOutput = console;
 		break;
 
 	case DataLog_HandleInfo::IntHandle:
-		handle->_intData._logOutput = log;
+		((DataLog_HandleInfo *)handle)->_intData._logOutput = log;
 		break;
 
 	case DataLog_HandleInfo::CriticalHandle:

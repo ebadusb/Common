@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.12  2002/08/22 20:18:26  jl11312
+ * - added network support
  * Revision 1.11  2002/08/15 20:54:52  jl11312
  * - added support for periodic logging
  * Revision 1.10  2002/07/18 21:20:05  jl11312
@@ -52,7 +54,7 @@ typedef enum { DataLog_OK, DataLog_Error } DataLog_Result;
 typedef enum { DataLog_LogEnabled, DataLog_LogDisabled } DataLog_EnabledType;
 typedef enum { DataLog_ConsoleEnabled, DataLog_ConsoleDisabled } DataLog_ConsoleEnabledType;
 
-typedef struct DataLog_HandleInfo *	DataLog_Handle;
+typedef const struct DataLog_HandleInfo *	DataLog_Handle;
 typedef struct DataLog_SetInfo *		DataLog_SetHandle;
 
 #define DATALOG_NULL_HANDLE NULL

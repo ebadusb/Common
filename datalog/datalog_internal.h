@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.10 2003/10/03 12:35:02Z jl11312 Exp jl11312 $
  * $Log: datalog_internal.h $
+ * Revision 1.3  2002/08/22 20:19:11  jl11312
+ * - added network support
  * Revision 1.2  2002/08/15 20:53:55  jl11312
  * - added support for periodic logging
  * Revision 1.1  2002/07/18 21:20:53  jl11312
@@ -192,17 +194,10 @@ struct DataLog_HandleInfo
 		DataLog_IntBuffer * _buffer;
 	};
 
-	struct CriticalHandleData
-	{
-		DataLog_TaskID _taskID;
-		DataLog_CriticalBuffer * _buffer;
-	};
-
 	union
 	{
 		TraceHandleData    _traceData;
 		IntHandleData      _intData;
-		CriticalHandleData _criticalData;
 	};
 };
 
@@ -216,7 +211,6 @@ struct DataLog_TaskInfo
 	DataLog_ConsoleEnabledType _consoleOutput;
 
 	DataLog_CriticalBuffer *	_critical;
-	DataLog_Handle             _criticalHandle;
 
 	DataLog_Level  _defaultLevel;
 	DataLog_Handle	_defaultHandle;
@@ -271,6 +265,11 @@ public:
 	void setDefaultCriticalBufferSize(size_t size) { _commonData->_defaultCriticalBufferSize = size; }
 
 	size_t getCurrentMaxBufferSize(void);
+
+	//
+	// All critical handles use this common handle information structure
+	//
+	static const struct DataLog_HandleInfo _criticalHandleInfo;
 
 public:
 	enum ConnectType { NotConnected, LogToFile, LogToNetwork };

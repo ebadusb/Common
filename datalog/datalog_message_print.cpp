@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_print.cpp 1.4 2002/10/08 12:09:50Z jl11312 Exp rm70006 $
  * $Log: datalog_message_print.cpp $
+ * Revision 1.2  2002/08/15 20:53:56  jl11312
+ * - added support for periodic logging
  * Revision 1.1  2002/07/18 21:20:56  jl11312
  * Initial revision
  *
@@ -95,10 +97,10 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 	case DataLog_HandleInfo::CriticalHandle:
 		{
 			printOutputRecord._levelID = 0;
-			printOutputRecord._taskID = handle->_criticalData._taskID;
+			printOutputRecord._taskID = datalog_CurrentTask();
 
 			consoleOutput = DataLog_ConsoleEnabled;
-			outputBuffer = handle->_criticalData._buffer;
+			outputBuffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
 	   }
 		break;
 

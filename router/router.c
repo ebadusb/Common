@@ -3,6 +3,11 @@
  *
  * $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/ROUTER.C 1.3 1999/07/14 22:44:21 BS04481 Exp TD10216 $
  * $Log: router.c $
+ * Revision 1.2  1999/05/31 20:35:12  BS04481
+ * Remove unused MSGHEADER structure from messages. 
+ * Decrease maximum message size.  Add new version of 
+ * focusBufferMsg and focusInt32Msg that do not bounce the message
+ * back to the originator.  All changes to increase free memory.
  * Revision 1.1  1999/05/24 23:29:53  TD10216
  * Initial revision
  * Revision 1.26  1998/09/23 18:27:34  bs04481
@@ -1105,7 +1110,8 @@ static void taskRegister( char* msg)
    int i;
    struct _trace_info info;
    pid_t id;
-   char *name;
+   char nameBuffer[256];
+   char *name=&nameBuffer[0];
    int found = 0;
 
    if(newEntry == NULL)

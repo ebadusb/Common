@@ -3,31 +3,33 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.4 2002/06/19 22:53:29 pn02526 Exp ms10234 $
  * $Log: auxclock.cpp $
+ * Revision 1.2  2002/06/18 10:28:09  pn02526
+ * Remove embedded comment for compiler.
  * Revision 1.1  2002/06/18 08:55:18  pn02526
  * Initial revision
  *
- * TITLE:      auxclock.cpp, Auxilliary clock ISR and support functions.
+ * TITLE:      auxclock.cpp, Auxiliary clock ISR and support functions.
  *
  * ABSTRACT:   This module contains the ISR used under vxWorks to access
- *             the auxilliary hardware clock, keep a tick counter, and
+ *             the auxiliary hardware clock, keep a tick counter, and
  *             notify a timer task when given tick periods elapse.
  *
  * PUBLIC FUNCTIONS:
- *  int auxClockRateGet();                           Get the interrupt rate for the auxClockTicks counter.
- *  void auxClockInit();                             Initialize the auxClockTicks facility.
- *                                                        Call at system initialization time.
- *  int auxClockEnable();                            Enable the auxClockTicks counter.
- *  rawTick auxClockTicksGet();                      Get the current value of the auxClockTicks counter.
- *  char *auxClockTicksString();                     Get the current value of the auxClockTicks counter as a decimal string.
- *  int auxClockMsgPktEnable(                        Enable the auxClock Message Packet queue to send auxClockTicks every given number of ticks.
+ *  int auxClockRateGet();                            Get the interrupt rate for the auxClockTicks counter.
+ *  void auxClockInit();                              Initialize the auxClockTicks facility.
+ *                                                         Call at system initialization time.
+ *  int auxClockEnable();                             Enable the auxClockTicks counter.
+ *  rawTick auxClockTicksGet();                       Get the current value of the auxClockTicks counter.
+ *  char *auxClockTicksString();                      Get the current value of the auxClockTicks counter as a decimal string.
+ *  int auxClockMsgPktEnable(                         Enable the auxClock Message Packet queue to send auxClockTicks every given number of ticks.
  *        unsigned int number_of_ticks,
  *        const char * Name_of_Message_Packet_queue,
  *        int *        Flag_for_detecting_overruns );
- *  int auxClockMsgPktReceive( mqd_t, rawTick *  );  Post a receive for the auxClock Message Packet queue.
- *  unsigned long auxClockNotificationOverruns();    Return the notification overrun count.
- *  unsigned long auxClockNotifications();           Return the notification count.
- *  unsigned long auxClockNotificationFailedAt();    Return the notification count when the first failure occurred.
- *  int auxClockNotificationErrno();                 Return the errno value for the first notification failure that occurred.
+ *  int auxClockMsgPktReceive( mqd_t, rawTick *  );   Post a receive for the auxClock Message Packet queue.
+ *  unsigned long int auxClockNotificationOverruns(); Return the notification overrun count.
+ *  unsigned long int auxClockNotifications();        Return the notification count.
+ *  unsigned long int auxClockNotificationFailedAt(); Return the notification count when the first failure occurred.
+ *  int auxClockNotificationErrno();                  Return the errno value for the first notification failure that occurred.
  */
 #include <stdio.h>
 #include <unistd.h>
@@ -47,10 +49,6 @@
 
 #include "messagepacket.h"
 
-/* Define shift counts for the unsigned long long division used in rawTickString(). */
-#define    SHIFTMID  (((int)(sizeof(unsigned long long)*CHAR_BIT))/3)
-#define    SHIFTHI  ((2*((int)(sizeof(unsigned long long)*CHAR_BIT)))/3)
-
 static rawTick auxClockTicks;
 static int *auxClockNotifyPointer;
 static char auxClockTicksStr[21];
@@ -60,9 +58,9 @@ static unsigned int auxClockNotifyCountDown;
 static unsigned int auxClockNotifyExpected;
 static mqd_t auxClockMsgPktQDes;
 static MessagePacket auxClockMsgPacket;
-static unsigned long auxClockNotifyCount;
-static unsigned long auxClockNotifyOverruns;
-static unsigned long auxClockNotifyFailedAt;
+static unsigned long int auxClockNotifyCount;
+static unsigned long int auxClockNotifyOverruns;
+static unsigned long int auxClockNotifyFailedAt;
 static int auxClockNotifyErrno;
 
 /*                                                            */
@@ -121,7 +119,7 @@ int auxClockRateGet()
     return extraAuxClockRateGet();
 }
 
-/* Initialize the auxClockTicks facility. Call at system initialiazation time. */
+/* Initialize the auxClockTicks facility. Call at system initialization time. */
 void auxClockInit()
 {
     auxClockNotifyDivisor = 0;
@@ -171,59 +169,22 @@ rawTick auxClockTicksGet()
     return( t );
 }
 
-unsigned long long rawTickDivideByUlong( rawTick dividend, unsigned long divisor )
+/* Workaround for the lack of a %ll format in vxWorks' [sf]printf() */
+char * rawTickString( char * s, rawTick rtValue )
 {
-    rawTick rTmidlo, quotient;
-    unsigned long ulHi, ulMid, ulLow;
-
-    /*  The following code implements a "divide-by-n" for rawTick's.
-        (Apparently, the vxWorks-supplied ull divide operator doesn't work) */
-    ulHi = (unsigned long) ( dividend >> SHIFTHI ) ;                           /* Get the High-order 22 bits */
-    quotient = dividend - ( ((rawTick)( ulHi )) << SHIFTHI );
-    ulMid = (unsigned long) ( ( quotient ) >> SHIFTMID );                      /* Get the Mid-order 21 bits */
-    ulLow = (unsigned long) ( quotient - ((rawTick)( ulMid ) << SHIFTMID)  );  /* Get the Low-order 21 bits */
-
-    ulMid += (ulHi % divisor) << (SHIFTHI - SHIFTMID); /* Add the High-order n's remainder to the Mid-order dividend */
-    ulLow += (ulMid % divisor) << SHIFTMID;            /* Add the Mid-order n's remainder to the Low-order dividend */
-
-    /* Complete the divide-by-n */
-    quotient  = ( ( (rawTick)( ulHi / divisor ) ) << SHIFTHI )
-              + (((rawTick)( ulMid / divisor )) << SHIFTMID )
-              + (rawTick)( ulLow / divisor );
-
-    return( quotient );
-}
-
-/* Workaround for the lack of a %ull format in vxWorks' [sf]printf() */
-char * rawTickString( char * s, rawTick rTvalue )
-{
-    rawTick rTmidlo;
-    unsigned long ulHi, ulMid, ulLow;
+    rawTick rti,rtq;
     char *cp, *cp1;
     char c;
+
+    rti = rtValue;
 
     /* Build the string in the buffer backwards, since that is easier.  It will be reversed below. */
     cp = s;
     do {
-        /*  The following code implements a "divide-by-10" for rawTick's.
-            (Apparently, the vxWorks-supplied ull divide operator doesn't work) */
-        ulHi = (unsigned long) ( rTvalue >> SHIFTHI ) ;                           /* Get the High-order 22 bits */
-        rTmidlo = rTvalue - ( ((rawTick)( ulHi )) << SHIFTHI );
-        ulMid = (unsigned long) ( ( rTmidlo ) >> SHIFTMID );                      /* Get the Mid-order 21 bits */
-        ulLow = (unsigned long) ( rTmidlo - ((rawTick)( ulMid ) << SHIFTMID)  );  /* Get the Low-order 21 bits */
-
-        ulMid += (ulHi % 10) << (SHIFTHI - SHIFTMID); /* Add the High-order 10s remainder to the Mid-order dividend */
-        ulLow += (ulMid % 10) << SHIFTMID;            /* Add the Mid-order 10s remainder to the Low-order dividend */
-
-        /* Complete the divide-by-10 */
-        rTvalue = ( ( (rawTick)( ulHi / 10 ) ) << SHIFTHI )
-                  + (((rawTick)( ulMid / 10 )) << SHIFTMID )
-                  + (rawTick)( ulLow / 10 );
-
-        *cp++ = (char)( ulLow%10 + '0' );  /* Convert the Low-order digit to a char and put it in the string */
-
-    }
-    while( rTvalue > 0 && cp - s < 20 );
+        rtq = rti / 10;
+        *cp++ = (char)( rti - rtq*10  ) + '0';  /* Convert the low-order digit to a char and put it in the string */
+        rti = rtq;
+    } while( rti > 0 && cp - s < 20 );
     /* Null-terminate the string */
     *cp='\0';
 
@@ -356,19 +317,19 @@ int auxClockMsgPktReceive( mqd_t MsgPktQDes, rawTick *ticks /* Pointer to buffer
 }
 
 /* Return the notification overrun count. */
-unsigned long auxClockNotificationOverruns()
+unsigned long int auxClockNotificationOverruns()
 {
     return auxClockNotifyOverruns;
 }
 
 /* Return the notification count. */
-unsigned long auxClockNotifications()
+unsigned long int auxClockNotifications()
 {
     return auxClockNotifyCount;
 }
 
 /* Return the notification count when the first failure occurred. */
-unsigned long auxClockNotificationFailedAt()
+unsigned long int auxClockNotificationFailedAt()
 {
     return auxClockNotifyFailedAt;
 }

@@ -19,6 +19,7 @@ class Usage
 {
     public:
 
+        Usage();
         Usage(const char* programName, const char* comment);
         ~Usage();
 
@@ -38,7 +39,6 @@ class Usage
         const char* _comment; 
         char* _usage_text; // built by add_usage
 
-        Usage(); // catch unauthorized use
         Usage(const Usage&); // catch unauthorized use 
         Usage& operator=(const Usage& rhs); // catch unauthorized use
 };

@@ -1,8 +1,10 @@
 /* FILENAME: OptionParser.cpp
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cmdline/rcs/optionparser.cpp 1.4 2002/09/20 21:35:48Z td07711 Exp ms10234 $
+ * $Header: K:/BCT_Development/vxWorks/Common/cmdline/rcs/optionparser.cpp 1.6 2002/12/20 23:28:19Z td07711 Exp jl11312 $
  * PURPOSE: option parsing class
  * CHANGELOG:
  *   $Log: optionparser.cpp $
+ *   Revision 1.4  2002/09/20 21:35:48  td07711
+ *   replaced LOG_FATAL with fprintf and exit
  *   Revision 1.3  2002/09/19 21:06:02  td07711
  *   errmsg fix
  *   Revision 1.2  2002/09/19 20:13:13  td07711
@@ -39,6 +41,10 @@
 
 
 
+OptionParser::OptionParser() : _usage(), _argc( 0 ), _argv( 0 ), _options( 0 )
+{
+}
+
 OptionParser::OptionParser(const char* programName, const char* comment)
 : _usage(programName, comment), 
   _argc(1), _argv(0), _options(0)
@@ -71,6 +77,10 @@ void OptionParser::init(int argc, const char** argv)
 
     // null terminate argv since we have an unecessary but undefined ptr at the end
     _argv[argc] = 0;
+
+    //
+    // Get the value of the passed in environmental variable, if any
+    resolveEnvironVars();
 }
 
 
@@ -90,7 +100,7 @@ void OptionParser::init(const char* options)
     {
         if(looking_for_arg)
         {
-            if(*p != ' ')
+            if(*p != ' ' || *p != '\t')
             {
                 _argc++;
                 looking_for_arg = false;
@@ -99,17 +109,26 @@ void OptionParser::init(const char* options)
         }
         else
         {
-            if(*p == ' ')
+            if(*p == ' ' || *p == '\t')
             {
                 looking_for_arg = true;
                 continue;
             }
         }
     }
-    _argv = new const char*[_argc+1];
+    int argcount = _argc;
+    if ( _usage.getProgramName() )
+       argcount++;
+
+    _argv = new const char*[argcount];
     ASSERT(_argv);
 
-    _argv[0] = _usage.getProgramName(); // dummy task/process name
+    int argcountInit=0;
+    if ( _usage.getProgramName() )
+    {
+       _argv[0] = _usage.getProgramName(); // dummy task/process name
+       argcountInit=1;
+    }
 
 
     // make copy of options that strtok_r can modify
@@ -122,9 +141,9 @@ void OptionParser::init(const char* options)
     // use strtok to find and null terminate each arg,
     // and set pointer to each arg in _argv
     char * pLast = 0; // next place to start strtok scan 
-    char* token = strtok_r(_options, " ", &pLast);
+    char* token = strtok_r(_options, " \t", &pLast);
     int i;
-    for(i = 1; token != NULL; i++)
+    for(i = argcountInit; token != NULL; i++)
     {
         ASSERT(i <= _argc);
         _argv[i] = token;
@@ -132,6 +151,10 @@ void OptionParser::init(const char* options)
     }
     ASSERT(i == _argc);
     _argv[i] = 0; // NULL terminate
+
+    //
+    // Get the value of the passed in environmental variable, if any
+    resolveEnvironVars();
 }
 
 
@@ -571,4 +594,21 @@ void OptionParser::remove_token(int i)
     _argc--;
 }
 
+void OptionParser::resolveEnvironVars()
+{
+
+   for ( int i=0 ; i<_argc; i++ )
+   {
+      //
+      // Check to see if the variable is an env. var
+      if ( _argv[i][0] == '$' )
+      {
+         char *envVar = getenv( (_argv[i]+1) );
+         if ( envVar )
+         {
+            _argv[i] = envVar;
+         }
+      }
+   }
+}
 

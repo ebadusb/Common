@@ -22,6 +22,11 @@
 #define ASSERT assert
 
 
+Usage::Usage()
+: _usage_text(0), _comment(0), _programName(0)
+{
+}
+
 Usage::Usage(const char* programName, const char* comment)
 : _usage_text(0), _comment(comment), _programName(programName)
 {

@@ -1,8 +1,10 @@
 /* FILENAME: OptionParser.hpp
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/optionparser.h 1.2 2002/09/19 20:10:32Z td07711 Exp ms10234 $
+ * $Header: I:/BCT_Development/vxWorks/Common/include/rcs/optionparser.h 1.3 2002/12/20 21:29:40Z ms10234 Exp td07711 $
  * PURPOSE: used to parse options from command line or elsewhere
  * CHANGELOG:
  *   $Log: optionparser.h $
+ *   Revision 1.2  2002/09/19 20:10:32Z  td07711
+ *   add public init() variants
  *   Revision 1.1  2002/09/18 23:31:10  td07711
  *   Initial revision
  *   Revision 6.2  2002/05/01 18:04:44  td07711
@@ -47,6 +49,7 @@ class OptionParser
 {
     public:
 
+        OptionParser();
         OptionParser(const char* programName, const char* comment);
         ~OptionParser();
 
@@ -107,6 +110,9 @@ class OptionParser
 
     protected:
 
+       //
+       // Resolve any environmental variable passed in the arg list, if any
+       void resolveEnvironVars();
 
     private:
 
@@ -116,7 +122,6 @@ class OptionParser
         Usage _usage;
         char* _options; // storage for option args
 
-        OptionParser(); // catch unauthorized use
         OptionParser(const OptionParser&); // catch unauthorized use 
         OptionParser& operator=(const OptionParser& rhs); // catch unauthorized use
 };

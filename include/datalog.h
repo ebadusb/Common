@@ -3,6 +3,9 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.28 2003/12/09 14:15:02Z jl11312 Exp rm70006 $
  * $Log: datalog.h $
+ * Revision 1.25  2003/10/03 12:32:41Z  jl11312
+ * - improved DataLog_Handle lookup time
+ * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
  * Revision 1.24  2003/08/25 21:11:24Z  jl11312
  * - removed obsolete function prototypes
  * Revision 1.23  2003/06/18 18:55:43Z  jl11312
@@ -118,6 +121,7 @@ DataLog_Result datalog_GetCurrentLogFileName(char * fileName, int bufferLength);
  * Data log handle routines
  */
 DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * handle);
+DataLog_Result datalog_CreateIntLevel(const char * levelName, DataLog_Handle * handle);
 DataLog_Result datalog_CreateCriticalLevel(DataLog_Handle * handle);
 DataLog_Result	datalog_SetDefaultLevel(DataLog_Handle handle);
 

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.10 2003/10/03 12:35:02Z jl11312 Exp jl11312 $
  * $Log: datalog_internal.h $
+ * Revision 1.2  2002/08/15 20:53:55  jl11312
+ * - added support for periodic logging
  * Revision 1.1  2002/07/18 21:20:53  jl11312
  * Initial revision
  *
@@ -272,9 +274,13 @@ public:
 
 public:
 	enum ConnectType { NotConnected, LogToFile, LogToNetwork };
-	void setConnect(ConnectType type, const char * name);
+
+	void setLocalConnect(const char * fileName);
+	void setNetworkConnect(const char * ipAddress, int port);
+
 	ConnectType connectType(void) { return _commonData->_connectType; }
 	DataLog_SharedPtr(const char) connectName(void) { return _commonData->_connectName; }
+	int connectPort(void) { return _commonData->_connectPort; }
 
 public:
 	//
@@ -301,6 +307,7 @@ private:
 
 		ConnectType _connectType;
 		DataLog_SharedPtr(const char) _connectName;
+		int _connectPort;
 	};
 
 	static void initializeCommonData(DataLog_SharedPtr(CommonData) data);
@@ -325,6 +332,21 @@ private:
 
 	static DataLog_Map<DataLog_InternalID, DataLog_Handle> _handles;
 	static DataLog_Lock _handlesLock;
+};
+
+enum DataLog_NetworkPacketType
+{
+	DataLog_NotifyBufferSize,
+	DataLog_StartOutputRecord,
+	DataLog_OutputRecordData,
+	DataLog_EndOutputRecord,
+	DataLog_EndConnection
+};
+
+struct DataLog_NetworkPacket
+{
+	DataLog_NetworkPacketType	_type __attribute__ ((packed));
+	DataLog_UINT16					_length __attribute__ ((packed));
 };
 
 enum

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.13 2003/12/05 16:33:05Z jl11312 Exp rm70006 $
  * $Log: datalog.cpp $
+ * Revision 1.5  2002/08/15 20:53:54  jl11312
+ * - added support for periodic logging
  * Revision 1.4  2002/07/18 21:20:29  jl11312
  * - preliminary implementation
  * Revision 1.3  2002/06/04 20:22:53  jl11312
@@ -140,13 +142,24 @@ DataLog_CriticalBuffer * DataLog_CommonData::getTaskCriticalBuffer(DataLog_TaskI
 	return taskInfo->_critical;
 }
 
-void DataLog_CommonData::setConnect(ConnectType type, const char * name)
+void DataLog_CommonData::setLocalConnect(const char * fileName)
 {
-	_commonData->_connectType = type;
+	_commonData->_connectType = LogToFile;
 
-	DataLog_SharedPtr(char)	buffer = (DataLog_SharedPtr(char))datalog_AllocSharedMem(strlen(name)+1);
-	strcpy(buffer, name);
+	DataLog_SharedPtr(char)	buffer = (DataLog_SharedPtr(char))datalog_AllocSharedMem(strlen(fileName)+1);
+	strcpy(buffer, fileName);
 	_commonData->_connectName = buffer;
+	_commonData->_connectPort = 0;
+}
+
+void DataLog_CommonData::setNetworkConnect(const char * ipAddress, int port)
+{
+	_commonData->_connectType = LogToNetwork;
+
+	DataLog_SharedPtr(char)	buffer = (DataLog_SharedPtr(char))datalog_AllocSharedMem(strlen(ipAddress)+1);
+	strcpy(buffer, ipAddress);
+	_commonData->_connectName = buffer;
+	_commonData->_connectPort = port;
 }
 
 void DataLog_CommonData::initializeCommonData(DataLog_SharedPtr(CommonData) data)
@@ -157,6 +170,7 @@ void DataLog_CommonData::initializeCommonData(DataLog_SharedPtr(CommonData) data
 
 	data->_connectType = NotConnected;
 	data->_connectName = DATALOG_NULL_SHARED_PTR;
+	data->_connectPort = 0;
 }
 
 DataLog_TaskErrorHandler * DataLog_CommonData::getTaskErrorHandler(DataLog_TaskID task)

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_init.cpp 1.8 2003/04/11 15:26:11Z jl11312 Exp jl11312 $
  * $Log: datalog_init.cpp $
+ * Revision 1.2  2002/08/15 20:53:54  jl11312
+ * - added support for periodic logging
  * Revision 1.1  2002/07/18 21:21:00  jl11312
  * Initial revision
  *
@@ -32,18 +34,46 @@ DataLog_Result datalog_Init(const char * logPath, const char * platformName)
 		datalog_TaskCreated(datalog_CurrentTask());
 
 		DataLog_CommonData common;
-		common.setConnect(DataLog_CommonData::LogToFile, logPath);
-		datalog_StartOutputTask(platformName);
+		common.setLocalConnect(logPath);
+		datalog_StartLocalOutputTask(platformName);
+
+#ifndef DATALOG_NO_NETWORK_SUPPORT
+		datalog_StartNetworkTask();
+#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
 	}
 
 	return result;
 }
 
-DataLog_Result datalog_InitNet(const char * ipAddress, double seconds)
+#ifndef DATALOG_NO_NETWORK_SUPPORT
+DataLog_Result datalog_InitNet(const char * ipAddress, int port, long connectTimeout)
 {
-	assert(0);
-	return DataLog_OK;
+	DataLog_Result	result = DataLog_OK;
+
+	if ( !DataLog_CommonData::startInitialization() )
+	{
+		DataLog_CommonData common;
+		common.setTaskError(DataLog_MultipleInitialization, __FILE__, __LINE__);
+		result = DataLog_Error;
+	}
+	else
+	{
+		//
+		// The task hooks for create/delete are installed only after the common data
+		// pointer is set, so we must add the task info for the current (initialization)
+		// task manually.
+		//
+		datalog_TaskCreated(datalog_CurrentTask());
+
+		DataLog_CommonData common;
+		common.setNetworkConnect(ipAddress, port);
+		datalog_StartNetworkOutputTask(connectTimeout);
+		datalog_StartNetworkTask();
+	}
+
+	return result;
 }
+#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
 
 DataLog_Result datalog_SetDefaultTraceBufferSize(size_t size)
 {

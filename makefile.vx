@@ -3,6 +3,8 @@
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.5  2002/06/18 16:51:40Z  jl11312
+# - removed COMDIR overrides from recursive make commands
 # Revision 1.4  2002/06/18 16:31:28  pn02526
 # Add commonclocks library
 # Revision 1.3  2002/05/24 10:12:01  ms10234
@@ -27,6 +29,7 @@ common:
 	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd clocks && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
+	@cd cds && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 
 .PHONY: clean
 clean:
@@ -36,4 +39,5 @@ clean:
 	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
 	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
 	@cd clocks && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
+	@cd cds && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
  

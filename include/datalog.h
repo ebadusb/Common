@@ -1,8 +1,11 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.28 2003/12/09 14:15:02Z jl11312 Exp rm70006 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.29 2004/10/26 20:49:21Z rm70006 Exp ms10234 $
  * $Log: datalog.h $
+ * Revision 1.28  2003/12/09 14:15:02Z  jl11312
+ * - corrected time stamp problem (IT 6668)
+ * - removed obsolete code/data types (IT 6664)
  * Revision 1.27  2003/11/25 16:10:17Z  jl11312
  * - corrected output of unsigned char data
  * Revision 1.26  2003/11/24 23:05:41Z  jl11312
@@ -68,9 +71,6 @@
 #ifndef _DATALOG_INCLUDE
 #define _DATALOG_INCLUDE
 
-#include <in.h>
-#include <inetLib.h>
-#include <sockLib.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -119,7 +119,7 @@ DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKByte
 typedef DataLog_BufferData * DataLog_EncryptFunc(DataLog_BufferData * input, size_t inputLength, size_t * outputLength);
 DataLog_Result datalog_SetEncryptFunc(DataLog_EncryptFunc * func);
 
-DataLog_Result datalog_GetCurrentLogFileName(char * fileName, int bufferLength);
+DataLog_Result datalog_GetCurrentLogFileName(char * fileName, size_t bufferLength);
 
 /*
  * Data log handle routines
@@ -266,7 +266,7 @@ public:
 	DataLog_Stream & operator << (const char * s);
 	DataLog_Stream & operator << (const signed char * s) { return operator<< ((const char *)s); }
 	DataLog_Stream & operator << (const unsigned char * s) { return operator<< ((const char *)s); }
-	DataLog_Stream & operator << (const string & s) { return operator<< (s.c_str()); }
+	DataLog_Stream & operator << (const std::string & s) { return operator<< (s.c_str()); }
 	DataLog_Stream & operator << (float val);
 	DataLog_Stream & operator << (double val);
 	DataLog_Stream & operator << (const void * ptr) { return operator<< ((unsigned long)ptr); }
@@ -381,7 +381,7 @@ public:
 
 	DataLog_Level(const char * levelName);
 
-   virtual ~DataLog_Level();
+	virtual ~DataLog_Level();
 
 	DataLog_EnabledType logOutput(void);
 	DataLog_EnabledType logOutput(DataLog_EnabledType flag);
@@ -531,7 +531,7 @@ private:
 private:
 	int _clientSocket;
 	bool _isExiting;
-	char	_asciiAddr[INET_ADDR_LEN];
+	char _asciiAddr[INET_ADDR_LEN];
 
 	bool _criticalOutput;
 	DataLog_BufferChain _dataChain;

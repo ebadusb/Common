@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.11 2003/10/03 12:35:06Z jl11312 Exp jl11312 $
  * $Log: datalog_output.cpp $
+ * Revision 1.9  2003/02/25 20:43:04Z  jl11312
+ * - added support for logging platform specific information in log header
  * Revision 1.8  2003/02/25 16:10:23  jl11312
  * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.6  2003/02/06 20:41:30  jl11312
@@ -52,20 +54,22 @@ DataLog_BufferData * datalog_DefaultEncryptFunc(DataLog_BufferData * input, size
 
 DataLog_OutputTask::DataLog_OutputTask(void)
 {
-	_isRunning = true;
-	_isExiting = false;
-	_exitCode = 0;
+	_state = Run;
 }
 
-void DataLog_OutputTask::exit(int code)
+void DataLog_OutputTask::exit(void)
 {
-	_exitCode = code;
-	_isRunning = false;
-	_isExiting = true;
+	_state = Exit;
 	datalog_SendSignal("DataLog_Output");
 }
 
-int DataLog_OutputTask::main(void)
+void DataLog_OutputTask::exitImmediately(void)
+{
+	_state = ExitImmediately;
+	datalog_SendSignal("DataLog_Output");
+}
+
+void DataLog_OutputTask::main(void)
 {
 	DataLog_CommonData 	common;
 
@@ -78,7 +82,7 @@ int DataLog_OutputTask::main(void)
 	// Main processing loop
 	//
 	bool	timeStampWritten;
-	while ( !_isExiting )
+	while ( _state == Run )
 	{
 		//
 		// Write a time stamp record to specify when this batch of data was written
@@ -108,7 +112,7 @@ int DataLog_OutputTask::main(void)
 		}
 
 		DataLog_BufferChain data;
-		while ( _isRunning &&
+		while ( _state != ExitImmediately &&
 				  DataLog_BufferManager::getNextChain(data) )
 		{
 			if ( !timeStampWritten )
@@ -137,7 +141,6 @@ int DataLog_OutputTask::main(void)
 	}
 
 	shutdown();
-	return _exitCode;
 }
 
 void DataLog_OutputTask::writeMissedLogDataRecord(void)

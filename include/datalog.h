@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.28 2003/12/09 14:15:02Z jl11312 Exp rm70006 $
  * $Log: datalog.h $
+ * Revision 1.22  2003/02/28 22:10:15Z  jl11312
+ * - added type/sub-type for binary record
  * Revision 1.21  2003/02/25 20:40:08  jl11312
  * - added support for logging platform specific information in log header
  * Revision 1.20  2003/02/25 16:12:00  jl11312
@@ -410,10 +412,9 @@ public:
 	DataLog_OutputTask(void);
 	virtual ~DataLog_OutputTask() {}
 
-	int main(void);
-	void pause(void) { _isRunning = false; }
-	void resume(void) { _isRunning = true; }
-	void exit(int code);
+	void main(void);
+	void exit(void);					// complete currently buffered data then exit
+	void exitImmediately(void);	// exit after writing current record (if any)
 
 protected:
 	virtual void startOutputRecord(void) = 0;
@@ -428,9 +429,14 @@ protected:
 	virtual void writeTimeStampRecord(void);
 
 protected:
-	bool _isRunning;
-	bool _isExiting;
-	int  _exitCode;
+	enum State
+	{
+		Run,
+		Exit,
+		ExitImmediately
+	};
+
+	State _state;	
 	int _outputFD;
 };
 

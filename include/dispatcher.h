@@ -26,10 +26,13 @@ public:
    
    //
    // Number of retries before error for messaging operations ...
-   const unsigned int MAX_NUM_RETRIES=1;
+   static const unsigned int MAX_NUM_RETRIES;
    //
-   // default Q size
-   const unsigned int DEFAULT_Q_SIZE=30;
+   // Time delay between retries ...
+   static const struct timespec RETRY_DELAY;
+   //
+   // Maximum message queue size
+   static const unsigned int MAX_MESSAGE_QUEUE_SIZE;
 
 public:
 
@@ -39,7 +42,8 @@ public:
    //
    // Initialize the task's mqueue ...
    void init( const char *qname,
-              unsigned int maxMessages=DEFAULT_Q_SIZE);
+              unsigned int maxMessages,
+              const bool block );
 
    //
    // Send a packet to the router ...
@@ -49,6 +53,7 @@ public:
    // receive messages from the router
    void dispatchMessages();          
    void stopLoop() { _StopLoop=true; }
+   void allowLoop() { if ( _Blocking ) _StopLoop=false; }
 
    //
    // register the message
@@ -88,6 +93,9 @@ protected:
    // List of messages and timers used by this application...
    map< unsigned long, set< MessageBase* > >  _MessageMap;
 
+   //
+   // Flag which contains which mode the queue was created ...
+   bool _Blocking;
    //
    // Flag to free the dispatcher from the loop...
    bool _StopLoop;

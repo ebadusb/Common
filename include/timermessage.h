@@ -26,7 +26,7 @@ public:
    //  armTimer - the timer is created disarmed by default
    //           - to create the timer armed, set this flag
    //
-   TimerMessage( unsigned long interval, const CallbackBase &cb, bool armTimer=false );
+   TimerMessage( unsigned long interval, const CallbackBase &cb, bool armTimer=true );
 
    //
    // Destructor
@@ -40,7 +40,7 @@ public:
    //  armTimer - the timer is created disarmed by default
    //           - to create the timer armed, set this flag
    //
-   bool init( unsigned long interval, const CallbackBase &cb, bool armTimer=false );
+   bool init( unsigned long interval, const CallbackBase &cb, bool armTimer=true );
 
    //
    // Call this function to start the timer if the interval
@@ -71,8 +71,23 @@ protected:
    virtual const char *genMessageName();
 
 private:
-   TimerMessage( TimerMessage const &);               // Not implemented
-   TimerMessage& operator=( TimerMessage const &);    // Not implemented
+
+   TimerMessage();                                                // Not implemented
+   TimerMessage( TimerMessage const &);                           // Not implemented
+   TimerMessage& operator=( TimerMessage const &);                // Not implemented
+
+   void send( const unsigned long &buffer);                       // Not implemented
+   const unsigned long &get( ) const;                             // Not implemented
+   void set( const unsigned long &buffer);                        // Not implemented
+
+   bool init( const SendType dt );                                // Not implemented
+   bool init( const CallbackBase &cb, const SendReceiveType dt ); // Not implemented
+   void registerMsg( const CallbackBase &cb );                    // Not implemented
+   void deregisterMsg();                                          // Not implemented
+   void send( );                                                  // Not implemented
+   unsigned long msgId( ) const;                                  // Not implemented
+   unsigned long originNode( ) const;                             // Not implemented
+   unsigned long originTask( ) const;                             // Not implemented
 
 protected:
 

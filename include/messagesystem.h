@@ -17,6 +17,11 @@ class MessageSystem
 public:
 
    //
+   // default Q size
+   const unsigned int DEFAULT_Q_SIZE=30;
+
+public:
+   //
    // Static method to gain access to the message system
    static MessageSystem *MsgSystem() { return _TheMessageSystem; }
 
@@ -38,20 +43,32 @@ public:
 
    //
    // Initialize the message system
-   bool init();                                     // uses default task name
-   bool init( const char *qname );
+   bool initBlocking( const unsigned int qSize=DEFAULT_Q_SIZE ); // uses default task name
+   bool initBlocking( const char *qname, const unsigned int qSize=DEFAULT_Q_SIZE );
+   bool initNonBlock( const unsigned int qSize=DEFAULT_Q_SIZE ); // uses default task name
+   bool initNonBlock( const char *qname, const unsigned int qSize=DEFAULT_Q_SIZE );
 
    //
-   // Go into the message loop ...
+   // Go into the message loop, or try to receive a message in the message
+   //  loop is disabled ...
    void dispatchMessages();
 
    //
-   // Stop receiving messages ...
-   void shutdown();
+   // Stop the receive messages loop ...
+   void stopLoop();
+   //
+   // Allow the receive messages loop ...
+   void allowLoop();
 
    //
    // Get the dispatcher
    Dispatcher &dispatcher() { return _Dispatcher; }
+
+protected:
+
+   //
+   // Actual function which does the work ...
+   bool init( const char *qName, const unsigned int qSize, const bool block );
 
 protected:
 

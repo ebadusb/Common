@@ -3,6 +3,8 @@
 # Makefile.rules - common makefile rules for vxWorks
 #
 # $Log: makefile.rules $
+# Revision 1.7  2002/11/27 15:01:04  jl11312
+# - removed special bin/%.o output rule
 # Revision 1.6  2002/09/11 16:10:57  jl11312
 # - corrected file suffix for assembly language files
 # Revision 1.5  2002/09/06 13:08:47  jl11312
@@ -22,22 +24,22 @@ MAKEFILE_RULES_INCLUDED := 1
 
 $(CPU)/%.o:%.c
 	@if not exist $(CPU) mkdir $(CPU)
-	$(CC) $(CCFLAGS) $< -o $@
+	$(CC) $(CCFLAGS) $(BUILD_OPTIONS) $< -o $@
 
 $(CPU)/%.o:%.cpp
 	@if not exist $(CPU) mkdir $(CPU)
-	$(CXX) $(CXXFLAGS) $< -o $@
+	$(CXX) $(CXXFLAGS) $(BUILD_OPTIONS) $< -o $@
 
 $(CPU)/%.o:%.s
 	@if not exist $(CPU) mkdir $(CPU)
-	$(AS) $(ASFLAGS) $< -o $@
+	$(AS) $(ASFLAGS) $(BUILD_OPTIONS) $< -o $@
 
 .dfile/%.d:%.c
 	@echo Rebuilding dependency file for $<
 	@if not exist .dfile mkdir .dfile
 	@rm -f $(CPU)/$(notdir $(subst .c,.o,$<))
 	@rm -f $@.tmp
-	@$(CC) -M $(CPPFLAGS) $< >$@.tmp
+	@$(CC) -M $(CPPFLAGS) $(BUILD_OPTIONS) $< >$@.tmp
 	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .c,.o,$(subst /,\/,$(CPU)/$(notdir $<))) $(subst /,\/,$@) : /g" < $@.tmp > $@
 	@rm -f $@.tmp
 
@@ -46,7 +48,7 @@ $(CPU)/%.o:%.s
 	@if not exist .dfile mkdir .dfile
 	@rm -f $(CPU)/$(notdir $(subst .cpp,.o,$<))
 	@rm -f $@.tmp
-	@$(CC) -M $(CPPFLAGS) $< >$@.tmp
+	@$(CC) -M $(CPPFLAGS) $(BUILD_OPTIONS) $< >$@.tmp
 	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .cpp,.o,$(subst /,\/,$(CPU)/$(notdir $<))) $(subst /,\/,$@) : /g" < $@.tmp > $@
 	@rm -f $@.tmp
 
@@ -55,7 +57,7 @@ $(CPU)/%.o:%.s
 	@if not exist .dfile mkdir .dfile
 	@rm -f $(CPU)/$(notdir $(subst .s,.o,$<))
 	@rm -f $@.tmp
-	@$(CC) -M $(CPPFLAGS) $< >$@.tmp
+	@$(CC) -M $(CPPFLAGS) $(BUILD_OPTIONS) $< >$@.tmp
 	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .s,.o,$(subst /,\/,$(CPU)/$(notdir $<))) $(subst /,\/,$@) : /g" < $@.tmp > $@
 	@rm -f $@.tmp
 

@@ -7,6 +7,8 @@
  * CHANGELOG:
  *   $Header: Z:/BCT_Development/Common/INCLUDE/rcs/ASECTIONFILE.HPP 1.2 1999/12/08 00:39:14 BD10648 Exp MS10234 $
  *   $Log: ASECTIONFILE.HPP $
+ *   Revision 1.1  1999/05/24 23:26:12  TD10216
+ *   Initial revision
  *   Revision 1.10  1999/04/20 00:40:31  TD07711
  *     In crope's less_than function, changed args from crope objects to
  *     const crope& to avoid unecessary copy constructiing and destruction.
@@ -19,120 +21,81 @@
 
 #include <Rope.h>
 #include <List.h>
-#include <map.h>
 
 #include "aSectionfile_element.hpp"
 
 typedef list<aSectionfile_element> elementListType;
 
-// Must define a class with a operator () that is a compare function for the 
-// map type used below.  STL requirement.
-struct crope_less_then
-{  
-   bool operator()(const crope& s1, const crope& s2) const  
-   {
-      return s1.compare(s2) < 0;
-   }
-};
-
-typedef map<crope, void*, crope_less_then> elementMapType;
 
 class aSectionfile
 {
-
-   //
-   //
-   //   The following methods are available for general use.
-   //
    public:
 
-      // Constructor
       aSectionfile();
+      ~aSectionfile();
 
-      // Destructor
-      virtual ~aSectionfile();
+      // construct and then initialize before use.
+      int initialize(const char *filename, const char *pathname);
 
-      //
-      //
-      //  Once I have been constucted I must be initialized.  I return
-      //  zero on success.
-      //
-      virtual const int initialize(const char *filename, const char *pathname);
-
-      //
-      //
       //  Get/set my pathname.
-      //
-      virtual const char *pathname() const;
-      virtual void pathname(const char *path);
+      const char *pathname() const;
+      void pathname(const char *path);
 
-      //
-      //
-      //  You can ask me to write my data to a file.  If you do not specify
-      //  a pathname I use the pathname I currently have.  If you rewrite me
-      //  using a filename then the filename given replaces any previous path.
-      //  I return zero on success.
-      //
-      virtual const int write(const char *filename, const char *path = NULL);
-      virtual const int writeSection(const char *section, const char *path = NULL);
-      virtual const int writeCurrentSection(const char *path = NULL);
-      virtual const int writeAllSections(const char *path = NULL);
+      //  Write data to a file.  If pathname is not specified
+      //  it uses the pathname it currently has.
+      //  return zero on success.
+      int write(const char *filename, const char *path = NULL);
+      int writeSection(const char *section, const char *path = NULL);
+      int writeAllSections(const char *path = NULL);
 
+      // Used to walk thru the section list.
+      // These were left using cropes for access to minimize changes
+      // to source files that use it.  It is recommended to use the
+      // FirstSection and NextSection member fns.
+      int getFirstSection( crope &first_sections_name );
+      int getNextSection( crope &next_sections_name );
+      int getNextSectionElement(crope &next_sections_name, 
+                                crope &next_variables_name);
 
-      // Used to walk thru the section list. 
-      virtual const int getFirstSection(crope &first_sections_name);
-      virtual const int getNextSection(crope &next_sections_name);
-      virtual const int getNextSectionElement(crope &next_sections_name, 
-                                              crope &next_variables_name);
+      // used to walk through the list with char ptrs
+      // return 0 if not found.
+      const char * FirstSection( void );
+      // provide char pointer of previous section
+      // return 0 if no next section
+      const char * NextSection( const char *ptr );
 
       // Used to CRC the sectionfile.
-      virtual unsigned long calculateCRC();
+      unsigned long calculateCRC();
 
-      //
-      //
-      //  You can get or set any piece of data in my file.  (Changes are only
-      //  internal until you ask me to write).  Generally the variable name
-      //  is unique so you do not need to specify the section name.  If I
-      //  cannot find the variable name or section while getting data then I
-      //  return zero for the value and a nonzero result.  I return a zero
-      //  status if everything was successful.  If the variable name specified
-      //  is not unique and the section name is not specified then I set or
-      //  return the value for the first matching variable found.
-      //
-	  virtual const int get(const char *section,
-						         const char *variable,
-							      aSectionfile_element &return_element);
-      virtual const int set(const aSectionfile_element &new_element);
+      // This goes through our section file element list
+      // and if matches section and variable, it copies the
+      // element and returns 0.  Returns non-zero if not found. 
+	  int get(
+          const char *section,
+		  const char *variable,
+		  aSectionfile_element &return_element
+          );
 
-      const int seekZero();
+      // return 0 on success
+      //        1 on failure
+      int set( const aSectionfile_element &new_element );
 
-   //
-   //
-   //   These methods are for internal use only.
-   //
+      // this is legacy, it does nothing now.
+      int seekZero();
+
    protected:
-      virtual elementListType::iterator *find_element(const char *section, 
-                                                 const char *variable);
+       void Erase( void );
+       void ErasePath( void );
+       void SetPath( const char *pth );
+       void MakeFileName( crope &nm , const char *fname );
 
-      const int aSectionfile::seek( const char *section = NULL, const char *variable = NULL);
-
-      //
-      //
       //   Copy constructor, op= are not valid for this class
-      //
       aSectionfile(const aSectionfile &orig);
       aSectionfile &operator=(const aSectionfile &orig);
-//
-//
-//-----------------------------------------------------------------------------
-//                      Member data
-//
-   protected:
-      crope _pathname;                                   // my pathname
-      elementListType _elements;                         // internal list of data file elements
-      elementMapType _elementsMap;                       // a map of the elements for fast lookup.
-      elementListType::iterator _current_pos_iterator;   // an iterator for the list.
-      elementListType::iterator _end_pos_iterator;       // another iterator for the list.
+
+   private:
+      char * m_pPath; 
+      elementListType _elements;
 };
 
 #endif

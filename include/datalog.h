@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.5  2002/04/29 21:48:42  jl11312
+ * - updated to reflect API changes
  * Revision 1.4  2002/03/27 16:43:25  jl11312
  * - updated to allow multiple data sets for periodic logging
  * - updated error handling interface
@@ -146,7 +148,7 @@ public:
 	DataLog_ConsoleEnabledType globalConsoleFlag(void);
 	DataLog_ConsoleEnabledType globalConsoleFlag(DataLog_ConsoleEnabledType flag);
 
-   ologstream & operator()(const char * fileName, int lineNumber);
+   ostream & operator()(const char * fileName, int lineNumber);
 };
 
 class DataLog_Critical : public DataLog_Level

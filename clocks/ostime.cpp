@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1995-1999 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/HOME/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.11 2002/09/25 11:11:36 jl11312 Exp pn02526 $
+ * $Header: K:/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.12 2002/11/22 21:13:18 pn02526 Exp jl11312 $
  * $Log: ostime.cpp $
+ * Revision 1.11  2002/09/25 11:11:36  jl11312
+ * - corrected time calculation in howLongAndUpdate function
  * Revision 1.10  2002/07/30 16:54:50  pn02526
  * Perform deltaMSec calculation in the order least prone to divide truncation.
  * Revision 1.9  2002/06/19 16:56:44  pn02526
@@ -59,8 +61,8 @@
 #include "error.h"
 #include "ostime.hpp"
 
-const unsigned long BILLION=1000000000ul;
-const unsigned long MILLION=1000000ul;
+const long BILLION=1000000000l;
+const long MILLION=1000000l;
 
 // SPECIFICATION:    osTime constructor.
 //                   Gets rate of aux clock and converts it to nsec/rawTick for use by other class methods.
@@ -70,7 +72,7 @@ const unsigned long MILLION=1000000ul;
 osTime::osTime(void)
 {
    _TicksPerSecond = auxClockRateGet( ); /* Get the number of ticks per second of the aux clock */
-   _NanoSecondsPerTick = (int) ( BILLION / (unsigned long)_TicksPerSecond );
+   _NanoSecondsPerTick = (int) ( BILLION / (long)_TicksPerSecond );
 };
 
 // SPECIFICATION:    osTime destructor.
@@ -194,7 +196,7 @@ int
 osTime::howLongRaw(rawTick then)
 {
    rawTick   now;
-   unsigned long deltaRaw;             // ticks
+   long deltaRaw;             // ticks
    int deltaMsec;             // milliseconds    
 
    snapshotRaw(&now);
@@ -202,7 +204,7 @@ osTime::howLongRaw(rawTick then)
    deltaRaw = now - then;
 
    // convert to msec
-   deltaMsec = (int) ( ( deltaRaw *  (unsigned long)_NanoSecondsPerTick ) / MILLION ); 
+   deltaMsec = (int) ( ( deltaRaw *  (long)_NanoSecondsPerTick ) / MILLION ); 
    
    return(deltaMsec);
 };
@@ -238,3 +240,6 @@ osTime::delayTime(int deltaTime)
    }
 
 };
+
+
+const char osTime::compileDateTime[]= __DATE__ " " __TIME__;

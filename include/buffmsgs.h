@@ -3,6 +3,8 @@
  *
  * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/BUFFMSGS.H 1.4 1999/07/26 15:38:48 BS04481 Exp TD10216 $
  * $Log: BUFFMSGS.H $
+ * Revision 1.1  1999/05/24 23:26:16  TD10216
+ * Initial revision
  * Revision 1.6  1999/05/13 15:33:14  SB07663
  * Readded in tcpgateRegistration for IT3838 and new modifyProduct
  * message for V3.3a PFR
@@ -30,6 +32,8 @@
 #ifndef BUFFMSGS_H                  // prevent multiple includes
 #define BUFFMSGS_H
 
+// NOTE: when changing BUFFER_MESSAGES, also change MsgStructMap below
+// or your build may fail or runtime not work correctly
 enum BUFFER_MESSAGES
 {
    FIRST_BUFFER_MESSAGE=0,        // don't change this entry
@@ -171,5 +175,149 @@ enum BUFFER_MESSAGES
 
    LAST_BUFFER_MESSAGE           // don't change this entry
 };
+
+// Join the buffer message ids with a structure. Make changes to 
+// MsgStructMap when BUFFER_MESSAGES are changed.
+#define NOTUSED "NotUsed"
+
+typedef struct
+{
+	int MsgId;			// From BUFFER_MESSAGES above
+	char *MsgStructure;	// The name of the structure the message sends
+} MsgStructMapEntry;
+
+// Dont use NOTUSED for real messages!
+// Change NOTUSED to actual struct if msg is used
+#ifdef STRUCTDEFGEN
+MsgStructMapEntry MsgStructMap[LAST_BUFFER_MESSAGE+1] =
+{
+	{ FIRST_BUFFER_MESSAGE, NULL },  	// Dont change this
+
+	{ AN2SetHostMsg, NOTUSED },
+	{ AN2AreYouThereRequestMsg, NOTUSED },
+	{ AN2AreYouThereReplyMsg, "SAN2Broadcast" },
+	{ AN2StatusRequestMsg, NOTUSED },
+	{ AN2StatusRequestReplyMsg, "SFSAN2Status" },
+	{ AN2ServiceRequestMsg,	NOTUSED },	// SAN2ServiceRequest union
+	{ AN2ServiceRequestReplyMsg, "SAN2ServiceRequestReply" },
+	{ AN2SetDonorVitalsMsg, NOTUSED },
+	{ AN2SetDonorVitalsReplyMsg, NOTUSED },
+	{ AN2AutoServiceControlCommand, "structAutoServiceControlOrders" },
+	{ AN2ManualServiceControlCommand, "structManualServiceControlOrders" },
+	{ AN2Test3, "AP2_Section_Name_Struct" }, 
+	{ AN2Test2, "AP2_Section_Name_Struct" }, 
+	{ AN2Test1, "DATA_MEMBERS" },
+
+	{ ControlHardwareCommands, "CHwOrders" }, 
+	{ ControlHardwareStatus, "CHwStates" },
+	{ CurrentProcedureStatus, "CURRENT_PROCEDURE_STATUS_STRUCT" },
+	{ DataLog, NOTUSED },
+	{ GUIConfigToProcedure, "ProcedureInformationStruct" },
+	{ GUIToProcedureDonorVitals, "SDonorVitals" },
+	{ GUIToProcedureAdjust, NOTUSED },
+	{ GUIToProcedureProductRequest, NOTUSED },
+	{ HALtoVDStatus, "HALtoVDdata" },
+	{ KeyboardMessage, NOTUSED },
+	{ KeypadReturnMsg, "KEYPAD_RETURN_STRUCT" },
+	{ ProcedureToGUIAdjust, "ADJUST_SCREEN_CONFIG" },
+	{ ProcToSafetyDonorVitals, "SDonorVitals" },
+	{ EndRunStats, "RUN_SUMMARY_STRUCT" },
+	{ RequestRanges, NOTUSED },
+	{ SafetyHardwareCommands, "SHwOrders" },
+	{ SafetyHardwareStatus, "SHwStates" },
+	{ SafetyToGuiDonorVitals, "SDonorVitals" },
+	{ StatusLine, NOTUSED },
+	{ VDtoHALCommands, "VDtoHALdata" },
+	{ AlarmMessage, "Alarm_struct" }, 
+	{ GUIAlarmResponse, "Alarm_response_struct" },
+	{ AlarmDisplayRequest, "GUI_Alarm_struct" },
+	{ TaskManagerCommand, "Task_msg_struct" },
+	{ ScreenInvokeStateless, "SCREEN_INVOKE_STRUCT" },
+	{ ScreenInvokeChild, "SCREEN_INVOKE_STRUCT" },
+	{ ScreenSwapStateless, "SCREEN_INVOKE_STRUCT" },
+	{ ScreenSwapChild, "SCREEN_INVOKE_STRUCT" },
+	{ ScreenInvoke, "SCREEN_INVOKE_STRUCT" },
+	{ SoundCommands, "SoundOrders" },
+	{ BuffTestMessage1, NOTUSED },
+	{ BuffTestMessage2, NOTUSED },
+	{ FastUsData, "FASTDATA" },
+	{ FastApsData, "FASTDATA" },
+	{ FastPumpData, "FASTDATA" },
+	{ SafetyDonorMon, NOTUSED },
+	{ SafetyResMon, NOTUSED },
+	{ SafetyCycleMon, NOTUSED },
+	{ GUIChildScreenToGUI, "GUI_LISTBOX_STRUCT" },
+
+	// Spectra ProcII Messages, Please leave these in a block
+	// They are given unique IDs for the TCP/IP processes
+	{ SpectraAcMsg, NOTUSED },
+	{ SpectraAsMsg, NOTUSED },
+	{ SpectraAwMsg, NOTUSED },
+	{ SpectraAxMsg, NOTUSED },
+	{ SpectraAyMsg, NOTUSED },
+	{ SpectraAzMsg, NOTUSED },
+	{ SpectraDsMsg, NOTUSED },
+	{ SpectraDyMsg, NOTUSED },
+	{ SpectraKMsg,	NOTUSED },
+	{ SpectraMcMsg, NOTUSED },
+	{ SpectraMsgAck, NOTUSED },
+	{ SpectraMsgCmd, NOTUSED },
+	{ SpectraPwrFailAck, NOTUSED },
+	{ SpectraPwrFailData, NOTUSED },
+	{ SpectraPwrFailReq, NOTUSED },
+	{ SpectraPmMsg,	NOTUSED },
+	{ SpectraPmAckMsg, NOTUSED },
+	{ SpectraPsMsg, NOTUSED },
+	{ SpectraPuMsg, NOTUSED },
+	{ SpectraPxMsg, NOTUSED },
+	{ SpectraPyMsg, NOTUSED },
+	{ SpectraPzMsg, NOTUSED },
+	{ SpectraSsMsg, NOTUSED },
+	{ SpectraSxMsg, NOTUSED },
+	{ SpectraSync, NOTUSED },
+	{ SpectraTest6, NOTUSED },
+	{ SpectraTest5, NOTUSED },
+	{ SpectraTest4, NOTUSED },
+	{ SpectraTest3, NOTUSED },
+	{ SpectraTest2, NOTUSED },
+	{ SpectraTest1, NOTUSED },
+	// End of Spectra Messages
+
+	{ ScreenSwapStackChild, "SCREEN_INVOKE_STRUCT" },
+	{ ScreenSwapStackStateless, "SCREEN_INVOKE_STRUCT" },
+	{ misc_log, "MISC_LOG_STRUCT" },
+	{ PowerFailRecoveryData, "float" },
+	{ ProcStateSubstate, "stateSubstateChangeRequest_t" },
+	{ MeterDataMsg, "Meter_Return_Struct" },
+	{ FastFilterAPS, "FASTFILTER" },
+
+	// Spectra ProcII Messages, Please leave these in a block
+	{ SpectraTest7, NOTUSED },
+	{ SpectraTest8, NOTUSED },
+	{ SpectraTest9, NOTUSED },
+	{ SpectraTest10, NOTUSED },
+	{ SpectraTest11, NOTUSED },
+	{ SpectraTest12, NOTUSED },
+	{ SpectraTest13, NOTUSED },
+	{ SpectraTest14, NOTUSED },
+	{ SpectraTest15, NOTUSED },
+	{ SpectraTest16, NOTUSED },
+	// End of Spectra Messages
+	
+	// NOTE: When adding buffer messages,
+	// Add to end of list, after this comment
+	{ HardwareVersion, "hardware" },
+	{ CreateProduct, "CreateProductStruct" },
+	{ OptimizerCommands, "InitializeOptimizerStruct" },
+	{ OptimizerResults, "OptimizerResultsStruct" },
+	{ ProcedureInformation, "ProcedureInformationStruct" },
+	{ AlarmLogRequest, "GUI_Alarm_struct" },
+	{ TcpgateRegistration, "TCPGate_Reg_ReqStruct" },
+	{ ModifyProduct, "ModifyProductStruct" },
+
+	// don't change this entry
+	{ LAST_BUFFER_MESSAGE, NULL }
+};
+#endif
 
 #endif

@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1995-1999 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: //Bctquad3/HOME/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.8 2001/04/05 14:16:14 jl11312 Exp pn02526 $
+ * $Header: //bctquad3/HOME/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.11 2002/09/25 11:11:36 jl11312 Exp pn02526 $
  * $Log: ostime.cpp $
+ * Revision 1.8  2001/04/05 14:16:14  jl11312
+ * - internal timer handling changes required for versa logic CPU board
  * Revision 1.7  2000/03/17 16:41:25  BS04481
  * Non-essential issues from 3.3 code review
  * Revision 1.6  1999/10/28 20:29:16  BS04481
@@ -46,56 +48,25 @@
  *
  *               
  */
-#include <i86.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <conio.h>
-#include <signal.h>
 #include <time.h>
-#include <fcntl.h>
-#include <sys/sched.h>
-#include <sys/proxy.h>
-#include <sys/kernel.h>
 #include <unistd.h>
-#include <sys/osinfo.h>
-#include <sys/mman.h>
 
 #include "error.h"
-#include "common.h"
 #include "ostime.hpp"
 
-const int MS_EQUIVALENT=1193;          //equivalent of 1ms in raw clock ticks for out clock
+const unsigned long BILLION=1000000000ul;
+const unsigned long MILLION=1000000ul;
 
 // SPECIFICATION:    osTime constructor.
-//                   Sets up pointer to kernel's time-tick space and
-//                   initializes time counter to indicate no time set
-//                   in progress
+//                   Gets rate of aux clock and converts it to nsec/rawTick for use by other class methods.
 //
 // ERROR HANDLING:   none.
 
 osTime::osTime(void)
 {
-   struct _osinfo osdata;
-
-   // get pointer to kernel's tick memory
-   qnx_osinfo(0, &osdata);
-   _timeptr = (struct _timesel far *)MK_FP(osdata.timesel,0);
-   if (_timeptr == NULL)
-      FATAL_ERROR( __LINE__, __FILE__ "No ticktime pointer!");
-
-   // open shared memory area for time reset indicator
-   _fd_timecounter = shm_open("timecounter", O_RDWR, 0777);
-   if (_fd_timecounter == -1)
-      FATAL_ERROR( __LINE__, __FILE__ "timecounter share create failed");
-
-   // map the share memory objects
-   _timeCounter = (int *)mmap(0,sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, 
-                                    _fd_timecounter, 0);
-   if (_timeCounter == (void *) -1)
-      FATAL_ERROR( __LINE__, __FILE__ "timecounter share map failed");
-
-   // initialize counter to indicate no time set is in progress
-   *_timeCounter = 0;
+   _TicksPerSecond = auxClockRateGet( ); /* Get the number of ticks per second of the aux clock */
+   _NanoSecondsPerTick = (int) ( BILLION / (unsigned long)_TicksPerSecond );
 };
 
 // SPECIFICATION:    osTime destructor.
@@ -104,50 +75,8 @@ osTime::osTime(void)
 
 osTime::~osTime()
 {
-   _timeptr = NULL;
 };
 
-
-
-// SPECIFICATION:    snapshotTime.
-//                   osTime method to get time from the kernel.
-//
-// ERROR HANDLING:   none.
-
-inline void
-osTime::snapshotTime(timeFromTick* now)
-{
-   // loop to make sure you take both readings on the same tick
-   do
-   {
-      now->sec = _timeptr->seconds;
-      now->nanosec = _timeptr->nsec;
-
-   } while ( now->sec != _timeptr->seconds || now->nanosec != _timeptr->nsec  );
-};
-
-
-// SPECIFICATION:    snapshotRaw.
-//                   osTime method to get raw ticks from the kernel.
-//
-// ERROR HANDLING:   none.
-
-inline void
-osTime::snapshotRaw(rawTick* now)
-{
-   // loop to make sure you take both readings on the same tick
-   do
-   {
-      now->sec = _timeptr->seconds;
-      now->nanosec = _timeptr->nsec;
-      now->cnt8254 = _timeptr->cnt8254;
-      now->cycles_per_sec = _timeptr->cycles_per_sec;
-      now->cycle = _timeptr->cycle_lo;
-
-   } while ( now->sec != _timeptr->seconds ||
-             now->nanosec != _timeptr->nsec ||
-             now->cycle != _timeptr->cycle_lo);
-};
 
 
 // SPECIFICATION:    whatTimeIsIt.
@@ -158,13 +87,7 @@ osTime::snapshotRaw(rawTick* now)
 void 
 osTime::whatTimeIsIt(timeFromTick* now)
 {
-   // loop to make sure you take both readings on the same tick
-   do
-   {
-      now->sec = _timeptr->seconds;
-      now->nanosec = _timeptr->nsec;
-
-   } while ( now->sec != _timeptr->seconds || now->nanosec != _timeptr->nsec  );
+    TimeFromRawTicks( now, auxClockTicksGet() );
 };
 
 
@@ -261,28 +184,21 @@ osTime::howLongMicro(timeFromTick then)
 // SPECIFICATION:    howLongRaw.
 //                   Returns delta in msec between previous 
 //                   then and now based on the raw clock.
-//
-// ERROR HANDLING:   FATAL_ERROR if the ticksize is not 2.
-//                   FATAL_ERROR if the clock has changed.
+// ERROR HANDLING:   none
 
 int
 osTime::howLongRaw(rawTick then)
 {
    rawTick   now;
-   long deltaRaw;             // ticks
+   unsigned long deltaRaw;             // ticks
    int deltaMsec;             // milliseconds    
 
    snapshotRaw(&now);
 
-   // this element of the timesel structure is not sensitive 
-   // changes to the realtime clock.  This value should increment
-   // at a rate of approximately 1193000 counts each second.
-   // The register will wrap in just over 3600 seconds but QNX
-   // handles the wrap.
-   deltaRaw = now.cycle - then.cycle;
+   deltaRaw = now - then;
 
    // convert to msec
-   deltaMsec = deltaRaw / MS_EQUIVALENT; 
+   deltaMsec = (int) ( deltaRaw *  (unsigned long)_NanoSecondsPerTick / MILLION ); 
    
    return(deltaMsec);
 };
@@ -299,7 +215,8 @@ osTime::howLongRaw(rawTick then)
 void
 osTime::delayTime(int deltaTime)
 {
-   ASSERT(deltaTime<100);
+//   trima_assert(deltaTime<100);
+   if( deltaTime >= 100 ) _FATAL_ERROR( __FILE__, __LINE__, "osTime::delayTime called with deltaTime > 99ms.");
 
    timeFromTick now, start;
    int delta=0;
@@ -317,31 +234,3 @@ osTime::delayTime(int deltaTime)
    }
 
 };
-
-
-// SPECIFICATION:    getTimeCounter.
-//                   returns current value of timeCounter which is 
-//                   non-zero if a time set operation is in progress
-//
-// ERROR HANDLING:   none.
-
-int
-osTime::getTimeCounter(void)
-{
-   return(*_timeCounter);
-};
-
-// SPECIFICATION:    countDown.
-//                   counts down timeCounter.  When timeCounter hits
-//                   zero (or is ordered to zero), the soft watchdogs
-//                   are re-enabled.
-//
-// ERROR HANDLING:   none.
-
-void
-osTime::countDown(void)
-{
-   *_timeCounter -= 1;
-}
-
-

@@ -4,8 +4,11 @@
  * FILENAME: crcgen.h
  * PURPOSE: function prototype for crcgen32()
  * CHANGELOG:
- *  $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/crcgen.h 1.4 2001/08/22 14:33:20 rm70006 Exp ms10234 $
+ *  $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/crcgen.h 1.5 2002/05/01 14:44:21 ms10234 Exp ms10234 $
  *  $Log: crcgen.h $
+ *  Revision 1.4  2001/08/22 14:33:20  rm70006
+ *  IT 4766.
+ *  Moved calculate crc function by file function here from GUI.
  *  Revision 1.3  2000/06/07 22:51:22  bd10648
  *  Changed seed to 0xFFFFFFFF so that a block of zeros
  *  gets a non-zero crc.
@@ -28,6 +31,7 @@
 extern "C" {
 #endif
 
+/*
 // crcgen32() generates a 32bit CRC over the input data
 // inputs:
 //    pcrc - ptr to initial crc value, the crc value is modified as each byte of input data
@@ -38,12 +42,14 @@ extern "C" {
 //    *pcrc is updated with new crc value
 //    returns 0 if success
 //    returns -1 if invalid argument (NULL ptr or length < 0)
+*/
 
 
-int crcgen32(unsigned long* pcrc, char* pdata, long length);
+int crcgen32(unsigned long* pcrc, const char* pdata, long length);
 
 
 
+/*
 // file_crcgen32() generates a 32bit CRC over the contents of a file.
 // inputs:
 //    filename - filename (plus path) to be crc'ed.  file must obviously exist.
@@ -53,11 +59,12 @@ int crcgen32(unsigned long* pcrc, char* pdata, long length);
 //    *pcrc is updated with new crc value
 //    returns 0 if success
 //    returns -1 if failed
+*/
 int file_crcgen32 (const char *filename, unsigned long *pcrc);
 
 
 
-// common seed for all users to get common results.
+/*// common seed for all users to get common results.*/
 #define INITCRC_DEFAULT (0xFFFFFFFFL)
 
 

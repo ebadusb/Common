@@ -19,8 +19,8 @@ class TimerMessage : public Message< unsigned long >
 public:
    enum TimerState
    {
-      ARMED,
-      DISARMED
+      ARMED = 1,
+      DISARMED = 0
    };
 
 public:

@@ -1,0 +1,249 @@
+# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.flags 1.12 2003/12/29 17:54:05Z jl11312 Exp $
+#
+# Makefile.flags - common compile-time options for vxWorks
+#
+# $Log: makefile.flags $
+# Revision 1.12  2003/12/29 17:54:05Z  jl11312
+# - added check to insure -ffloat-store flag is not removed inadvertently (IT 6150)
+# Revision 1.11  2003/09/10 14:42:24Z  jl11312
+# - force float storage to insure floating point compares work properly
+# Revision 1.10  2003/03/12 15:53:41Z  ms10234
+# changed grep command line options for new version
+# Revision 1.9  2003/02/25 14:59:40Z  jl11312
+# - modified optimization settings for SIMNT and I80486 builds
+# - added BUILD_OPTIONS setting
+# Revision 1.8  2002/11/27 15:00:35  jl11312
+# - changed simulator build to use -O1 instead of -O2 to avoid compiler problems
+# Revision 1.7  2002/08/15 20:23:17  jl11312
+# - added check for valid CPU and BUILD_TYPE
+# Revision 1.6  2002/05/16 17:38:39  jl11312
+# - allowed for overrides of various flag settings
+# - corrected flag settings for assembly language source
+# - removed lib$(CPU)gnuvx.a from default list of linked libraries
+# Revision 1.5  2002/04/18 14:27:17  jl11312
+# - updated compile flags
+# - added link command and flags
+# - added grep command
+# - added munch command
+# Revision 1.4  2002/04/15 21:25:20  sb07663
+# Added definitions for nm utility
+# Revision 1.3  2002/04/12 17:02:39  sb07663
+# Added 'LD' definitions
+# Revision 1.2  2002/04/11 15:50:38  jl11312
+# - default BUILD_TYPE to PRODUCTION
+# - added default for CPU to I80486
+# Revision 1.1  2002/04/10 14:39:55  jl11312
+# Initial revision
+#
+
+#
+# Several variables are assigned only if not previously overridden.  These
+# variables are surrounded by ifndef/endif directives.  Note that special
+# handling is required to force the variables to be empty.  Completely
+# empty variables are treated as not defined, so an override of the form
+#   ARCH_FLAGS :=
+# will not work.  Instead use something like
+#   ARCH_FLAGS := $(NOSUCHVARIABLE) $(NOSUCHVARIABLE)
+# where NOSUCHVARIABLE does not exist.  This forces ARCH_FLAGS to be defined
+# as the string containing one space (and thus to be treated as defined
+# by GNU make).
+#
+
+VXWORKS_VERSION=5.4
+
+#
+# Default to a PRODUCTION build.  To get a debug build (not optimized,
+# debug symbols included) use BUILD_TYPE=DEBUG on the make command
+# line.
+#
+ifndef BUILD_TYPE
+  BUILD_TYPE=PRODUCTION
+endif
+
+#
+# Default to a 486 processor
+#
+ifndef CPU
+  CPU=I80486
+endif
+
+#
+# Make sure we have a valid CPU and BUILD_TYPE
+#
+ifneq ($(CPU),I80486)
+  ifneq ($(CPU),SIMNT)
+    OPT_ERROR := Invalid CPU type: $(CPU).  Valid types are I80486 or SIMNT.
+    FORCE_REBUILD := 1
+  endif
+endif
+
+ifneq ($(BUILD_TYPE),DEBUG)
+  ifneq ($(BUILD_TYPE),PRODUCTION)
+    OPT_ERROR := Invalid BUILD_TYPE: $(BUILD_TYPE).  Valid types are CLEAN, DEBUG, or PRODUCTION.
+    FORCE_REBUILD := 1
+  endif
+endif
+
+#
+# Set commands for assembler, C pre-processor (CPP), C compiler, C++
+# compiler and archive tool based on selected CPU type.  The architecture
+# specific flags required for each command are also set here.
+#
+ifeq ($(CPU),I80486)
+AS = cc386 -c
+CPP = cc386 -E
+CC = cc386 -c
+CXX = cc386 -c
+AR = ar386
+LD = ld386
+NM = nm386 -g
+GREP = grep -h
+MUNCH = wtxtcl $(WIND_BASE)/host/src/hutils/munch.tcl -asm 386
+
+ifndef ARCH_FLAGS
+ARCH_FLAGS := -DCPU=I80486 -m486 -DVXWORKS -nostdinc
+endif
+
+ifndef AS_ARCH_FLAGS
+AS_ARCH_FLAGS := $(ARCH_FLAGS) -xassembler-with-cpp
+endif
+
+ifndef CPP_ARCH_FLAGS
+CPP_ARCH_FLAGS := $(ARCH_FLAGS)
+endif
+
+ifndef CC_ARCH_FLAGS
+CC_ARCH_FLAGS := $(ARCH_FLAGS) -fno-builtin -fno-defer-pop -ffloat-store
+endif
+
+ifndef CXX_ARCH_FLAGS
+CXX_ARCH_FLAGS := $(ARCH_FLAGS) -Wstrict-prototypes -fno-builtin -fno-defer-pop -ffloat-store
+endif
+
+ifndef LD_ARCH_FLAGS
+LD_ARCH_FLAGS := -r -X
+endif
+
+ifndef LD_ARCH_RELOC
+LD_ARCH_RELOC :=
+endif
+
+endif
+
+ifeq ($(CPU),SIMNT)
+AS  = ccsimpc -c
+CPP = ccsimpc -E
+CC  = ccsimpc -c
+CXX = ccsimpc -c
+AR = arsimpc
+LD = ldsimpc
+NM = nmsimpc -g
+GREP = grep -h
+MUNCH = wtxtcl $(WIND_BASE)/host/src/hutils/munch.tcl -asm simpc
+
+ifndef ARCH_FLAGS
+ARCH_FLAGS := -DCPU=SIMNT -U__WINNT -UWIN32 -U__WINNT__ -UWINNT -U__MINGW32__ -U_WIN32 -U__WIN32 -U__WIN32__ -U__WIN32 -mpentium -DVXWORKS -nostdinc
+endif
+
+ifndef AS_ARCH_FLAGS
+AS_ARCH_FLAGS := $(ARCH_FLAGS) -xassembler-with-cpp
+endif
+
+ifndef CPP_ARCH_FLAGS
+CPP_ARCH_FLAGS := $(ARCH_FLAGS)
+endif
+
+ifndef CC_ARCH_FLAGS
+CC_ARCH_FLAGS := $(ARCH_FLAGS) -fno-builtin -fno-defer-pop -ffloat-store
+endif
+
+ifndef CXX_ARCH_FLAGS
+CXX_ARCH_FLAGS := $(ARCH_FLAGS) -Wstrict-prototypes -fno-builtin -fno-defer-pop -ffloat-store
+endif
+
+ifndef LD_ARCH_FLAGS
+LD_ARCH_FLAGS := -r -X
+endif
+
+ifndef LD_ARCH_RELOC
+LD_ARCH_RELOC := --force-stabs-reloc
+endif
+
+endif
+
+#
+# This section sets debug and optimization options based on
+# the build type.
+#
+ifeq ($(BUILD_TYPE), PRODUCTION)
+
+ifndef DBGFLAGS
+DBGFLAGS := -DPRODUCTION_BUILD
+endif
+
+ifndef OPTFLAGS
+ifeq ($(CPU),SIMNT)
+OPTFLAGS := -O0
+else
+OPTFLAGS := -O2 -Wuninitialized
+endif
+endif
+
+else
+
+ifndef DBGFLAGS
+DBGFLAGS := -g -DDEBUG_BUILD
+endif
+
+ifndef OPTFLAGS
+OPTFLAGS :=
+endif
+
+endif
+
+#
+# These flags can be set before including this common file
+# and allow individual makefiles to add additional command
+# line flags for the assembler, pre-processor, c-compiler,
+# and c++ compiler, and for include file directories.  If used,
+# these must be defined in the individual makefile before
+# including this common makefile
+#
+ADDN_ASFLAGS ?=
+ADDN_CCFLAGS ?=
+ADDN_CPPFLAGS ?=
+ADDN_CXXFLAGS ?=
+ADDN_LDFLAGS ?=
+ADDN_INCDIR ?=
+
+#
+# The warning list includes all of -Wall except -Wunused and -Wunitialized
+# (unitialized is enabled above for the production build, since it requires
+# optimization to be enabled.  unused causes false warnings on certain class
+# declarations in this version of the GNU compiler and so must be left out.
+#
+ifndef WARNFLAGS
+WARNFLAGS := -Werror -Wmissing-prototypes \
+             -Wmissing-declarations -Wchar-subscripts -Wcomment -Wformat \
+	     -Wimplicit -Wparentheses -Wreturn-type -Wswitch -Wtrigraphs
+endif  
+
+#
+# These files are the files common to all build directories which should be
+# removed by a make BUILD_TYPE=CLEAN
+#
+COMMON_CLEAN_FILELIST = .dfile/*.d .opt/* I80486/*.* SIMNT/*.*
+
+#
+# The float-store flag was added to correct a problem with inconsistent
+# floating point compare operations, and must always be enabled  (see IT 6150).
+# The following checks that the flag has not been inadvertently removed.
+#
+ifeq (,$(findstring -ffloat-store,$(CXX_ARCH_FLAGS)))
+	makefile_error "missing -ffloat-store flag"
+endif
+
+ifeq (,$(findstring -ffloat-store,$(CC_ARCH_FLAGS)))
+   makefile_error "missing -ffloat-store flag"
+endif
+

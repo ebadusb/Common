@@ -62,6 +62,14 @@ class CRCFunctions
       //## Operation: moveValidFile%904748912
       int moveValidFile (const char* crc, const char* source, const char* dest);
 
+
+      // Calculates the crc of the contents of a file.
+      // The finalCrc parameter must be set to an initial value before the call.
+      // 0 is returned if operation was successful, -1 otherwise.
+      static int getFileCrc (const char *filename, unsigned long *finalCrc);
+
+
+
     // Additional Public Declarations
       //## begin CRCFunctions%35EC152600BC.public preserve=yes
       //## end CRCFunctions%35EC152600BC.public

@@ -32,18 +32,18 @@ public:
       MESSAGE_DEREGISTER,                       // deregister message with router
       GATEWAY_CONNECT,                          // register a gateway task
       GATEWAY_DISCONNECT,                       // deregister a gateway task
-      SPOOFER_REGISTER,                         // register the spoofer task
-      SPOOFER_DEREGISTER,                       // deregister the spoofer task
+      SPOOF_MSG_REGISTER,                       // register the spoofer task
+      SPOOF_MSG_DEREGISTER,                     // deregister the spoofer task
 
       DISTRIBUTE_GLOBALLY,                      // distribute the message to everyone
                                                 //  who registered 
       DISTRIBUTE_LOCALLY,                       // distribute the message to everyone
                                                 //  who registered on the local node
-      TIME_UPDATE,                              // time update from the ISR
-
       SPOOFED_GLOBALLY,                         // spoofer has modified message for everyone
       SPOOFED_LOCALLY,                          // spoofer has modified message for everyone 
                                                 //  on the local node
+
+      TIME_UPDATE,                              // time update from the ISR
    };
 
 public:

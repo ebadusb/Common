@@ -49,8 +49,8 @@ public:
    // register the message
    void registerMessage( const MessageBase &mb, MessagePacket &mp );
    void registerMessage( const unsigned long messageId, const MessageBase &mb );
-   void deregisterMessage( const MessageBase &mb, MessagePacket &mp );
-   void deregisterMessage( const unsigned long messageId, const MessageBase &mb );
+   virtual void deregisterMessage( const MessageBase &mb, MessagePacket &mp );
+           void deregisterMessage( const unsigned long messageId, const MessageBase &mb );
 
    void dump( ostream &outs );
 

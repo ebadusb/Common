@@ -20,6 +20,7 @@ class MessageBase
 {
 public:
    friend class Dispatcher;
+   friend class SpooferDispatcher;
 public:
 
    //
@@ -130,6 +131,7 @@ protected:
    //  that it has been received.  If the message data was
    //  corrupt, the function returns 'false'
    bool notify( const MessagePacket &mp );
+   bool notify( const MessagePacket &mp, const CallbackBase &cb );
 
    //
    // Clean-up any dynamic memory

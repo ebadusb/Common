@@ -142,7 +142,7 @@ protected:
 
    //
    // This function sends the message packet to the Spoofer task.
-   void sendMessageToSpoofer( const MessagePacket &mp );
+   bool sendMessageToSpoofer( const MessagePacket &mp, int priority=0 );
 
    //
    // This function will synchronize the remote node's registered messages with my list

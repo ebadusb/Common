@@ -66,9 +66,13 @@ public:
 
    //
    // Get the dispatcher
-   Dispatcher &dispatcher() { return _Dispatcher; }
+   Dispatcher &dispatcher(); 
 
 protected:
+
+   //
+   // Function which creates the dispatcher object ...
+   virtual void createDispatcher();
 
    //
    // Actual function which does the work ...
@@ -78,7 +82,7 @@ protected:
 
    //
    // The tasks interface to the system's message router
-   Dispatcher _Dispatcher;
+   Dispatcher *_Dispatcher;
 
 private:
    MessageSystem( const MessageSystem & ); // not implemented

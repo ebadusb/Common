@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/MSGHDR.H 1.4 1999/09/14 16:51:26 TD10216 Exp TD10216 $
- * $Log: MSGHDR.H $
+ * $Header: //bctquad3/HOME/BCT_Development/Common/include/rcs/msghdr.h 1.9 2001/09/21 17:35:18 ms10234 Exp ms10234 $
+ * $Log: msghdr.h $
+ * Revision 1.4  1999/09/14 16:51:26  TD10216
+ * IT4333
  * Revision 1.3  1999/07/13 18:16:10  TD10216
  * IT4130
  * Revision 1.2  1999/05/31 20:35:00  BS04481
@@ -51,18 +53,17 @@
 #define MSGHDR_HPP
 
 // Check to see if this is for the windows version or QNX version.
-//#ifdef __QNX__
+#ifndef _NONTRIMA
 #include <sys/types.h>
 #include <time.h>
-//#else
-// Windows & ~linux
-//#if !defined(__linux__) && !defined(WIN32)
-//struct timespec 
-//{
-//    long    tv_sec;
-//    long    tv_nsec;    
-//};
-//#endif
+#else
+// needed for MSGHDR & not defined in windows
+struct timespec 
+{
+    long    tv_sec;
+    long    tv_nsec;    
+};
+#endif
 
 typedef struct
 {

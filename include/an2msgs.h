@@ -1,8 +1,10 @@
 /*
 * Copyright (c) 1995, 1996 by Cobe BCT, Inc.	All rights reserved.
 *
-* $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.8 1999/09/14 16:51:20 TD10216 Exp TD10216 $
+* $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.11 1999/10/08 17:59:02 TD10216 Exp TD10216 $
 * $Log: AN2MSGS.H $
+* Revision 1.8  1999/09/14 16:51:20  TD10216
+* IT4333
 * Revision 1.7  1999/08/18 17:08:16  TD10216
 * IT4266
 * Revision 1.6  1999/08/13 00:35:40  TD10216
@@ -118,10 +120,12 @@ typedef struct
 	int		iSeqNo;					// packet count since service started
 	int		iSystemState;			// Current system state of the focus system.
 	int		iSubState;				// Current sub-state of the focus system.
-	int		iServices;				// Bit field of START... AN2_SERVICES.
-	int		iFileIndex;				// file index for run data file
 	int		product_number;			// product selected
 	int		cassette_type;			// cassette being used
+			// RESERVOIR_UNKNOWN=0,RESERVOIR_EMPTY,RESERVOIR_LOW,
+			// RESERVOIR_FULL,RESERVOIR_ERROR
+	int		reservoir_state;		
+
 	float	fProcedureTargetTime;	// procedure target time
 	float	fCurrentProcedureTime;	// current procedure time
 	float	fYieldTarget;			// Current projected yield target
@@ -158,6 +162,7 @@ enum AN2_SERVICE_REQUEST_REPSONSE
 	SERVICE_DENIED_LOAD_AGENT_NOT_ENABLED,
 	SERVICE_DENIED_CANNOT_UPDATE_AGENT,
 	SERVICE_DENIED_INVALID_REQUEST_ID,
+	SERVICE_DENIED_DURING_STARTUP,
 };
 
 typedef struct 

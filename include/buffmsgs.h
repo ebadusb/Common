@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/BUFFMSGS.H 1.5 1999/07/28 21:52:24 TD10216 Exp TD10216 $
+ * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/BUFFMSGS.H 1.9 2000/04/13 14:27:08 BD10648 Exp MS10234 $
  * $Log: BUFFMSGS.H $
+ * Revision 1.5  1999/07/28 21:52:24  TD10216
+ * IT4154
  * Revision 1.3  1999/07/23 01:37:15  BS04481
  * Add BasinTempStatus message
  * Revision 1.2  1999/06/30 20:35:41  TD10216
@@ -177,6 +179,7 @@ enum BUFFER_MESSAGES
    TcpgateRegistration,     // External->an2inetd->tcp_gate:register for tcpgate msgs
    ModifyProduct,           // anyone -> proc : modify product (see predict_msgs.h)
    BasinTempStatus,         // safety driver -> anyone who want basin temp data
+	EverestConfigLog,		// Not Sent: Used by Everest to parse log file
 
    LAST_BUFFER_MESSAGE           // don't change this entry
 };
@@ -320,6 +323,7 @@ MsgStructMapEntry MsgStructMap[LAST_BUFFER_MESSAGE+1] =
 	{ TcpgateRegistration, "TCPGate_Reg_ReqStruct" },
 	{ ModifyProduct, "ModifyProductStruct" },
 	{ BasinTempStatus, "basinTemp" },
+	{ EverestConfigLog, "ConfigDataItem" },
 	// don't change this entry
 	{ LAST_BUFFER_MESSAGE, NULL }
 };

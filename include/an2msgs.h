@@ -1,79 +1,8 @@
 /*
 * Copyright (c) 1995, 1996 by Cobe BCT, Inc.	All rights reserved.
 *
-* $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.4 1999/07/16 13:08:45 TD10216 Exp TD10216 $
+* $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.7 1999/08/18 17:08:16 TD10216 Exp TD10216 $
 * $Log: AN2MSGS.H $
-* Revision 1.3  1999/07/13 18:16:06  TD10216
-* IT4130
-* Revision 1.2  1999/06/30 21:40:12  TD10216
-* IT3908
-* Revision 1.1  1999/05/24 23:26:05  TD10216
-* Initial revision
-* Revision 1.26  1999/05/06 19:41:50  TD10216
-* I/T 3841
-* Revision 1.25	1999/04/03 14:53:32	TD10216
-* Revision 1.24	1999/03/29 17:10:37	TD10216
-* Revision 1.23	1998/11/06 22:36:02	TM02109
-* Added WIN32 ifdefs..
-* Revision 1.22	1998/10/22 21:24:14	TD10216
-* add invalid message request id to an2 message request types - used for 
-* invalid requests
-* Revision 1.21	1998/10/20 21:49:53	TM02109
-* Added an2_run_update for running a script from the update 
-* directory during service mode.
-* Revision 1.20	1998/09/24 22:00:36	TM02109
-* Mods for adding a reply port which is different then the default.
-* Also added dataChangedComplete.
-* Revision 1.19	1998/09/18 20:36:09	TM02109
-* Updates to return values.
-* Revision 1.18	1998/09/17 18:36:24	TM02109
-* Updates for the Agent, an2_load_agent, an2_update_config...
-* Revision 1.17	1998/09/03 19:57:32	TM02109
-* an2_load_agent does not need the type of load anymore.
-* Revision 1.16	1998/08/28 00:01:24	TM02109
-* Added the CRC in the agent interface requests.	This will give you
-* consistent data or warn you if you read from a file that is not what
-* you would expect with AGENT_INCONSISTENT_DATA return.
-* Revision 1.15	1998/08/20 23:46:48	TM02109
-* Modified to allow for the proper working function of checking for 
-* conditions which do not allow the service to run and reporting
-* status in both the send_reply but also in LOG_ERROR
-* Revision 1.14	1998/08/19 21:12:11	TM02109
-* Updated for Agent file reading and first level AP2 function.
-* Revision 1.13	1998/08/12 20:53:58	TM02109
-* New an2inetd updates
-* Revision 1.12	1998/08/11 00:16:41	TM02109
-* Modified for AP2 broadcast startup and load_agent startup.
-* Revision 1.11	1998/08/07 23:54:57	TM02109
-* Changes to add Reject code and the code necessary for first level
-* modifications to an2port and an2inetd.
-* Revision 1.10	1997/05/29 18:04:02	SM02805
-* Revision 1.9	1997/01/29 00:02:02	TM02109
-* Added the machine name to the status message.
-* Revision 1.8	1997/01/28 18:06:35	TM02109
-* Modified the status message to send data necessary for setting
-* up a procedure display.
-* Revision 1.7	1997/01/17 04:03:03	TM02109
-* Modified status message to include fs date, time and file index.
-* Revision 1.6	1996/12/26 23:37:48	TM02109
-* Implemented services for masking and unmasking QNX servers. IF 
-* the servers are masked, external qnx commands submitted via qnx
-* IPC are ignored.
-* Revision 1.5	1996/12/17 17:23:43	TM02109
-* Added the request for an2_comd.
-* Revision 1.4	1996/12/13 20:23:28	TM02109
-* Modified to add a password to the requests.
-* Revision 1.3	1996/12/13 16:46:38	TM02109
-* Added service support for disk crc update, status ping reply.
-* Revision 1.2	1996/12/10 17:56:05	TM02109
-* Modified with new services.
-* Revision 1.1	1996/12/10 12:35:55	TM02109
-* Initial revision
-* Revision 1.2	1996/12/09 22:26:54	TM02109
-* Use a char array for the port number.
-* Revision 1.1	1996/12/09 19:06:42	TM02109
-* Initial revision
-*
 * an2msgs.h
 *
 * Abstract : 12/04/96
@@ -330,4 +259,27 @@ typedef struct
 // enums for primitives types found in 1st field of TrimaMsgMap
 enum { mBOOL,mCHAR,mSHORT,mINT,mLONG,mFLOAT,mDOUBLE,mUNSIGNED,mENUM, 
 		mSTRUCT, mUNION, mWCHAR_T, mNONE };
+
+// typedef for structure used in ConfigDataMsg 
+// These are only written to the everest log file and 
+// one item is one message
+#define MAXITEMS 32
+#define MAXNAMELEN 40
+#define MAXVALLEN 16
+// 1 agent dictionary item
+typedef struct
+{
+	char Section[MAXNAMELEN+1];
+	char Key[MAXNAMELEN+1];
+	char Value[MAXVALLEN+1];
+} ConfigDataItem;
+
+// message containing a ConfigDataItem
+typedef struct
+{
+	MSGHEADER hdr;
+	ConfigDataItem ConfigData;
+} ConfigDataMsgStruct;
+
+
 #endif										/* include guard */	

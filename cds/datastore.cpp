@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.14  2002/09/19 21:46:07Z  jl11312
+ * HISTORY:    - added initialization to avoid compiler warning for BUILD_TYPE=PRODUCTION
  * HISTORY:    Revision 1.13  2002/09/18 22:13:57  rm70006
  * HISTORY:    Changed get and set to have built in locking.
  * HISTORY:    Revision 1.12  2002/09/13 20:09:23Z  rm70006
@@ -151,7 +153,6 @@ DataStore::DataStore(char *name, Role role) :
 {
    const int MUTEX_SEM_FLAGS = SEM_Q_PRIORITY | SEM_DELETE_SAFE | SEM_INVERSION_SAFE;
    bool created;
-
 
    if (_debug == 0)
    {
@@ -897,3 +898,92 @@ MultWriteDataStore::MultWriteDataStore(char * name, Role role) :
 MultWriteDataStore::~MultWriteDataStore()
 {
 }
+
+
+
+
+int dump_table_choice;
+
+//
+// Debug routine to dump symbol table entry
+//
+BOOL DumpEntry(char *name, int val, SYM_TYPE type, int arg, UINT16 group)
+{
+   int *data = (int *)val;
+
+   switch (group)
+   {
+   case ITEM_DATA:
+      cout << "DataItem " << name << ",\tvalue " << *data << endl;
+      break;
+
+   case ITEM_SPOOF:
+      if (dump_table_choice > 0)
+         cout << "SpoofItem " << name << ",\tvalue " << *data << endl;
+
+      break;
+
+   case ITEM_PFR_LIST:
+      if (dump_table_choice > 0)
+         cout << "PFRList " << name << ",\tptr " << data << endl;
+
+      break;
+
+   case ITEM_MUTEX_SEMAPHORE:
+      if (dump_table_choice > 0)
+         cout << "MUTEX " << name << ",\tptr " << data << endl;
+
+      break;
+
+   case ITEM_READ_SEMAPHORE:
+      if (dump_table_choice > 0)
+         cout << "READSEM " << name << ",\tptr " << data << endl;
+
+      break;
+
+   case ITEM_WRITE_SEMAPHORE:
+      if (dump_table_choice > 0)
+         cout << "WRITESEM " << name << ",\tptr " << data << endl;
+
+      break;
+
+   case ITEM_SIGNAL_READ:
+      if (dump_table_choice > 0)
+         cout << "SigRead " << name << ",\tvalue " << *data << endl;
+
+      break;
+
+   case ITEM_SIGNAL_WRITE:
+      if (dump_table_choice > 0)
+         cout << "SigWrite " << name << ",\tvalue " << *data << endl;
+
+      break;
+
+   case ITEM_READ_COUNT:
+      if (dump_table_choice > 0)
+         cout << "ReadCount " << name << ",\tvalue " << *data << endl;
+
+      break;
+
+   case ITEM_WRITER_DECLARED:
+      if (dump_table_choice > 0)
+         cout << "WriterDeclared " << name << ",\tvalue " << *data << endl;
+
+      break;
+
+   default:
+      cout << "Symbol " << name << ", val " << data << ", type " << (int)type
+           << ", group " << group << endl;
+   }
+
+   return true;
+}
+
+
+extern "C" void cds_dump (int choice = 0)
+{
+   dump_table_choice = choice;
+
+   symEach (DataStore::getTable(), (FUNCPTR)DumpEntry, 0);
+}
+

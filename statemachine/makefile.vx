@@ -3,6 +3,8 @@
 # Makefile - makefile for proc algorithm library
 #
 # $Log: makefile.vx $
+# Revision 1.1  2003/05/15 15:16:30Z  ms10234
+# Initial revision
 #
 
 ifeq ($(BUILD_TYPE),CLEAN)

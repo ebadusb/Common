@@ -3,6 +3,8 @@
  *
  * $Header: S:/BCT_Development/Common/INCLUDE/rcs/INTMSGS.H 1.6 2000/05/02 21:07:48 MS10234 Exp BD10648 $
  * $Log: INTMSGS.H $
+ * Revision 1.6  2000/05/02 21:07:48  MS10234
+ * Added AKO message from the alarm handler to proc
  * Revision 1.4  1999/08/18 15:01:31  AS10337
  * Added 2 Int32 messages to allow communications between the
  * predict task and the optimizer tasks (IT4080 - optimization hanging)
@@ -138,6 +140,7 @@ enum INT32_MESSAGES
    OptimizerAreYouOk,            // predict -> optimizer: notify me that you are okay....
    Rinseback,                    // message to request transition to rinseback
    AKO,				// message to request ThreeMinutePause action of Proc
+    ConfigUpdateComplete,       // GUI or EOT config.dat changes complete.
 
    // NOTE: Block of last 255 Int32Msg IDs reserved for Spectra
       // Spectra Int32Msgs go here

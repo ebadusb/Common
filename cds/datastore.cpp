@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.22  2002/12/16 18:31:30Z  jl11312
+ * HISTORY:    - checked logging mode before logging semaphore information
  * HISTORY:    Revision 1.21  2002/11/18 18:29:10  jl11312
  * HISTORY:    - modifications to improve compile speed, reduce inline function sizes
  * HISTORY:    Revision 1.20  2002/11/06 15:43:56  rm70006
@@ -159,6 +161,7 @@ void DataStore::CreateSymbolTableEntry()
 {
    const int MUTEX_SEM_FLAGS = SEM_Q_PRIORITY | SEM_DELETE_SAFE | SEM_INVERSION_SAFE;
 
+   DataLog_Critical _fatal;
 
    //
    // Keep track of how many writers there are.  There should only be 1.
@@ -179,10 +182,8 @@ void DataStore::CreateSymbolTableEntry()
                        << ".  Errno " << errnoMsg << "." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "_mutexSemaphore could not be created.");
    }
-	else if (_logging)
-	{
-      DataLog(_debug) << "_mutexSemaphore value(" << hex << _handle->_mutexSemaphore << dec << ")." << endmsg;
-	}
+   else
+      DataLog(log_level_cds_debug) << "_mutexSemaphore value(" << hex << _handle->_mutexSemaphore << dec << ")." << endmsg;
 
    // Create the semaphore.
    _handle->_readSemaphore = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
@@ -194,10 +195,8 @@ void DataStore::CreateSymbolTableEntry()
                           << ".  Errno " << errnoMsg << "." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "_readSemaphore could not be created.");
    }
-	else if (_logging)
-	{
-      DataLog(_debug) << "_readSemaphore value(" << hex << _handle->_readSemaphore << dec << ")." << endmsg;
-   }
+   else
+      DataLog(log_level_cds_debug) << "_readSemaphore value(" << hex << _handle->_readSemaphore << dec << ")." << endmsg;
    
    // Create the semaphore.
    _handle->_writeSemaphore = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
@@ -209,10 +208,8 @@ void DataStore::CreateSymbolTableEntry()
                        << ".  Errno " << errnoMsg << "." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "_writeSemaphore could not be created.");
    }
-	else if (_logging)
-	{
-      DataLog(_debug) << "_writeSemaphore value(" << hex << _handle->_writeSemaphore << dec << ")." << endmsg;
-   }
+   else
+      DataLog(log_level_cds_debug) << "_writeSemaphore value(" << hex << _handle->_writeSemaphore << dec << ")." << endmsg;
 
    //
    // Create symbol names for mutex control flags and assign their values to the member variables.
@@ -243,7 +240,6 @@ void DataStore::CreateSymbolTableEntry()
 DataStore::DataStore(const char *name, Role role) :
    _role(role),
    _name(name),
-   _debug(LOG_DATASTORE),
    _refCount(0)
 {
    bool created;
@@ -275,10 +271,7 @@ DataStore::DataStore(const char *name, Role role) :
       // (element values) to their last state.
       _datastoreList.push_back(this);
 
-      if (_logging)
-      {
-         DataLog(_debug) << "First instance of " << _name << " created.  Saving datastore." << endmsg;
-      }
+      DataLog(log_level_cds_debug) << "First instance of " << _name << " created.  Saving datastore." << endmsg;
    }
 
 #if EVENT_TRACE == 1
@@ -310,7 +303,7 @@ void DataStore::SavePfrData (ofstream &pfrFile)
    //        The restore function will put back in the same order.
    for (DATASTORE_LISTTYPE::iterator datastoreIterator = _datastoreList.begin(); datastoreIterator != _datastoreList.end(); ++datastoreIterator)
    {
-      DataLog((*datastoreIterator)->_debug) << "saving datastore " << (*datastoreIterator)->_name << endmsg;
+      DataLog(log_level_cds_info) << "saving datastore " << (*datastoreIterator)->_name << endmsg;
 
       int count = 0;
 
@@ -321,14 +314,11 @@ void DataStore::SavePfrData (ofstream &pfrFile)
             (*pfrListIterator)->WriteSelf(pfrFile);
             count++;
 
-            if (_logging)
-            {
-               DataLog((*datastoreIterator)->_debug) << "saving element " << count << " in " << (*datastoreIterator)->_name << " to PFR File." << endmsg;
-            }
+            DataLog(log_level_cds_debug) << "saving element " << count << " in " << (*datastoreIterator)->_name << " to PFR File." << endmsg;
          }
       }
 
-      DataLog((*datastoreIterator)->_debug) << "saved " << count << " elements in " << (*datastoreIterator)->_name << "." << endmsg;
+      DataLog(log_level_cds_info) << "saved " << count << " elements in " << (*datastoreIterator)->_name << "." << endmsg;
    }
 }
 
@@ -341,7 +331,7 @@ void DataStore::RestorePfrData (ifstream &pfrFile)
 {
    for (DATASTORE_LISTTYPE::iterator datastoreIterator = _datastoreList.begin(); datastoreIterator != _datastoreList.end(); ++datastoreIterator)
    {
-      DataLog((*datastoreIterator)->_debug) << "restoring datastore " << (*datastoreIterator)->_name << endmsg;
+      DataLog(log_level_cds_info) << "restoring datastore " << (*datastoreIterator)->_name << endmsg;
 
       int count = 0;
 
@@ -352,14 +342,11 @@ void DataStore::RestorePfrData (ifstream &pfrFile)
             (*pfrListIterator)->ReadSelf(pfrFile);
             count++;
 
-            if (_logging)
-            {
-               DataLog((*datastoreIterator)->_debug) << "restoring element " << count << "in " << (*datastoreIterator)->_name << " to PFR File." << endmsg;
-            }
+            DataLog(log_level_cds_debug) << "restoring element " << count << "in " << (*datastoreIterator)->_name << " to PFR File." << endmsg;
          }
       }
 
-      DataLog((*datastoreIterator)->_debug) << "restored " << count << " elements in " << (*datastoreIterator)->_name << "." << endmsg;
+      DataLog(log_level_cds_info) << "restored " << count << " elements in " << (*datastoreIterator)->_name << "." << endmsg;
    }
 }
 
@@ -373,6 +360,7 @@ void DataStore::RestorePfrData (ifstream &pfrFile)
    STATUS status = semTake(sem, wait);                                                \
    if (status != OK)                                                                  \
    {                                                                                  \
+      DataLog_Critical _fatal;                                                        \
       DataLog(_fatal) << "SemTake failed.  Errno " << errnoMsg << ".  " << endmsg;    \
       _FATAL_ERROR(__FILE__, __LINE__, "semTake failed");                             \
    }                                                                                  \
@@ -388,6 +376,7 @@ void DataStore::RestorePfrData (ifstream &pfrFile)
    STATUS status = semGive(sem);                                                      \
    if (status != OK)                                                                  \
    {                                                                                  \
+      DataLog_Critical _fatal;                                                        \
       DataLog(_fatal) << "SemGive failed.  Errno " << errnoMsg << ".  " << endmsg;    \
       _FATAL_ERROR(__FILE__, __LINE__, "semGive failed");                             \
    }                                                                                  \
@@ -403,6 +392,7 @@ void DataStore::RestorePfrData (ifstream &pfrFile)
    STATUS status = semFlush(sem);                                                      \
    if (status != OK)                                                                   \
    {                                                                                   \
+      DataLog_Critical _fatal;                                                         \
       DataLog(_fatal) << "SemFlush failed.  Errno " << errnoMsg << ".  " << endmsg;    \
       _FATAL_ERROR(__FILE__, __LINE__, "semFlush failed");                             \
    }                                                                                   \
@@ -449,12 +439,9 @@ void DataStore::Lock()
       if (_handle->_signalWrite)
       {
 
-         if (_logging)
-         {
-            DataLog(_debug) << "reader " << taskName(taskIdSelf()) << " RBOW in " << _name << ".\t"
-                             << "WF(" << _handle->_signalWrite << ")\t"
-                             << "RF(" << _handle->_signalRead << ")." << endmsg;
-         }
+         DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) << " RBOW in " << _name << ".\t"
+                         << "WF(" << _handle->_signalWrite << ")\t"
+                         << "RF(" << _handle->_signalRead << ")." << endmsg;
          
          END_CRITICAL_SECTION();
 
@@ -463,11 +450,8 @@ void DataStore::Lock()
          // Block waiting for writer
          SEM_TAKE(_handle->_readSemaphore, WAIT_FOREVER);
 
-         if (_logging)
-         {
-            DataLog(_debug) << "reader " << taskName(taskIdSelf()) 
+         DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) 
                              << " unblocked by writer, continuing in " << _name << endmsg;
-         }
          
          // Reset semaphore for next writer
          SEM_GIVE(_handle->_readSemaphore);
@@ -488,11 +472,8 @@ void DataStore::Lock()
          // Signal Writers to block for read
          _handle->_signalRead = true;
 
-         if (_logging)
-         {
-            DataLog(_debug) << "reader " << taskName(taskIdSelf()) << " first reader in " 
+         DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) << " first reader in " 
                              << _name << "(" << _handle->_readCount << ").  Blocking future writers." << endmsg;
-         }
 
          SEM_TAKE(_handle->_writeSemaphore, WAIT_FOREVER);   // Non-blocking
 
@@ -500,13 +481,10 @@ void DataStore::Lock()
       }
       else
       {
-         if (_logging)
-         {
-            DataLog(_debug) << "reader " << taskName(taskIdSelf()) << " free pass (" 
-                             << _handle->_readCount << ") in " << _name << "." << endmsg;
+         DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) << " free pass (" 
+                         << _handle->_readCount << ") in " << _name << "." << endmsg;
 
-            event_type += 0x4;
-         }
+         event_type += 0x4;
       }
 
       END_CRITICAL_SECTION();
@@ -525,23 +503,17 @@ void DataStore::Lock()
 
       if (_handle->_signalRead)
       {
-         if (_logging)
-         {
-            event_type += 0x1;
+         event_type += 0x1;
 
-            DataLog(_debug) << "writer " << taskName(taskIdSelf()) 
+         DataLog(log_level_cds_debug) << "writer " << taskName(taskIdSelf()) 
                              << " blocking future readers in " << _name << "." << endmsg;
-         }
 
          // Block future readers (RBOW).  At this point, we shouldn't block.
          SEM_TAKE(_handle->_readSemaphore, WAIT_FOREVER);    // Non-blocking
 
-         if (_logging)
-         {
-            DataLog(_debug) << "writer " << taskName(taskIdSelf()) << " WBOR in " << _name << ".\t"
+         DataLog(log_level_cds_debug) << "writer " << taskName(taskIdSelf()) << " WBOR in " << _name << ".\t"
                              << "WF(" << _handle->_signalWrite << ")\t"
                              << "RF(" << _handle->_signalRead << ")." << endmsg;
-         }
 
          END_CRITICAL_SECTION();
 
@@ -550,11 +522,8 @@ void DataStore::Lock()
 
          BEGIN_CRITICAL_SECTION();
 
-         if (_logging)
-         {
-            DataLog(_debug) << "writer " << taskName(taskIdSelf()) << " lock in " 
+         DataLog(log_level_cds_debug) << "writer " << taskName(taskIdSelf()) << " lock in " 
                              << _name << "." << endmsg;
-         }
 
          // Give back read semaphore.
          SEM_GIVE(_handle->_writeSemaphore);    // Reset for next reader.
@@ -563,13 +532,10 @@ void DataStore::Lock()
       }
       else
       {
-         if (_logging)
-         {
-            event_type += 0x2;
+         event_type += 0x2;
 
-            DataLog(_debug) << "writer " << taskName(taskIdSelf()) << " lock in " 
+         DataLog(log_level_cds_debug) << "writer " << taskName(taskIdSelf()) << " lock in " 
                              << _name << "." << endmsg;
-         }
 
          // Block future writers (RBOW).  At this point, we shouldn't block.
          SEM_TAKE(_handle->_readSemaphore, WAIT_FOREVER);    // Non-blocking
@@ -617,12 +583,9 @@ void DataStore::Unlock()
          // Clear/Reset read flag
          _handle->_signalRead = false;
 
-         if (_logging)
-         {
-            DataLog(_debug) << "reader " << taskName(taskIdSelf()) << " released SEMWRITE in " << _name 
+         DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) << " released SEMWRITE in " << _name 
                              << ". WF(" << _handle->_signalWrite << ") "
                              << "RC(" << _handle->_readCount << ")." << endmsg;
-         }
       }
       else if (_handle->_readCount == 0)   // No more readers.
       {
@@ -634,22 +597,16 @@ void DataStore::Unlock()
          // Clear/Reset read flag
          _handle->_signalRead = false;
 
-         if (_logging)
-         {
-            DataLog(_debug) << "reader " << taskName(taskIdSelf()) << " released SEMWRITE in " << _name 
+         DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) << " released SEMWRITE in " << _name 
                              << ". No more readers.  WF(" << _handle->_signalWrite << ")." << endmsg;
-         }
       }
       else
       {
          event_type += 0x4;
 
-         if (_logging)
-         {
-            DataLog(_debug) << "reader " << taskName(taskIdSelf()) << " free out in " << _name << ".  "
+         DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) << " free out in " << _name << ".  "
                              << "RF(" << _handle->_signalRead << ") "
                              << "RC(" << _handle->_readCount << ")." << endmsg;
-         }
       }
 
       END_CRITICAL_SECTION();
@@ -663,12 +620,9 @@ void DataStore::Unlock()
 
       BEGIN_CRITICAL_SECTION();
 
-      if (_logging)
-      {
-         DataLog(_debug) << "writer " << taskName(taskIdSelf()) << " releasing SEMREAD in " << _name 
-                          << ". WF(" << _handle->_signalWrite << ") "
-                          << "RF(" << _handle->_signalRead << ")." << endmsg;
-      }
+      DataLog(log_level_cds_debug) << "writer " << taskName(taskIdSelf()) << " releasing SEMREAD in " << _name 
+                      << ". WF(" << _handle->_signalWrite << ") "
+                      << "RF(" << _handle->_signalRead << ")." << endmsg;
 
       // Clear the Write signal
       _handle->_signalWrite = false;
@@ -696,6 +650,7 @@ void DataStore::GetSymbolName(string &s, const BIND_ITEM_TYPE item)
 {
    int size = 0;
    const int s_len = s.size();
+   DataLog_Critical _fatal;                                                        \
 
    // Create the Symbol name to search for.
    switch (item)
@@ -752,7 +707,7 @@ SingleWriteDataStore::~SingleWriteDataStore()
    if (GetRole() == ROLE_RW)
    {
       _handle->_writerDeclared = false;
-      DataLog(_debug) << "Writer exited for CDS " << Name() << "." << endmsg;
+      DataLog(log_level_cds_info) << "Writer exited for CDS " << Name() << "." << endmsg;
    }
 }
 
@@ -769,6 +724,7 @@ void SingleWriteDataStore::CheckForMultipleWriters()
       if (_handle->_writerDeclared)
       {
          // This is an error.
+         DataLog_Critical _fatal;                                                        \
          DataLog(_fatal) << "Error.  Multiple Writers Declared for CDS " << Name() << ".  Abort!!!!!!" << endmsg;
          _FATAL_ERROR(__FILE__, __LINE__, "Datastore multiple writers");
          return;

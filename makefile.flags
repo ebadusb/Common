@@ -3,6 +3,11 @@
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags $
+# Revision 1.5  2002/04/18 14:27:17  jl11312
+# - updated compile flags
+# - added link command and flags
+# - added grep command
+# - added munch command
 # Revision 1.4  2002/04/15 21:25:20  sb07663
 # Added definitions for nm utility
 # Revision 1.3  2002/04/12 17:02:39  sb07663
@@ -12,6 +17,19 @@
 # - added default for CPU to I80486
 # Revision 1.1  2002/04/10 14:39:55  jl11312
 # Initial revision
+#
+
+#
+# Several variables are assigned only if not previously overridden.  These
+# variables are surrounded by ifndef/endif directives.  Note that special
+# handling is required to force the variables to be empty.  Completely
+# empty variables are treated as not defined, so an override of the form
+#   ARCH_FLAGS :=
+# will not work.  Instead use something like
+#   ARCH_FLAGS := $(NOSUCHVARIABLE) $(NOSUCHVARIABLE)
+# where NOSUCHVARIABLE does not exist.  This forces ARCH_FLAGS to be defined
+# as the string containing one space (and thus to be treated as defined
+# by GNU make).
 #
 
 #
@@ -46,14 +64,34 @@ NM = nm386 -g
 GREP = grep -m
 MUNCH = wtxtcl $(WIND_BASE)/host/src/hutils/munch.tcl -asm 386
 
-ARCH_FLAGS = -DCPU=I80486 -m486 -DVXWORKS -nostdinc
-AS_ARCH_FLAGS  = $(ARCH_FLAGS)
-CPP_ARCH_FLAGS = $(ARCH_FLAGS)
-CC_ARCH_FLAGS  = $(ARCH_FLAGS) -fno-builtin -fno-defer-pop
-CXX_ARCH_FLAGS = $(ARCH_FLAGS) -Wstrict-prototypes -fno-builtin -fno-defer-pop
-LD_ARCH_FLAGS  = -r -X -L$(WIND_BASE)/target/lib
-LD_LIBS        = -lI80486gnuvx
-LD_ARCH_RELOC  =
+ifndef ARCH_FLAGS
+ARCH_FLAGS := -DCPU=I80486 -m486 -DVXWORKS -nostdinc
+endif
+
+ifndef AS_ARCH_FLAGS
+AS_ARCH_FLAGS := $(ARCH_FLAGS) -xassembler-with-cpp
+endif
+
+ifndef CPP_ARCH_FLAGS
+CPP_ARCH_FLAGS := $(ARCH_FLAGS)
+endif
+
+ifndef CC_ARCH_FLAGS
+CC_ARCH_FLAGS := $(ARCH_FLAGS) -fno-builtin -fno-defer-pop
+endif
+
+ifndef CXX_ARCH_FLAGS
+CXX_ARCH_FLAGS := $(ARCH_FLAGS) -Wstrict-prototypes -fno-builtin -fno-defer-pop
+endif
+
+ifndef LD_ARCH_FLAGS
+LD_ARCH_FLAGS := -r -X
+endif
+
+ifndef LD_ARCH_RELOC
+LD_ARCH_RELOC :=
+endif
+
 endif
 
 ifeq ($(CPU),SIMNT)
@@ -67,14 +105,34 @@ NM = nmsimpc -g
 GREP = grep -m
 MUNCH = wtxtcl $(WIND_BASE)/host/src/hutils/munch.tcl -asm simpc
 
-ARCH_FLAGS = -DCPU=SIMNT -U__WINNT -UWIN32 -U__WINNT__ -UWINNT -U__MINGW32__ -U_WIN32 -U__WIN32 -U__WIN32__ -U__WIN32 -mpentium -DVXWORKS -nostdinc
-AS_ARCH_FLAGS  = $(ARCH_FLAGS)
-CPP_ARCH_FLAGS = $(ARCH_FLAGS)
-CC_ARCH_FLAGS  = $(ARCH_FLAGS) -fno-builtin -fno-defer-pop
-CXX_ARCH_FLAGS = $(ARCH_FLAGS) -Wstrict-prototypes -fno-builtin -fno-defer-pop
-LD_ARCH_FLAGS  = -r -X -L$(WIND_BASE)/target/lib
-LD_LIBS        = -lSIMNTgnuvx
-LD_ARCH_RELOC  = --force-stabs-reloc
+ifndef ARCH_FLAGS
+ARCH_FLAGS := -DCPU=SIMNT -U__WINNT -UWIN32 -U__WINNT__ -UWINNT -U__MINGW32__ -U_WIN32 -U__WIN32 -U__WIN32__ -U__WIN32 -mpentium -DVXWORKS -nostdinc
+endif
+
+ifndef AS_ARCH_FLAGS
+AS_ARCH_FLAGS := $(ARCH_FLAGS) -xassembler-with-cpp
+endif
+
+ifndef CPP_ARCH_FLAGS
+CPP_ARCH_FLAGS := $(ARCH_FLAGS)
+endif
+
+ifndef CC_ARCH_FLAGS
+CC_ARCH_FLAGS := $(ARCH_FLAGS) -fno-builtin -fno-defer-pop
+endif
+
+ifndef CXX_ARCH_FLAGS
+CXX_ARCH_FLAGS := $(ARCH_FLAGS) -Wstrict-prototypes -fno-builtin -fno-defer-pop
+endif
+
+ifndef LD_ARCH_FLAGS
+LD_ARCH_FLAGS := -r -X
+endif
+
+ifndef LD_ARCH_RELOC
+LD_ARCH_RELOC := --force-stabs-reloc
+endif
+
 endif
 
 #
@@ -82,11 +140,25 @@ endif
 # the build type.
 #
 ifeq ($(BUILD_TYPE), PRODUCTION)
-DBGFLAGS = -DPRODUCTION_BUILD
-OPTFLAGS = -O2 -Wuninitialized
+
+ifndef DBGFLAGS
+DBGFLAGS := -DPRODUCTION_BUILD
+endif
+
+ifndef OPTFLAGS
+OPTFLAGS := -O2 -Wuninitialized
+endif
+
 else
-DBGFLAGS = -g -DDEBUG_BUILD
-OPTFLAGS =
+
+ifndef DBGFLAGS
+DBGFLAGS := -g -DDEBUG_BUILD
+endif
+
+ifndef OPTFLAGS
+OPTFLAGS :=
+endif
+
 endif
 
 #
@@ -110,7 +182,9 @@ ADDN_INCDIR ?=
 # optimization to be enabled.  unused causes false warnings on certain class
 # declarations in this version of the GNU compiler and so must be left out.
 #
-WARNFLAGS = -Werror -Wmissing-prototypes \
-            -Wmissing-declarations -Wchar-subscripts -Wcomment -Wformat \
-	    -Wimplicit -Wparentheses -Wreturn-type -Wswitch -Wtrigraphs
+ifndef WARNFLAGS
+WARNFLAGS := -Werror -Wmissing-prototypes \
+             -Wmissing-declarations -Wchar-subscripts -Wcomment -Wformat \
+	     -Wimplicit -Wparentheses -Wreturn-type -Wswitch -Wtrigraphs
+endif  
 

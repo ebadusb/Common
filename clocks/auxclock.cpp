@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 2002 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //Bctquad3/home/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.6 2002/07/18 13:18:37 pn02526 Exp pn02526 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.10 2002/12/16 18:30:25Z jl11312 Exp ms10234 $
  * $Log: auxclock.cpp $
+ * Revision 1.6  2002/07/18 13:18:37  pn02526
+ * Change notification interface to use microseconds rather than ticks.
  * Revision 1.5  2002/07/02 10:06:04  ms10234
  * Removed a check to see in the interrupt was enabled inside the function which enabled the interrupt.
  * Revision 1.4  2002/06/19 22:53:29  pn02526
@@ -295,7 +297,9 @@ int auxClockMsgPktReceive( mqd_t MsgPktQDes, long long *pMuSec /* Pointer to buf
 /* Return the notification overrun count. */
 unsigned long int auxClockNotificationOverruns()
 {
-    return auxClockNotifyOverruns;
+    unsigned long int overruns = auxClockNotifyOverruns;
+    auxClockNotifyOverruns = 0;
+    return overruns;
 }
 
 /* Return the notification count. */

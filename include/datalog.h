@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.20  2003/02/25 16:12:00  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.19  2003/02/06 20:42:01  jl11312
  * - added support for binary record type
  * - added support for symbolic node names in networked configurations
@@ -90,12 +92,12 @@ extern "C" {
  */
 #ifdef DATALOG_NETWORK_SUPPORT
 
-DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * nodeName);
+DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * nodeName, const char * platformInfo);
 DataLog_Result datalog_InitNet(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * ipAddress, int port, long connectTimeout, const char * nodeName);
 
 #else /* ifdef DATALOG_NETWORK_SUPPORT */
 
-DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName);
+DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * platformInfo);
 
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
@@ -435,7 +437,7 @@ protected:
 class DataLog_LocalOutputTask : public DataLog_OutputTask
 {
 public:
-	DataLog_LocalOutputTask(const char * platformName, const char * nodeName = NULL);
+	DataLog_LocalOutputTask(const char * platformName, const char * nodeName = NULL, const char * platformInfo = NULL);
 	virtual ~DataLog_LocalOutputTask() {}
 
 protected:
@@ -445,7 +447,7 @@ protected:
 	virtual void shutdown(void);
 	virtual void flushOutput(void);
 
-	void writeLogFileHeader(const char * platformName, const char * nodeName);
+	void writeLogFileHeader(const char * platformName, const char * nodeName, const char * platformInfo);
 	void writeFileCloseRecord(void);
 
 private:

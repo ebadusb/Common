@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.16 2003/10/03 12:32:57Z jl11312 Exp rm70006 $
  * $Log: datalog_port.h $
+ * Revision 1.12  2003/02/25 16:12:01  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.11  2003/02/06 20:42:04  jl11312
  * - added support for binary record type
  * - added support for symbolic node names in networked configurations
@@ -204,7 +206,7 @@ void datalog_SetupPeriodicSignal(const char * signalName, long milliSeconds);
 /*
  *	Data log task related functions
  */
-void datalog_StartLocalOutputTask(const char * platformName, const char * nodeName);
+void datalog_StartLocalOutputTask(const char * platformName, const char * nodeName, const char * platformInfo);
 void datalog_StartNetworkOutputTask(long connectTimeout, const char * nodeName);
 void datalog_StartPeriodicLogTask(DataLog_SetHandle set);
 

@@ -1229,7 +1229,8 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
          {
             //
             // Check for socket connection status.
-            if ( _GatewayConnSynchedMap[ (*sockiter).first ] != Router::NoConn )
+            if (    _GatewayConnSynchedMap[ (*sockiter).first ] != Router::NoConn 
+                 && (*sockiter).second != ERROR )
             {
                //
                // Save the fact that we registered this message with this node ...

@@ -1,34 +1,39 @@
-# @(#) $Header: I:/BCT_Development/vxWorks/Common/socket++/rcs/makefile.vx 1.1 2002/04/30 19:25:43Z rm70006 Exp rm70006 $
+# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/socket++/rcs/makefile.vx 1.6 2002/06/18 16:52:59 jl11312 Exp ms10234 $
 #
-# Makefile.vx - main Trima makefile
+# Makefile - makefile for socket++ library
 #
 # $Log: makefile.vx $
-# Revision 1.1  2002/04/30 19:25:18Z  rm70006
-# Initial revision
 #
 
 .PHONY: all
-all: check_opt_change common
+all: check_opt_change lib
 
-MAINDIR = .
+#
+# MAINDIR should be set to the relative path from this makefile directory
+# to the base trima project directory.  MAINDIR must use \ (DOS/Windows
+# style) directory separators if they are needed.
+#
+MAINDIR = ..
 include $(MAINDIR)/makefile.vxc
 
-.PHONY: common
-common:
-	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
-#	@cd convert && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
-#	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
-#	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
+#
+# The following should define all of the source files of each type
+# to be compiled for the library
+#
+LIB_C_FILES   = 
+LIB_CXX_FILES = sockinet.cpp sockstream.cpp
+LIB_S_FILES =
 
-socket++:
-	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
-       
+#
+# The following should define the location of the resulting library.  Note
+# that ARCHIVE_DIR is used in DOS shell commands, and must use \ directory
+# separators.
+#
+ARCHIVE_NAME = libcommonsocket.a
+ARCHIVE_DIR = $(MAINDIR)\lib
 
+#
+# This is the standard makefile for Trima libraries
+#
+include $(MAINDIR)/makefile.lib
 
-.PHONY: clean
-clean:
-	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
-#	@cd convert && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
-#	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
-#	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
- 

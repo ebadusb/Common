@@ -6,6 +6,9 @@
  * CHANGELOG:
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.cpp 1.10 2003/06/26 22:33:44Z jl11312 Exp MS10234 $
  * $Log: softcrc.cpp $
+ * Revision 1.8  2003/05/13 15:04:00Z  jl11312
+ * - completed vxWorks port
+ * - modified to allow compiling as both a vxWorks and a Win32 program
  * Revision 1.7  2002/11/20 17:15:00Z  rm70006
  * Change code to keep format string literal to keep compiler from whining.
  * Revision 1.6  2002/09/20 19:30:23Z  td07711
@@ -892,6 +895,33 @@ int softcrc(const char* options)
 
 int main(int argc, char ** argv)
 {
+	if ( argc == 3 &&
+		  strcmp(argv[1], "-string") == 0 )
+	{
+		// Special case - just CRC the specified string
+		unsigned long	crc = 0;
+		crcgen32(&crc, (unsigned char *)argv[2], strlen(argv[2]));
+
+		printf("String CRC=%08lx\n", crc);
+		return 0;
+   }
+	else if ( argc >= 3 &&
+				 strcmp(argv[1], "-values") == 0 )
+	{
+		// Special case - CRC a list of unsigned long values
+		unsigned long	crc = 0;
+		unsigned long	value;
+
+		for ( int i=2; i<argc; i++ )
+		{
+			sscanf(argv[i], "%lx", &value);
+			crcgen32(&crc, (unsigned char *)&value, sizeof(value));
+		}
+
+		printf("Value list CRC=%08lx\n", crc);
+		return 0;
+	}
+
    // concatenate the command line options into a single string
    // to allow use of the same interface as vxWorks
    size_t   optLength = 1;

@@ -288,6 +288,25 @@ void Dispatcher :: dump( ostream &outs )
    set< MessageBase* >::iterator siter;
    map< unsigned long, set< MessageBase* > >::iterator miter;
 
+   // mq_attr qattributes;
+   // if ( _MyQueue != (mqd_t)0 ) mq_getattr( _MyQueue, &qattributes );
+   outs << " MyQueue: " << hex << (long)_MyQueue 
+        // << "  flags " << qattributes.mq_flags
+        // << "  size " << qattributes.mq_curmsgs
+        // << "  maxsize " << qattributes.mq_maxmsg 
+        << endl;
+   // if ( _RQueue != (mqd_t)0 ) mq_getattr( _RQueue, &qattributes );
+   outs << " RouterQueue: " << hex << (long)_RQueue 
+        // << "  flags " << qattributes.mq_flags
+        // << "  size " << qattributes.mq_curmsgs
+        // << "  maxsize " << qattributes.mq_maxmsg 
+        << endl;
+   // if ( _TimerQueue != (mqd_t)0 ) mq_getattr( _TimerQueue, &qattributes );
+   outs << " MsgSysTimerQueue: " << hex << (long)_TimerQueue 
+        // << "  flags " << qattributes.mq_flags
+        // << "  size " << qattributes.mq_curmsgs
+        // << "  maxsize " << qattributes.mq_maxmsg 
+        << endl;
    outs << "Map size = " << dec << _MessageMap.size() << " " << (int)(_MessageMap.begin() == _MessageMap.end()) << endl;
    for ( miter = _MessageMap.begin() ; 
          miter != _MessageMap.end() ;

@@ -234,9 +234,22 @@ void MsgSysTimer::maintainTimers()
 void MsgSysTimer::dump( ostream &outs )
 {
    outs << "??????????????????????? MsgSysTimer DUMP ??????????????????????????" << endl;
-   outs << " Time: " << dec << ((unsigned long)_Time) << endl;
-   outs << " TimerMQueue: " << hex << (long)_TimerMQ << endl;
-   outs << " RouterMQueue: " << hex << (long)_RouterMQ << endl;
+   // mq_attr qattributes;
+   // if ( _TimerMQ != (mqd_t)0 ) mq_getattr( _TimerMQ, &qattributes );
+   outs << " MsgSysTimerQueue: " << hex << (long)_TimerMQ 
+        // << "  flags " << qattributes.mq_flags
+        // << "  size " << qattributes.mq_curmsgs
+        // << "  maxsize " << qattributes.mq_maxmsg 
+        << endl;
+   // if ( _RouterMQ != (mqd_t)0 ) mq_getattr( _RouterMQ, &qattributes );
+   outs << " RouterQueue: " << hex << (long)_RouterMQ 
+        // << "  flags " << qattributes.mq_flags
+        // << "  size " << qattributes.mq_curmsgs
+        // << "  maxsize " << qattributes.mq_maxmsg 
+        << endl;
+
+   outs << endl 
+        << " Time: " << dec << ((unsigned long)_Time) << endl;
    outs << " StopLoop: " << _StopLoop << endl;
 
    outs << " Timer Message Map: size " << dec << _TimerMsgMap.size() << endl;

@@ -133,18 +133,9 @@ bool Router::init()
    {
       //
       // Error ...
-      int errorNo = errnoGet();
       DataLog_Critical criticalLog;
       DataLog(criticalLog) << "Router message queue open failed" << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Router message queue open failed" );
-      return false;
-   }
-
-   if ( initGateways() == false )
-   {
-      //
-      // Error ...
-      _FATAL_ERROR( __FILE__, __LINE__, "Router init gateways failed" );
       return false;
    }
 
@@ -159,15 +150,21 @@ bool Router::init()
    if ( _TimerQueue == (mqd_t)ERROR )
    {
       //
-      // ... error, the timer task should already have opened the queue
-      //  before connecting to the router.
-      //
       // Error ...
-      DataLog_Level lglvl( LOG_ERROR );
-      DataLog(lglvl) << "Timer message queue open failed" << endmsg;
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "Timer message queue open failed" << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Timer message queue open failed" );
       return false;
    }
+
+   if ( initGateways() == false )
+   {
+      //
+      // Error ...
+      _FATAL_ERROR( __FILE__, __LINE__, "Router init gateways failed" );
+      return false;
+   }
+
    //
    // Set the static pointer to ensure we only init once ...
    _TheRouter = this;
@@ -232,8 +229,20 @@ void Router::dispatchMessages()
 void Router::dump( ostream &outs )
 {
    outs << "------------------------- Router DUMP -----------------------------" << endl;
-   outs << " RouterQueue: " << hex << (long)_RouterQueue << endl;
-   outs << " MsgSysTimerQueue: " << hex << (long)_TimerQueue << endl;
+
+   // mq_attr qattributes;
+   // if ( _RouterQueue != (mqd_t)0 ) mq_getattr( _RouterQueue, &qattributes );
+   outs << " RouterQueue: " << hex << (long)_RouterQueue 
+        // << "  flags " << qattributes.mq_flags
+        // << "  size " << qattributes.mq_curmsgs
+        // << "  maxsize " << qattributes.mq_maxmsg 
+        << endl;
+   // if ( _TimerQueue != (mqd_t)0 ) mq_getattr( _TimerQueue, &qattributes );
+   outs << " MsgSysTimerQueue: " << hex << (long)_TimerQueue 
+        // << "  flags " << qattributes.mq_flags
+        // << "  size " << qattributes.mq_curmsgs
+        // << "  maxsize " << qattributes.mq_maxmsg 
+        << endl;
 
    outs << " Message Integrity Map: size " << dec << _MsgIntegrityMap.size() << endl;
    map< unsigned long, string >::iterator miiter;                                 // _MsgIntegrityMap;
@@ -264,7 +273,12 @@ void Router::dump( ostream &outs )
          tqiter != _TaskQueueMap.end() ;
          tqiter++ )
    {
-      outs << "  Tid " << hex << (*tqiter).first << " " << hex << (long)(*tqiter).second << endl;
+      // if ( (*tqiter).second != (mqd_t)0 ) mq_getattr( (*tqiter).second, &qattributes );
+      outs << "  Tid " << hex << (*tqiter).first << " " << hex << (long)(*tqiter).second
+           // << "  flags " << qattributes.mq_flags
+           // << "  size " << qattributes.mq_curmsgs
+           // << "  maxsize " << qattributes.mq_maxmsg 
+           << endl;
    }
    outs << " Message Gateway Map: size " << dec << _MessageGatewayMap.size() << endl;
    map< unsigned long, set< unsigned long > >::iterator mgiter;                   // _MessageGatewayMap;
@@ -288,6 +302,14 @@ void Router::dump( ostream &outs )
          igiter++ )
    {
       outs << "  Address " << hex << (*igiter).first << endl;
+   }
+   outs << " Gateway Connection Attempts Map: size " << dec << _GatewayConnAtmptMap.size() << endl;
+   map< unsigned long, unsigned int >::iterator gcaiter;                           // _GatewayConnAtmptMap;
+   for ( gcaiter  = _GatewayConnAtmptMap.begin() ;
+         gcaiter != _GatewayConnAtmptMap.end() ;
+         gcaiter++ )
+   {
+      outs << "  Address " << hex << (*gcaiter).first << " conn attempts: " << (*gcaiter).second << endl;
    }
    outs << " Spoofer Message Map: size " << dec << _SpooferMsgMap.size() << endl;
    map< unsigned long, unsigned long >::iterator smiter;                            // _SpooferMsgMap;
@@ -344,16 +366,21 @@ bool Router::initGateways()
    
          //
          // Send the message packet to connect to the gateways ...
+         unsigned long timeDelay = ( MessageSystemConstant::CONNECT_DELAY * 4 );
+         unsigned long timerMsgId;
+         crcgen32( &timerMsgId, (const unsigned char*)gateName, strlen( gateName ) );
+         checkMessageId( timerMsgId, gateName );
+
          MessagePacket mp;
          mp.msgData().osCode( MessageData::GATEWAY_CONNECT );
-         mp.msgData().msgId( 0 );
+         mp.msgData().msgId( timerMsgId );
          mp.msgData().nodeId( netAddress );
          mp.msgData().taskId( taskIdSelf() );
          mp.msgData().msgLength( sizeof( short ) );
          mp.msgData().totalNum( 1 );
          mp.msgData().seqNum( 1 );
          mp.msgData().packetLength( sizeof( short ) );
-         mp.msgData().msg( (unsigned char*)&(MessageSystemConstant::CONNECT_DELAY), 
+         mp.msgData().msg( (unsigned char*)&timeDelay, 
                            sizeof( unsigned int ) );
          mp.updateCRC();
          sendMessage( mp, _TimerQueue, taskIdSelf(), 0 );
@@ -478,6 +505,7 @@ void Router::connectWithGateway( const MessagePacket &mp )
          // Increment the connection attempts flag for this gatway ...
          _GatewayConnAtmptMap[ mp.msgData().nodeId() ]++;
 
+#ifndef SIMNT
          //
          // Log the connection failure after every 20 attempts ...
          if ( _GatewayConnAtmptMap[ mp.msgData().nodeId() ]%20 == 0 )
@@ -486,10 +514,7 @@ void Router::connectWithGateway( const MessagePacket &mp )
             DataLog( elog ) << "Connect with gateway=" << hex << mp.msgData().nodeId() 
                                  << " failed with error-" << strerror( status ) << endmsg;
          }
-
-         //
-         // Start a timer to trigger a retry ...
-         sendMessage( mp, _TimerQueue, taskIdSelf(), 0 );
+#endif
 
          //
          // ... give back my socket memory.

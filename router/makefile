@@ -27,12 +27,12 @@ PROGRAMS=$(GATEWAY) $(PEARLYGATE)
 MQUEUE_LIB=/usr/lib/mqueue3r.lib
 
 CPPSRCS=\
-	new.cpp dispatch.cpp phdspat.cpp spoofdsp.cpp \
-	debugclass.cpp callback.cpp
+        new.cpp dispatch.cpp phdspat.cpp spoofdsp.cpp \
+        debugclass.cpp callback.cpp kernaltime.cpp timedispatch.cpp
 CPPOBJS=${CPPSRCS:.cpp=.o}
 
 CSRCS=gateway.c router.c pearlyg.c sinver.c \
-	crc.c mq_check.c error.c debug.c
+        crc.c mq_check.c error.c debug.c
 COBJS=${CSRCS:.c=.o}
 
 SRCS=${CPPSRCS} ${CSRCS}
@@ -41,16 +41,16 @@ OBJS= ${CPPOBJS} ${COBJS}
 all: $(LIBDIR)/$(ROUTERLIB) $(PROGRAMS)
 
 $(GATEWAY): gateway.o $(LIBDIR)/$(ROUTERLIB)
-	$(LD) $(LDFLAGS) gateway.o $(ROUTERLIB) -o $(GATEWAY)
+        $(LD) $(LDFLAGS) gateway.o $(ROUTERLIB) -o $(GATEWAY)
 
 $(PEARLYGATE) : pearlyg.o $(LIBDIR)/$(ROUTERLIB)
-	$(LD) $(LDFLAGS) pearlyg.o $(ROUTERLIB) -o $(PEARLYGATE)
+        $(LD) $(LDFLAGS) pearlyg.o $(ROUTERLIB) -o $(PEARLYGATE)
 
-$(LIBDIR)/$(ROUTERLIB) : new.o dispatch.o crc.o sinver.o phdspat.o \
-		spoofdsp.o mq_check.o error.o debugclass.o debug.o callback.o router.o
-		$(LIB_BLD_CMD) $(LIBDIR)/$(ROUTERLIB) +$(MQUEUE_LIB) +new.o +dispatch.o +crc.o \
-		+sinver.o +phdspat.o +spoofdsp.o +mq_check.o +error.o +router.o \
-		+debug.o +debugclass.o +callback.o
+$(LIBDIR)/$(ROUTERLIB) : new.o dispatch.o crc.o sinver.o phdspat.o kernaltime.o timedispatch.o \
+                spoofdsp.o mq_check.o error.o debugclass.o debug.o callback.o router.o
+                $(LIB_BLD_CMD) $(LIBDIR)/$(ROUTERLIB) +$(MQUEUE_LIB) +new.o +dispatch.o +crc.o \
+                +sinver.o +phdspat.o +spoofdsp.o +mq_check.o +error.o +router.o \
+                +kernaltime.o +timedispatch.o +debug.o +debugclass.o +callback.o
 
 #
 # setup commonsharedtargets.mk

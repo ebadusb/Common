@@ -155,7 +155,7 @@ short getGatewayPort()
    // Determine my connection port ...
    for ( paiter = portAddressMap.begin() ;
          paiter != portAddressMap.end() ;
-         paiter++ )
+         ++paiter )
    {
       if ( (*paiter).second == getNetworkAddress() )
          return (*paiter).first;

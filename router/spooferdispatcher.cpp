@@ -45,7 +45,7 @@ void SpooferDispatcher :: spoofMessage( MessageBase &mb, const CallbackBase &cb 
    list< MessagePacket* >::iterator pckt;
    for ( pckt  = mb._PacketList.begin();
          pckt != mb._PacketList.end() ;
-         pckt++ ) 
+         ++pckt ) 
    {
       if ( (*pckt)->msgData().osCode() == MessageData::DISTRIBUTE_GLOBALLY )
          (*pckt)->msgData().osCode( MessageData::SPOOFED_GLOBALLY );
@@ -93,7 +93,7 @@ void SpooferDispatcher :: despoofMessage( MessageBase &mb )
    list< MessagePacket* >::iterator pckt;
    for ( pckt  = mb._PacketList.begin();
          pckt != mb._PacketList.end() ;
-         pckt++ ) 
+         ++pckt ) 
    {
       if ( (*pckt)->msgData().osCode() == MessageData::SPOOFED_GLOBALLY )
          (*pckt)->msgData().osCode( MessageData::DISTRIBUTE_GLOBALLY );
@@ -134,7 +134,7 @@ void SpooferDispatcher :: processMessage( MessagePacket &mp )
       map< const MessageBase*, CallbackBase >::iterator spiter;
       for ( spiter = _SpoofedMsgMap.begin() ;
             spiter != _SpoofedMsgMap.end() ;
-            spiter++ )
+            ++spiter )
       {
          //
          // if the message id of the message packet contains an

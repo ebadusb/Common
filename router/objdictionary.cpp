@@ -127,7 +127,7 @@ int ObjDictionary :: valid( const char *n )
    list< ObjDictionaryEntry* >::iterator entry;
    for ( entry = _ObjEntries.begin();
          entry != _ObjEntries.end() ;
-         entry++ ) 
+         ++entry ) 
    {
       if ( *(*entry) == n )
       {
@@ -143,7 +143,7 @@ void ObjDictionary :: dump( ostream &outs )
    list< ObjDictionaryEntry* >::iterator entry;
    for ( entry = _ObjEntries.begin();
          entry != _ObjEntries.end() ;
-         entry++ ) 
+         ++entry ) 
    {
       outs << " dictionary entry: " <<  (*entry)->className() << endmsg;
    }
@@ -156,7 +156,7 @@ ObjDictionaryEntry *ObjDictionary :: findEntry( const char *n )
    list< ObjDictionaryEntry* >::iterator entry;
    for ( entry = _ObjEntries.begin();
          entry != _ObjEntries.end() ;
-         entry++ ) 
+         ++entry ) 
    {
       if ( *(*entry) == n )
       {

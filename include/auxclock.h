@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 2002 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/auxclock.h 1.6 2002/12/16 18:29:31Z jl11312 Exp ms10234 $
+ * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/auxclock.h 1.9 2004/01/26 18:51:21Z jl11312 Exp jl11312 $
  * $Log: auxclock.h $
+ * Revision 1.6  2002/12/16 18:29:31Z  jl11312
+ * - optimized low-level timer related functions
  * Revision 1.5  2002/12/13 19:03:06  pn02526
  * Reinstate Semaphore handling in order to facillitate optimizing hardware driver tasks.
  * Revision 1.4  2002/07/18 13:18:22  pn02526
@@ -45,6 +47,9 @@ void auxClockInit();
 
 /* Get the current value of the raw auxClock time. */
 void auxClockTimeGet(rawTime *);
+
+/* Get the time the auxClock was initialized. */
+void auxClockInitTimeGet(timespec *);
 
 /* Enable the auxClock Semaphore to toggle every given number of microseconds. */
 void auxClockSemaphoreEnable( unsigned int /* number of microseconds */ );

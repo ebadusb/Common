@@ -123,7 +123,7 @@ bool Router::init()
    //
    unsigned int retries=0;
    while (    ( _RouterQueue = mq_open( "router", O_RDWR | O_CREAT , 0666, &attr) ) == (mqd_t)ERROR 
-           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
+           && ++retries < MessageSystemConstant::MAX_NUM_RETRIES ) 
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    if ( _RouterQueue == (mqd_t)ERROR )
    {
@@ -189,7 +189,7 @@ void Router::dispatchMessages()
       // Read the queue entry ...
       unsigned int retries=0;
       while (    ( size = mq_receive( _RouterQueue, &buffer, sizeof( MessagePacket ), &priority ) ) == ERROR 
-              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
+              && ++retries < MessageSystemConstant::MAX_NUM_RETRIES ) 
       {
          nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
       }
@@ -221,7 +221,7 @@ void Router::dispatchMessages()
                               << hex << mp.msgData().msgId() 
                               << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ")" 
                               << ", CRC=" << crc << " and should be " << mp.crc() << endmsg;
-         mp.dump( cerr );
+         mp.dump( DataLog( log_level_router_error ) );
          _FATAL_ERROR( __FILE__, __LINE__, "CRC check failed" );
       }  
 
@@ -233,7 +233,7 @@ void Router::dispatchMessages()
 
 void Router::dump( DataLog_Stream &outs )
 {
-   outs << "------------------------- Router DUMP -----------------------------" << endl;
+   outs << "------------------------- Router DUMP -----------------------------";
 
    // mq_attr qattributes;
    // if ( _RouterQueue != (mqd_t)0 ) mq_getattr( _RouterQueue, &qattributes );
@@ -241,23 +241,25 @@ void Router::dump( DataLog_Stream &outs )
         // << "  flags " << qattributes.mq_flags
         // << "  size " << qattributes.mq_curmsgs
         // << "  maxsize " << qattributes.mq_maxmsg 
-        << endl;
+        << endmsg;
    // if ( _TimerQueue != (mqd_t)0 ) mq_getattr( _TimerQueue, &qattributes );
    outs << " MsgSysTimerQueue: " << hex << (long)_TimerQueue 
         // << "  flags " << qattributes.mq_flags
         // << "  size " << qattributes.mq_curmsgs
         // << "  maxsize " << qattributes.mq_maxmsg 
-        << endl;
+        << endmsg;
 
-   outs << " Message Integrity Map: size " << dec << _MsgIntegrityMap.size() << endl;
+   outs << " Message Integrity Map: size " << dec << _MsgIntegrityMap.size() << endmsg;
    map< unsigned long, string >::iterator miiter;                                 // _MsgIntegrityMap;
    for ( miiter  = _MsgIntegrityMap.begin() ;
          miiter != _MsgIntegrityMap.end() ;
          miiter++ )
    {
-      outs << "  Mid " << hex << (*miiter).first << " " << (*miiter).second << endl;
+      outs << "  Mid " << hex << (*miiter).first << " " << (*miiter).second;
    }
-   outs << " Message to Gateway Synch Map: size " << dec << _MsgToGatewaySynchMap.size() << endl;
+   outs << endmsg;
+   outs << " Message to Gateway Synch Map: size " << dec << _MsgToGatewaySynchMap.size();
+   outs << endmsg;
    map< unsigned long, set< unsigned long > >::iterator mtogiter;                                 // _MsgToGatewaySynchMap;
    for ( mtogiter  = _MsgToGatewaySynchMap.begin() ;
          mtogiter != _MsgToGatewaySynchMap.end() ;
@@ -268,25 +270,28 @@ void Router::dump( DataLog_Stream &outs )
       for ( gateiter  = ((*mtogiter).second).begin() ;
             gateiter != ((*mtogiter).second).end() ;
             gateiter++ )
-         outs << " " << (*miiter).second;
-      outs << endl;
+         outs << " " << (*gateiter);
+      outs << endmsg;
    }
-   outs << " Message Task Map: size " << _MessageTaskMap.size() << endl;
+   outs << " Message Task Map: size " << _MessageTaskMap.size();
+   outs << endmsg;
    map< unsigned long, map< unsigned long, unsigned char > >::iterator mtiter;    // _MessageTaskMap;
    map< unsigned long, unsigned char >::iterator triter;                          
    for ( mtiter  = _MessageTaskMap.begin() ;
          mtiter != _MessageTaskMap.end() ;
          mtiter++ )
    {
-      outs << "  Mid " << hex << (*mtiter).first << endl;
+      outs << "  Mid " << hex << (*mtiter).first;
       for ( triter  = ((*mtiter).second).begin() ;
             triter != ((*mtiter).second).end() ;
             triter++ )
       {
-         outs << "    Tid " << hex << (*triter).first << " #regs " << (int)(*triter).second << endl;
+         outs << "    Tid " << hex << (*triter).first << " #regs " << (int)(*triter).second;
       }
+      outs << endmsg;
    }
-   outs << " Task Queue Map: size " << dec << _TaskQueueMap.size() << endl;
+   outs << " Task Queue Map: size " << dec << _TaskQueueMap.size();
+   outs << endmsg;
    map< unsigned long, mqd_t >::iterator tqiter;                                  // _TaskQueueMap;
    for ( tqiter  = _TaskQueueMap.begin() ;
          tqiter != _TaskQueueMap.end() ;
@@ -297,50 +302,149 @@ void Router::dump( DataLog_Stream &outs )
            // << "  flags " << qattributes.mq_flags
            // << "  size " << qattributes.mq_curmsgs
            // << "  maxsize " << qattributes.mq_maxmsg 
-           << endl;
+           << endmsg;
    }
-   outs << " Message Gateway Map: size " << dec << _MessageGatewayMap.size() << endl;
+   outs << " Message Gateway Map: size " << dec << _MessageGatewayMap.size();
+   outs << endmsg;
    map< unsigned long, set< unsigned long > >::iterator mgiter;                   // _MessageGatewayMap;
    for ( mgiter  = _MessageGatewayMap.begin() ;
          mgiter != _MessageGatewayMap.end() ;
          mgiter++ )
    {
-      outs << "  Mid " << hex << (*mgiter).first << " Gateway Set: size " << dec << (long)(*mgiter).second.size() << endl;
+      outs << "  Mid " << hex << (*mgiter).first << " Gateway Set: size " << dec << (long)(*mgiter).second.size();
       set< unsigned long >::iterator giter;                                      // GatewaySet;
       for ( giter  = (*mgiter).second.begin() ;
             giter != (*mgiter).second.end() ;
             giter++ )
       {
-         outs << "   Gateway address " << hex << (*giter) << endl;
+         outs << "   Gateway address " << hex << (*giter);
       }
+      outs << endmsg;
    }
-   outs << " Inet Gateway Map: size " << dec << _InetGatewayMap.size() << endl;
+   outs << " Inet Gateway Map: size " << dec << _InetGatewayMap.size();
+   outs << endmsg;
    map< unsigned long, int >::iterator igiter;                            // _InetGatewayMap;
    for ( igiter  = _InetGatewayMap.begin() ;
          igiter != _InetGatewayMap.end() ;
          igiter++ )
    {
-      outs << "  Address " << hex << (*igiter).first << " sock " << (*igiter).second << endl;
+      outs << "  Address " << hex << (*igiter).first << " sock " << (*igiter).second << endmsg;
    }
-   outs << " Gateway Connection Attempts Map: size " << dec << _GatewayConnSynchedMap.size() << endl;
+   outs << " Gateway Connection Attempts Map: size " << dec << _GatewayConnSynchedMap.size();
+   outs << endmsg;
    map< unsigned long, Router::GatewaySynched >::iterator gcaiter;        // _GatewayConnSynchedMap;
    for ( gcaiter  = _GatewayConnSynchedMap.begin() ;
          gcaiter != _GatewayConnSynchedMap.end() ;
          gcaiter++ )
    {
-      outs << "  Address " << hex << (*gcaiter).first << " conn attempts: " << (*gcaiter).second << endl;
+      outs << "  Address " << hex << (*gcaiter).first << " conn attempts: " << (*gcaiter).second << endmsg;
    }
-   outs << " Spoofer Message Map: size " << dec << _SpooferMsgMap.size() << endl;
+   outs << " Spoofer Message Map: size " << dec << _SpooferMsgMap.size();
+   outs << endmsg;
    map< unsigned long, unsigned long >::iterator smiter;                            // _SpooferMsgMap;
    for ( smiter  = _SpooferMsgMap.begin() ;
          smiter != _SpooferMsgMap.end() ;
          smiter++ )
    {
-      outs << "  Mid " << hex << (*smiter).first << " Spoofer Tid " << hex << (*smiter).second << endl;
+      outs << "  Mid " << hex << (*smiter).first << " Spoofer Tid " << hex << (*smiter).second << endmsg;
    }
-   outs << " StopLoop " << dec << _StopLoop << endl;
-   outs << "-------------------------------------------------------------------" << endl;
+   outs << " StopLoop " << dec << _StopLoop << endmsg;
+   outs << "-------------------------------------------------------------------" << endmsg;
 
+}
+
+void Router::msgDump()
+{
+   DataLog( log_level_router_info ) << " Message Integrity Map: size " << dec << _MsgIntegrityMap.size() << endmsg;
+   map< unsigned long, string >::iterator miiter;                                 // _MsgIntegrityMap;
+   for ( miiter  = _MsgIntegrityMap.begin() ;
+         miiter != _MsgIntegrityMap.end() ;
+         miiter++ )
+   {
+      DataLog( log_level_router_info ) << "  Mid " << hex << (*miiter).first << " " << (*miiter).second;
+   }
+   DataLog( log_level_router_info ) << endmsg;
+}
+
+void Router::msgTaskDump()
+{
+   DataLog( log_level_router_info ) << " Message Task Map: size " << _MessageTaskMap.size();
+   DataLog( log_level_router_info ) << endmsg;
+   map< unsigned long, map< unsigned long, unsigned char > >::iterator mtiter;    // _MessageTaskMap;
+   map< unsigned long, unsigned char >::iterator triter;                          
+   for ( mtiter  = _MessageTaskMap.begin() ;
+         mtiter != _MessageTaskMap.end() ;
+         mtiter++ )
+   {
+      DataLog( log_level_router_info ) << "  Mid " << hex << (*mtiter).first;
+      for ( triter  = ((*mtiter).second).begin() ;
+            triter != ((*mtiter).second).end() ;
+            triter++ )
+      {
+         DataLog( log_level_router_info ) << "    Tid " << hex << (*triter).first << " #regs " << (int)(*triter).second;
+      }
+      DataLog( log_level_router_info ) << endmsg;
+   }
+}
+
+void Router::gatewayDump()
+{
+   DataLog( log_level_router_info ) << " Inet Gateway Map: size " << dec << _InetGatewayMap.size();
+   DataLog( log_level_router_info ) << endmsg;
+   map< unsigned long, int >::iterator igiter;                            // _InetGatewayMap;
+   for ( igiter  = _InetGatewayMap.begin() ;
+         igiter != _InetGatewayMap.end() ;
+         igiter++ )
+   {
+      DataLog( log_level_router_info ) << "  Address " << hex << (*igiter).first << " sock " << (*igiter).second << endmsg;
+   }
+   DataLog( log_level_router_info ) << " Gateway Connection Attempts Map: size " << dec << _GatewayConnSynchedMap.size();
+   DataLog( log_level_router_info ) << endmsg;
+   map< unsigned long, Router::GatewaySynched >::iterator gcaiter;        // _GatewayConnSynchedMap;
+   for ( gcaiter  = _GatewayConnSynchedMap.begin() ;
+         gcaiter != _GatewayConnSynchedMap.end() ;
+         gcaiter++ )
+   {
+      DataLog( log_level_router_info ) << "  Address " << hex << (*gcaiter).first << " conn attempts: " << (*gcaiter).second << endmsg;
+   }
+}
+
+void Router::remoteMsgDump()
+{
+   DataLog( log_level_router_info ) << " Message to Gateway Synch Map: size " << dec << _MsgToGatewaySynchMap.size();
+   DataLog( log_level_router_info ) << endmsg;
+   map< unsigned long, set< unsigned long > >::iterator mtogiter;                                 // _MsgToGatewaySynchMap;
+   for ( mtogiter  = _MsgToGatewaySynchMap.begin() ;
+         mtogiter != _MsgToGatewaySynchMap.end() ;
+         mtogiter++ )
+   {
+      DataLog( log_level_router_info ) << "  Mid " << hex << (*mtogiter).first;
+      set< unsigned long >::iterator gateiter;
+      for ( gateiter  = ((*mtogiter).second).begin() ;
+            gateiter != ((*mtogiter).second).end() ;
+            gateiter++ )
+         DataLog( log_level_router_info ) << " " << (*gateiter);
+      DataLog( log_level_router_info ) << endmsg;
+   }
+   DataLog( log_level_router_info ) << " Message Gateway Map: size " << dec << _MessageGatewayMap.size();
+   DataLog( log_level_router_info ) << endmsg;
+   map< unsigned long, set< unsigned long > >::iterator mgiter;                   // _MessageGatewayMap;
+   for ( mgiter  = _MessageGatewayMap.begin() ;
+         mgiter != _MessageGatewayMap.end() ;
+         mgiter++ )
+   {
+      DataLog( log_level_router_info ) << "      Mid " << hex << (*mgiter).first 
+                       << "(" << _MsgIntegrityMap[ (*mgiter).first ].c_str() << ") " 
+                       << " Gateway Set: size " << dec << (long)(*mgiter).second.size();
+      set< unsigned long >::iterator giter;                                      // GatewaySet;
+      for ( giter  = (*mgiter).second.begin() ;
+            giter != (*mgiter).second.end() ;
+            giter++ )
+      {
+         DataLog( log_level_router_info ) << "   Gateway address " << hex << (*giter);
+      }
+      DataLog( log_level_router_info ) << endmsg;
+   }
 }
 
 bool Router::initGateways()
@@ -402,7 +506,7 @@ bool Router::initGateways()
                            sizeof( unsigned long ) );
          mp.updateCRC();
          sendMessage( mp, _TimerQueue, taskIdSelf(), MessageSystemConstant::GATEWAY_CONNECT_PRIORITY );
-         _GatewayConnSynchedMap[ netAddress ] = Router::Incomplete;
+         _GatewayConnSynchedMap[ netAddress ] = Router::NoConn;
 
       }
    }
@@ -448,14 +552,29 @@ void Router::processMessage( MessagePacket &mp, int priority )
    case MessageData::GATEWAY_DISCONNECT:
       disconnectWithGateway( mp.msgData().nodeId() );
       break;
+   case MessageData::GATEWAY_MESSAGE_SYNCH_BEGIN:
+      if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::NoConn )
+         _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::Connected;
+      else if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::Connected )
+      {
+         _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::Inprogress;
+         synchUpRemoteNode( mp.msgData().nodeId() );
+      }
+      DataLog( log_level_router_info ) << "Gateway (" << hex << mp.msgData().nodeId()
+                    << ") connection status : " << dec << gatewayConnStatus( mp.msgData().nodeId() )
+                    << endmsg;
+      break;
    case MessageData::GATEWAY_MESSAGE_SYNCH:
       synchUpRemoteNode( mp.msgData().nodeId() );
       break;
    case MessageData::GATEWAY_MESSAGE_SYNCH_COMPLETE:
       if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::LocalComplete )
          _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::Synched;
-      else if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::Incomplete )
+      else if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::Inprogress )
          _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::RemoteComplete;
+      DataLog( log_level_router_info ) << "Gateway (" << hex << mp.msgData().nodeId()
+                    << ") synchronization status : " << dec << gatewayConnStatus( mp.msgData().nodeId() ) 
+                    << endmsg;
       break;
    case MessageData::SPOOF_MSG_REGISTER:
       checkMessageId( mp.msgData().msgId(), (const char *)( mp.msgData().msg() ) );
@@ -543,8 +662,24 @@ void Router::connectWithGateway( const MessagePacket &mp )
          sendMessage( newMP, _TimerQueue, taskIdSelf(), MessageSystemConstant::GATEWAY_CONNECT_PRIORITY );
 
          //
-         // Synch up the remote node's message list ...
-         synchUpRemoteNode( mp.msgData().nodeId() );
+         // Synch up with the remote node ...
+         if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::NoConn )
+            _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::Connected;
+         else if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::Connected )
+         {
+            _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::Inprogress;
+            synchUpRemoteNode( mp.msgData().nodeId() );
+         }
+
+         //
+         // Notify the other node that we are connected ...
+         newMP.msgData().osCode( MessageData::GATEWAY_MESSAGE_SYNCH_BEGIN );
+         newMP.updateCRC();
+         sendMessageToGateway( mp.msgData().nodeId(), newMP );
+         DataLog( log_level_router_info ) << "Gateway (" << hex << mp.msgData().nodeId()
+                       << ") connection status : " << dec << gatewayConnStatus( mp.msgData().nodeId() )
+                       << endmsg;
+
       }
       else 
       {
@@ -600,7 +735,7 @@ void Router::registerTask( unsigned long tId, const char *qName )
       mqd_t tQueue = (mqd_t)ERROR;
       unsigned int retries=0;
       while ( ( tQueue = mq_open( qName, O_RDWR ) ) == (mqd_t)ERROR 
-              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
+              && ++retries < MessageSystemConstant::MAX_NUM_RETRIES ) nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
 
       //
       // If opened ...
@@ -1059,7 +1194,7 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
    // Send message to the task ...
    unsigned int retries=0;
    while (    mq_send( mqueue , &mp, sizeof( MessagePacket ), priority ) == ERROR 
-           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
+           && ++retries < MessageSystemConstant::MAX_NUM_RETRIES ) 
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
    {
@@ -1143,7 +1278,15 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
                   || mpConst.msgData().osCode() == MessageData::MESSAGE_REGISTER )
              && mpConst.msgData().nodeId() != 0 )
    {
-      _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ].insert( mpConst.msgData().nodeId() );
+      //
+      // Try to find the message Id in the message/task map ...
+      map< unsigned long, map< unsigned long, unsigned char > >::iterator mtiter;
+      mtiter = _MessageTaskMap.find( mpConst.msgData().msgId() );
+      
+      //
+      // If message found , but not tasks ...
+      if ( mtiter == _MessageTaskMap.end() )
+         _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ].insert( mpConst.msgData().nodeId() );
    }
 }
 
@@ -1151,16 +1294,10 @@ void Router::sendMessageToGateway( unsigned long nodeId, const MessagePacket &mp
 {
    if (    mpConst.msgData().osCode() != MessageData::MESSAGE_REGISTER
         && mpConst.msgData().osCode() != MessageData::MESSAGE_NAME_REGISTER 
+        && mpConst.msgData().osCode() != MessageData::GATEWAY_MESSAGE_SYNCH_BEGIN 
         && mpConst.msgData().osCode() != MessageData::GATEWAY_MESSAGE_SYNCH_COMPLETE )
    {
       if ( _GatewayConnSynchedMap[ nodeId ] != Router::Synched )
-         return;
-   }
-   else if (    mpConst.msgData().osCode() == MessageData::MESSAGE_REGISTER
-             && mpConst.msgData().osCode() == MessageData::MESSAGE_NAME_REGISTER )
-   {
-      if ( _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ].find( nodeId ) == 
-                             _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ].end() )
          return;
    }
 
@@ -1173,10 +1310,23 @@ void Router::sendMessageToGateway( unsigned long nodeId, const MessagePacket &mp
       mp.msgData().netSequenceNum( _NetSequenceNum++ );
       mp.msgData().nodeId( getNetworkAddress() );
       mp.updateCRC();
-   
-      int len = sizeof( mp );
+                            
+      //
+      // Form the message
+      unsigned long tmp      = 0xeeeeeeee;
+      unsigned long crc      = mp.crc();
+      unsigned long msgSize  = mp.msgData().sizeOfData();
+      int           pcktSize = msgSize + 3*sizeof( unsigned long );
+      unsigned char tcpMsg[ sizeof( MessagePacket ) + ( 4*sizeof( unsigned long ) ) ];
+      memmove( (void*)   tcpMsg                                        , &pcktSize, sizeof( int ) );
+      memmove( (void*)&( tcpMsg[             sizeof( unsigned long ) ]), &tmp     , sizeof( unsigned long ) );
+      memmove( (void*)&( tcpMsg[           2*sizeof( unsigned long ) ]), &mp      , msgSize );
+      memmove( (void*)&( tcpMsg[ msgSize + 2*sizeof( unsigned long ) ]), &crc     , sizeof( unsigned long ) );
+      memmove( (void*)&( tcpMsg[ msgSize + 3*sizeof( unsigned long ) ]), &tmp     , sizeof( unsigned long ) );
+
+      int len = pcktSize + sizeof( int );
       int wlen=0;
-	   char * cbuf = (char *)&mp;
+	   char * cbuf = (char *)tcpMsg;
       while ( len > 0 )
       {
          int wval;
@@ -1193,7 +1343,7 @@ void Router::sendMessageToGateway( unsigned long nodeId, const MessagePacket &mp
                                  << endmsg;
             _FATAL_ERROR( __FILE__, __LINE__, "socket send failed" );
          }
-   
+
          len -= wval;
          wlen += wval;
       }
@@ -1281,7 +1431,7 @@ void Router::synchUpRemoteNode( unsigned long nodeId )
 
    if ( _GatewayConnSynchedMap[ nodeId ] == Router::RemoteComplete )
       _GatewayConnSynchedMap[ nodeId ] = Router::Synched;
-   else if ( _GatewayConnSynchedMap[ nodeId ] == Router::Incomplete )
+   else if ( _GatewayConnSynchedMap[ nodeId ] == Router::Inprogress )
       _GatewayConnSynchedMap[ nodeId ] = Router::LocalComplete;
 
    //
@@ -1289,6 +1439,9 @@ void Router::synchUpRemoteNode( unsigned long nodeId )
    MessagePacket mp;
    mp.msgData().osCode( MessageData::GATEWAY_MESSAGE_SYNCH_COMPLETE );
    mp.msgData().msgId( 0 );
+   DataLog( log_level_router_info ) << "Gateway (" << hex << nodeId
+                 << ") synchronization status : " << dec << gatewayConnStatus( nodeId )
+                 << endmsg;
 
    sendMessageToGateway( nodeId, mp );
 }
@@ -1346,6 +1499,28 @@ short Router::getGatewayPort()
          return (*paiter).first;
    }
    return 0;
+}
+
+const char *Router::gatewayConnStatus( unsigned long nodeId )
+{
+   GatewaySynched status = _GatewayConnSynchedMap[ nodeId ];
+   switch ( status )
+   {
+      case Router::NoConn :
+         return "Not Connected";
+      case Router::Connected :
+         return "One-way connection established";
+      case Router::Inprogress :
+         return "Fully connected, synchronization in progress";
+      case Router::LocalComplete :
+         return "Local message have been synchronized with the remote node";
+      case Router::RemoteComplete :
+         return "Remote node messages have been synchronized";
+      case Router::Synched :
+         return "Local and Remote node synchronizations complete";
+      default :
+         return "Status unknown";
+   };
 }
 
 
@@ -1459,5 +1634,29 @@ void routerDump()
 
    if ( Router::globalRouter() )
       Router::globalRouter()->dump( DataLog( log_level_router_info ) );
+}
+
+void msgDump()
+{
+   if ( Router::globalRouter() )
+      Router::globalRouter()->msgDump();
+}
+
+void msgTaskDump()
+{
+   if ( Router::globalRouter() )
+      Router::globalRouter()->msgTaskDump();
+}
+
+void gatewayDump()
+{
+   if ( Router::globalRouter() )
+      Router::globalRouter()->gatewayDump();
+}
+
+void remoteMsgDump()
+{
+   if ( Router::globalRouter() )
+      Router::globalRouter()->remoteMsgDump();
 }
 

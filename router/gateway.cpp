@@ -16,6 +16,7 @@
 #include <netinet/tcp.h>
 
 #include "datalog.h"
+#include "datalog_levels.h"
 #include "error.h"
 #include "gateway.h"
 #include "messagesystemconstant.h"
@@ -70,7 +71,7 @@ bool Gateway::init( short port )
    //
    unsigned int retries=0;
    while (    ( _RouterQueue = mq_open( "router", O_WRONLY ) ) == (mqd_t)ERROR 
-           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
+           && ++retries < MessageSystemConstant::MAX_NUM_RETRIES ) 
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    if ( _RouterQueue == (mqd_t)ERROR )
    {
@@ -167,33 +168,68 @@ bool Gateway::init( short port )
 void Gateway::receiveLoop()
 {
    MessagePacket mp;
+   unsigned char msgBuf[ sizeof( MessagePacket ) +( 4*sizeof( unsigned long ) ) ];
    do
    {
-		char	* mpBuff = (char *)&mp;
-		int	  total_byte_count = 0;
-		while ( total_byte_count < sizeof(MessagePacket) )
-		{
-			int byte_count = recv( _ClientSocket, &mpBuff[total_byte_count], sizeof( MessagePacket ) - total_byte_count, 0 );
+      //
+      // Reset my data structures ...
+      memset( &mp,    0, sizeof( MessagePacket ) );
+      memset( msgBuf, 0, sizeof( MessagePacket ) + ( 4*sizeof( unsigned long ) ) );
 
-			if ( byte_count == ERROR )
+      int msgSize;
+		int totalByteCount = 0;
+		while ( totalByteCount < sizeof( int ) )
+      {
+         int byteCount = recv( _ClientSocket, (char*)((&msgSize)+totalByteCount), sizeof( int )-totalByteCount, 0 );
+   
+         if ( byteCount == ERROR )
+         {
+            DataLog_Critical criticalLog;
+            DataLog(criticalLog) << "Gateway::receiveLoop : socket receive failed, error->" << strerror( errnoGet() ) << endmsg;
+            _FATAL_ERROR( __FILE__, __LINE__, "socket receive failed" );
+            return;
+         }
+		   totalByteCount += byteCount;
+      }
+      if ( msgSize <= 0 )
+      {
+         DataLog_Critical criticalLog;
+         DataLog(criticalLog) << "Gateway::receiveLoop : invalid message size" << endmsg;
+         _FATAL_ERROR( __FILE__, __LINE__, "invalid message size" );
+         return;
+      }
+
+		totalByteCount = 0;
+		while ( totalByteCount < msgSize )
+		{
+			int byteCount = recv( _ClientSocket, (char*)&(msgBuf[totalByteCount]), msgSize-totalByteCount, 0 );
+
+			if ( byteCount == ERROR )
 			{
 				DataLog_Critical criticalLog;
 				DataLog(criticalLog) << "Gateway::receiveLoop : socket receive failed, error->" << strerror( errnoGet() ) << endmsg;
 				_FATAL_ERROR( __FILE__, __LINE__, "socket receive failed" );
 				return;
 		   }
-			else if ( byte_count == 0 )
-			{
-				DataLog_Critical criticalLog;
-				DataLog(criticalLog) << "Gateway::receiveLoop : socket closed" << endmsg;
-				_FATAL_ERROR( __FILE__, __LINE__, "socket closed" );
-				return;
-		   }
-		   else
-			{
-				total_byte_count += byte_count;
-			}
+		   totalByteCount += byteCount;
 		}
+
+      unsigned long crc;
+      unsigned long msgBegin, msgEnd;
+      memmove( &msgBegin , (void*)   msgBuf                                          ,             sizeof( unsigned long ) );
+      memmove( &msgEnd   , (void*)&( msgBuf[ msgSize -   sizeof( unsigned long )   ]),             sizeof( unsigned long ) );
+      memmove( &mp       , (void*)&( msgBuf[             sizeof( unsigned long )   ]), msgSize-( 3*sizeof( unsigned long ) ) );
+      memmove( &crc      , (void*)&( msgBuf[ msgSize-( 2*sizeof( unsigned long ) ) ]),             sizeof( unsigned long ) );
+      mp.crc( crc );
+
+      if ( msgBegin != 0xeeeeeeee || msgEnd != 0xeeeeeeee )
+      {
+         DataLog_Critical criticalLog;
+         DataLog(criticalLog) << "Gateway::receiveLoop : receive failure (" << hex 
+                              << msgBegin << "-" << msgEnd << ")" << endmsg;
+         _FATAL_ERROR( __FILE__, __LINE__, "receive failure" );
+         return;
+      }
 
       //
       // Send the message packet to the router ...
@@ -231,7 +267,7 @@ void Gateway::sendMsgToRouter( const MessagePacket &mp )
    // Send message packet to router ...
    unsigned int retries=0;
    while (    mq_send( _RouterQueue, &mp, sizeof( MessagePacket ), MessageSystemConstant::GATEWAY_MESSAGE_PRIORITY ) == ERROR 
-           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES )
+           && ++retries < MessageSystemConstant::MAX_NUM_RETRIES )
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
    {

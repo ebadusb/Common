@@ -621,6 +621,15 @@ int sockbuf::keepalive (int opt) const
    return old;
 }
 
+int sockbuf::nodelay (int opt) const
+{
+   int old=0;
+   getopt (so_nodelay, &old, sizeof (old));
+   if(opt != -1)
+      setopt (so_nodelay, &opt, sizeof (opt));
+   return old;
+}
+
 int sockbuf::dontroute (int opt) const
 {
    int old=0;

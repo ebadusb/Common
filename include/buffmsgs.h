@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/BUFFMSGS.H 1.9 2000/04/13 14:27:08 BD10648 Exp MS10234 $
  * $Log: BUFFMSGS.H $
+ * Revision 1.6  1999/08/04 22:51:48  TD10216
+ * IT3640
  * Revision 1.5  1999/07/28 21:52:24  TD10216
  * IT4154
  * Revision 1.3  1999/07/23 01:37:15  BS04481
@@ -180,6 +182,10 @@ enum BUFFER_MESSAGES
    ModifyProduct,           // anyone -> proc : modify product (see predict_msgs.h)
    BasinTempStatus,         // safety driver -> anyone who want basin temp data
 	EverestConfigLog,		// Not Sent: Used by Everest to parse log file
+    HalStatusMsg,           // sent by Hal Task
+    HalOrdersMsg,           // sent to hal task
+    ArcCalibrationMsg,      // Cal.dat message from Archive
+    ArcConfigMsg,           // Config.dat message to/from Archive
 
    LAST_BUFFER_MESSAGE           // don't change this entry
 };
@@ -324,7 +330,12 @@ MsgStructMapEntry MsgStructMap[LAST_BUFFER_MESSAGE+1] =
 	{ ModifyProduct, "ModifyProductStruct" },
 	{ BasinTempStatus, "basinTemp" },
 	{ EverestConfigLog, "ConfigDataItem" },
-	// don't change this entry
+    { HalStatusMsg , NOTUSED },
+    { HalOrdersMsg , NOTUSED },
+    { ArcCalibrationMsg, NOTUSED },
+    { ArcConfigMsg, NOTUSED },
+
+    // don't change this entry
 	{ LAST_BUFFER_MESSAGE, NULL }
 };
 #endif

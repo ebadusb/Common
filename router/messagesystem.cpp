@@ -49,11 +49,11 @@ bool MessageSystem::initNonBlock( const char *qname, const unsigned int qsize )
    return init( qname, qsize, false );
 }
 
-void MessageSystem::dispatchMessages()
+unsigned int MessageSystem::dispatchMessages()
 {
    //
    // Give control to the dispatcher ...
-   _Dispatcher.dispatchMessages();
+   return _Dispatcher.dispatchMessages();
 }
 
 void MessageSystem::stopLoop()

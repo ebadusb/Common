@@ -51,7 +51,7 @@ public:
 
    //
    // receive messages from the router
-   void dispatchMessages();          
+   unsigned int dispatchMessages();          
    void stopLoop() { _StopLoop=true; }
    void allowLoop() { if ( _Blocking ) _StopLoop=false; }
 

@@ -3,6 +3,8 @@
  *
  * $Header: //Bctquad3/HOME/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.8 2001/04/05 14:16:14 jl11312 Exp pn02526 $
  * $Log: ostime.cpp $
+ * Revision 1.1  1999/09/17 15:05:15  BS04481
+ * Initial revision
  * TITLE:      osTime.cpp, Time measurement
  *
  * ABSTRACT:   Computes time intervals by using the kernel's tick-time
@@ -68,7 +70,7 @@ osTime::~osTime()
 //
 // ERROR HANDLING:   none.
 
-void
+inline void
 osTime::snapshotTime(timeFromTick* now)
 {
    // loop to make sure you take both readings on the same tick
@@ -78,8 +80,6 @@ osTime::snapshotTime(timeFromTick* now)
       now->nanosec = _timeptr->nsec;
 
    } while ( now->sec != _timeptr->seconds || now->nanosec != _timeptr->nsec  );
-   _lastTime.sec = now->sec;
-   _lastTime.nanosec = now->nanosec;
 };
 
 
@@ -91,8 +91,13 @@ osTime::snapshotTime(timeFromTick* now)
 void 
 osTime::whatTimeIsIt(timeFromTick* now)
 {
-   now->sec = _lastTime.sec;
-   now->nanosec = _lastTime.nanosec;
+   // loop to make sure you take both readings on the same tick
+   do
+   {
+      now->sec = _timeptr->seconds;
+      now->nanosec = _timeptr->nsec;
+
+   } while ( now->sec != _timeptr->seconds || now->nanosec != _timeptr->nsec  );
 };
 
 
@@ -107,13 +112,16 @@ osTime::whatTimeIsIt(timeFromTick* now)
 int
 osTime::howLongAndUpdate(timeFromTick* then)
 {
+   timeFromTick   now;
    int delta;        // milliseconds
 
-   delta = ( ( (_lastTime.sec * 1000) + (_lastTime.nanosec / 1000000) )
+   snapshotTime(&now);
+   
+   delta = ( ( (now.sec * 1000) + (now.nanosec / 1000000) )
            - ( (then->sec * 1000) + (then->nanosec / 1000000) ) );
 
-   then->sec = _lastTime.sec;
-   then->nanosec = _lastTime.nanosec;
+   then->sec = now.sec;
+   then->nanosec = now.nanosec;
 
    return(delta);
 };
@@ -129,13 +137,16 @@ osTime::howLongAndUpdate(timeFromTick* then)
 int
 osTime::howLongMicroAndUpdate(timeFromTick* then)
 {
+   timeFromTick   now;
    int delta;        // microseconds
 
-   delta = ( ( (_lastTime.sec * 1000000) + (_lastTime.nanosec / 1000) )
+   snapshotTime(&now);
+   
+   delta = ( ( (now.sec * 1000000) + (now.nanosec / 1000) )
            - ( (then->sec * 1000000) + (then->nanosec / 1000) ) );
 
-   then->sec = _lastTime.sec;
-   then->nanosec = _lastTime.nanosec;
+   then->sec = now.sec;
+   then->nanosec = now.nanosec;
 
    return(delta);
 };
@@ -150,9 +161,12 @@ osTime::howLongMicroAndUpdate(timeFromTick* then)
 int
 osTime::howLong(timeFromTick then)
 {
+   timeFromTick   now;
    int delta;        // milliseconds
 
-   delta = ( ( (_lastTime.sec * 1000) + (_lastTime.nanosec / 1000000) )
+   snapshotTime(&now);
+   
+   delta = ( ( (now.sec * 1000) + (now.nanosec / 1000000) )
            - ( (then.sec * 1000) + (then.nanosec / 1000000) ) );
 
    return(delta);
@@ -167,9 +181,12 @@ osTime::howLong(timeFromTick then)
 int
 osTime::howLongMicro(timeFromTick then)
 {
+   timeFromTick   now;
    int delta;        // microseconds
 
-   delta = ( ( (_lastTime.sec * 1000000) + (_lastTime.nanosec / 1000) )
+   snapshotTime(&now);
+   
+   delta = ( ( (now.sec * 1000000) + (now.nanosec / 1000) )
            - ( (then.sec * 1000000) + (then.nanosec / 1000) ) );
 
    return(delta);
@@ -187,21 +204,11 @@ osTime::delayTime(int deltaTime)
    timeFromTick now, start;
    int delta=0;
 
-   do
-   {
-      start.sec = _timeptr->seconds;
-      start.nanosec = _timeptr->nsec;
-
-   } while ( start.sec != _timeptr->seconds || start.nanosec != _timeptr->nsec  );
+   snapshotTime(&start);
    
    while(delta < deltaTime)
    {
-      do
-      {
-         now.sec = _timeptr->seconds;
-         now.nanosec = _timeptr->nsec;
-   
-      } while ( now.sec != _timeptr->seconds || now.nanosec != _timeptr->nsec  );
+      snapshotTime(&now);
       
       delta = ( ( (now.sec * 1000) + (now.nanosec / 1000000) )
               - ( (start.sec * 1000) + (start.nanosec / 1000000) ) );

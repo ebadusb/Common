@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.16 2003/10/03 12:32:57Z jl11312 Exp rm70006 $
  * $Log: datalog_port.h $
+ * Revision 1.14  2003/03/27 15:47:36Z  jl11312
+ * - added support for new data log levels
  * Revision 1.13  2003/02/25 20:40:11Z  jl11312
  * - added support for logging platform specific information in log header
  * Revision 1.12  2003/02/25 16:12:01  jl11312
@@ -180,6 +182,12 @@ typedef SEM_ID	DataLog_Lock;
 #ifdef __cplusplus
 extern "C" {
 #endif /* ifdef __cplusplus */
+
+/*
+ *	Console logging support
+ */
+#include <stdio.h>
+FILE * datalog_ConsoleFile(void);
 
 /*
  *	Task related functions

@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.22 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.15  2005/01/12 20:06:08Z  rm10919
+ * Deleted convertToAscii().
  * Revision 1.14  2004/12/27 22:48:51Z  rm10919
  * Added CGUITextItem::getAscii for use with sprintf().
  * Revision 1.13  2004/12/09 00:20:41Z  cf10242
@@ -327,14 +329,7 @@ void CGUITextItem::setText(const StringChar * string, LanguageId = currentLangua
 
 const StringChar * CGUITextItem::getText(LanguageId languageId = currentLanguage)
 {
-   if (_string)
-   {
-      return  _string;
-   }
-   else
-   {
-      return NULL;
-   }
+	return _string;
 }
 
 char * CGUITextItem::getAscii(LanguageId languageId = currentLanguage)
@@ -373,16 +368,10 @@ char * CGUITextItem::getAscii(LanguageId languageId = currentLanguage)
 
 void CGUITextItem::setId(const char * id)
 {
+	_id = id;
 }
 
 bool CGUITextItem::isInitialized(void)
 {
-   if (_id)
-   {
-      return true;
-   }
-   else
-   {
-      return false;
-   }
+   return (_id != NULL);
 }

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.16 2003/10/03 12:32:57Z jl11312 Exp rm70006 $
  * $Log: datalog_port.h $
+ * Revision 1.3  2002/04/29 21:48:42  jl11312
+ * - updated to reflect API changes
  * Revision 1.2  2002/03/27 16:43:25  jl11312
  * - updated to allow multiple data sets for periodic logging
  * - updated error handling interface
@@ -18,10 +20,10 @@
  * Error type is defined here to allow for platform specific errors.  Most
  * errors however are common to all platforms.
  */
-enum DataLog_ErrorType
+typedef enum
 {
 	DataLog_NoError
-};
+} DataLog_ErrorType;
 
 /*
  * Platform specific configuration

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.7  2002/05/17 18:27:59  jl11312
+ * - more temporary changes for debug use under vxWorks
  * Revision 1.6  2002/05/17 17:15:59  jl11312
  * - temporary change of operator() return type
  * Revision 1.5  2002/04/29 21:48:42  jl11312
@@ -36,7 +38,7 @@ extern "C" {
 /*
  * Data log initialization routines
  */
-enum DataLog_Result { DataLog_OK, DataLog_Error };
+typedef enum { DataLog_OK, DataLog_Error } DataLog_Result;
 
 DataLog_Result datalog_Init(const char * logPath);
 DataLog_Result datalog_InitNet(const char * ipAddress, double seconds);
@@ -51,11 +53,11 @@ DataLog_Result datalog_SetEncryptFunc(DataLog_EncryptFunc * func);
 /*
  * Data log level creation
  */
-struct DataLog_HandleInfo;
-typedef DataLog_HandleInfo * DataLog_Handle;
+typedef struct DataLog_HandleInfo * DataLog_Handle;
 #define NULL_DATALOG_HANDLE   NULL
 
 DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * handle);
+DataLog_Result	datalog_SetDefaultLevel(DataLog_Handle handle);
 
 /*
  * Interrupt log level creation
@@ -70,8 +72,8 @@ DataLog_Handle datalog_GetCriticalHandle(void);
 /*
  * Data log option control
  */
-enum DataLog_EnabledType { LogEnabled, LogDisabled };
-enum DataLog_ConsoleEnabledType { ConsoleEnabled, ConsoleDisabled };
+typedef enum { LogEnabled, LogDisabled } DataLog_EnabledType;
+typedef enum { ConsoleEnabled, ConsoleDisabled } DataLog_ConsoleEnabledType;
 
 DataLog_Result datalog_GetTaskOutputOptions(DataLog_TaskID task, DataLog_EnabledType * log, DataLog_ConsoleEnabledType * console);
 DataLog_Result datalog_SetTaskOutputOptions(DataLog_TaskID task, DataLog_EnabledType log, DataLog_ConsoleEnabledType console);
@@ -82,12 +84,12 @@ DataLog_Result datalog_SetLevelOptions(DataLog_Handle handle, DataLog_EnabledTyp
  * printf-like interface for data log output
  */
 DataLog_Result datalog_Print(DataLog_Handle handle, const char * file, int line, const char * format, ...);
+DataLog_Result datalog_PrintToDefault(const char * file, int line, const char * format, ...);
 
 /*
  * periodic logging routines
  */
-struct DataLog_SetInfo;
-typedef DataLog_SetInfo * DataLog_Set;
+typedef struct DataLog_SetInfo * DataLog_Set;
 #define NULL_DATALOG_SET   NULL
 DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_Set * handle);
 
@@ -154,6 +156,12 @@ public:
    ostream & operator()(const char * fileName, int lineNumber);
 };
 
+class DataLog_DefaultLevel
+{
+public:
+   static ostream & getStream(const char * fileName, int lineNumber);
+};
+
 #define endmsg endl
 
 class DataLog_Critical : public DataLog_Level
@@ -164,6 +172,7 @@ public:
 };
 
 #define DataLog(instance) (instance)(__FILE__, __LINE__)
+#define DataLog_Default DataLog_DefaultLevel::getStream(__FILE__, __LINE__)
 
 template<class Value> inline DataLog_Result datalog_AddRef(DataLog_Set handle, const Value& ref, const char * key, const char * description)
    {

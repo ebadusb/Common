@@ -1,0 +1,48 @@
+# @(#) $Header: L:/BCT_Development/vxWorks/Common/rcs/makefile.rules 1.3 2002/05/16 17:39:03 jl11312 Exp sb07663 $
+#
+# Makefile.rules - common makefile rules for vxWorks
+#
+# $Log: makefile.rules $
+#
+
+ifndef MAKEFILE_RULES_INCLUDED
+MAKEFILE_RULES_INCLUDED := 1
+
+$(CPU)/%.o:%.c
+	$(CC) $(CCFLAGS) $< -o $@
+
+$(CPU)/%.o:%.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
+
+$(CPU)/%.o:%.S
+	$(AS) $(ASFLAGS) $< -o $@
+
+.dfile/%.d:%.c
+	@echo Rebuilding dependency file for $<
+	@if not exist .dfile mkdir .dfile
+	@rm -f $(CPU)/$(notdir $(subst .c,.o,$<))
+	@rm -f $@.tmp
+	@$(CC) -M $(CPPFLAGS) $< >$@.tmp
+	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .c,.o,$(subst /,\/,$(CPU)/$<)) $(subst /,\/,$@) : /g" < $@.tmp > $@
+	@rm -f $@.tmp
+
+.dfile/%.d:%.cpp
+	@echo Rebuilding dependency file for $<
+	@if not exist .dfile mkdir .dfile
+	@rm -f $(CPU)/$(notdir $(subst .cpp,.o,$<))
+	@rm -f $@.tmp
+	@$(CC) -M $(CPPFLAGS) $< >$@.tmp
+	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .cpp,.o,$(subst /,\/,$(CPU)/$<)) $(subst /,\/,$@) : /g" < $@.tmp > $@
+	@rm -f $@.tmp
+
+.dfile/%.d:%.S
+	@echo Rebuilding dependency file for $<
+	@if not exist .dfile mkdir .dfile
+	@rm -f $(CPU)/$(notdir $(subst .S,.o,$<))
+	@rm -f $@.tmp
+	@$(CC) -M $(CPPFLAGS) $< >$@.tmp
+	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .S,.o,$(subst /,\/,$(CPU)/$<)) $(subst /,\/,$@) : /g" < $@.tmp > $@
+	@rm -f $@.tmp
+
+endif
+

@@ -1,0 +1,64 @@
+# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/makefile.lib 1.4 2002/09/11 16:10:56Z jl11312 Exp ms10234 $
+#
+# Makefile.lib - common makefile for libraries
+#
+# $Log: makefile.lib $
+#
+# This file should be included as the last line in makefile.vx
+# The following variables need to be defined
+#
+#   LIB_C_FILES - list of C files to be compiled and placed in the library
+#   LIB_CXX_FILES - list of C++ files to be compiled and placed in the library
+#   LIB_S_FILES - list of assembly files to be assembled and placed in the library
+#   LIB_ARCHIVE - archive file to be created
+#   MAINDIR - path to the application main directory
+#   CPU - CPU type for build
+#   BUILD_TYPE - build type for build
+#
+# All file names and paths must be specified relative to the directory
+# containing the main makefile for the library (makefile.vx).  A single
+# makefile.vx can define only one library (this could be extended if
+# necessary in the future - see makefile.app)
+#    
+LIB_OBJ := $(addprefix $(CPU)/, $(notdir $(LIB_C_FILES:.c=.o))) \
+           $(addprefix $(CPU)/, $(notdir $(LIB_CXX_FILES:.cpp=.o))) \
+	   $(addprefix $(CPU)/, $(notdir $(LIB_S_FILES:.S=.o)))
+
+DEPEND_CXX_FILES := $(addprefix .dfile/, $(notdir $(LIB_CXX_FILES:.cpp=.d)))
+DEPEND_C_FILES   := $(addprefix .dfile/, $(notdir $(LIB_C_FILES:.c=.d)))
+DEPEND_S_FILES   := $(addprefix .dfile/, $(notdir $(LIB_S_FILES:.S=.d)))
+LIB_DEPEND := $(DEPEND_CXX_FILES) $(DEPEND_C_FILES) $(DEPEND_S_FILES)
+LIB_ARCHIVE := $(ARCHIVE_DIR)/$(ARCHIVE_NAME)
+
+.PHONY: lib
+lib : output_dir $(LIB_ARCHIVE)
+
+$(LIB_ARCHIVE) : $(LIB_DEPEND) $(LIB_OBJ)
+	@if not exist $(ARCHIVE_DIR) mkdir $(ARCHIVE_DIR)
+	@rm -f $@
+	$(AR) -rcs $@ $(LIB_OBJ)
+
+.PHONY: output_dir
+output_dir:
+	@if not exist $(CPU) mkdir $(CPU)
+
+.PHONY: clean
+clean:
+	rm -f $(LIB_DEPEND) $(LIB_OBJ) $(LIB_ARCHIVE)
+
+ifndef FORCE_REBUILD
+ ifneq ($(strip $(LIB_CXX_FILES)),)
+  -include $(DEPEND_CXX_FILES)
+ endif
+
+ ifneq ($(strip $(LIB_C_FILES)),)
+  -include $(DEPEND_C_FILES)
+ endif
+
+ ifneq ($(strip $(LIB_S_FILES)),)
+  -include $(DEPEND_S_FILES)
+ endif
+else
+ include $(MAINDIR)/makefile.rules
+endif
+

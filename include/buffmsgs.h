@@ -2,6 +2,8 @@
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
  * $Log: BUFFMSGS.H $
+ * Revision 1.13  2000/05/31 15:02:59  MS10234
+ * Added message structure entries for new messages
  * Revision 1.12  2000/05/30 16:28:16  BD10648
  * Added section messages for config.dat and vistadonormsg.
  * Revision 1.11  2000/05/25 18:43:27  MS10234
@@ -203,7 +205,8 @@ enum BUFFER_MESSAGES
     ArcConfigMsg,           // Config.dat message to/from Archive
     ProcDonorMsg,           // Within proc donor message
     OverrideAlarmMsg,
-    Opt2ProcMsg,
+    Opt2ProcMsg,            // Optimizer to Procedure target message
+    Proc2OptMsg,            // Procedure to Optimizer request message
     VistaDonorMsg,          // Vista to Gui donor message
     AdjustmentsMsg,         // Adjustments section message
     LangUnitMsg,            // Config Lang/Unit section message
@@ -363,6 +366,7 @@ MsgStructMapEntry MsgStructMap[LAST_BUFFER_MESSAGE+1] =
    { ProcDonorMsg , NOTUSED },
    { OverrideAlarmMsg , NOTUSED },
    { Opt2ProcMsg , NOTUSED },
+   { Proc2OptMsg , NOTUSED },
    { VistaDonorMsg, NOTUSED },
    { AdjustmentsMsg, NOTUSED },
    { LangUnitMsg, NOTUSED },

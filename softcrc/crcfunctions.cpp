@@ -15,6 +15,7 @@
 #include <fstream.h>
 #include <stdio.h>
 #include "crcgen.h"
+#include "crc.h"
 //## end module%35EC152600BC.additionalIncludes
 
 //## begin module%35EC152600BC.includes preserve=yes
@@ -162,6 +163,8 @@ int CRCFunctions::validateCRC (const char* crc, iostream* the_stream)
   //## end CRCFunctions::validateCRC%904748911.body
 }
 
+#include "error.h"
+
 int CRCFunctions::moveValidFile (const char* crc, const char* source, const char* dest)
 {
   //## begin CRCFunctions::moveValidFile%904748912.body preserve=yes
@@ -170,7 +173,7 @@ int CRCFunctions::moveValidFile (const char* crc, const char* source, const char
    if ( source && dest )
    {
       // Open the file for reading in the file for CRCing.
-      fstream readfile(source,ios::in+ios::nocreate);
+      fstream readfile(source,ios::in+ios::nocreate+ios::binary);
       if (!readfile.fail()) 
       {
          // Validate the CRC for the file given.
@@ -187,7 +190,7 @@ int CRCFunctions::moveValidFile (const char* crc, const char* source, const char
             else
             {
                // Open the output stream/file.
-               fstream writefile(dest,ios::out);
+               fstream writefile(dest,ios::out+ios::binary);
                if (!writefile.fail())
                {
                   char buffer[MAXBUFFERLENGTH]; 
@@ -231,3 +234,54 @@ int CRCFunctions::moveValidFile (const char* crc, const char* source, const char
 
 //## begin module%35EC152600BC.epilog preserve=yes
 //## end module%35EC152600BC.epilog
+
+
+
+
+static int CRCFunctions::getFileCrc(const char *filename, unsigned long *finalCrc)
+{
+   char buffer[MAXBUFFERLENGTH]; 
+   int count;
+   int status;
+   int totalBytesRead = 0;
+   unsigned long runningCrc = 0; 
+
+   ifstream inStream (filename, ios::in + ios::binary + ios::nocreate);
+
+   if (inStream.fail())
+   {
+      PROC_SLOGERROR ("Opening file failed.");
+      inStream.close();
+      return -1;
+   }
+   
+   // Start at the beginning of the stream.
+   inStream.seekg(0);
+   
+   // Read in the stream on block at a time.
+   do
+   {
+      inStream.read (buffer, MAXBUFFERLENGTH);
+      count = inStream.gcount();
+      totalBytesRead += count;
+
+      // There is something goofy with this stream class.  Fail bit is triggered
+      // on the reading of the end of a file.  Don't know what causes it, but
+      // ignore fail status.
+      if (inStream.bad())
+      {
+         sprintf (buffer, "Stream read failed (%d, %d) (%x).", count, totalBytesRead, inStream.rdstate());
+         PROC_SLOGERROR (buffer);
+         inStream.close();
+         return -1;
+      }
+      
+      //status = crcgen32 (&runningCrc, buffer, count);
+      runningCrc = addToCrc32 ((unsigned char *)buffer, count, runningCrc);
+   
+   //} while ( ( count == MAXBUFFERLENGTH ) && ( status == 0 ) ); 
+   } while ( count == MAXBUFFERLENGTH );
+
+   *finalCrc = runningCrc;
+   return 0;
+}

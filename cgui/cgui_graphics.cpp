@@ -3,6 +3,8 @@
  *
  * $Header: L:/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.10 2004/11/12 14:53:10Z rm10919 Exp cf10242 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.9  2004/11/01 17:27:20Z  cf10242
+ * Change TextItem to CGUITextItem
  * Revision 1.8  2004/10/29 15:11:14Z  rm10919
  * Revision 1.7  2004/10/22 20:14:34Z  rm10919
  * CGUIButton updates and changes.
@@ -275,22 +277,6 @@ void CGUITextItem::setText(const StringChar * string, LanguageId = currentLangua
 
 const StringChar * CGUITextItem::getText(LanguageId languageId = currentLanguage)
 {
-//   const StringChar * string;
-//   StringChar * stringNonsense=NULL;
-
-//   string = (StringChar *) "\x41\x00\x63\x00\x63\x00\x65\x00\x73\x00" "\x73\x00\x20\x00\x50\x00\x72\x00\x65\x00" "\x73\x00\x73\x00\x75\x00\x72\x00\x65\x00\x00";
-
-//   if (string)
-//   {
-//      int length = 0;
-//      while (string[length] != '\0')
-//      {
-//         length += 1;
-//      }
-
-//      stringNonsense = new UGL_WCHAR [length+1];
-//      memcpy(stringNonsense, string, length * sizeof(StringChar));
-//   }
    if (_string)
    {
       return  _string;
@@ -301,9 +287,25 @@ const StringChar * CGUITextItem::getText(LanguageId languageId = currentLanguage
    }
 }
 
+CGUITextItem * CGUITextItem::getTextItem (const char * id, LanguageId languageId)
+{
+  CGUITextItem * textItem;
+
+  textItem->_id = id;
+//  textItem->_string = "Text Item";
+
+  return textItem;
+}
 
 void CGUITextItem::setId(const char * id)
 {
+   if (id)
+   {
+      _id = id;
+   }else
+   {
+      _id = NULL;
+   }
 }
 
 bool CGUITextItem::isInitialized(void)

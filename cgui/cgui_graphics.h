@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.13 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.h $
+ * Revision 1.6  2004/11/01 17:27:21Z  cf10242
+ * Change TextItem to CGUITextItem
  * Revision 1.5  2004/10/29 15:11:14Z  rm10919
  * Revision 1.4  2004/10/07 22:47:02Z  cf10242
  * Revision 1.3  2004/10/07 18:52:19Z  cf10242
@@ -117,6 +119,8 @@ public:
    //
    //
    const StringChar * getText(LanguageId languageId = currentLanguage);
+
+   CGUITextItem * getTextItem(const char * id, LanguageId languageId);
 
    void setText(const char * string, LanguageId = currentLanguage);
    void setText(const StringChar * texString, LanguageId = currentLanguage);

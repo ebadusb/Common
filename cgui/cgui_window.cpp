@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.9 2005/03/02 01:37:51Z cf10242 Exp psanusb $
+ * $Header: L:/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.10 2005/04/04 17:38:15Z psanusb Exp cf10242 $
  * $Log: cgui_window.cpp $
+ * Revision 1.9  2005/03/02 01:37:51Z  cf10242
+ * deleting objects that are already deleted causing issues on TAOS
  * Revision 1.8  2005/02/21 17:17:13Z  cf10242
  * IT 133 - delete all allocated memory to avoid unrecovered memory
  * Revision 1.7  2005/02/07 18:53:55Z  rm10919
@@ -23,6 +25,7 @@
  */
 
 #include <vxWorks.h>
+#include <ugl\private\uglWinP.h>
 #include "cgui_graphics.h"
 #include "cgui_window.h"
 #include "cgui_window_object.h"
@@ -44,6 +47,7 @@ CGUIWindow::CGUIWindow(CGUIDisplay & display, const CGUIRegion & region)
 void CGUIWindow::initializeData(void)
 {
    _id = UGL_NULL_ID;
+   _zPos = 0;
    _parent = NULL;
    _disabled = false;
    _activeDrawRegion = UGL_NULL_ID;
@@ -105,9 +109,17 @@ void CGUIWindow::setRegion(const CGUIRegion & newRegion)
    }
 }
 
+/* This "replaces" winZPosSet, which is not a class member, so can't be overwritten */
+void CGUIWindow::setZPos(UGL_WINDOW_ID id, int zpos)
+{
+	_zPos = zpos;
+	winZPosSet(id, zpos);	//this will not work if id == UGL_NULL_ID
+}
 
 void CGUIWindow::attach(CGUIWindow * window, WIN_ATTRIB winAttrib /* = WIN_ATTRIB_VISIBLE*/)
 {
+	UGL_WINDOW *pParent;
+	
    if (_parent != window ||
        _id == UGL_NULL_ID)
    {
@@ -163,6 +175,10 @@ void CGUIWindow::attach(CGUIWindow * window, WIN_ATTRIB winAttrib /* = WIN_ATTRI
          winAttach(_id, _display.rootWindow(), UGL_NULL_ID);
       }
 
+	  if (_zPos != 0)
+			winZPosSet(_id, _zPos);		//now we have an id
+	  else
+			winZPosSet(_id, 2);
       //
       // Notify display of new window
       //

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.12 2003/11/25 16:10:03Z jl11312 Exp rm70006 $
  * $Log: datalog_message_stream.cpp $
+ * Revision 1.11  2003/11/24 23:06:46Z  jl11312
+ * - corrected handling of interrupt output
  * Revision 1.10  2003/11/10 17:46:16Z  jl11312
  * - corrections from data log unit tests (see IT 6598)
  * Revision 1.9  2003/04/29 17:07:54Z  jl11312
@@ -322,6 +324,13 @@ DataLog_Stream & DataLog_Stream::operator << (char c)
 {
 	if ( _consoleOutput == DataLog_ConsoleEnabled ) putc(c, datalog_ConsoleFile());
 	if ( _logOutput == DataLog_LogEnabled) writeArg(SignedChar, &c, sizeof(char));
+	return *this;
+}
+
+DataLog_Stream & DataLog_Stream::operator << (unsigned char c)
+{
+	if ( _consoleOutput == DataLog_ConsoleEnabled ) putc((char)c, datalog_ConsoleFile());
+	if ( _logOutput == DataLog_LogEnabled) writeArg(UnsignedChar, &c, sizeof(unsigned char));
 	return *this;
 }
 

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.28 2003/12/09 14:15:02Z jl11312 Exp rm70006 $
  * $Log: datalog.h $
+ * Revision 1.26  2003/11/24 23:05:41Z  jl11312
+ * - added missing API declaration
  * Revision 1.25  2003/10/03 12:32:41Z  jl11312
  * - improved DataLog_Handle lookup time
  * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
@@ -251,7 +253,7 @@ public:
 
 	DataLog_Stream & operator << (char c);
 	DataLog_Stream & operator << (signed char c) { return operator<< ((char)c); }
-	DataLog_Stream & operator << (unsigned char c) { return operator<< ((char)c); }
+	DataLog_Stream & operator << (unsigned char c);
 	DataLog_Stream & operator << (short val) { return operator<< ((int)val); }
 	DataLog_Stream & operator << (unsigned short val) { return operator<< ((unsigned int)val); }
 	DataLog_Stream & operator << (int val);

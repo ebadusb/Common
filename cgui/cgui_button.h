@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.9  2004/11/19 18:14:47Z  cf10242
+ *  Integration checkin
  *  Revision 1.8  2004/11/18 22:33:37Z  rm10919
  *  Added ability to modify button text.
  *  Revision 1.7  2004/11/04 20:19:08Z  rm10919
@@ -286,11 +288,11 @@ public:
    // set a previously set icon as visible on the button
    void enableIcon();
 
-protected:
    // DISABLE ICON
    // set a previously set icon as invisible
    void disableIcon();
 
+protected:
    // The following methods are called when state of the button is changed.  These can be overriden
    // and supllemented by derived types if different behavior is needed.
    // DO ON PRESS

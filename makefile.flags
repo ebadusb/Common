@@ -3,6 +3,10 @@
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags $
+# Revision 1.6  2002/05/16 17:38:39  jl11312
+# - allowed for overrides of various flag settings
+# - corrected flag settings for assembly language source
+# - removed lib$(CPU)gnuvx.a from default list of linked libraries
 # Revision 1.5  2002/04/18 14:27:17  jl11312
 # - updated compile flags
 # - added link command and flags
@@ -46,6 +50,23 @@ endif
 #
 ifndef CPU
   CPU=I80486
+endif
+
+#
+# Make sure we have a valid CPU and BUILD_TYPE
+#
+ifneq ($(CPU),I80486)
+  ifneq ($(CPU),SIMNT)
+    OPT_ERROR := Invalid CPU type: $(CPU).  Valid types are I80486 or SIMNT.
+    FORCE_REBUILD := 1
+  endif
+endif
+
+ifneq ($(BUILD_TYPE),DEBUG)
+  ifneq ($(BUILD_TYPE),PRODUCTION)
+    OPT_ERROR := Invalid BUILD_TYPE: $(BUILD_TYPE).  Valid types are CLEAN, DEBUG, or PRODUCTION.
+    FORCE_REBUILD := 1
+  endif
 endif
 
 #
@@ -188,3 +209,8 @@ WARNFLAGS := -Werror -Wmissing-prototypes \
 	     -Wimplicit -Wparentheses -Wreturn-type -Wswitch -Wtrigraphs
 endif  
 
+#
+# These files are the files common to all build directories which should be
+# removed by a make BUILD_TYPE=CLEAN
+#
+COMMON_CLEAN_FILELIST = .dfile/*.d .opt/* I80486/*.* SIMNT/*.*

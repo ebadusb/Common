@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.9  2005/01/03 23:49:50Z  cf10242
+ * add a setRegion to cguiText to invalidate region even if region size did not change
  * Revision 1.8  2005/01/03 20:40:52Z  cf10242
  * add defensive coding to catch gui crashes
  * Revision 1.7  2004/12/10 23:29:20Z  cf10242
@@ -156,7 +158,8 @@ void CGUIText::setStylingRecord (StylingRecord * stylingRecord)
    _stylingRecord = * stylingRecord;
    _requestedRegion = stylingRecord->region;
    computeTextRegion();
-   _owner->invalidateObjectRegion(this);
+	if(_owner)
+		_owner->invalidateObjectRegion(this);
 }
 
 

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_records.h 1.2 2004/06/07 16:55:54Z jl11312 Exp rm70006 $
  * $Log: datalog_records.h $
+ * Revision 1.1  2003/02/26 16:11:18Z  jl11312
+ * Initial revision
  *
  */
 
@@ -57,15 +59,15 @@ struct DataLog_NetworkHeaderRecord
 {
 	DataLog_UINT16	_recordType __attribute__ ((packed));
 	DataLog_NodeID _nodeID __attribute__ ((packed));
-	DataLog_TimeStampStart _start __attribute__ ((packed));
+	DataLog_TimeStampStart _start;
 	DataLog_UINT16 _nodeNameLen __attribute__ ((packed));
 };
 
 struct DataLog_LogLevelRecord
 {
 	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
-	DataLog_InternalID _levelID __attribute__ ((packed));
+	DataLog_TimeStamp _timeStamp;
+	DataLog_InternalID _levelID;
 	
 #ifdef DATALOG_NETWORK_SUPPORT
 	DataLog_NodeID _nodeID __attribute__ ((packed));
@@ -77,8 +79,8 @@ struct DataLog_LogLevelRecord
 struct DataLog_PrintOutputRecord
 {
 	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
-	DataLog_InternalID _levelID __attribute__ ((packed));
+	DataLog_TimeStamp _timeStamp;
+	DataLog_InternalID _levelID;
 	DataLog_TaskID	_taskID __attribute__ ((packed));
 	
 #ifdef DATALOG_NETWORK_SUPPORT
@@ -93,8 +95,8 @@ struct DataLog_PrintOutputRecord
 struct DataLog_StreamOutputRecord
 {
 	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
-	DataLog_InternalID _levelID __attribute__ ((packed));
+	DataLog_TimeStamp _timeStamp;
+	DataLog_InternalID _levelID;
 	DataLog_TaskID	_taskID __attribute__ ((packed));
 	
 #ifdef DATALOG_NETWORK_SUPPORT
@@ -108,7 +110,7 @@ struct DataLog_StreamOutputRecord
 struct DataLog_PeriodicOutputRecord
 {
 	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
+	DataLog_TimeStamp _timeStamp;
 	DataLog_InternalID _setID __attribute__ ((packed));
 	
 #ifdef DATALOG_NETWORK_SUPPORT
@@ -121,7 +123,7 @@ struct DataLog_PeriodicOutputRecord
 struct DataLog_PeriodicSetRecord
 {
 	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
+	DataLog_TimeStamp _timeStamp;
 	DataLog_InternalID _setID __attribute__ ((packed));
 	
 #ifdef DATALOG_NETWORK_SUPPORT
@@ -134,7 +136,7 @@ struct DataLog_PeriodicSetRecord
 struct DataLog_PeriodicItemRecord
 {
 	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
+	DataLog_TimeStamp _timeStamp;
 	DataLog_InternalID _keyCode __attribute__ ((packed));
 	
 #ifdef DATALOG_NETWORK_SUPPORT
@@ -149,8 +151,8 @@ struct DataLog_PeriodicItemRecord
 struct DataLog_TaskCreateRecord
 {
 	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
-	DataLog_InternalID	_levelID __attribute__ ((packed));  
+	DataLog_TimeStamp _timeStamp;
+	DataLog_InternalID	_levelID;
 	DataLog_TaskID	_taskID __attribute__ ((packed));
 
 #ifdef DATALOG_NETWORK_SUPPORT
@@ -163,8 +165,8 @@ struct DataLog_TaskCreateRecord
 struct DataLog_TaskDeleteRecord
 {
 	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));
-	DataLog_InternalID _levelID __attribute__ ((packed));
+	DataLog_TimeStamp _timeStamp;
+	DataLog_InternalID _levelID;
 	DataLog_TaskID	_taskID __attribute__ ((packed));
 
 #ifdef DATALOG_NETWORK_SUPPORT
@@ -175,13 +177,13 @@ struct DataLog_TaskDeleteRecord
 struct DataLog_FileCloseRecord
 {
 	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));	
+	DataLog_TimeStamp _timeStamp;
 };
 
 struct DataLog_WriteTimeRecord
 {
 	DataLog_UINT16	_recordType __attribute__ ((packed));
-	DataLog_TimeStamp _timeStamp __attribute__ ((packed));	
+	DataLog_TimeStamp _timeStamp;
 };
 
 #endif /* ifndef _DATALOG_RECORDS_INCLUDE */

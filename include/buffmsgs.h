@@ -3,6 +3,8 @@
  *
  * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/BUFFMSGS.H 1.4 1999/07/26 15:38:48 BS04481 Exp TD10216 $
  * $Log: BUFFMSGS.H $
+ * Revision 1.2  1999/06/30 20:35:41  TD10216
+ * IT3908
  * Revision 1.1  1999/05/24 23:26:16  TD10216
  * Initial revision
  * Revision 1.6  1999/05/13 15:33:14  SB07663
@@ -172,6 +174,7 @@ enum BUFFER_MESSAGES
    AlarmLogRequest,              // Procedure -> Procedure
    TcpgateRegistration,     // External->an2inetd->tcp_gate:register for tcpgate msgs
    ModifyProduct,           // anyone -> proc : modify product (see predict_msgs.h)
+   BasinTempStatus,         // safety driver -> anyone who want basin temp data
 
    LAST_BUFFER_MESSAGE           // don't change this entry
 };

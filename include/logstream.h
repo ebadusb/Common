@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/logstream.h 1.2 2002/03/20 16:37:53 jl11312 Exp jl11312 $
+ * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/logstream.h 1.2 2002/03/20 16:37:53 jl11312 Exp $
  * $Log: logstream.h $
+ * Revision 1.2  2002/03/20 16:37:53  jl11312
+ * - redefined template manipulator as inline
  * Revision 1.1  2002/03/19 16:11:34  jl11312
  * Initial revision
  *
@@ -12,6 +14,10 @@
 
 #ifndef _LOGSTREAM_INCLUDE
 #define _LOGSTREAM_INCLUDE
+
+#ifdef __GNUG__
+#pragma interface
+#endif
 
 #include <iostream.h>
 

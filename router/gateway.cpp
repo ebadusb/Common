@@ -118,6 +118,13 @@ void Gateway::receiveLoop()
 				_FATAL_ERROR( __FILE__, __LINE__, "socket receive failed" );
 				return;
 		   }
+			else if ( byte_count == 0 )
+			{
+				DataLog_Critical criticalLog;
+				DataLog(criticalLog) << "Gateway::receiveLoop : socket closed" << endmsg;
+				_FATAL_ERROR( __FILE__, __LINE__, "socket closed" );
+				return;
+		   }
 		   else
 			{
 				total_byte_count += byte_count;

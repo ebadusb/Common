@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: L:/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.10 2004/11/12 14:53:10Z rm10919 Exp cf10242 $
+ * $Header: L:/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.11 2004/11/12 14:59:44Z cf10242 Exp cf10242 $
  * $Log: cgui_graphics.cpp $
  * Revision 1.9  2004/11/01 17:27:20Z  cf10242
  * Change TextItem to CGUITextItem
@@ -30,6 +30,28 @@
 //#include "datalogger.h"
 
 BITMAP_DATA_ENTRY bitmap_data_table[BITMAP_ID_COUNT];
+
+// START MESSAGE_SYSTEM_IN_WIN_MGR
+#include "messagesystem.h"
+extern void (* winAppStartupTask)(void);
+extern void (* winAppIdleTask)(void);
+MessageSystem * msgSys = NULL;
+
+static void cguiWinAppStartupTask(void)
+{
+//	if ( !msgSys )
+//	{
+		printf("Creating the message system %x\n", taskIdSelf());
+		msgSys = new MessageSystem();
+		msgSys->initNonBlock();
+//	}
+}
+
+static void cguiWinAppIdleTask(void)
+{
+	msgSys->dispatchMessages();
+}
+// END MESSAGE_SYSTEM_IN_WIN_MGR
 
 CGUIDisplay::CGUIDisplay(void)
 {
@@ -63,6 +85,12 @@ CGUIDisplay::CGUIDisplay(void)
 
    uglDriverFind(UGL_EVENT_SERVICE_TYPE, 0, (UGL_UINT32 *)&_uglEventService);
 
+	// START MESSAGE_SYSTEM_IN_WIN_MGR
+	winAppStartupTask = cguiWinAppStartupTask;
+	winAppIdleTask = cguiWinAppIdleTask;
+	// END MESSAGE_SYSTEM_IN_WIN_MGR
+
+
    _uglApp = winAppCreate("winApp", 0, 0, 0, UGL_NULL);     
 
    _uglRootWindow = winCreate(_uglApp, UGL_NULL_ID,         
@@ -74,6 +102,8 @@ CGUIDisplay::CGUIDisplay(void)
    winAttach(_uglRootWindow, UGL_NULL_ID, UGL_NULL_ID);
 
    uglDriverFind(UGL_FONT_ENGINE_TYPE, 0, (UGL_UINT32 *)&_uglFontDriver);
+
+
 
    cursorInit();
 }
@@ -277,6 +307,22 @@ void CGUITextItem::setText(const StringChar * string, LanguageId = currentLangua
 
 const StringChar * CGUITextItem::getText(LanguageId languageId = currentLanguage)
 {
+//   const StringChar * string;
+//   StringChar * stringNonsense=NULL;
+
+//   string = (StringChar *) "\x41\x00\x63\x00\x63\x00\x65\x00\x73\x00" "\x73\x00\x20\x00\x50\x00\x72\x00\x65\x00" "\x73\x00\x73\x00\x75\x00\x72\x00\x65\x00\x00";
+
+//   if (string)
+//   {
+//      int length = 0;
+//      while (string[length] != '\0')
+//      {
+//         length += 1;
+//      }
+
+//      stringNonsense = new UGL_WCHAR [length+1];
+//      memcpy(stringNonsense, string, length * sizeof(StringChar));
+//   }
    if (_string)
    {
       return  _string;
@@ -287,25 +333,9 @@ const StringChar * CGUITextItem::getText(LanguageId languageId = currentLanguage
    }
 }
 
-CGUITextItem * CGUITextItem::getTextItem (const char * id, LanguageId languageId)
-{
-  CGUITextItem * textItem;
-
-  textItem->_id = id;
-//  textItem->_string = "Text Item";
-
-  return textItem;
-}
 
 void CGUITextItem::setId(const char * id)
 {
-   if (id)
-   {
-      _id = id;
-   }else
-   {
-      _id = NULL;
-   }
 }
 
 bool CGUITextItem::isInitialized(void)

@@ -187,7 +187,7 @@ void sockinetaddr::setaddr(const char* host_name)
 
 const char* sockinetaddr::gethostname () const
 {
-   return inet_ntoa(sin_addr.s_addr);
+   return inet_ntoa(sin_addr);
 
 /*
    if (sin_addr.s_addr == htonl(INADDR_ANY))
@@ -376,8 +376,8 @@ int sockinetbuf::connect (unsigned long addr, int port_no)
 int sockinetbuf::connect (const char* host_name, int port_no)
 {
    in_addr sock_addr;
-   sock_addr.s_addr = inet_addr(host_name);
-   sockinetaddr sa (ntohl(inet_addr(host_name)), port_no);
+   sock_addr.s_addr = inet_addr((char *)host_name);
+   sockinetaddr sa (ntohl(inet_addr((char *)host_name)), port_no);
 
    return connect (sa);
 }
@@ -398,8 +398,8 @@ int sockinetbuf::connectWithTimeout (unsigned long addr, int port_no, timeval *t
 int sockinetbuf::connectWithTimeout (const char* host_name, int port_no, timeval *tv)
 {
    in_addr sock_addr;
-   sock_addr.s_addr = inet_addr(host_name);
-   sockinetaddr sa (ntohl(inet_addr(host_name)), port_no);
+   sock_addr.s_addr = inet_addr((char *)host_name);
+   sockinetaddr sa (ntohl(inet_addr((char *)host_name)), port_no);
 
    return connectWithTimeout (sa, tv);
 }

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_client.cpp 1.5 2003/12/09 14:14:16Z jl11312 Exp rm70006 $
  * $Log: datalog_client.cpp $
+ * Revision 1.1  2002/08/22 20:19:03  jl11312
+ * Initial revision
  *
  */
 
@@ -59,7 +61,6 @@ void DataLog_NetworkClientTask::handlePacket(const DataLog_NetworkPacket & packe
 			break;
 
 		case DataLog_StartOutputRecord:
-			_dataStream = &(_clientBuffer->streamWriteStart());
 			_state = WaitEnd;
 			break;
 
@@ -83,7 +84,7 @@ void DataLog_NetworkClientTask::handlePacket(const DataLog_NetworkPacket & packe
 		case DataLog_OutputRecordData:
 			if ( packet._length <= MaxDataSize && readData(_tempBuffer, packet._length) )
 			{
-				_dataStream->write(_tempBuffer, packet._length);
+				_clientBuffer->partialWrite(_tempBuffer, packet._length);
 			}
 			else
 			{
@@ -92,7 +93,7 @@ void DataLog_NetworkClientTask::handlePacket(const DataLog_NetworkPacket & packe
 			break;
 
 		case DataLog_EndOutputRecord:
-			_clientBuffer->streamWriteComplete();
+			_clientBuffer->partialWriteComplete();
 			_state = WaitStart;
 			break;
 

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.10 2003/10/03 12:35:02Z jl11312 Exp jl11312 $
  * $Log: datalog_internal.h $
+ * Revision 1.6  2002/10/08 14:43:02  jl11312
+ * - added code to handle case for application saving a reference to a data log stream and performing multiple message writes
  * Revision 1.5  2002/09/19 21:25:59  jl11312
  * - modified stream functions to not reset stream state when two stream writes occur without endmsg in between
  * - added errnoMsg manipulator function
@@ -99,6 +101,7 @@ private:
 	void reattach(DataLog_SharedPtr(SharedBufferData) data);
 };
 
+struct DataLog_StreamOutputRecord;
 class DataLog_OutputBuffer : public DataLog_Buffer
 {
 public:
@@ -106,12 +109,11 @@ public:
 	virtual ~DataLog_OutputBuffer();
 
 	virtual size_t write(const DataLog_BufferData * ptr, size_t size);
+	virtual void partialWrite(const DataLog_BufferData * ptr, size_t size);
+	virtual size_t partialWriteComplete(void);
 
-	typedef DataLog_EnabledType NotifyStreamWriteComplete(const DataLog_BufferData * ptr, size_t size);
-	virtual DataLog_Stream & streamWriteStart(NotifyStreamWriteComplete * callBack = NULL, size_t callBackArgSize = 0);
-	virtual DataLog_Stream & streamWriteStartOrContinue(NotifyStreamWriteComplete * callBack, size_t callBackArgSize, bool & firstWrite);
-	virtual void streamWriteReleaseToApp(void);
-	virtual size_t streamWriteComplete(void);
+	virtual DataLog_Stream & streamAppWriteStart(const DataLog_StreamOutputRecord & header, const char * fileName, DataLog_EnabledType logOutput, DataLog_ConsoleEnabledType consoleOutput);
+	virtual size_t streamAppWriteComplete(void);
 
 protected:
 	virtual void lockWriteAccess(void);
@@ -120,27 +122,21 @@ protected:
 
 protected:
 	//
-	// For normal output buffers, _writeStream is allocated on demand as a
-	// dynamic string stream.  For critical output buffers, a static stream
-	// is created by the constructor, since we don't want critical output
-	// to require memory allocation.
+	// For normal output buffers, _writeStream is allocated on demand.  For
+	// critical output buffers, _writeStream is allocated by the constructor,
+	// since we don't want critical output to require memory allocation.
 	//
-	DataLog_Stream * _writeStream;
-	DataLog_BufferData * _streamWriteBuffer;
-	NotifyStreamWriteComplete * _streamWriteCompleteCallBack;
-	size_t _streamWriteCompleteCallBackArgSize;
+	DataLog_Stream * _writeStream; 
 
 private:
-	bool	_streamWriteInProgress;			// stream write interface to buffer is in use
-	bool	_streamWriteReleasedToApp;		// a reference to the internal stream used for the stream write interface
-													//  is in use by application code (i.e. outside direct control of the
-													//  datalog sub-system).
- 
-	bool	_streamWriteAllowRestart;		// application code has completed a stream write operation, but may still
-													//  hold a reference to the internal stream, and may perform additional
-													//  stream write operations.
-	size_t	_streamWriteRestartPos;		// stream write position for application write restart
-	
+	bool	_rawStreamWriteInProgress;		// _writeStream is in use for raw write (partialWrite()) interface
+	bool  _appStreamWriteInProgress;		// _writeStream has been released to the application
+	int	_streamWriteRestartPos;			// position at which a new stream write should start if the
+													// application re-uses a DataLog_Stream reference after
+													// a call to endmsg
+
+	DataLog_ConsoleEnabledType _appConsoleOutput;
+
 #ifdef DATALOG_MULTITHREADED
 	DataLog_Lock _writeLock;
 #endif /* ifdef DATALOG_MULTITHREADED */

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.17  2002/10/28 14:33:07  jl11312
+ * - moved include for iomanip.h to C++ only section
  * Revision 1.16  2002/10/25 16:56:13  jl11312
  * - added new form of errnoMsg stream manipulator which takes an argument for errno
  * Revision 1.15  2002/09/23 13:54:46  jl11312
@@ -52,7 +54,7 @@
 /*
  *	Version information
  */
-#define	DATALOG_MAJOR_VERSION	(1)
+#define	DATALOG_MAJOR_VERSION	(2)
 #define	DATALOG_MINOR_VERSION	(1)
 
 /*
@@ -157,23 +159,168 @@ DataLog_Result datalog_GetBytesMissed(size_t * byteCount);
  */
 #ifdef __cplusplus
 
-#include <iomanip.h>
-#include <strstream.h>
+#include <string>
 
-class DataLog_OutputBuffer;
-class DataLog_Stream : public ostrstream
+/*
+ * The DataLog_Stream class supports only two types of manipulators:
+ * those taking no arguments and those taking a single integer argument.
+ * More general support using templates similar to that provided by
+ * iomanip.h for the C++ streams library could be added in the future if
+ * necessary.
+ */
+class DataLog_Stream;
+typedef DataLog_Stream & (* DataLog_StreamManip)(DataLog_Stream &);
+
+class DataLog_StreamIManip
+{
+	int _value;
+	DataLog_Stream & (* _func)(DataLog_Stream &, int);
+
+public:
+	DataLog_StreamIManip(DataLog_Stream & (* func)(DataLog_Stream &, int), int value)
+	  : _func(func), _value(value) { }
+
+	friend DataLog_Stream & operator << (DataLog_Stream & stream, const DataLog_StreamIManip & manip);
+};
+
+inline DataLog_Stream & operator << (DataLog_Stream & stream, const DataLog_StreamIManip & manip)
+{
+	return (*manip._func)(stream, manip._value); 
+}
+
+class DataLog_Stream
 {
 	friend class DataLog_OutputBuffer;
 	friend class DataLog_CriticalBuffer;
-	friend ostream & endmsg(ostream & stream);
+	friend DataLog_Stream & endmsg(DataLog_Stream & stream);
+
+public:
+	virtual ~DataLog_Stream();
+
+//	DataLog_Stream & write(const void * data, size_t size) 	{ writeStringArg(String, data, size); return *this; }
+
+	DataLog_Stream & operator << (char c);
+	DataLog_Stream & operator << (signed char c) { return operator<< ((char)c); }
+	DataLog_Stream & operator << (unsigned char c) { return operator<< ((char)c); }
+	DataLog_Stream & operator << (short val) { return operator<< ((int)val); }
+	DataLog_Stream & operator << (unsigned short val) { return operator<< ((unsigned int)val); }
+	DataLog_Stream & operator << (int val);
+	DataLog_Stream & operator << (unsigned int val);
+	DataLog_Stream & operator << (long val);
+	DataLog_Stream & operator << (unsigned long val);
+	DataLog_Stream & operator << (bool val);
+	DataLog_Stream & operator << (const char * s);
+	DataLog_Stream & operator << (const signed char * s) { return operator<< ((const char *)s); }
+	DataLog_Stream & operator << (const unsigned char * s) { return operator<< ((const char *)s); }
+	DataLog_Stream & operator << (const string & s) { return operator<< (s.c_str()); }
+	DataLog_Stream & operator << (float val);
+	DataLog_Stream & operator << (double val);
+	DataLog_Stream & operator << (const void * ptr) { return operator<< ((unsigned long)ptr); }
+
+	DataLog_Stream & operator << (DataLog_StreamManip func) { return (*func)(*this); }
+
+	enum Flag
+	{
+		// General numeric format control
+		f_showpos = 0x0001,		// print explicit '+' on output of positive values
+ 
+		// Integer format control
+		f_dec = 0x0010,			// output integers as decimal values
+		f_hex = 0x0020,			// output integers as hexadecimal values
+		f_oct = 0x0040,			// output integers as octal values
+		f_basemask = 0x0070,		// mask for output base flags
+		f_showbase = 0x0100,		// show integer output base (e.g. 0x for hex)
+
+		// Floating point format control
+		f_showpoint = 0x1000,	// show trailing zeroes after decimal point
+		f_scientific = 0x2000,	// scientific notation (e.g. 1.234E02)
+		f_fixed = 0x4000,			// fixed point notation (e.g. 123.4)
+		f_floatmask = 0x6000,	// mask for floating point format flags
+
+		// Default flag setting
+		f_defaultflags = f_dec | f_fixed
+	};
+
+	void flags(unsigned int flagSetting) { _flags = flagSetting; _flagsChanged = true; }
+	void setFlags(unsigned int flagSetting);
+	void resetFlags(unsigned int flagSetting);
+	void precision(unsigned int precSetting) { _precision = precSetting; _precisionChanged = true; }
+
+protected:
+	DataLog_Stream(DataLog_OutputBuffer * output);
+	void setLogOutput(DataLog_EnabledType logOutput) { _logOutput = logOutput; }
+	void setConsoleOutput(DataLog_ConsoleEnabledType consoleOutput) { _consoleOutput = consoleOutput; }
+
+	void rawWrite(const void * data, size_t size);
+
+	size_t pcount(void) { return _bufferPos; }
+	void clear(void) { _bufferPos = 0; _fail = false; _flagsChanged = false; _precisionChanged = false; }
+	void seekp(size_t pos) { _bufferPos = (pos < _bufferSize) ? pos : _bufferSize; }
+	const void * data(void) { return _buffer; }
+	bool fail(void) { bool retVal = _fail; _fail = false; return retVal; }
+
+	DataLog_UINT16 getFlags(void) { return _flags; }
+	DataLog_UINT8	getPrecision(void) { return _precision; }
 
 private:
-	DataLog_Stream(DataLog_OutputBuffer * output);
-	DataLog_Stream(DataLog_BufferData * buffer, size_t bufferSize, DataLog_OutputBuffer * output);
-	virtual ~DataLog_Stream() {}
+	enum ArgumentType
+	{
+		SignedChar = 1,
+		UnsignedChar = 2,
+		SignedInt = 3,
+		UnsignedInt = 4,
+		SignedLong = 5,
+		UnsignedLong = 6,
+		String = 7,
+		Float = 8,
+		Double = 9,
+		Bool = 10,
+		FlagSetting = 100,
+		PrecisionSetting = 101
+	};
 
+	void writeArg(ArgumentType type, const void * data, DataLog_UINT16 size);
+	void writeStringArg(ArgumentType type, const void * data, DataLog_UINT16 size);
+	void printLong(long val);
+	void printUnsignedLong(unsigned long val);
+	void printDouble(double val);
+
+private:
 	DataLog_OutputBuffer * _output;
+	DataLog_EnabledType _logOutput;
+	DataLog_ConsoleEnabledType _consoleOutput;
+
+	size_t _bufferSize;
+	size_t _bufferPos;
+	DataLog_UINT16 _flags;
+	DataLog_UINT8  _precision; 
+	bool _fail;
+	bool _flagsChanged, _precisionChanged;
+	
+	DataLog_BufferData * _buffer;
 };
+
+/*
+ *	DataLog_Stream manipulators
+ */
+DataLog_Stream & endmsg(DataLog_Stream & stream);
+
+DataLog_Stream & manipfunc_setprecision(DataLog_Stream & stream, int param);
+DataLog_Stream & manipfunc_setflags(DataLog_Stream & stream, int param);
+DataLog_Stream & manipfunc_resetflags(DataLog_Stream & stream, int param);
+
+inline DataLog_StreamIManip precision(int param) { return DataLog_StreamIManip(manipfunc_setprecision, param); }
+inline DataLog_StreamIManip setflags(int param) { return DataLog_StreamIManip(manipfunc_setflags, param); }
+inline DataLog_StreamIManip resetflags(int param) { return DataLog_StreamIManip(manipfunc_resetflags, param); }
+
+inline DataLog_Stream & hex(DataLog_Stream & stream) { stream << setflags(DataLog_Stream::f_hex); return stream; }
+inline DataLog_Stream & dec(DataLog_Stream & stream) { stream << setflags(DataLog_Stream::f_dec); return stream; }
+
+DataLog_Stream & manipfunc_errnoMsg(DataLog_Stream & stream, int param);
+inline DataLog_StreamIManip errnoMsg(int param) { return DataLog_StreamIManip(manipfunc_errnoMsg, param); }
+inline DataLog_Stream & errnoMsg(DataLog_Stream & stream) { return manipfunc_errnoMsg(stream, errno); }
+
+DataLog_Stream & datalog_GetDefaultStream(const char * file, int line);
 
 class DataLog_Level
 {
@@ -201,12 +348,6 @@ protected:
 	DataLog_Handle	_handle;
 };
 
-ostream & endmsg(ostream & stream);
-ostream & datalog_GetDefaultStream(const char * file, int line);
-
-ostream & omanip_errnoMsg(ostream & stream, int errnoParam);
-inline omanip<int> errnoMsg(int errnoParam) { return omanip<int>(omanip_errnoMsg, errnoParam); }
-inline ostream & errnoMsg(ostream & stream) { return omanip_errnoMsg(stream, errno); }
 
 class DataLog_Critical : public DataLog_Level
 {
@@ -341,7 +482,6 @@ private:
 
 	DataLog_ClientBuffer * _clientBuffer;
 	DataLog_BufferData _tempBuffer[MaxDataSize];
-	DataLog_Stream * _dataStream;
 
 	enum State { WaitStart, WaitEnd };
 	State	_state;

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.13 2003/12/05 16:33:05Z jl11312 Exp rm70006 $
  * $Log: datalog.cpp $
+ * Revision 1.8  2002/09/23 13:54:58  jl11312
+ * - added access function for current log file name
  * Revision 1.7  2002/08/28 14:37:07  jl11312
  * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.6  2002/08/22 20:19:10  jl11312
@@ -346,10 +348,9 @@ void datalog_TaskCreated(DataLog_TaskID taskID)
 
 	taskCreateRecord._nameLen = strlen(tcb->name);
 
-	DataLog_Stream & stream = info->_critical->streamWriteStart();
-	stream.write((const char *)&taskCreateRecord, sizeof(taskCreateRecord));
-	stream.write(tcb->name, taskCreateRecord._nameLen * sizeof(char));
-	info->_critical->streamWriteComplete();
+	info->_critical->partialWrite((DataLog_BufferData *)&taskCreateRecord, sizeof(taskCreateRecord));
+	info->_critical->partialWrite((DataLog_BufferData *)tcb->name, taskCreateRecord._nameLen * sizeof(char));
+	info->_critical->partialWriteComplete();
 }
 
 void datalog_TaskDeleted(DataLog_TaskID taskID)

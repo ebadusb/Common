@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message.cpp 1.5 2003/02/25 16:10:14Z jl11312 Exp jl11312 $
  * $Log: datalog_message.cpp $
+ * Revision 1.3  2002/08/28 14:37:07  jl11312
+ * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.2  2002/08/15 20:53:55  jl11312
  * - added support for periodic logging
  * Revision 1.1  2002/07/18 21:20:54  jl11312
@@ -47,11 +49,9 @@ DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * hand
 		logLevelRecord._nameLen = strlen(levelName);
 
 		DataLog_CriticalBuffer * buffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
-		DataLog_Stream & stream = buffer->streamWriteStart();
-
-		stream.write(&logLevelRecord, sizeof(logLevelRecord));
-		stream.write(levelName, logLevelRecord._nameLen * sizeof(char));
-		size_t writeSize = buffer->streamWriteComplete();
+		buffer->partialWrite((DataLog_BufferData *)&logLevelRecord, sizeof(logLevelRecord));
+		buffer->partialWrite((DataLog_BufferData *)levelName, logLevelRecord._nameLen * sizeof(char));
+		size_t writeSize = buffer->partialWriteComplete();
  
 		if ( writeSize != sizeof(logLevelRecord) + logLevelRecord._nameLen * sizeof(char) )
 		{

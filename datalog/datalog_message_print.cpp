@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_print.cpp 1.7 2003/02/25 16:10:17Z jl11312 Exp jl11312 $
  * $Log: datalog_message_print.cpp $
+ * Revision 1.5  2002/11/20 16:46:47  rm70006
+ * Changed va_arg statement to compile under T2.2 compiler.
  * Revision 1.4  2002/10/08 12:09:50Z  jl11312
  * - added support for %X format
  * Revision 1.3  2002/08/28 14:37:07  jl11312
@@ -134,10 +136,9 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 
 	if ( logOutput == DataLog_LogEnabled )
 	{
-		DataLog_Stream & stream = outputBuffer->streamWriteStart();
-		stream.write(&printOutputRecord, sizeof(printOutputRecord));
-		stream.write(format, printOutputRecord._formatLen * sizeof(char));
-		stream.write(file, printOutputRecord._fileNameLen * sizeof(char));
+		outputBuffer->partialWrite((DataLog_BufferData *)&printOutputRecord, sizeof(printOutputRecord));
+		outputBuffer->partialWrite((DataLog_BufferData *)format, printOutputRecord._formatLen * sizeof(char));
+		outputBuffer->partialWrite((DataLog_BufferData *)file, printOutputRecord._fileNameLen * sizeof(char));
 
 		unsigned int	starModifierCount;
 		size_t			currentIndex = 0;
@@ -164,7 +165,7 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 				for ( unsigned int i=0; i<starModifierCount; i++ )
 				{
 					int	fieldLen = va_arg(argList, int);
-					stream.write(&fieldLen, sizeof(int));
+					outputBuffer->partialWrite((DataLog_BufferData *)&fieldLen, sizeof(int));
 				}
 
 				switch ( argType )
@@ -172,21 +173,21 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 				case PrintArg_Char:
 					{
 						char	chArg = va_arg(argList, int);
-						stream.write(&chArg, sizeof(char));
+					   outputBuffer->partialWrite((DataLog_BufferData *)&chArg, sizeof(char));
 					}
 					break;
 
 				case PrintArg_Int:
 					{
 						int	intArg = va_arg(argList, int);
-						stream.write(&intArg, sizeof(int));
+						outputBuffer->partialWrite((DataLog_BufferData *)&intArg, sizeof(int));
 					}
 					break;
 
 				case PrintArg_Long:
 					{
 						long	longArg = va_arg(argList, long);
-						stream.write(&longArg, sizeof(long));
+						outputBuffer->partialWrite((DataLog_BufferData *)&longArg, sizeof(long));
 					}
 					break;
 
@@ -194,14 +195,14 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 					{
 						double	doubleArg = va_arg(argList, double);
 						float		floatArg = (float)doubleArg;
-						stream.write(&floatArg, sizeof(float));
+						outputBuffer->partialWrite((DataLog_BufferData *)&floatArg, sizeof(float));
 					}
 					break;
 
 				case PrintArg_Double:
 					{
 						double	doubleArg = va_arg(argList, double);
-						stream.write(&doubleArg, sizeof(double));
+						outputBuffer->partialWrite((DataLog_BufferData *)&doubleArg, sizeof(double));
 					}
 					break;
 
@@ -209,8 +210,8 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 					{
 						const char * strArg = va_arg(argList, char *);
 						DataLog_UINT16	strLen = strlen(strArg);
-						stream.write(&strLen, sizeof(DataLog_UINT16));
-						stream.write(strArg, strLen * sizeof(char));
+						outputBuffer->partialWrite((DataLog_BufferData *)&strLen, sizeof(DataLog_UINT16));
+						outputBuffer->partialWrite((DataLog_BufferData *)strArg, strLen * sizeof(char));
 					}
 					break;
 
@@ -220,7 +221,7 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 			}
 		}
 
-		outputBuffer->streamWriteComplete();
+		outputBuffer->partialWriteComplete();
 	}
 
 	if ( consoleOutput == DataLog_ConsoleEnabled )

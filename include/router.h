@@ -20,6 +20,7 @@
 #include <string>
 #include <taskLib.h>
 
+#include "datalog.h"
 #include "messagepacket.h"
 #include "sockinet.h"
 
@@ -74,7 +75,7 @@ public:
 
    //
    // Dump the contents of this class
-   void dump( ostream &outs );
+   void dump( DataLog_Stream &outs );
 
 protected:
 
@@ -159,7 +160,7 @@ protected:
 
    //
    // Dump the contents of the given queue
-   void dumpQueue( unsigned long tId, mqd_t mqueue, ostream &out );
+   void dumpQueue( unsigned long tId, mqd_t mqueue, DataLog_Stream &out );
 
    //
    // This function will close the router's message queues and socket connections.

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_periodic.cpp 1.6 2005/05/31 20:26:46Z jheiusb Exp ms10234 $
  * $Log: datalog_periodic.cpp $
+ * Revision 1.1  2002/08/15 21:20:57  jl11312
+ * Initial revision
  *
  */
 
@@ -147,10 +149,9 @@ int DataLog_PeriodicTask::main(void)
 
 			periodicOutputRecord._itemCount = itemCount;
 			
-			DataLog_Stream & stream = logBuffer->streamWriteStart();
-			stream.write(&periodicOutputRecord, sizeof(periodicOutputRecord));
-			stream.write(tempBuffer, writeSize);
-			logBuffer->streamWriteComplete();
+			logBuffer->partialWrite((DataLog_BufferData *)&periodicOutputRecord, sizeof(periodicOutputRecord));
+			logBuffer->partialWrite((DataLog_BufferData *)tempBuffer, writeSize);
+			logBuffer->partialWriteComplete();
 		}
 	}
 
@@ -203,11 +204,10 @@ DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_SetHandle
 	periodicSetRecord._nameLen = strlen(setName);
 
 	DataLog_CriticalBuffer * buffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
-	DataLog_Stream & stream = buffer->streamWriteStart();
 
-	stream.write(&periodicSetRecord, sizeof(periodicSetRecord));
-	stream.write(setName, periodicSetRecord._nameLen * sizeof(char));
-	size_t writeSize = buffer->streamWriteComplete();
+	buffer->partialWrite((DataLog_BufferData *)&periodicSetRecord, sizeof(periodicSetRecord));
+	buffer->partialWrite((DataLog_BufferData *)setName, periodicSetRecord._nameLen * sizeof(char));
+	size_t writeSize = buffer->partialWriteComplete();
 
 	if ( writeSize != sizeof(periodicSetRecord) + periodicSetRecord._nameLen * sizeof(char) )
 	{
@@ -290,13 +290,12 @@ DataLog_PeriodicItemBase::DataLog_PeriodicItemBase(DataLog_SetHandle set, size_t
 	periodicItemRecord._formatLen = strlen(format);
 
 	DataLog_CriticalBuffer * buffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
-	DataLog_Stream & stream = buffer->streamWriteStart();
 
-	stream.write(&periodicItemRecord, sizeof(periodicItemRecord));
-	stream.write(key, periodicItemRecord._keyLen * sizeof(char));
-	stream.write(description, periodicItemRecord._descLen * sizeof(char));
-	stream.write(format, periodicItemRecord._formatLen * sizeof(char));
-	size_t writeSize = buffer->streamWriteComplete();
+	buffer->partialWrite((DataLog_BufferData *)&periodicItemRecord, sizeof(periodicItemRecord));
+	buffer->partialWrite((DataLog_BufferData *)key, periodicItemRecord._keyLen * sizeof(char));
+	buffer->partialWrite((DataLog_BufferData *)description, periodicItemRecord._descLen * sizeof(char));
+	buffer->partialWrite((DataLog_BufferData *)format, periodicItemRecord._formatLen * sizeof(char));
+	size_t writeSize = buffer->partialWriteComplete();
 
 	if ( writeSize != sizeof(periodicItemRecord) +
                        periodicItemRecord._keyLen * sizeof(char) +

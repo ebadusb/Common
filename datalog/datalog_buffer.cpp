@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_buffer.cpp 1.5 2003/01/31 19:52:49 jl11312 Exp jl11312 $
  * $Log: datalog_buffer.cpp $
+ * Revision 1.4  2002/10/08 14:42:45  jl11312
+ * - added code to handle case for application saving a reference to a data log stream and performing multiple message writes
  * Revision 1.3  2002/09/23 13:55:15  jl11312
  * - removed obsolete UnterminatedStreamOutput error
  * Revision 1.2  2002/09/19 21:25:58  jl11312
@@ -134,23 +136,34 @@ size_t DataLog_InputBuffer::read(DataLog_BufferData * ptr, size_t maxSize)
 	size_t	bytesAvail = bytesBuffered();
 	size_t	bytesRead = (maxSize < bytesAvail) ? maxSize : bytesAvail;
 
-	if ( bytesRead > 0 )
-	{
-		DataLog_SharedPtr(DataLog_BufferData)	readLoc = _data->_readPtr;
+	int	count = 0;
+	DataLog_SharedPtr(DataLog_BufferData)	readLoc = _data->_readPtr;
 
-		for (int count=0; count<bytesRead; count++)
+	while ( count < bytesRead )
+	{
+		//
+		// Determine largest block of data that can be handled with a single
+		// memcpy() call.  Because a circular buffer is used, the full read
+		// operation may require two copies.  Note that we don't consider the
+		// possibility of copying past _data->_writePtr, since we have already
+		// computed the number of bytes to be read above.
+		//
+		int	maxBlockCount = _data->_endBufferPtr - readLoc;
+		if ( maxBlockCount > bytesRead-count )
 		{
-			ptr[count] = *readLoc;
-			readLoc += 1;
-			if ( readLoc >= _data->_endBufferPtr )
-			{
-				readLoc = _data->_startBufferPtr;
-		   }
+			maxBlockCount = bytesRead-count;
 		}
 
-		_data->_readPtr = readLoc;
+		memcpy(&ptr[count], readLoc, maxBlockCount);
+		count += maxBlockCount;
+	   readLoc += maxBlockCount;
+		if ( readLoc >= _data->_endBufferPtr )
+		{
+			readLoc = _data->_startBufferPtr;
+		}
 	}
 
+	_data->_readPtr = readLoc;
 	return bytesRead;
 }
 
@@ -177,12 +190,10 @@ DataLog_OutputBuffer::DataLog_OutputBuffer(size_t size)
 	addBufferToList();
 
 	_writeStream = NULL;
-	_streamWriteBuffer = NULL;
-	_streamWriteCompleteCallBack = NULL;
 
-	_streamWriteInProgress = false;
-	_streamWriteReleasedToApp = false;
-	_streamWriteAllowRestart = false;
+	_rawStreamWriteInProgress = false;
+	_appStreamWriteInProgress = false;
+	_streamWriteRestartPos = false;
 
 #ifdef DATALOG_MULTITHREADED
 	_writeLock = datalog_CreateLock();
@@ -202,22 +213,16 @@ DataLog_OutputBuffer::~DataLog_OutputBuffer()
 	{
 		lockWriteAccess();
 
-		if ( (_streamWriteInProgress && _streamWriteReleasedToApp) ||
-			  (_streamWriteAllowRestart && _writeStream->pcount() > _streamWriteRestartPos) )
+		if ( _appStreamWriteInProgress &&
+			  _writeStream->pcount() > _streamWriteRestartPos )
 		{
-			streamWriteComplete();
+			streamAppWriteComplete();
 		}
 
 		if ( _writeStream )
 		{
 			delete _writeStream;
 			_writeStream = NULL;
-		}
-
-		if ( _streamWriteBuffer )
-		{
-			delete[] _streamWriteBuffer;
-			_streamWriteBuffer = NULL;
 		}
 
 #ifdef DATALOG_MULTITHREADED
@@ -233,11 +238,27 @@ size_t DataLog_OutputBuffer::write(const DataLog_BufferData * ptr, size_t size)
 
 	lockWriteAccess();
 
+	int	count = 0;
 	DataLog_SharedPtr(DataLog_BufferData)	writeLoc = _data->_writePtr;
-	for (int count=0; count<bytesWritten; count++)
+
+	while ( count < bytesWritten )
 	{
-		*writeLoc = ptr[count];
-		writeLoc += 1;
+		//
+		// Determine largest block of data that can be handled with a single
+		// memcpy() call.  Because a circular buffer is used, the full write
+		// operation may require two copies.  Note that we don't consider the
+		// possibility of copying past _data->_readPtr, since we have already
+		// checked above that there is room for the data.
+		//
+		int	maxBlockCount = _data->_endBufferPtr - writeLoc;
+		if ( maxBlockCount > bytesWritten-count )
+		{
+			maxBlockCount = bytesWritten-count;
+		}
+
+		memcpy(writeLoc, &ptr[count], maxBlockCount);
+		count += maxBlockCount;
+	   writeLoc += maxBlockCount;
 		if ( writeLoc >= _data->_endBufferPtr )
 		{
 			writeLoc = _data->_startBufferPtr;
@@ -258,24 +279,17 @@ size_t DataLog_OutputBuffer::write(const DataLog_BufferData * ptr, size_t size)
 	return bytesWritten;
 }
 
-DataLog_Stream & DataLog_OutputBuffer::streamWriteStart(NotifyStreamWriteComplete * callBack, size_t callBackArgSize)
+DataLog_Stream & DataLog_OutputBuffer::streamAppWriteStart(const DataLog_StreamOutputRecord & header, const char * fileName, DataLog_EnabledType logOutput, DataLog_ConsoleEnabledType consoleOutput)
 {
 	lockWriteAccess();
-
-	if ( _streamWriteInProgress )
+	if ( _rawStreamWriteInProgress )
 	{
 		//
-		// Shouldn't be in this function is a stream write is already in progress
+		// Shouldn't be in this function if a stream write is already in progress
 		//
 		DataLog_CommonData	common;
 		common.setTaskError(DataLog_InternalWriteError, __FILE__, __LINE__);
 	}
-
-	_streamWriteInProgress = true;
-	_streamWriteReleasedToApp = false;
-	_streamWriteAllowRestart = false;
-	_streamWriteCompleteCallBack = callBack;
-	_streamWriteCompleteCallBackArgSize = callBackArgSize;
 
 	if ( !_writeStream )
 	{
@@ -283,34 +297,37 @@ DataLog_Stream & DataLog_OutputBuffer::streamWriteStart(NotifyStreamWriteComplet
 	}
 
 	_writeStream->clear();
-	_writeStream->seekp(0);
+	_writeStream->setLogOutput(logOutput);
+	_writeStream->setConsoleOutput(consoleOutput);
+	_writeStream->rawWrite(&header, sizeof(DataLog_StreamOutputRecord));
+	_writeStream->rawWrite(fileName, sizeof(char)*header._fileNameLen);
+
+	DataLog_UINT16	flags = _writeStream->getFlags();
+	DataLog_UINT8  precision = _writeStream->getPrecision();
+	_writeStream->rawWrite(&flags, sizeof(flags));
+	_writeStream->rawWrite(&precision, sizeof(precision));
+
+	//
+	// This 2 byte value will be replaced by the argument length when the
+	// stream data is written to the log.
+	//
+	DataLog_UINT16	dummy = 0;
+	_writeStream->rawWrite(&dummy, sizeof(dummy));
+
+	_appStreamWriteInProgress = true;
+	_appConsoleOutput = consoleOutput;
+	_streamWriteRestartPos = _writeStream->pcount();
 
 	releaseWriteAccess();
 	return *_writeStream;
 }
 
-DataLog_Stream & DataLog_OutputBuffer::streamWriteStartOrContinue(NotifyStreamWriteComplete * callBack, size_t callBackArgSize, bool & firstWrite)
-{
-	firstWrite = ( !_streamWriteInProgress || !_streamWriteReleasedToApp ) ? true : false;
-	return (firstWrite) ? streamWriteStart(callBack, callBackArgSize) : *_writeStream;
-}
-
-void DataLog_OutputBuffer::streamWriteReleaseToApp(void)
-{
-	lockWriteAccess();
-	_streamWriteReleasedToApp = true;
-
-	_streamWriteAllowRestart = true;
-	_streamWriteRestartPos = _writeStream->pcount();
-	releaseWriteAccess();
-}
-
-size_t DataLog_OutputBuffer::streamWriteComplete(void)
+size_t DataLog_OutputBuffer::streamAppWriteComplete(void)
 {
 	size_t	result = 0;
 
 	lockWriteAccess();
-	if ( !_streamWriteInProgress && !_streamWriteAllowRestart )
+	if ( !_appStreamWriteInProgress )
 	{
 		//
 		//	There is an internal problem with the use of the stream interface, or
@@ -331,21 +348,11 @@ size_t DataLog_OutputBuffer::streamWriteComplete(void)
 	}
 	else
 	{
-		//
-		// Lock stream buffer
-		//
-		_writeStream->freeze(1);
+		DataLog_BufferData * startData = (DataLog_BufferData *)_writeStream->data();
+		size_t dataLen = _writeStream->pcount();
+		DataLog_UINT16 argLength = 0;
 
-		//
-		// Compute start location of data that needs to go to the log.  If the
-		// caller specified a stream write complete callback, some bytes at the
-		// beginning of the stream may be used for arguments to the call back
-		// and should not be written to the log.
-		//
-		DataLog_BufferData * startData = ((DataLog_BufferData *)(_writeStream->str())) + _streamWriteCompleteCallBackArgSize;
-		size_t dataLen = _writeStream->pcount()*sizeof(char) - _streamWriteCompleteCallBackArgSize;
-
-		if ( _streamWriteReleasedToApp || _streamWriteAllowRestart )
+		if ( _appStreamWriteInProgress )
 		{
 			//
 			//	For application writes, we don't know the length of the app
@@ -354,33 +361,84 @@ size_t DataLog_OutputBuffer::streamWriteComplete(void)
 			// output data.
 			//
 			const DataLog_StreamOutputRecord * streamOutputRecord = (const DataLog_StreamOutputRecord *)startData;
-			DataLog_BufferData * appDataLenPtr = startData + sizeof(*streamOutputRecord) + sizeof(char)*streamOutputRecord->_fileNameLen;
-			DataLog_UINT16	appDataLen = dataLen - sizeof(*streamOutputRecord) - sizeof(char)*streamOutputRecord->_fileNameLen - sizeof(DataLog_UINT16);
+			size_t lengthOffset = sizeof(DataLog_StreamOutputRecord) + sizeof(char)*streamOutputRecord->_fileNameLen + 3;
+			argLength = _writeStream->pcount() - lengthOffset - 2;
 
-		   memcpy(appDataLenPtr, &appDataLen, sizeof(DataLog_UINT16));
+		   memcpy(&startData[lengthOffset], &argLength, sizeof(DataLog_UINT16));
 		}
 
 		//
-		// Output the record to the console/log as necessary
+		// Output the record to the log.  Note that if log output was disabled, 
+		// the stream will not contain any argument data.
 		//
-		DataLog_EnabledType	logOutput = DataLog_LogEnabled;
-		if ( _streamWriteCompleteCallBack )
-		{
-			logOutput = (*_streamWriteCompleteCallBack)((DataLog_BufferData *)_writeStream->str(), _writeStream->pcount()*sizeof(char));
-	   }
-
-		if ( logOutput == DataLog_LogEnabled )
+		if ( _rawStreamWriteInProgress ||
+			  _appStreamWriteInProgress && argLength > 0 )
 		{
 			result = write(startData, dataLen);
 		}
-
-		_writeStream->seekp(_streamWriteRestartPos);
-		_writeStream->freeze(0);
 	}
 
-	_streamWriteInProgress = false;
-	_streamWriteReleasedToApp = false;
+	_writeStream->seekp(_streamWriteRestartPos);
 	releaseWriteAccess();
+
+	if ( _appConsoleOutput == DataLog_ConsoleEnabled )
+	{
+		putchar('\n');
+	}
+
+	return result;
+}
+
+void DataLog_OutputBuffer::partialWrite(const DataLog_BufferData * ptr, size_t size)
+{
+	lockWriteAccess();
+
+	if ( !_writeStream )
+	{
+		_writeStream = new DataLog_Stream(this);
+	}
+
+	_appStreamWriteInProgress = false;
+	if ( !_rawStreamWriteInProgress )
+	{
+		_writeStream->clear();
+		_rawStreamWriteInProgress = true;
+	}
+
+	_writeStream->rawWrite(ptr, size);
+	releaseWriteAccess();
+}
+
+size_t DataLog_OutputBuffer::partialWriteComplete(void)
+{
+	size_t	result = 0;
+
+	lockWriteAccess();
+	if ( !_rawStreamWriteInProgress )
+	{
+		//
+		//	There is an internal problem with the use of the partial write interface.
+		//
+		DataLog_CommonData  common;
+		common.setTaskError(DataLog_InternalWriteError, __FILE__, __LINE__);
+	}
+	else if ( _writeStream->fail() )
+	{
+		//
+		// Problem while writing data to the stream.  Simply indicate that data was
+		// lost since we don't want to write possibly corrupted data to the log file
+		//
+		_data->_bytesMissed += _writeStream->pcount();
+		datalog_SendSignal("DataLog_DataLost");
+	}
+	else
+	{
+		result = write((DataLog_BufferData *)_writeStream->data(), _writeStream->pcount());
+	}
+
+	_rawStreamWriteInProgress = false;
+	releaseWriteAccess();
+
 	return result;
 }
 
@@ -459,8 +517,7 @@ DataLog_IntBuffer::DataLog_IntBuffer(size_t bufferSize)
 DataLog_CriticalBuffer::DataLog_CriticalBuffer(size_t bufferSize)
 				: DataLog_OutputBuffer(bufferSize)
 {
-	_streamWriteBuffer = new DataLog_BufferData[bufferSize];
-	_writeStream = new DataLog_Stream(_streamWriteBuffer, bufferSize, this);
+	_writeStream = new DataLog_Stream(this);
 }
 
 size_t DataLog_CriticalBuffer::write(const DataLog_BufferData * ptr, size_t size)

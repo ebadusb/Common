@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.9 2003/04/29 17:07:54Z jl11312 Exp jl11312 $
  * $Log: datalog_message_stream.cpp $
+ * Revision 1.5  2002/10/25 16:59:17  jl11312
+ * - added new form of errnoMsg stream manipulator which takes an argument for errno
  * Revision 1.4  2002/09/19 21:25:59  jl11312
  * - modified stream functions to not reset stream state when two stream writes occur without endmsg in between
  * - added errnoMsg manipulator function
@@ -174,47 +176,15 @@ DataLog_ConsoleEnabledType DataLog_Level::consoleOutput(DataLog_ConsoleEnabledTy
 	return result;
 }
 
-struct OutputControl
-{
-	DataLog_EnabledType	logOutput;
-	DataLog_ConsoleEnabledType	consoleOutput;
-};
-
-DataLog_EnabledType streamCallBack(const DataLog_BufferData * data, size_t size)
-{
-	OutputControl * control = (OutputControl *)data;
-
-	if ( control->consoleOutput == DataLog_ConsoleEnabled )
-	{
-		//
-		// Parse the stream output record and send data to stdout
-		//
-		DataLog_StreamOutputRecord * streamOutputRecord;
-		const DataLog_BufferData * fileName;
-		DataLog_UINT16 * streamDataLen;
-		const DataLog_BufferData * streamData;
-
-		streamOutputRecord = (DataLog_StreamOutputRecord *)&data[sizeof(*control)];
-		fileName = &data[sizeof(*control)+sizeof(*streamOutputRecord)];
-		streamDataLen = (DataLog_UINT16 *)(fileName + streamOutputRecord->_fileNameLen*sizeof(char));
-		streamData = ((DataLog_BufferData *)streamDataLen) + sizeof(DataLog_UINT16);
-
-		fwrite(fileName, sizeof(char), (unsigned int)streamOutputRecord->_fileNameLen, stdout);
-		fprintf(stdout, "(%d): ", streamOutputRecord->_lineNum);
-		fwrite(streamData, sizeof(char), (unsigned int)(*streamDataLen), stdout);
-		fputc('\n', stdout);
-	}
-
-	return control->logOutput;
-}
-
 DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber)
 {
 	DataLog_CommonData common;
 	DataLog_OutputBuffer * outputBuffer = NULL;
-	OutputControl outputControl = { DataLog_LogEnabled, DataLog_ConsoleDisabled };
+	DataLog_EnabledType logOutput = DataLog_LogEnabled;
+	DataLog_ConsoleEnabledType consoleOutput = DataLog_ConsoleDisabled;
 
-	DataLog_StreamOutputRecord streamOutputRecord;
+	DataLog_StreamOutputRecord  streamOutputRecord;
+
 	streamOutputRecord._recordType = DataLog_StreamOutputRecordID;
 	datalog_GetTimeStamp(&streamOutputRecord._timeStamp);
 
@@ -226,12 +196,12 @@ DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber
 			streamOutputRecord._levelID = _handle->_id;
 			streamOutputRecord._taskID = datalog_CurrentTask();
 
-			outputControl.logOutput = _handle->_traceData._logOutput;
-			outputControl.consoleOutput = _handle->_traceData._consoleOutput;
+			logOutput = _handle->_traceData._logOutput;
+			consoleOutput = _handle->_traceData._consoleOutput;
 
 			DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);
-			outputControl.logOutput = ( outputControl.logOutput == DataLog_LogEnabled ) ? DataLog_LogEnabled : taskInfo->_logOutput;
-			outputControl.consoleOutput = ( outputControl.consoleOutput == DataLog_ConsoleEnabled ) ? DataLog_ConsoleEnabled : taskInfo->_consoleOutput;
+			logOutput = ( logOutput == DataLog_LogEnabled ) ? DataLog_LogEnabled : taskInfo->_logOutput;
+			consoleOutput = ( consoleOutput == DataLog_ConsoleEnabled ) ? DataLog_ConsoleEnabled : taskInfo->_consoleOutput;
 			outputBuffer = taskInfo->_trace;
 		}
 		break;
@@ -241,7 +211,7 @@ DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber
 			streamOutputRecord._levelID = 0;
 			streamOutputRecord._taskID = datalog_CurrentTask();
 
-			outputControl.consoleOutput = DataLog_ConsoleEnabled;
+			consoleOutput = DataLog_ConsoleEnabled;
 			outputBuffer = common.getTaskCriticalBuffer(DATALOG_CURRENT_TASK);
 	   }
 		break;
@@ -268,21 +238,7 @@ DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber
 	streamOutputRecord._fileNameLen = strlen(fileName);
 	streamOutputRecord._lineNum = lineNumber;
  
-	bool	firstWrite;
-	DataLog_Stream	& stream = outputBuffer->streamWriteStartOrContinue(&streamCallBack, sizeof(outputControl), firstWrite);
-
-	if ( firstWrite )
-	{
-		stream.write(&outputControl, sizeof(outputControl));
-		stream.write(&streamOutputRecord, sizeof(streamOutputRecord));
-		stream.write(fileName, streamOutputRecord._fileNameLen * sizeof(char));
-
-		DataLog_UINT16	dataLen = 0;
-		stream.write(&dataLen, sizeof(dataLen));
-
-		outputBuffer->streamWriteReleaseToApp();
-	}
-
+	DataLog_Stream	& stream = outputBuffer->streamAppWriteStart(streamOutputRecord, fileName, logOutput, consoleOutput);
 	return stream;
 }
 
@@ -308,45 +264,222 @@ DataLog_Critical::~DataLog_Critical()
 }
 
 DataLog_Stream::DataLog_Stream(DataLog_OutputBuffer * output)
-				: ostrstream(), _output(output)
+				: _output(output), _buffer(NULL)
 {
+	_bufferSize = (_output->size() > 0) ? _output->size() : 1024;
+	_buffer = new DataLog_BufferData[_bufferSize];
+
+	_bufferPos = 0;
+	_flags = f_defaultflags;
+	_precision = 5;
+	_fail = false;
+	_flagsChanged = false;
+	_precisionChanged = false;
+	_logOutput = DataLog_LogDisabled;
+	_consoleOutput = DataLog_ConsoleDisabled;
 }
 
-DataLog_Stream::DataLog_Stream(DataLog_BufferData * buffer, size_t bufferSize, DataLog_OutputBuffer * output)
-				: ostrstream((char *)buffer, bufferSize/sizeof(char)), _output(output)
+DataLog_Stream::~DataLog_Stream()
 {
+	delete[] _buffer;
+	_buffer = NULL;
 }
 
-ostream & endmsg(ostream & stream)
+DataLog_Stream & DataLog_Stream::operator << (char c)
 {
-	bool	validStream = false;
+	if ( _consoleOutput == DataLog_ConsoleEnabled ) putchar(c);
+	if ( _logOutput == DataLog_LogEnabled) writeArg(SignedChar, &c, sizeof(char));
+	return *this;
+}
 
-	//
-	// Compiled code generates GPF when attempting to perform run time type
-	// operations on the standard output streams, so we need to check for
-	// these as a special case.
-	//
-	if ( &stream != dynamic_cast<ostream *>(&cout) &&
-		  &stream != dynamic_cast<ostream *>(&clog) &&
-		  &stream != dynamic_cast<ostream *>(&cerr) )
+DataLog_Stream & DataLog_Stream::operator << (int val)
+{
+	if ( _consoleOutput == DataLog_ConsoleEnabled ) printLong((long)val);
+	if ( _logOutput == DataLog_LogEnabled) writeArg(SignedInt, &val, sizeof(int));
+	return *this;
+}
+
+DataLog_Stream & DataLog_Stream::operator << (unsigned int val)
+{
+	if ( _consoleOutput == DataLog_ConsoleEnabled ) printUnsignedLong((unsigned long)val);
+	if ( _logOutput == DataLog_LogEnabled) writeArg(UnsignedInt, &val, sizeof(unsigned int)); return *this;
+}
+
+DataLog_Stream & DataLog_Stream::operator << (long val)
+{
+	if ( _consoleOutput == DataLog_ConsoleEnabled ) printLong(val);
+	if ( _logOutput == DataLog_LogEnabled) writeArg(SignedLong, &val, sizeof(long)); return *this;
+}
+
+DataLog_Stream & DataLog_Stream::operator << (unsigned long val)
+{
+	if ( _consoleOutput == DataLog_ConsoleEnabled ) printUnsignedLong(val);
+	if ( _logOutput == DataLog_LogEnabled) writeArg(UnsignedLong, &val, sizeof(unsigned long)); return *this;
+}
+
+DataLog_Stream & DataLog_Stream::operator << (bool val)
+{
+	if ( _consoleOutput == DataLog_ConsoleEnabled ) printf((val) ? "true" : "false");
+	if ( _logOutput == DataLog_LogEnabled)
 	{
-		DataLog_Stream * dstream = dynamic_cast<DataLog_Stream *>(&stream);
-		if ( dstream )
-		{
-			dstream->_output->streamWriteComplete();
-			validStream = true;
-	   }
+		DataLog_UINT8 byte = (val) ? 1 : 0;
+		writeArg(Bool, &byte, 1);
 	}
 
-	if ( !validStream )
-	{
-		stream << "\n";
-	}
+	return *this;
+}
 
+DataLog_Stream & DataLog_Stream::operator << (const char * s)
+{
+	if ( _consoleOutput == DataLog_ConsoleEnabled ) printf("%s", s);
+	if ( _logOutput == DataLog_LogEnabled) writeStringArg(String, s, strlen(s)*sizeof(char));
+	return *this;
+}
+
+DataLog_Stream & DataLog_Stream::operator << (float val)
+{
+	if ( _consoleOutput == DataLog_ConsoleEnabled ) printDouble((double)val);	
+	if ( _logOutput == DataLog_LogEnabled) writeArg(Float, &val, sizeof(float));
+	return *this;
+}
+
+DataLog_Stream & DataLog_Stream::operator << (double val)
+{
+	if ( _consoleOutput == DataLog_ConsoleEnabled ) printDouble(val);
+	if ( _logOutput == DataLog_LogEnabled) writeArg(Double, &val, sizeof(double)); return *this;
+}
+
+void DataLog_Stream::writeArg(ArgumentType type, const void * data, DataLog_UINT16 size)
+{
+	if ( _flagsChanged )
+	{
+		_flagsChanged = false;
+		writeArg(FlagSetting, &_flags, sizeof(_flags));
+   }
+
+	if ( _precisionChanged )
+	{
+		_precisionChanged = false;
+		writeArg(PrecisionSetting, &_precision, sizeof(_precision));
+   }
+
+	if ( _bufferPos+1+size >= _bufferSize )
+	{
+		_fail = true;
+	}
+	else
+	{
+		memcpy(&_buffer[_bufferPos], &type, 1);
+		memcpy(&_buffer[_bufferPos+1], data, size);
+		_bufferPos += size+1;
+	}
+}
+
+void DataLog_Stream::writeStringArg(ArgumentType type, const void * data, DataLog_UINT16 size)
+{
+	if ( _flagsChanged )
+	{
+		_flagsChanged = false;
+		writeArg(FlagSetting, &_flags, sizeof(_flags));
+   }
+
+	if ( _precisionChanged )
+	{
+		_precisionChanged = false;
+		writeArg(PrecisionSetting, &_precision, sizeof(_precision));
+   }
+
+	if ( _bufferPos+3+size >= _bufferSize )
+	{
+		_fail = true;
+	}
+	else
+	{
+		memcpy(&_buffer[_bufferPos], &type, 1);
+		memcpy(&_buffer[_bufferPos+1], &size, 2);
+		memcpy(&_buffer[_bufferPos+3], data, size);
+		_bufferPos += size+3;
+	}
+}
+
+void DataLog_Stream::printLong(long val)
+{
+	const char * format;
+	if ( _flags & f_oct ) format="%lo";
+	else if ( _flags & f_hex ) format="%lx";
+	else format="%ld";
+
+	printf(format, val);
+}
+
+void DataLog_Stream::printUnsignedLong(unsigned long val)
+{
+	const char * format;
+	if ( _flags & f_oct ) format="%lo";
+	else if ( _flags & f_hex ) format="%lx";
+	else format="%lu";
+
+	printf(format, val);
+}
+
+void DataLog_Stream::printDouble(double val)
+{
+	const char * format;
+	if ( _flags && f_scientific ) format="%.*g";
+	else format="%.*f";
+
+	printf(format, _precision, val);
+}
+
+void DataLog_Stream::rawWrite(const void * data, size_t size)
+{
+	if ( _bufferPos+size >= _bufferSize )
+	{
+		_fail = true;
+	}
+	else
+	{
+		memcpy(&_buffer[_bufferPos], data, size);
+		_bufferPos += size;
+	}
+}
+
+void DataLog_Stream::setFlags(unsigned int flagSetting)
+{
+	if ( flagSetting & f_basemask ) _flags &= ~f_basemask;
+	if ( flagSetting & f_floatmask ) _flags &= ~f_floatmask;
+	_flags |= flagSetting;
+	_flagsChanged = true;
+}
+
+void DataLog_Stream::resetFlags(unsigned int flagSetting)
+{
+	_flags &= ~flagSetting;
+
+	if ( !(flagSetting & f_basemask) ) _flags |= f_defaultflags & f_basemask;
+	if ( !(flagSetting & f_floatmask) ) _flags |= f_defaultflags & f_floatmask;
+	_flagsChanged = true;
+}
+
+DataLog_Stream & manipfunc_setprecision(DataLog_Stream & stream, int param)
+{
+	stream.precision(param);
 	return stream;
 }
 
-ostream & omanip_errnoMsg(ostream & stream, int errnoParam)
+DataLog_Stream & manipfunc_setflags(DataLog_Stream & stream, int param)
+{
+	stream.setFlags(param);
+	return stream;
+}
+
+DataLog_Stream & manipfunc_resetflags(DataLog_Stream & stream, int param)
+{
+	stream.resetFlags(param);
+	return stream;
+}
+
+DataLog_Stream & manipfunc_errnoMsg(DataLog_Stream & stream, int param)
 {
 	bool	decodeOK = false; 
 
@@ -356,9 +489,9 @@ ostream & omanip_errnoMsg(ostream & stream, int errnoParam)
 		char  	errName[MAX_SYS_SYM_LEN+1];
 		int		errValue;
 
-		if ( symFindByValue(statSymTbl, errnoParam, errName, &errValue, &type) == OK )
+		if ( symFindByValue(statSymTbl, param, errName, &errValue, &type) == OK )
 		{
-			if ( errValue == errnoParam )
+			if ( errValue == param )
 			{
 				stream << errName;
 				decodeOK = true;
@@ -368,14 +501,19 @@ ostream & omanip_errnoMsg(ostream & stream, int errnoParam)
 
 	if ( !decodeOK )
 	{
-		stream << "errno=" << errnoParam;
+		stream << "errno=" << param;
 	}
 
 	return stream;
-} 
-		
+}
 
-ostream & datalog_GetDefaultStream(const char * file, int line)
+DataLog_Stream & endmsg(DataLog_Stream & stream)
+{
+	stream._output->streamAppWriteComplete();
+	return stream;
+}
+
+DataLog_Stream & datalog_GetDefaultStream(const char * file, int line)
 {
 	DataLog_CommonData common;
 	DataLog_TaskInfo * taskInfo = common.findTask(DATALOG_CURRENT_TASK);

@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.28  2003/11/06 17:12:35Z  rm70006
+ * HISTORY:    IT 6507.  Put back in critical section code.
  * HISTORY:    Revision 1.27  2003/08/29 21:09:37Z  ms10234
  * HISTORY:    semaphore protected the datastore creation code.
  * HISTORY:    Revision 1.26  2003/07/11 21:21:37Z  ms10234
@@ -168,24 +170,13 @@ void DataStore::CreateSymbolTableEntry()
    _handle->_writerDeclared = false;
 
    //
-   // Create mutex semaphore
+   // Create mutex semaphores
    //
-   _handle->_mutexSemaphore = semMCreate(MUTEX_SEM_FLAGS);
-      
-   if (_handle->_mutexSemaphore == NULL)
-   {
-      // Fatal Error
-      DataLog(_fatal) << "_mutexSemaphore could not be created for " << _name
-                       << ".  Errno " << errnoMsg << "." << endmsg;
-      _FATAL_ERROR(__FILE__, __LINE__, "_mutexSemaphore could not be created.");
-   }
-   else
-      DataLog(log_level_cds_debug) << "_mutexSemaphore value(" << hex << _handle->_mutexSemaphore << dec << ")." << endmsg;
 
-   // Create the semaphore.
+   // Create the read semaphore
    _handle->_readSemaphore = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
 
-   // Fatal if _writeSemaphore = NULL
+   // Fatal if _readSemaphore = NULL
    if (_handle->_readSemaphore == NULL)
    {
       DataLog(_fatal) << "_readSemaphore could not be created for " << _name 
@@ -195,7 +186,7 @@ void DataStore::CreateSymbolTableEntry()
    else
       DataLog(log_level_cds_debug) << "_readSemaphore value(" << hex << _handle->_readSemaphore << dec << ")." << endmsg;
    
-   // Create the semaphore.
+   // Create the write semaphore.
    _handle->_writeSemaphore = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
 
    // Fatal if _writeSemaphore = NULL
@@ -211,10 +202,6 @@ void DataStore::CreateSymbolTableEntry()
    //
    // Create symbol names for mutex control flags and assign their values to the member variables.
    //
-   _handle->_signalRead = false;
-
-   _handle->_signalWrite = false;
-   
    _handle->_readCount = 0;
 }
 
@@ -431,21 +418,12 @@ bool DataStore::RestoreAllPfData()
 }
 
 
-//
-// Begin Critical Section macro
-//
-#define BEGIN_CRITICAL_SECTION() SEM_TAKE(_mutexSemaphore, WAIT_FOREVER);
-
 
 //
-// End Critical Section macro
+// Lock
 //
-#define END_CRITICAL_SECTION() SEM_GIVE(_mutexSemaphore);
-
-
 void DataStoreSymbolContainer::Lock( Role role )
 {
-   bool crit_section_released = false;
    int event_type = 0;
 
    // If instance is RO, perform RO semaphore lock
@@ -456,49 +434,19 @@ void DataStoreSymbolContainer::Lock( Role role )
       wvEvent(event_type, (char *)_name.c_str(), _name.length());
 #endif
 
-      BEGIN_CRITICAL_SECTION();
-
-      // If a writer has signaled to write, readers should block until after 
-      // writer releases semaphore.
-      if (_signalWrite)
-      {
-
-         END_CRITICAL_SECTION();
-
-         crit_section_released = true;
-
-         // Block waiting for writer
-         SEM_TAKE(_readSemaphore, WAIT_FOREVER);
-
-         // Reset semaphore for next writer
-         SEM_GIVE(_readSemaphore);
-
-         event_type += 0x1;
-      }
-      
-      if (crit_section_released)
-      {
-         BEGIN_CRITICAL_SECTION();
-      }
+      SEM_TAKE(_readSemaphore, WAIT_FOREVER);
 
       // Increment the read count
-      ++(_readCount);
+      ++_readCount;
 
-      if (_signalRead == false)
+      // If first reader, block future writers
+      if (_readCount == 1)
       {
-         // Signal Writers to block for read
-         _signalRead = true;
-
-         SEM_TAKE(_writeSemaphore, WAIT_FOREVER);   // Non-blocking
-
-         event_type += 0x2;
-      }
-      else
-      {
-         event_type += 0x4;
+         SEM_TAKE(_writeSemaphore, WAIT_FOREVER);   // Better be Non-blocking
       }
 
-      END_CRITICAL_SECTION();
+      // Unblock pending readers
+      SEM_GIVE(_readSemaphore);
    }
    else  // Do RW semaphore lock
    {
@@ -507,46 +455,20 @@ void DataStoreSymbolContainer::Lock( Role role )
       wvEvent(event_type, (char *)_name.c_str(), _name.length());
 #endif
 
-      BEGIN_CRITICAL_SECTION();
-
-      // Set write count.
-      _signalWrite = true;
-
-      if (_signalRead)
-      {
-         event_type += 0x1;
-
-         // Block future readers (RBOW).  At this point, we shouldn't block.
-         SEM_TAKE(_readSemaphore, WAIT_FOREVER);    // Non-blocking
-
-         END_CRITICAL_SECTION();
-
-         // Block on the Read semaphore (WBOR)
-         SEM_TAKE(_writeSemaphore, WAIT_FOREVER);    // Blocking
-
-         BEGIN_CRITICAL_SECTION();
-
-         // Give back read semaphore.
-         SEM_GIVE(_writeSemaphore);    // Reset for next reader.
-
-         END_CRITICAL_SECTION();
-      }
-      else
-      {
-         event_type += 0x2;
-
-         // Block future writers (RBOW).  At this point, we shouldn't block.
-         SEM_TAKE(_readSemaphore, WAIT_FOREVER);    // Non-blocking
-
-         END_CRITICAL_SECTION();
-      }
+      // Wait for our turn to write
+      SEM_TAKE(_writeSemaphore, WAIT_FOREVER);
    }
 
 #if EVENT_TRACE == 1
-   wvEvent(event_type, (char *)_name.c_str(), _name.length());
+   wvEvent(++event_type, (char *)_name.c_str(), _name.length());
 #endif
 }
 
+
+
+//
+// Unlock
+//
 void DataStoreSymbolContainer::Unlock( Role role )
 {
    int event_type = 0;
@@ -559,39 +481,17 @@ void DataStoreSymbolContainer::Unlock( Role role )
       wvEvent(event_type, (char *)_name.c_str(), _name.length());
 #endif
 
-      BEGIN_CRITICAL_SECTION();
+      SEM_TAKE(_readSemaphore, WAIT_FOREVER);
 
-      if (_readCount > 0)
+      --_readCount;
+
+      if (_readCount == 0)
       {
-         --(_readCount);
-      }
-
-      if (_signalWrite && _signalRead)   // Only do the first time.
-      {
-         event_type += 0x1;
-
-         // Unlock the writer
          SEM_GIVE(_writeSemaphore);
-
-         // Clear/Reset read flag
-         _signalRead = false;
-      }
-      else if (_readCount == 0)   // No more readers.
-      {
-         event_type += 0x2;
-
-         // Unlock the writer
-         SEM_GIVE(_writeSemaphore);
-
-         // Clear/Reset read flag
-         _signalRead = false;
-      }
-      else
-      {
-         event_type += 0x4;
+         SEM_FLUSH(_writeSemaphore);
       }
 
-      END_CRITICAL_SECTION();
+      SEM_GIVE(_readSemaphore);
    }
    else  // Do RW semaphore lock
    {
@@ -600,26 +500,21 @@ void DataStoreSymbolContainer::Unlock( Role role )
       wvEvent(event_type, (char *)_name.c_str(), _name.length());
 #endif
 
-      BEGIN_CRITICAL_SECTION();
-
-      // Clear the Write signal
-      _signalWrite = false;
-
-      END_CRITICAL_SECTION();
-
       // Unlock the semaphore
-      SEM_GIVE(_readSemaphore);
-      SEM_FLUSH(_readSemaphore);
-
-      event_type += 0x1;
+      SEM_GIVE(_writeSemaphore);
+      SEM_FLUSH(_writeSemaphore);
    }
 
 #if EVENT_TRACE == 1
-   wvEvent(event_type, (char *)_name.c_str(), _name.length());
+   wvEvent(++event_type, (char *)_name.c_str(), _name.length());
 #endif
 }
 
 
+
+//
+// AddElement
+//
 void DataStore::AddElement (BaseElementSymbolContainerAbs *element, unsigned int size )
 { 
    DataLog( log_level_cds_debug ) << "Add element to datastore " << _name << endmsg;

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/error.c 1.7 2001/05/11 19:56:17 jl11312 Exp jl11312 $
  * $Log: error.c $
+ * Revision 1.4  1999/09/29 18:07:55  TD10216
+ * IT4333 - changes for microsoft compiler
  * Revision 1.3  1999/08/31 17:50:03  BS04481
  * Change _log_error to not display to screen unless the env var
  * DISPLAYSTATUS=DISPLAY.
@@ -184,6 +186,17 @@ _FATAL_ERROR_DRV( char* file, int line, trace_codes_t code, int usercode, char* 
 }
 
 
+void DoLog( char* file, int line, trace_codes_t code, int usercode, char* eString )
+{
+   static char eBuff[ERROR_SIZE];                             // fixed length error buffer
+
+   sprintf(eBuff, "pid(%d) %.25s %.250s", getpid(), file, eString);
+   eBuff[ERROR_SIZE-1] = 0;
+
+   // send to trace log
+   Trace3b( code, _TRACE_SEVERE, line, errno, usercode, strlen( eBuff) + 1, eBuff);
+}
+
 // SPECIFICATION:    Logs to trace buffer.  Display on screen
 //                   Parameters:
 //                   line - source code line number
@@ -194,16 +207,13 @@ _FATAL_ERROR_DRV( char* file, int line, trace_codes_t code, int usercode, char* 
 void
 _LOG_ERROR_WITH_DISPLAY( char* file, int line, trace_codes_t code, int usercode, char* eString)
 {
-   static char eBuff[ERROR_SIZE];                             // fixed length error buffer
+    DoLog( file, line, code, usercode, eString );
 
-   sprintf(eBuff, "%.25s %.270s", file, eString);
-
-   // send to trace log
-   Trace3b( code, _TRACE_SEVERE, line, errno, usercode, strlen( eBuff) + 1, eBuff);
-
-   // display on console for debug
-   printf("%s @ %d, errno=%d, usercode=%d, %s\n", file, line, errno, usercode, eString);
+    // display on console for debug
+    printf("%s @ %d, errno=%d, usercode=%d, %s\n", file, line, errno, usercode, eString);
 }
+
+
 
 
 // SPECIFICATION:    Logs to trace buffer.  No display to screen.
@@ -216,12 +226,7 @@ _LOG_ERROR_WITH_DISPLAY( char* file, int line, trace_codes_t code, int usercode,
 void
 _LOG_ERROR( char* file, int line, trace_codes_t code, int usercode, char* eString)
 {
-   static char eBuff[ERROR_SIZE];                             // fixed length error buffer
-
-   sprintf(eBuff, "%.25s %.270s", file, eString);
-
-   // send to trace log
-   Trace3b( code, _TRACE_SEVERE, line, errno, usercode, strlen( eBuff) + 1, eBuff);
+    DoLog( file, line, code, usercode, eString );
 
    if (displayStatusKnown == 0)
    {

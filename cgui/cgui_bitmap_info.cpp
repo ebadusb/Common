@@ -5,6 +5,8 @@
 * build_bitmap_info file.
 *
 * $Log: cgui_bitmap_info.cpp $
+* Revision 1.1  2004/10/14 14:26:53Z  cf10242
+* Initial revision
 *
 */
 

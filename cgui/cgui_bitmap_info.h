@@ -5,6 +5,8 @@
 * build_bitmap_info file.
 *
 * $Log: cgui_bitmap_info.h $
+* Revision 1.3  2004/11/03 18:10:58Z  cf10242
+* Swap height and width in constructor to be cnsistent with CGUIRegion ordering.
 * Revision 1.2  2004/10/22 20:13:09Z  rm10919
 * Added methods to get height and width.
 * Revision 1.1  2004/10/14 14:26:52Z  cf10242
@@ -39,7 +41,7 @@ class CGUIBitmapInfo
 		// CONSTRUCTOR - accepts a pointer to the input bitmap.  Expects that the data is in
 		// compressed format.
 		CGUIBitmapInfo (const unsigned char bmp_data[],
-							unsigned short size,
+							unsigned long size,
 			            unsigned short width,
 							unsigned short height
 							) :						_myHeight (height),

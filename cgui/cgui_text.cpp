@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.13  2005/03/15 00:21:35Z  rm10919
+ * Change CGUIText to not add object to window object list of parent in constructor.
  * Revision 1.12  2005/02/21 17:17:12Z  cf10242
  * IT 133 - delete all allocated memory to avoid 
  * unrecovered memory
@@ -70,7 +72,7 @@ CGUIText::~CGUIText()
    if (_textString)
    {
       delete[] _textString;
-		_textString = NULL;
+      _textString = NULL;
    }
 }
 void CGUIText::attachText( CGUIWindow * parent)
@@ -169,32 +171,32 @@ void CGUIText::setStylingRecord (StylingRecord * stylingRecord)
    _stylingRecord = * stylingRecord;
    _requestedRegion = stylingRecord->region;
    computeTextRegion();
-	if(_owner)
-		_owner->invalidateObjectRegion(this);
+   if (_owner)
+      _owner->invalidateObjectRegion(this);
 }
 
 void CGUIText::setText(CGUITextItem * textItem)
 {
 
-	if(textItem)
-	{
-		_textItem =  textItem;
+   if (textItem)
+   {
+      _textItem =  textItem;
 
-		if (_textItem->isInitialized())
-		{
-			const StringChar * string = _textItem->getText(_textItem->getLanguageId());
+      if (_textItem->isInitialized())
+      {
+         const StringChar * string = _textItem->getText(_textItem->getLanguageId());
 
-			if (string)
-			{
-				setText(string);
-			}
-			else
-			{
-				_textString = new StringChar[1];
-				*_textString =  null_char;
-			}
-		}
-	}
+         if (string)
+         {
+            setText(string);
+         }
+         else
+         {
+            _textString = new StringChar[1];
+            *_textString =  null_char;
+         }
+      }
+   }
 }
 
 void CGUIText::setText(const StringChar * string)
@@ -215,7 +217,7 @@ void CGUIText::setText(const StringChar * string)
       _textString = new UGL_WCHAR[_stringLength+1];
       memcpy(_textString, string, _stringLength * sizeof(UGL_WCHAR));
 
-		_textString[_stringLength] = null_char;  // add the NULL UGL_WCHAR
+      _textString[_stringLength] = null_char;  // add the NULL UGL_WCHAR
 
    }
    else
@@ -242,7 +244,7 @@ void CGUIText::setText(const char * string)
    if (string)
    {
 
-		_stringLength = strlen(string) + 1;   // add 1 for the NULL
+      _stringLength = strlen(string) + 1;   // add 1 for the NULL
 
       _textString = new UGL_WCHAR[_stringLength];  
 
@@ -264,13 +266,40 @@ void CGUIText::setText(const char * string)
    }
 } // END set_text
 
-void CGUIText::getText(char &bufferPtr)
-{                                                                      
-   // This will involve looking for the                               
-   // text string in the string database.        
-   const StringChar * string;
+//void CGUIText::getText(char * string)
+//{                                                                      
+//   int max_conv_len = 3 * _stringLength + 1;
+//   char * result = new char[max_conv_len];
+//   int result_idx = 0;
 
-   string = _textItem->getText(_configLanguage);
+//   for (int conv_idx=0; conv_idx < _stringLength; conv_idx++)
+//   {
+//      wchar_t ch = txt_wstring[conv_idx];
+//      if ((ch & 0xff00) == 0)
+//      {
+//         result[result_idx++] = (char)ch;
+//      }
+//      else if ((ch & 0x00ff) == 0)
+//      {
+//         result[result_idx++] = 0x01;
+//         result[result_idx++] = (ch >> 8) & 0xff;
+//      }
+//      else
+//      {
+//         result[result_idx++] = 0x02;
+//         result[result_idx++] = (ch >> 8) & 0xff;
+//         result[result_idx++] = ch & 0xff;
+//      }
+//   }
+
+//   result[result_idx] = '\0';
+//   string = result;
+//   delete[] result;
+//}
+
+void CGUIText::getText(StringChar * string)
+{
+   string = _textString;
 }
 
 void CGUIText::getSize(CGUIRegion & region, int startIndex, int length)
@@ -582,10 +611,10 @@ void CGUIText::computeTextRegion(void)
 
 void CGUIText::setRegion(const CGUIRegion & newRegion)
 {
-     if (_owner)
-        _owner->setObjectRegion(this, newRegion);
-	  else
-         _region = newRegion;
+   if (_owner)
+      _owner->setObjectRegion(this, newRegion);
+   else
+      _region = newRegion;
 }
 
 
@@ -713,7 +742,7 @@ void CGUIText::handleVariableSubstitution(void)
 
             varName[subEndIdx-subStartIdx] = '\0';
             unsigned char * varValue = '\0'; //= (unsigned char *)trimaSysGetGUISetting(varName);
-				delete[] varName;
+            delete[] varName;
             if (varValue)
             {
                // Value is present, copy to the string and setup to continue with
@@ -743,5 +772,5 @@ void CGUIText::handleVariableSubstitution(void)
    _stringLength = new_stringLength;
 
    free(new_textString);
-	new_textString = NULL;
+   new_textString = NULL;
 }

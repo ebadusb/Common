@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.11  2005/03/15 00:21:36Z  rm10919
+ * Change CGUIText to not add object to window object list of parent in constructor.
  * Revision 1.10  2005/02/21 17:17:12Z  cf10242
  * IT 133 - delete all allocated memory to avoid unrecovered memory
  * Revision 1.9  2005/01/28 23:52:18Z  rm10919
@@ -196,7 +198,8 @@ public:
    void setText(CGUITextItem * textItem);
    void setText(const char * string);
    void setText(const StringChar * string);
-   void getText(char &bufferPtr);
+//   void getText(char * string);
+   void getText(StringChar * string);
 
 protected:
 

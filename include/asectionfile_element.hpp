@@ -2,94 +2,90 @@
  * Copyright (c) 1995 by Cobe BCT, Inc.  All rights reserved.
  *
  * TITLE:      aSectionfile_element.hpp
- *             Focussed system prediction functions - wrapper for
- *             data file reader abstractions.
  *
- * AUTHOR:     R.E. Edwards
+ * A section file element contains three character strings.
+ * These are the section name, variable name and value.
+ * Each line of the data file is parsed into a section file
+ * element.  Three types of elements can exist:
  *
- * ABSTRACT:
+ * 1. A section header line: [section_name].  In this case,
+ *    the section file element contains the section_name
+ *    and the variable and value strings are null.
+ * 2. A value line: VariableName=ValueString.  In this case,
+ *    all three strings are non-null.  The section is set to
+ *    the current section for this line.  The variable name is
+ *    set to VariableName.  The Value string is set to ValueString.
+ * 3. A comment or whitespace line.  In this case, the section and
+ *    value strings are NULL and the variable name string
+ *    contains a copy of the line.
  *
- * DOCUMENTS
- * Requirements:
- * Test:
- *
- * EXAMPLE:
- *
- *
+ * Each file line is limited to <= 255 characters by design.
  */
-
+ 
 #ifndef aSectionfile_element_HPP
 #define aSectionfile_element_HPP
 
 #include <fstream.h>
-#include <Rope.h>
 #include "ap2agent.h"
 
 class aSectionfile_element
 {
-
-   //
-   //
-   //   The following methods are available for general use.
-   //
    public:
 
-      // Constructor
       aSectionfile_element();
+      ~aSectionfile_element();
 
-      // Destructor
-      virtual ~aSectionfile_element();
-
-      //
       //
       //  Once I have been constucted I must be initialized.  I return
       //  zero on success.  The section and line sent is assumed to be \0 terminated.
       //  Use this init method if you know the section and have a line from a section 
 	  //  file.  
 	  //
-      virtual const int initialize(const char *section, const char *line);
+      int initialize(const char *section, const char *line);
+
+      // send to the tracelog
+      void Log( void ) const;
+      void Log( const char * ) const;
 
       //
-      //
-      //  Once I have been constucted I must be initialized.  I return
+      //  Once constucted, must be initialized.  Return
       //  zero on success.  The section, variable and value are assumed to be \0 terminated.
-      //  Use this init method if you have all three parts of the section file element, 
-	  //  section, variable name, and a value for the section variable.
+      //  Use this init method if all three parts of the section file element, 
+	  //  section, variable name, and a value are known.
 	  //
-      virtual const int initialize(const char *section, const char *variable, const char *value);
-      virtual const int initialize(const char *section, const char *variable, const int value);
-      virtual const int initialize(const char *section, const char *variable, const float value);
+      int initialize(const char *section, const char *variable, const char *value);
+      int initialize(const char *section, const char *variable, const int value);
+      int initialize(const char *section, const char *variable, const float value);
+
       //
-      //
-      //   You can ask me to output myself to a file stream
+      //   output to a file stream
       //
       void put(ostream &str) const;
 
       //
       //
-      //   You can ask me if I match a given variable and section name.
-      //   I return nonzero if I match and zero if I do not match.
+      //   return nonzero if a match and zero if do not match.
       //
-      virtual const int match(const char *section, const char *variable) const;
-      virtual const int matchSectionOnly(const char *section) const;
-      //
-      //
-      //  You can get or set my data value.
+      int match(const char *section, const char *variable) const;
+      int matchSectionOnly(const char *section) const;
+
       //
       // Each of these return 1 if the value is valid 0 otherwise.
-      virtual const int getValue(float& float_value) const;
-      virtual const int getValue(int& int_value) const; 
-	   
-      virtual const char *getValue_charptr() const;
-	   virtual void setValue(const float value);
-	   virtual void setValue(const int value);
-      virtual void setValue(const char *value);
+      int getValue(float& float_value) const;
+      int getValue(int& int_value) const; 
+
+      // get the string representing the value
+      const char *getValue_charptr() const;
+	  void setValue(const float value);
+	  void setValue(const int value);
+      void setValue(const char *value);
+
       //
       //
-      //   Accessors for my section and variable
+      //   Access for section and variable
       //
-      virtual const char *getVariable() const;
-      virtual const char *getSection() const;
+      const char *getVariable() const;
+      const char *getSection() const;
 
       //
       //
@@ -99,27 +95,19 @@ class aSectionfile_element
       aSectionfile_element &operator=(const aSectionfile_element &orig);
       int operator==(const aSectionfile_element &orig) const;      
 	  int operator<(const aSectionfile_element &orig) const;
-   //
-   //
-   //   These methods are for internal use only.
-   //
+
    protected:
 
-      //
-      //   methods to invoke internally for construction / destruction
-      //   (note non-virtual)
-      void cleanup();
+      void cleanup( void );
+      void EraseValue( void );
       void copyover(const aSectionfile_element &orig);
+      int SafeCompare( const char *p1 , const char *p2 ) const;
+      void CleanStr( char * str );
 
-//
-//
-//-----------------------------------------------------------------------------
-//                      Member data
-//
-   protected:
-      crope _variable;
-      crope _section;
-      crope _value;
+   private:
+      char * m_pVar;
+      char * m_pSct;
+      char * m_pVal;
 
 };
 

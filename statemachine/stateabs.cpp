@@ -14,6 +14,7 @@ _StateManager( 0 ),
 _SubstateList(),
 _StateName(),
 _Transition(),
+_TransitionStatus( NO_TRANSITION ),
 _ParentState( parentState ),
 _MaintainHistoryFlag( 0 ),
 _ProcessingDone( NO_TRANSITION ),
@@ -25,6 +26,7 @@ StateAbs :: StateAbs( const StateAbs &state ) :
 _StateManager( 0 ),
 _SubstateList(),
 _Transition( state._Transition ),
+_TransitionStatus( state._TransitionStatus ),
 _ParentState( state._ParentState ),
 _MaintainHistoryFlag( state._MaintainHistoryFlag ),
 _ProcessingDone( state._ProcessingDone ),
@@ -428,6 +430,7 @@ StateAbs &StateAbs :: operator=( const StateAbs &state )
    if ( &state != this ) 
    {
       _Transition = state._Transition;
+      _TransitionStatus = state._TransitionStatus;
       _ParentState = state._ParentState;
       _MaintainHistoryFlag = state._MaintainHistoryFlag;
       _ProcessingDone = state._ProcessingDone;
@@ -506,7 +509,7 @@ void StateAbs :: copyOver( const StateAbs &s )
          state != ( (StateAbs&)s )._SubstateList.end()  ;
          state++ )
    {
-      _SubstateList.push_back( clone() );
+      _SubstateList.push_back( (*state)->clone() );
    }
 
 }

@@ -2,6 +2,8 @@
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
  * $Log: BUFFMSGS.H $
+ * Revision 1.12  2000/05/30 16:28:16  BD10648
+ * Added section messages for config.dat and vistadonormsg.
  * Revision 1.11  2000/05/25 18:43:27  MS10234
  * Added optimizer to proc message ...
  * Revision 1.10  2000/04/14 19:37:02  MS10234
@@ -361,6 +363,14 @@ MsgStructMapEntry MsgStructMap[LAST_BUFFER_MESSAGE+1] =
    { ProcDonorMsg , NOTUSED },
    { OverrideAlarmMsg , NOTUSED },
    { Opt2ProcMsg , NOTUSED },
+   { VistaDonorMsg, NOTUSED },
+   { AdjustmentsMsg, NOTUSED },
+   { LangUnitMsg, NOTUSED },
+   { ProcedureConfigMsg, NOTUSED },
+   { PredictionConfigMsg, NOTUSED },
+   { ProductTemplatesMsg, NOTUSED },
+   { ProductDefinitionMsg, NOTUSED },
+   { BasicMachineCfgMsg, NOTUSED },
 
     // don't change this entry
    { LAST_BUFFER_MESSAGE, NULL }

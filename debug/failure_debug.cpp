@@ -5,6 +5,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/debug/rcs/failure_debug.cpp 1.12 2004/03/24 19:47:47Z ms10234 Exp jl11312 $
  * $Log: failure_debug.cpp $
+ * Revision 1.12  2004/03/24 19:47:47Z  ms10234
+ * 6910 - added network message debug logging
  * Revision 1.11  2004/02/24 22:31:40Z  jl11312
  * - more debug logging (see IT 6880)
  * Revision 1.10  2003/12/16 21:57:10Z  jl11312
@@ -35,7 +37,6 @@
 #include <sysLib.h>
 #include <tickLib.h>
 #include <taskHookLib.h>
-
 #include "failure_debug.h"
 #include "task_start.h"
 
@@ -54,6 +55,204 @@ static bool idleTaskStarted = false;
 
 static volatile unsigned int	maxWordsAllocated = 0;
 
+static SEM_ID dbgDumpSem = semBCreate(0, SEM_EMPTY);
+static void DBG_DumpTask(void)
+{
+	semTake(dbgDumpSem, WAIT_FOREVER);
+	
+	enum { MaxTasks = 100 };
+	static WIND_TCB * taskList[MaxTasks];
+	static bool dumpDone = false;
+
+	if ( dumpDone ) return;
+	dumpDone = true;
+
+	int numTasks = taskIdListGet((int *)taskList, MaxTasks);
+	DataLog_Stream & outStream = log_level_critical(__FILE__, __LINE__);
+	outStream << "Tasks:" << hex;
+
+	for ( int i=0; i<numTasks; i++ )
+	{
+		outStream << " " << (unsigned int)taskList[i] << ":" << (unsigned int)taskList[i]->regs.pc;
+		unsigned int * frame = (unsigned int *)taskList[i]->regs.ebp;
+		int	stackCount = 0;
+		while ( (char *)frame < taskList[i]->pStackBase && (char *)frame > taskList[i]->pStackLimit && stackCount < 10 )
+		{
+			outStream << " " << frame[1];
+			frame = (unsigned int *)(*frame);
+			stackCount += 1;
+	   }
+	}
+	outStream << dec << endmsg;
+
+	outStream << "Task state:" << hex;
+	for ( int i=0; i<numTasks; i++ )
+	{
+		outStream << (unsigned int)taskList[i] << ":" << taskList[i]->status << " " <<
+                    taskList[i]->priority << " " << taskList[i]->priNormal << " ";
+      if ( taskList[i]->pPriMutex )
+		{
+			outStream << (unsigned int)taskList[i]->pPriMutex << " " << (unsigned int)taskList[i]->pPriMutex->state.owner << " ";
+		}
+	}
+	outStream << dec << endmsg;
+
+	if ( taskSwitchInfo.record )
+	{
+		datalog_WriteBinaryRecord(log_handle_critical, DBG_RecordType, DBG_TaskSwitchInfoSubType,
+                                 taskSwitchInfo.record, taskSwitchInfo.recordCount*sizeof(DBG_TaskSwitchRecord));
+	}
+
+	if ( messageInfo.record )
+	{
+		datalog_WriteBinaryRecord(log_handle_critical, DBG_RecordType, DBG_MessageInfoSubType,
+                                 messageInfo.record, messageInfo.recordCount*sizeof(DBG_MessageRecord));
+	}
+}
+
+#ifdef DEBUG_ETHERNET_PACKETS
+
+#include <etherLib.h>
+
+// Buffers for raw ethernet packets
+enum { PacketBufferSize = 60000 };
+static char inputPacketBuffer[PacketBufferSize+sizeof(int)];
+static char outputPacketBuffer[PacketBufferSize+sizeof(int)];
+static int inputPacketLoc = 0;
+static int outputPacketLoc = 0;
+
+struct MarkBuffer
+{
+	DataLog_TimeStamp	timeStamp __attribute__ ((packed));
+	short length __attribute__ ((packed));
+	short index __attribute__ ((packed));
+};
+
+static BOOL inputHook(struct ifnet *pIf, char *buffer, int length)
+{
+	int maxCopySize = PacketBufferSize-inputPacketLoc;
+	int firstCopySize = (length > maxCopySize) ? maxCopySize : length;
+	memcpy(&inputPacketBuffer[inputPacketLoc], buffer, firstCopySize);
+	if ( firstCopySize < length )
+	{
+		memcpy(&inputPacketBuffer[0], &buffer[firstCopySize], length-firstCopySize);
+	}
+	inputPacketLoc = (inputPacketLoc + length) % PacketBufferSize;
+
+	MarkBuffer	markBuffer;
+	datalog_GetTimeStamp(&markBuffer.timeStamp);
+	markBuffer.length = length;
+	markBuffer.index = pIf->if_index;
+
+	maxCopySize = PacketBufferSize-inputPacketLoc;
+	firstCopySize = (sizeof(MarkBuffer) > maxCopySize) ? maxCopySize : sizeof(MarkBuffer);
+
+	char * markData = (char *)&markBuffer;
+	memcpy(&inputPacketBuffer[inputPacketLoc], markData, firstCopySize);
+	if ( firstCopySize < sizeof(MarkBuffer) )
+	{
+		memcpy(&inputPacketBuffer[0], &markData[firstCopySize], sizeof(MarkBuffer)-firstCopySize);
+	}
+	
+	inputPacketLoc = (inputPacketLoc + sizeof(MarkBuffer)) % PacketBufferSize;
+	return FALSE;
+}
+
+static BOOL outputHook(struct ifnet *pIf, char *buffer, int length)
+{
+	int maxCopySize = PacketBufferSize-outputPacketLoc;
+	int firstCopySize = (length > maxCopySize) ? maxCopySize : length;
+	memcpy(&outputPacketBuffer[outputPacketLoc], buffer, firstCopySize);
+	if ( firstCopySize < length )
+	{
+		memcpy(&outputPacketBuffer[0], &buffer[firstCopySize], length-firstCopySize);
+	}
+	outputPacketLoc = (outputPacketLoc + length) % PacketBufferSize;
+
+	MarkBuffer	markBuffer;
+	datalog_GetTimeStamp(&markBuffer.timeStamp);
+	markBuffer.length = length;
+	markBuffer.index = pIf->if_index;
+
+	maxCopySize = PacketBufferSize-outputPacketLoc;
+	firstCopySize = (sizeof(MarkBuffer) > maxCopySize) ? maxCopySize : sizeof(MarkBuffer);
+
+	char * markData = (char *)&markBuffer;
+	memcpy(&outputPacketBuffer[outputPacketLoc], markData, firstCopySize);
+	if ( firstCopySize < sizeof(MarkBuffer) )
+	{
+		memcpy(&outputPacketBuffer[0], &markData[firstCopySize], sizeof(MarkBuffer)-firstCopySize);
+	}
+	
+	outputPacketLoc = (outputPacketLoc + sizeof(MarkBuffer)) % PacketBufferSize;
+	return FALSE;
+}
+
+SEM_ID	packetSem = semBCreate(0, SEM_EMPTY);
+static void DBG_PacketDump(void)
+{
+	semTake(packetSem, WAIT_FOREVER);
+
+	memcpy(&inputPacketBuffer[PacketBufferSize], &inputPacketLoc, sizeof(int));
+	datalog_WriteBinaryRecord(log_handle_critical, DBG_RecordType, DBG_InputEthernetSubType, inputPacketBuffer, sizeof(inputPacketBuffer));
+
+	memcpy(&outputPacketBuffer[PacketBufferSize], &outputPacketLoc, sizeof(int));
+	datalog_WriteBinaryRecord(log_handle_critical, DBG_RecordType, DBG_OutputEthernetSubType, outputPacketBuffer, sizeof(outputPacketBuffer));
+}
+
+#endif /* ifdef DEBUG_ETHERNET_PACKETS */
+
+#ifdef DEBUG_NETWORK_STATS
+
+#include "netinet/tcp.h"
+#include "netinet/ip_var.h"
+#include "netinet/tcp_var.h"
+#include "net/mbuf.h"
+#include "netShow.h"
+
+struct NetworkStatData
+{
+	DataLog_TimeStamp	timeStamp;
+
+	struct ipstat	ipstat;
+	struct tcpstat	tcpstat;
+	struct mbstat	data_mbstat;
+	struct mbstat	sys_mbstat;
+};
+
+enum { NetworkStatDataSize = 10 };
+static NetworkStatData	networkStatData[NetworkStatDataSize];
+static int	networkStatLoc = 0; 
+
+SEM_ID	netStatSem = semBCreate(0, SEM_EMPTY);
+static void DBG_NetStatDump(void)
+{
+	
+	while ( semTake(netStatSem, 60) != OK )
+	{
+		datalog_GetTimeStamp(&networkStatData[networkStatLoc].timeStamp);
+		memcpy(&networkStatData[networkStatLoc].ipstat, &ipstat, sizeof(ipstat));
+		memcpy(&networkStatData[networkStatLoc].tcpstat, &tcpstat, sizeof(tcpstat));
+		memcpy(&networkStatData[networkStatLoc].data_mbstat, _pNetDpool->pPoolStat, sizeof(struct mbstat));
+		memcpy(&networkStatData[networkStatLoc].sys_mbstat, _pNetSysPool->pPoolStat, sizeof(struct mbstat));
+
+		networkStatLoc = (networkStatLoc+1) % NetworkStatDataSize;
+	}
+
+	datalog_WriteBinaryRecord(log_handle_critical, DBG_RecordType, DBG_NetworkStatSubType, networkStatData, sizeof(networkStatData));
+
+   ifShow(0);
+   inetstatShow();
+   ipstatShow(0);
+   tcpstatShow();
+   icmpstatShow();
+   arpShow();
+   mbufShow();
+   netStackSysPoolShow();
+}
+
+#endif /* ifdef DEBUG_NETWORK_STATS */
+
 void DBG_EnableTaskSwitchLogging(unsigned int recordCount)
 {
 	if ( recordCount > 2 && taskSwitchInfo.record == NULL )
@@ -64,6 +263,8 @@ void DBG_EnableTaskSwitchLogging(unsigned int recordCount)
 
 		taskStart("idle", 255, 2000, (FUNCPTR)idleTask, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		idleTaskStarted = true;
+
+		taskStart("debug_dump", 5, 4000, (FUNCPTR)DBG_DumpTask, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 		taskSwitchHookAdd((FUNCPTR)taskSwitchHook);
 	}
@@ -79,6 +280,17 @@ void DBG_EnableMessageLogging(unsigned int recordCount)
 
 		messageInfo.updateLock = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
 	}
+
+#ifdef DEBUG_ETHERNET_PACKETS
+	etherInputHookAdd((FUNCPTR)inputHook, 0, 0);
+	etherOutputHookAdd((FUNCPTR)outputHook);
+	taskStart("packet_dump", 80, 6000, (FUNCPTR)DBG_PacketDump, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+#endif /* ifdef DEBUG_ETHERNET_PACKETS */
+
+#ifdef DEBUG_NETWORK_STATS
+	taskStart("network_stat", 80, 6000, (FUNCPTR)DBG_NetStatDump, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+#endif /* ifdef DEBUG_NETWORK_STATS */
+
 }
 
 void DBG_LogReceivedMessage(int taskID, int sendTaskID, unsigned long msgID)
@@ -134,54 +346,20 @@ void DBG_LogSentNetworkMessage(int taskID, int netaddr, unsigned long msgID)
 
 void DBG_DumpData(void)
 {
-	enum { MaxTasks = 100 };
-	static WIND_TCB * taskList[MaxTasks];
-	static bool dumpDone = false;
+	semGive(dbgDumpSem);
 
-	if ( dumpDone ) return;
-	dumpDone = true;
+#ifdef DEBUG_ETHERNET_PACKETS
+	// Remove ethernet hooks since we aren't interested in packets after the
+	// failure was detected.
+	//
+	etherInputHookDelete((FUNCPTR)inputHook, 0, 0);
+	etherOutputHookDelete((FUNCPTR)outputHook);
+	semGive(packetSem);
+#endif /* ifdef DEBUG_ETHERNET_PACKETS */
 
-	int numTasks = taskIdListGet((int *)taskList, MaxTasks);
-	DataLog_Stream & outStream = log_level_critical(__FILE__, __LINE__);
-	outStream << "Tasks:" << hex;
-
-	for ( int i=0; i<numTasks; i++ )
-	{
-		outStream << " " << (unsigned int)taskList[i] << ":" << (unsigned int)taskList[i]->regs.pc;
-		unsigned int * frame = (unsigned int *)taskList[i]->regs.ebp;
-		int	stackCount = 0;
-		while ( (char *)frame < taskList[i]->pStackBase && (char *)frame > taskList[i]->pStackLimit && stackCount < 10 )
-		{
-			outStream << " " << frame[1];
-			frame = (unsigned int *)(*frame);
-			stackCount += 1;
-	   }
-	}
-	outStream << dec << endmsg;
-
-	outStream << "Task state:" << hex;
-	for ( int i=0; i<numTasks; i++ )
-	{
-		outStream << (unsigned int)taskList[i] << ":" << taskList[i]->status << " " <<
-                    taskList[i]->priority << " " << taskList[i]->priNormal << " ";
-      if ( taskList[i]->pPriMutex )
-		{
-			outStream << (unsigned int)taskList[i]->pPriMutex << " " << (unsigned int)taskList[i]->pPriMutex->state.owner << " ";
-		}
-	}
-	outStream << dec << endmsg;
-
-	if ( taskSwitchInfo.record )
-	{
-		datalog_WriteBinaryRecord(log_handle_critical, DBG_RecordType, DBG_TaskSwitchInfoSubType,
-                                 taskSwitchInfo.record, taskSwitchInfo.recordCount*sizeof(DBG_TaskSwitchRecord));
-	}
-
-	if ( messageInfo.record )
-	{
-		datalog_WriteBinaryRecord(log_handle_critical, DBG_RecordType, DBG_MessageInfoSubType,
-                                 messageInfo.record, messageInfo.recordCount*sizeof(DBG_MessageRecord));
-	}
+#ifdef DEBUG_NETWORK_STATS
+	semGive(netStatSem);
+#endif /* ifdef DEBUG_NETWORK_STATS */
 }
 
 int DBG_GetIdlePercent(void)

@@ -5,6 +5,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/failure_debug.h 1.5 2004/03/26 19:26:01Z jl11312 Exp jl11312 $
  * $Log: failure_debug.h $
+ * Revision 1.4  2004/03/24 19:48:14Z  ms10234
+ * 6910 - added network message debug logging
  * Revision 1.3  2003/06/25 17:09:56Z  jl11312
  * - added logging for safety side CPU idle time and memory availability
  * Revision 1.2  2003/05/05 14:16:18Z  jl11312
@@ -28,6 +30,9 @@
 #define DBG_RecordType 0x0001
 #define DBG_TaskSwitchInfoSubType	0x0001
 #define DBG_MessageInfoSubType		0x0002
+#define DBG_InputEthernetSubType		0x0003
+#define DBG_OutputEthernetSubType	0x0004
+#define DBG_NetworkStatSubType		0x0005
 
 typedef struct
 {

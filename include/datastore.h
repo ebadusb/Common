@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.4  2002/07/16 21:05:02Z  rm70006
+ * HISTORY:    Fix bug in check for multiple writers.
  * HISTORY:    Revision 1.3  2002/07/02 19:29:37Z  rm70006
  * HISTORY:    Made register virtual function for overriding by derived classes.
  * HISTORY:    Revision 1.2  2002/07/02 16:03:44Z  rm70006
@@ -31,6 +33,7 @@
 #define __DP_ELEMENT
 
 #include <fstream.h>
+#include <string>
 
 
 enum PfrType {PFR_RECOVER, NO_PFR};
@@ -96,11 +99,11 @@ public:
 
 // Class Methods
 protected:
-   virtual void     ReadSelf  (ifstream &pfrfile);
-   virtual void     WriteSelf (ofstream &pfrfile);
+   virtual void ReadSelf  (ifstream &pfrfile);
+   virtual void WriteSelf (ofstream &pfrfile);
 
 // Data Members
-protected:
+private:
    dataType *_data;  // Points to the Symbol Table entry
    FP       *_fp;    // Points to the Symbol Table entry
 };
@@ -119,20 +122,13 @@ public:
 
    virtual ~RangedElement();
 
-   virtual const dataType & Get() const;
+   virtual bool Set(const dataType &data);   // Perform range check on set call.
 
-   virtual bool Set(const dataType &data);
-
-   void Register (DataStore *ds, Role role, PfrType pfr, const dataType min, const dataType max);
-   void Register (DataStore *ds, Role role, PfrType pfr, const dataType min, const dataType max, const dataType &initValue);
-
-// Class Methods
-protected:
-   virtual void ReadSelf  (ifstream &pfrfile);
-   virtual void WriteSelf (ofstream &pfrfile);
+   virtual void Register (DataStore *ds, Role role, PfrType pfr, const dataType min, const dataType max);
+   virtual void Register (DataStore *ds, Role role, PfrType pfr, const dataType min, const dataType max, const dataType &initValue);
 
 // Data Members
-protected:
+private:
    dataType  _min;
    dataType  _max;
 };
@@ -143,7 +139,6 @@ protected:
 // Base CDS Container Class.  All CDS Containers are derived from this class.
 //
 #include <list>
-#include <string>
 
 #include <symLib.h>
 
@@ -170,35 +165,54 @@ class DataStore
 {
 // Data Members
 public:
-   static DataLog_Level    _debug;
-   static DataLog_Critical _fatal;
+   static DataLog_Level    *_debug;
+   static DataLog_Critical *_fatal;
 
 
 // Class Methods
 public:
    friend class ElementType;
 
-   void Lock();
-   void Unlock();
-
    static void SavePfrData (ofstream &pfrFile);
    static void RestorePfrData (ifstream &pfrFile);
 
-   template <class T> void BindItem(T **dataPtr, BIND_ITEM_TYPE item, bool &created);
+   void Lock();
+   void Unlock();
 
+   const string & Name () const {return _name; }
+
+   void GetSymbolName (string &s, const BIND_ITEM_TYPE item);
+
+   void AddElement (ElementType *member);
+
+   static const SYMTAB_ID & getTable() { return _datastoreTable; }
+   
 // Class Methods
 protected:
    DataStore (char *name, Role role);
    virtual ~DataStore();
 
-   void AddElement (ElementType *member);
    void DeleteElement (ElementType *member);
    virtual void CheckForMultipleWriters();
 
-// Data Members
-protected:
-   Role _role;
+// Class Methods
+private:
+   DataStore();    // Base Constructor not available
 
+
+private:
+// Data Members
+
+   // instance vars
+   Role _role;
+   string _name;
+   
+   int _refCount;
+   int _spoofCount;
+
+   // instance vars connected to the global symbol table
+   bool *_writerDeclared;
+   
    // Mutex control flags
    int *_signalWrite;
    int *_readCount;
@@ -210,23 +224,9 @@ protected:
    // List of PFR elements
    ELEMENT_LISTTYPE *_pfrList;
    
-   bool *_writerDeclared;
-   
-// Class Methods
-private:
-
-private:
-// Data Members
+   // static class vars
    static DATASTORE_LISTTYPE _datastoreList;
-
-   DataStore();    // Base Constructor not available
-
-   string _name;
-
-   int _refCount;
-   int _spoofCount;
-
-   static SYMTAB_ID _datastoreTable;
+   static SYMTAB_ID          _datastoreTable;
 
 };
 

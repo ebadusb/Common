@@ -165,6 +165,17 @@ private:
 
    mqd_t _TimerMQ;
 
+   //
+   // High water mark for my message queue
+   int _MessageHighWaterMark;
+
+   //
+   // Number of message passed through this queue
+   unsigned long _NumMessages;
+   // High water mark for my message queue per logging period
+   int _MessageHighWaterMarkPerPeriod;
+   int _PrevMessageHighWaterMarkPerPeriod;
+
    bool _StopLoop;
 
 };

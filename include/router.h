@@ -186,6 +186,18 @@ protected:
    //
    // The router message queue ...
    mqd_t                                                        _RouterQueue;
+
+   //
+   // High water mark for my message queue
+   int _MessageHighWaterMark;
+
+   //
+   // Number of message passed through this queue
+   unsigned long _NumMessages;
+   // High water mark for my message queue per logging period
+   int _MessageHighWaterMarkPerPeriod;
+   int _PrevMessageHighWaterMarkPerPeriod;
+
    //
    // The router message queue ...
    mqd_t                                                        _TimerQueue;

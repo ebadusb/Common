@@ -54,6 +54,9 @@ public:
    // Default priority of timer message notifications ( 1-31 )
    static const int REMOTE_NODE_SYNCH_PRIORITY;
    //
+   // Number of messages received in between high-water mark logging
+   static const int MESSAGES_BETWEEN_LOG;
+   //
    // Size of the user data inside the message packets
    enum {MAX_MESSAGE_SIZE = 127};
 

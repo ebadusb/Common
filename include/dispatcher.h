@@ -87,8 +87,22 @@ private:
 protected:
 
    //
-   // Message Queues
+   // My Message Queue
    mqd_t _MyQueue;
+
+   //
+   // High water mark for my message queue
+   int _MessageHighWaterMark;
+
+   //
+   // Number of message passed through this queue
+   unsigned long _NumMessages;
+   // High water mark for my message queue per logging period
+   int _MessageHighWaterMarkPerPeriod;
+   int _PrevMessageHighWaterMarkPerPeriod;
+
+   //
+   // Other Message Queues
    mqd_t _RQueue;
    mqd_t _TimerQueue;
 

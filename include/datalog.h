@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.1  2002/03/19 16:11:36  jl11312
+ * Initial revision
  *
  */
 
@@ -63,6 +65,10 @@ void datalog_AddIntFunc(int (* func)(void *), void * arg, const char * key, cons
 void datalog_AddLongFunc(long (* func)(void *), void * arg, const char * key, const char * description);
 void datalog_AddDoubleFunc(double (* func)(void *), void * arg, const char * key, const char * description);
 void datalog_AddCharPtrFunc(const char * (* func)(void *), void * arg, const char * key, const char * description);
+
+DataLog_Result datalog_GetPeriodicOutputInterval(double * seconds);
+DataLog_Result datalog_SetPeriodicOutputInterval(double seconds);
+DataLog_Result datalog_ForcePeriodicOutput(void);
 
 /*
  * error interface

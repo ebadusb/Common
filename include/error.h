@@ -3,6 +3,9 @@
  *
  * $Header: M:/BCT_Development/TrimaVx/Common/include/rcs/error.h 1.7 2001/08/30 17:22:53 rm70006 Exp sb07663 $
  * $Log: error.h $
+ * Revision 1.3  1999/08/31 17:49:59  BS04481
+ * Change _log_error to not display to screen unless the env var
+ * DISPLAYSTATUS=DISPLAY.
  * Revision 1.2  1999/08/06 14:33:41  BS04481
  * New logging function to add entry to log but not display on the 
  * screen
@@ -238,6 +241,10 @@ void log_info(char* format, ...);
 // PURPOSE: formats a fatal error message and passes it to _FATAL_ERROR
 // USAGE: called by the FATAL_ERROR macro.
 void fatal_error(char* format, ...);
+
+// shortcut macros for specific domains
+#define PROC_SLOGERROR(x)    _LOG_ERROR( __FILE__, __LINE__, TRACE_PROC, 0, x )
+#define PROC_ULOGERROR(u,x)  _LOG_ERROR( __FILE__, __LINE__, TRACE_PROC, u, x )
 
 
 #ifdef __cplusplus

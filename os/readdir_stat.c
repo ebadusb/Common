@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/os/rcs/readdir_stat.c 1.3 2003/11/05 19:28:02Z jl11312 Exp rm70006 $
  * $Log: readdir_stat.c $
+ * Revision 1.3  2003/11/05 19:28:02Z  jl11312
+ * - corrected handling of end of directory condition
  * Revision 1.2  2003/09/16 22:17:50Z  jl11312
  * - corrected time stamp (IT 6422)
  * Revision 1.1  2003/09/05 21:37:52Z  jl11312
@@ -13,6 +15,7 @@
 #include <vxworks.h>
 #include <private/dosFsLibP.h>
 #include <private/iosLibP.h>
+#include <string.h>
 
 #include "readdir_stat.h"
 

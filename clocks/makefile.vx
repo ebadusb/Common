@@ -3,6 +3,8 @@
 # Makefile - makefile for clocks library
 #
 # $Log: makefile.vx $
+# Revision 1.5  2002/08/15 20:52:01Z  jl11312
+# - modified to use new application build templates
 # Revision 1.4  2002/07/09 16:24:30  ms10234
 # changed name and location of library
 # Revision 1.3  2002/06/19 23:02:23  pn02526

@@ -12,8 +12,12 @@
  *             usage in a datastore.
  *
  * HISTORY:    $Log: carray.h $
+ * HISTORY:    Revision 1.2  2002/05/30 14:21:43  rm70006
+ * HISTORY:    Added file header
 *******************************************************************************/
 
+#ifndef __CARRAY_H
+#define __CARRAY_H
 #include <cstddef>
 
 
@@ -50,5 +54,6 @@ public:
    // conversion to ordinary array
    T* as_array() { return v; }
 };
+#endif
 
 

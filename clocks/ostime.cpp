@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.12 2002/11/22 21:13:18 pn02526 Exp jl11312 $
  * $Log: ostime.cpp $
+ * Revision 1.12  2002/11/22 21:13:18  pn02526
+ * Change the nanosec member of the timeFromTick struct to a long to 1) facilitate computation of negative time deltas, and 2) agree with the timespec struct in <time.h>.
  * Revision 1.11  2002/09/25 11:11:36  jl11312
  * - corrected time calculation in howLongAndUpdate function
  * Revision 1.10  2002/07/30 16:54:50  pn02526
@@ -61,43 +63,45 @@
 #include "error.h"
 #include "ostime.hpp"
 
-const long BILLION=1000000000l;
-const long MILLION=1000000l;
-
-// SPECIFICATION:    osTime constructor.
-//                   Gets rate of aux clock and converts it to nsec/rawTick for use by other class methods.
+// SPECIFICATION:    howLongMilliSec
+//                   Returns delta in milliseconds between then value
+//                   and now.
 //
 // ERROR HANDLING:   none.
 
-osTime::osTime(void)
+int
+osTime::howLongMilliSec(const rawTime & then)
 {
-   _TicksPerSecond = auxClockRateGet( ); /* Get the number of ticks per second of the aux clock */
-   _NanoSecondsPerTick = (int) ( BILLION / (long)_TicksPerSecond );
-};
+   rawTime   now;
+   int delta;        // milliseconds
 
-// SPECIFICATION:    osTime destructor.
+   snapshotRawTime(now);
+   delta = ( (now.sec - then.sec) * 1000)
+         + ( (now.nanosec - then.nanosec) / 1000000);
+
+   return(delta);
+}
+
+// SPECIFICATION:    howLongMicroSec
+//                   Returns delta in microseconds between then value
+//                   and now.
 //
 // ERROR HANDLING:   none.
 
-osTime::~osTime()
+int
+osTime::howLongMicroSec(const rawTime & then)
 {
-};
+   rawTime   now;
+   int delta;        // microseconds
 
+   snapshotRawTime(now);
+   delta = ( (now.sec - then.sec) * 1000000)
+         + ( (now.nanosec - then.nanosec) / 1000);
 
+   return(delta);
+}
 
-// SPECIFICATION:    whatTimeIsIt.
-//                   Just like snapshotTime except not inline
-//
-// ERROR HANDLING:   none.
-
-void 
-osTime::whatTimeIsIt(timeFromTick* now)
-{
-    TimeFromRawTicks( now, auxClockTicksGet() );
-};
-
-
-// SPECIFICATION:    howLongAndUpdate.
+// SPECIFICATION:    howLongMilliSecAndUpdate
 //                   Sets time in the then structure to time 
 //                   Returns delta between previous then value
 //                   and now.
@@ -105,23 +109,21 @@ osTime::whatTimeIsIt(timeFromTick* now)
 // ERROR HANDLING:   none.
 
 int
-osTime::howLongAndUpdate(timeFromTick* then)
+osTime::howLongMilliSecAndUpdate(rawTime & then)
 {
-   timeFromTick   now;
+   rawTime   now;
    int delta;        // milliseconds
 
-   snapshotTime(&now);
+   snapshotRawTime(now);
    
-   delta = ( (now.sec - then->sec) * 1000)
-         + ( ((long)now.nanosec - (long)then->nanosec) / 1000000);
+   delta = ( (now.sec - then.sec) * 1000)
+         + ( ((long)now.nanosec - (long)then.nanosec) / 1000000);
 
-   then->sec = now.sec;
-   then->nanosec = now.nanosec;
-
+   then = now;
    return(delta);
-};
+}
 
-// SPECIFICATION:    howLongMicroAndUpdate.
+// SPECIFICATION:    howLongMicroSecAndUpdate
 //                   Sets time in the then structure to time 
 //                   Returns delta in microseconds between previous 
 //                   then and now.
@@ -129,88 +131,21 @@ osTime::howLongAndUpdate(timeFromTick* then)
 // ERROR HANDLING:   none.
 
 int
-osTime::howLongMicroAndUpdate(timeFromTick* then)
+osTime::howLongMicroSecAndUpdate(rawTime & then)
 {
-   timeFromTick   now;
+   rawTime   now;
    int delta;        // microseconds
 
-   snapshotTime(&now);
-   
-   delta = ( (now.sec - then->sec) * 1000000)
-         + ( (now.nanosec - then->nanosec) / 1000);
-
-   then->sec = now.sec;
-   then->nanosec = now.nanosec;
-
-   return(delta);
-};
-
-
-// SPECIFICATION:    howLong.
-//                   Returns delta between then value
-//                   and now.
-//
-// ERROR HANDLING:   none.
-
-int
-osTime::howLong(timeFromTick then)
-{
-   timeFromTick   now;
-   int delta;        // milliseconds
-
-   snapshotTime(&now);
-   
-   delta = ( (now.sec - then.sec) * 1000)
-         + ( (now.nanosec - then.nanosec) / 1000000);
-
-   return(delta);
-};
-
-// SPECIFICATION:    howLongMicro.
-//                   Returns delta in microseconds between then value
-//                   and now.
-//
-// ERROR HANDLING:   none.
-
-int
-osTime::howLongMicro(timeFromTick then)
-{
-   timeFromTick   now;
-   int delta;        // microseconds
-
-   snapshotTime(&now);
+   snapshotRawTime(now);
    
    delta = ( (now.sec - then.sec) * 1000000)
          + ( (now.nanosec - then.nanosec) / 1000);
+   then = now;
 
    return(delta);
-};
+}
 
-      
-// SPECIFICATION:    howLongRaw.
-//                   Returns delta in msec between previous 
-//                   then and now based on the raw clock.
-// ERROR HANDLING:   none
-
-int
-osTime::howLongRaw(rawTick then)
-{
-   rawTick   now;
-   long deltaRaw;             // ticks
-   int deltaMsec;             // milliseconds    
-
-   snapshotRaw(&now);
-
-   deltaRaw = now - then;
-
-   // convert to msec
-   deltaMsec = (int) ( ( deltaRaw *  (long)_NanoSecondsPerTick ) / MILLION ); 
-   
-   return(deltaMsec);
-};
-
-
-// SPECIFICATION:    delayTime.
+// SPECIFICATION:    delayMilliSec
 //                   osTime method to delay without using a kernel call.
 //                   Use sparingly as this holds the processor for the
 //                   requested time.
@@ -219,27 +154,21 @@ osTime::howLongRaw(rawTick then)
 // ERROR HANDLING:   none.
 
 void
-osTime::delayTime(int deltaTime)
+osTime::delayMilliSec(int milliSec)
 {
-//   trima_assert(deltaTime<100);
-   if( deltaTime >= 100 ) _FATAL_ERROR( __FILE__, __LINE__, "osTime::delayTime called with deltaTime > 99ms.");
+   if( milliSec >= 100 ) _FATAL_ERROR( __FILE__, __LINE__, "osTime::delayTime called with deltaTime > 99ms.");
 
-   timeFromTick now, start;
+   rawTime now, start;
    int delta=0;
 
-   snapshotTime(&start);
+   snapshotRawTime(start);
 
-   while(delta < deltaTime)
+   while(delta < milliSec)
    {
-      snapshotTime(&now);
+      snapshotRawTime(now);
       
       delta = ( (now.sec - start.sec) * 1000)
             + ( (now.nanosec - start.nanosec) / 1000000);
-      if ( (delta < 0) || (delta > 100) )
-         snapshotTime(&start);
    }
+}
 
-};
-
-
-const char osTime::compileDateTime[]= __DATE__ " " __TIME__;

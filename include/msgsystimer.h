@@ -84,7 +84,7 @@ protected:
    
    //
    // Function to update the current time 
-   void updateTime( const long long usecs );
+   void updateTicks( unsigned long ticks );
 
    //
    // This function will be called to register a task in the task maps
@@ -118,7 +118,7 @@ protected:
 
 private:
 
-   long long _Time;
+   unsigned long _Ticks;
 
    struct MapEntry;
    class QueueEntry
@@ -132,18 +132,18 @@ private:
       QueueEntry &operator=( const QueueEntry &qe );
 
       int operator==( const QueueEntry &qe ) const;
-      int operator==( const long long l ) const;
+      int operator==( unsigned long l ) const;
       int operator<( const QueueEntry &qe ) const;
-      int operator<( const long long l ) const;
-      int operator<=( const long long l ) const;
+      int operator<( unsigned long l ) const;
+      int operator<=( unsigned long l ) const;
       int operator>( const QueueEntry &qe ) const;
-      int operator>( const long long l ) const;
-      int operator>=( const long long l ) const;
+      int operator>( unsigned long l ) const;
+      int operator>=( unsigned long l ) const;
 
    public:
 
-      long long _ExpirationTime;
-      MapEntry           *_MapEntryPtr;
+      unsigned long _ExpirationTick;
+      MapEntry      *_MapEntryPtr;
 
    };
 
@@ -151,6 +151,7 @@ private:
    {
       MessagePacket *_TimerMessage;
       unsigned long _Interval;
+      unsigned long _IntervalInTicks;
    };
 
    map< unsigned long, MapEntry* > _TimerMsgMap;

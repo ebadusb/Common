@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/ostime.hpp 1.7 2002/11/22 21:07:37 pn02526 Exp jl11312 $
  * $Log: ostime.hpp $
+ * Revision 1.7  2002/11/22 21:07:37  pn02526
+ * Change the nanosec member of the timeFromTick struct to a long to 1) facilitate computation of negative time deltas, and 2) agree with the timespec struct in <time.h>.
  * Revision 1.6  2002/06/19 17:01:09  pn02526
  * Updates for VxWorks: remove/replace system level includes; remove the sensitivity to time-of-day changes; modify to use auxClock as a time base.
  * Revision 1.5  1999/10/28 14:29:19  BS04481
@@ -46,66 +48,27 @@
 #ifndef OSTIME_HPP
 #define OSTIME_HPP
 
-#include <time.h>
 #include <unistd.h>
 
 #include "auxclock.h"
 
-
-typedef struct
-{
-   time_t   sec;
-   long     nanosec;
-}timeFromTick;
-
 class osTime
 {
    public:
-      osTime();
-      ~osTime();
-
-      // SPECIFICATION:    TimeFromRawTicks.
-      //                   osTime method to convert the rawTick type to a timeFromTick struct.
-      //
-      // ERROR HANDLING:   none.
-      inline void TimeFromRawTicks(timeFromTick *tftptr, rawTick rt )
-      {
-          rawTick rtSec = (rt) / (rawTick)_TicksPerSecond;
-          tftptr->sec  = (time_t) rtSec;
-      	  tftptr->nanosec = (long) ( (rt - rtSec*(rawTick)_TicksPerSecond ) *  (rawTick)_NanoSecondsPerTick );
-          return;
-      }
-      
-      // SPECIFICATION:    snapshotTime.
-      //                   osTime method to get time from the kernel.
-      //
-      // ERROR HANDLING:   none.
-      inline void snapshotTime(timeFromTick* now)
-      {
-         TimeFromRawTicks( now, auxClockTicksGet() );
-      };
-      
-      
       // SPECIFICATION:    snapshotRaw.
-      //                   osTime method to get raw ticks from the kernel.
-      //                   (assumes typedef TICK rawTick)
+      //                   osTime method to get raw time from auxclock handler
       //
       // ERROR HANDLING:   none.
-      inline void snapshotRaw(rawTick* now)
+      static inline void snapshotRawTime(rawTime & now)
       {
-         *now = auxClockTicksGet();
-      };
+         auxClockTimeGet(&now);
+      }
 
-      void whatTimeIsIt(timeFromTick* now);        // get new time from object
-      int howLong(timeFromTick then);              // return delta between then and now
-      int howLongMicro(timeFromTick then);         // return delta in usecond between then and now
-      int howLongAndUpdate(timeFromTick* then);    // update then with time from object and return delta
-      int howLongMicroAndUpdate(timeFromTick* then); // update then with time from object and return delta in usec
-      int howLongRaw(rawTick then);                // return delta between now and then based on raw clock ticks
-      void delayTime(int deltaTime);               // holds in a tight loop for specified time
-      static const char compileDateTime[];
-   private:
-      int _TicksPerSecond, _NanoSecondsPerTick;
+      static int howLongMilliSec(const rawTime & then);   	// return delta in milliseconds between then and now
+      static int howLongMicroSec(const rawTime & then);   	// return delta in microseconds between then and now
+      static int howLongMilliSecAndUpdate(rawTime & then);  // update then with current time and return delta in milliseconds
+      static int howLongMicroSecAndUpdate(rawTime & then); 	// update then with current time and return delta in microseconds
+      static void delayMilliSec(int milliSec);              // holds in a tight loop for specified time in milliseconds
 };
 
 #endif

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.10 2002/12/16 18:30:25Z jl11312 Exp ms10234 $
  * $Log: auxclock.cpp $
+ * Revision 1.9  2002/12/13 20:47:45  pn02526
+ * Reinstate iand revise Semaphore handling in order to facillitate optimizing hardware driver tasks.
  * Revision 1.8  2002/09/25 11:11:18  jl11312
  * - added volatile modifier to variables used in ISR
  * Revision 1.7  2002/08/16 16:27:05  pn02526
@@ -43,358 +45,197 @@
  *  unsigned long int auxClockNotificationFailedAt(); Return the notification count when the first failure occurred.
  *  int auxClockNotificationErrno();                  Return the errno value for the first notification failure that occurred.
  */
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include <vxWorks.h>
 #include <errno.h>
-#include <time.h>
-#include <sysLib.h>
-#include <ioLib.h>
-#include <string.h>
-#include <ctype.h>
-#include <limits.h>
-#include <intLib.h>
-#include <semLib.h>
-#include <iv.h>
 #include <extraAuxClock.h>
+#include <ioLib.h>
+#include <semLib.h>
 
 #include "auxclock.h"
-
 #include "messagepacket.h"
 
 /* Free-running counters */
-static volatile rawTick auxClockTicks;
-static volatile long long int auxClockMuSec; /* microseconds */
+static volatile rawTime auxClockTime;
 
-/* Notification microsecond accumulators  */
-static volatile long long int auxClockNotifyMuSec;
-static volatile long long int auxClockSemaphoreMuSec;
+/* Nanosecond counter/accumulator increment */
+static unsigned long auxClockNanoSecPerTick;
 
-/* Microsecond counter/accumulator increment */
-static long long int auxClockMuSecPerTick;
+/* Notification periods in nanoseconds */
+static unsigned long auxClockQueueNanoSecInterval;
+static long long int auxClockSemaphoreNanoSecInterval;
 
-/* Notification period in microseconds */
-static long long int auxClockNotifyMuSecPerPeriod;
-static long long int auxClockSemaphoreMuSecPerPeriod;
-
-static int *auxClockNotifyPointer;
-static char auxClockTicksStr[21];
-
-static unsigned int auxClockNotifyExpected;
+/* Queue notification related data */
 static mqd_t auxClockMsgPktQDes;
 static MessagePacket auxClockMsgPacket;
-static volatile unsigned long int auxClockNotifyCount;
-static volatile unsigned long int auxClockNotifyOverruns;
-static volatile unsigned long int auxClockNotifyFailedAt;
-static volatile int auxClockNotifyErrno;
 
+static volatile unsigned long auxClockQueueNotifyCount;
+static volatile unsigned long auxClockQueueNotifyFailedAt;
+static volatile int auxClockQueueNotifyErrno;
+
+/* Semaphore notification related data */
 static SEM_ID auxClockSemaphoreID;
+static bool   auxClockInitDone = false;
 
-/*                                                            */
-/* Interrupt Service Routine for the vanilla (non-notification) auxClockTicks counter. */
-/*                                                            */
 static void auxClockISR( int arg )
 {
-    auxClockTicks++;            /* Bump the tick counter. */
+	static unsigned long	queueNanoSecIntervalTime = 0;
+	static unsigned long semaphoreNanoSecIntervalTime = 0;
 
-    return;
+	auxClockTime.nanosec += auxClockNanoSecPerTick;
+	if ( auxClockTime.nanosec >= 1000000000 )
+	{
+		auxClockTime.nanosec -= 1000000000;
+		auxClockTime.sec += 1;
+	}
+
+	if ( auxClockSemaphoreNanoSecInterval > 0 )
+	{
+		semaphoreNanoSecIntervalTime += auxClockNanoSecPerTick;
+		if ( semaphoreNanoSecIntervalTime >= auxClockSemaphoreNanoSecInterval )  /* Is the count completed? */
+		{
+			semFlush( auxClockSemaphoreID );     /* Resume all tasks pending on the semaphore. */
+			semaphoreNanoSecIntervalTime -= auxClockSemaphoreNanoSecInterval; /* Decrement the notification accumulator, probably leaving a remainder */
+	   }
+	}
+	else
+	{
+		semaphoreNanoSecIntervalTime = 0;
+	}
+
+	if ( auxClockQueueNanoSecInterval > 0 )
+	{
+		queueNanoSecIntervalTime += auxClockNanoSecPerTick;
+		if ( queueNanoSecIntervalTime >= auxClockQueueNanoSecInterval )  /* Is the count completed? */
+		{
+			queueNanoSecIntervalTime -= auxClockQueueNanoSecInterval;  /* Decrement the notification accumulator, probably leaving a remainder */
+	
+			/* Fill in the static MessagePacket buffer before sending. */
+			auxClockQueueNotifyCount += 1;
+			auxClockMsgPacket.msgData().msg( (const unsigned char *) &auxClockQueueNotifyCount, sizeof( auxClockQueueNotifyCount ) );
+			auxClockMsgPacket.updateCRC();
+	
+			/* Post the message on the given Message Packet queue for task notification. */
+			if ( mq_send ( auxClockMsgPktQDes,                   /* message queue descriptor */
+								(const void *) &auxClockMsgPacket,    /* message to send */
+								(size_t) sizeof( auxClockMsgPacket ), /* size of message, in bytes */
+								MQ_PRIORITY_MAX                       /* priority of message */
+							 ) == ERROR  && auxClockQueueNotifyFailedAt == 0 )
+			{
+				auxClockQueueNotifyErrno = errno;
+				auxClockQueueNotifyFailedAt = auxClockQueueNotifyCount;
+			}
+		}
+   }
+   else
+	{
+		queueNanoSecIntervalTime = 0;
+	}
+
+   return;
 }
 
-/*                                                            */
-/* Interrupt Service Routine for the Message Packet (notification) auxClockTicks counter. */
-/*                                                            */
-static void auxClockMsgPktISR( int arg )
-{
-    auxClockTicks++;            /* Bump the tick counter. */
-
-    if( auxClockMsgPktQDes )                        /* Make sure we have a non-NULL Message Queue Descriptor. */
-    {
-        auxClockMuSec += auxClockMuSecPerTick;       /* Increment the free-running microsecond counter */
-        auxClockNotifyMuSec += auxClockMuSecPerTick; /* Increment the notification microsecond accumulator */
-        if( auxClockNotifyMuSec >= auxClockNotifyMuSecPerPeriod )  /* Is the count completed? */
-        {
-            auxClockNotifyMuSec -= auxClockNotifyMuSecPerPeriod; /* Decrement the notification accumulator, probably leaving a remainder */
-            /* Fill in the static MessagePacket buffer before sending. */
-            auxClockMsgPacket.msgData().msg( (const unsigned char *) &auxClockMuSec, (int) sizeof( auxClockMuSec ) );
-            auxClockMsgPacket.updateCRC();
-            if( ! *auxClockNotifyPointer )     /* Is a task expecting the notification? */
-            {                                     /* There is not a task expecting the notification. */
-                auxClockNotifyOverruns++;         /* So, bump the overrun counter. */
-            }
-            /* Post the message on the given Message Packet queue for task notification. */
-            auxClockNotifyCount++;            /* Bump the notification counter. */
-            if( mq_send (
-                      auxClockMsgPktQDes,                    /* message queue descriptor */
-                      (const void *) &auxClockMsgPacket,    /* message to send */
-                      (size_t) sizeof( auxClockMsgPacket ), /* size of message, in bytes */
-                      MQ_PRIORITY_MAX                       /* priority of message */
-                    ) == ERROR  && auxClockNotifyFailedAt == 0 )
-            {
-                auxClockNotifyErrno = errno;
-                auxClockNotifyFailedAt = auxClockNotifyCount;
-            }
-            *auxClockNotifyPointer = FALSE;   /* Clear the notification-expected flag. */  
-        }
-    }
-
-    if( auxClockSemaphoreID )                   /* Make sure we have a non-NULL semaphore ID. */
-    {
-        auxClockSemaphoreMuSec += auxClockMuSecPerTick; /* Increment the semaphore microsecond accumulator */
-        if( auxClockSemaphoreMuSec >= auxClockSemaphoreMuSecPerPeriod )  /* Is the count completed? */
-        {
-            semFlush( auxClockSemaphoreID );     /* Resume all tasks pending on the semaphore. */
-            auxClockSemaphoreMuSec -= auxClockSemaphoreMuSecPerPeriod; /* Decrement the notification accumulator, probably leaving a remainder */
-        }
-    }
-    return;
-}
-
-/* Get the interrupt rate for the auxClockTicks counter. */
+/* Get the interrupt rate (in Hertz) for the auxClockTicks counter. */
 int auxClockRateGet()
 {
-    return extraAuxClockRateGet();
+   return extraAuxClockRateGet();
 }
 
 /* Initialize the auxClockTicks facility. Call at system initialization time. */
 void auxClockInit()
 {
-    auxClockSemaphoreID = NULL;
-    auxClockMsgPktQDes = NULL;
-    auxClockNotifyMuSecPerPeriod = 0ll;
-    auxClockSemaphoreMuSecPerPeriod = 0ll;
-    auxClockNotifyMuSec = 0ll;
-    auxClockSemaphoreMuSec = 0ll;
-    auxClockNotifyCount = 0;
-    auxClockNotifyExpected = FALSE;
-    auxClockNotifyPointer = (int *) &auxClockNotifyExpected;
-    auxClockNotifyOverruns = 0;
-    auxClockNotifyFailedAt = 0;
-    auxClockNotifyErrno = 0;
-    auxClockTicks=(rawTick)0;
+	if ( !auxClockInitDone )
+	{
+		auxClockSemaphoreID = NULL;
+		auxClockSemaphoreNanoSecInterval = 0;
+
+		auxClockMsgPktQDes = NULL;
+		auxClockQueueNanoSecInterval = 0;
+		auxClockQueueNotifyCount = 0;
+		auxClockQueueNotifyFailedAt = 0;
+		auxClockQueueNotifyErrno = 0;
+
+		memset((void *)&auxClockTime, 0, sizeof(auxClockTime));
+		auxClockNanoSecPerTick = 1000000000/auxClockRateGet();
+
+		extraAuxClockConnect( (FUNCPTR) &auxClockISR, 0x2BADDEED );
+
+		auxClockInitDone = true;
+   }
 }
 
-/* Enable the auxClockTicks counter */
-int auxClockEnable( )
+/* Get the current value of the raw auxClock time. */
+void auxClockTimeGet(rawTime * current)
 {
-    if( auxClockTicks > (rawTick)0 )  /* At least 1 tick will have accumulated if auxClock is already enabled */
-    {
-        /* Can't enabled an extraAuxClock that's already enabled! */
-        return( FALSE );
-    }
-
-    if(  extraAuxClockConnect( (FUNCPTR) &auxClockISR, 0xABADDEED ) == ERROR )
-    {
-        /* Enabling the extraAuxClock failed! */
-        return( FALSE );
-    }
-
-    /* Wait for at least 1 tick to accumulate (if we hang here, extraAuxClock isn't running!) */
-    while( auxClockTicks == (rawTick)0 );
-
-    return( TRUE );
+   /* loop to make sure you read out the whole rawTime value on the same tick */
+   do
+   {
+      memcpy((void *)current, (void *)&auxClockTime, sizeof(rawTime));
+   }
+   while ( current->nanosec != auxClockTime.nanosec );
 }
 
-/* Get the current value of the auxClockTicks counter. */
-rawTick auxClockTicksGet()
+/* Enable the auxClock semaphore to toggle every given number of microseconds. */
+void auxClockSemaphoreEnable( unsigned int microSecInterval )
 {
-    rawTick t;
+	if ( !auxClockInitDone )
+	{
+		auxClockInit();
+	}
 
-    /* loop to make sure you read out the whole rawTick value on the same tick */
-    do
-    {
-       t = auxClockTicks;
-    }
-    while ( t != auxClockTicks );
-
-    return( t );
+	if ( !auxClockSemaphoreNanoSecInterval )
+	{
+		auxClockSemaphoreID = semBCreate( SEM_Q_FIFO, SEM_EMPTY );
+		auxClockSemaphoreNanoSecInterval = microSecInterval * 1000;
+	}
 }
 
-/* Convert the given rawTick value to a numeric string. */
-char * rawTickString( char * s, rawTick rtValue )
+
+/* Wait for the auxClock Semaphore to toggle. */
+STATUS auxClockBlockOnSemaphore()
 {
-    sprintf( s, "%lld", rtValue );
-    return s;
+	return semTake( auxClockSemaphoreID, WAIT_FOREVER );
 }
-
-/* Get the current value of the auxClockTicks counter as a numeric string. */
-char *auxClockTicksString()
-{
-    return( rawTickString( auxClockTicksStr, auxClockTicksGet() ) );
-}
-
-
-/* Enable the auxClock semaphore to toggle every given number of ticks. */
-int auxClockSemaphoreEnable( unsigned int periodicity /* number of microseconds */ )
-{
-    int lockKey;
-    if (periodicity < 1)
-    {
-        /* Can't enable a semaphore with a <= 0 period! */
-        return( FALSE );
-    }
-    lockKey = intLock();
-    /* Is the semaphore already enabled? */
-    if( auxClockSemaphoreID == NULL )
-    {
-        /* No, set it up */
-        auxClockSemaphoreMuSecPerPeriod = periodicity;
-        intUnlock( lockKey );
-
-        /* Set up the ISR's microsecond increment value */
-        auxClockMuSecPerTick = 1000000ll / ( (long long)auxClockRateGet() );
-
-        /* Create the semaphore */
-        if( ( auxClockSemaphoreID = semBCreate( SEM_Q_FIFO, SEM_EMPTY ) ) == NULL )
-        {
-            return( FALSE );
-        }
-
-        /* Non-null Semaphore ID tells the ISR to start Giving the semaphore. */
-        if( extraAuxClockConnect( (FUNCPTR) &auxClockMsgPktISR, (int)0x2BADDEED ) == ERROR )
-        {
-            /* Enabling the extraAuxClock failed! */
-            return( FALSE );
-        }
-
-    }
-    else
-        intUnlock( lockKey );
-
-    return( TRUE );
-}
-
-
-/* Wait for the auxClock ISR to toggle the semaphore. */
-int auxClockBlockOnSemaphore()
-{
-    if( auxClockSemaphoreID == NULL || ( semTake( auxClockSemaphoreID, WAIT_FOREVER ) == ERROR ) )
-    {
-        /* Can't block on a semaphore that isn't enabled OR semaphore take request unsuccessful. */
-        return( FALSE );
-    }
-    return( TRUE );
-}
-
 
 /* Enable the auxClock Message Packet queue to send auxClockMuSec every given number of microseconds. */
-int auxClockMsgPktEnable( unsigned int periodicity /* number of microseconds */,
-                          const char * MsgPktQName  /* Name of Message Packet queue to which to send auxClockMuSec in a Message Packet */,
-                          int *MsgPktOverrunFlag /* Flag for detecting overruns by the calling task */ )
+void auxClockMsgPktEnable( unsigned int microSecInterval /* number of microseconds */,
+                           const char * MsgPktQName      /* Name of Message Packet queue to which to send auxClockMuSec in a Message Packet */ )
 {
-    if (periodicity < 1)
-    {
-        /* Can't enable a Message Packet queue with a <= 0 period! */
-        return( FALSE );
-    }
+	if ( !auxClockInitDone )
+	{
+		auxClockInit();
+	}
 
-    if (!MsgPktOverrunFlag)
-    {
-        /* Can't enable a Message Packet queue without an overrun flag! */
-        return( FALSE );
-    }
+	if ( !auxClockQueueNanoSecInterval )
+	{
+		/* Open the Message Packet Queue */
+		auxClockMsgPktQDes = mq_open(
+                                   MsgPktQName, /* name of queue to open */
+                                   O_WRONLY  /* open flags */
+                                  );
 
-    /* Is a notification already enabled? */
-    if( auxClockNotifyMuSecPerPeriod > 0ll ) 
-    {
-        /* Can't enable a Message Packet queue if notification is already enabled! */
-        return( FALSE );
-    }
-
-    /* Open the Message Packet Queue */
-    auxClockMsgPktQDes = mq_open(
-                                 MsgPktQName, /* name of queue to open */
-                                 O_WRONLY  /* open flags */
-                                );
-    if( auxClockMsgPktQDes == (mqd_t)ERROR )
-    {
-        /* Can't enable a Message Packet queue if the queue can't be opened! */
-        return FALSE;
-    }
-
-    auxClockMsgPacket.msgData().osCode( MessageData::TIME_UPDATE );
-    *MsgPktOverrunFlag = FALSE;
-    auxClockNotifyPointer = MsgPktOverrunFlag; 
-
-    /* Clear the free-running microsecond counter */
-    auxClockMuSec = 0ll;
-
-    /* Clear the microsecond accumulator */
-    auxClockNotifyMuSec = 0ll;
-
-    /* Set up the ISR's microsecond increment value */
-    auxClockMuSecPerTick = 1000000ll / ( (long long)auxClockRateGet() );
-
-    /* Give the ISR the average microsecond periodicity of notification */
-    auxClockNotifyMuSecPerPeriod = (long long)periodicity;
-
-    /* This tells the ISR to start mq_send-ing the auxClockMuSec value. */
-    if( extraAuxClockConnect( (FUNCPTR) &auxClockMsgPktISR, (int)0x3BADDEED ) == ERROR )
-    {
-        /* Enabling the extraAuxClock failed! */
-        return( FALSE );
-    }
-
-    return( TRUE );
-}
-
-/* Post a receive for the auxClock Message Packet queue. */
-int auxClockMsgPktReceive( mqd_t MsgPktQDes, long long *pMuSec /* Pointer to buffer to put current value of the free-running auxClocki microsecond counter  */ )
-{
-    MessagePacket msgPacket;
-    int msgPrio;
-
-    if( MsgPktQDes == (mqd_t)NULL ) 
-    {
-        /* Can't post to a queue that isn't enabled for the ISR! */
-        return( FALSE );
-    }
-    else
-    {
-        do
-        {
-            *auxClockNotifyPointer = TRUE;   /* Let ISR know it is expected */
-            /* DO NOT INSERT ANY CODE HERE!!!!! */
-            if( mq_receive(
-                             MsgPktQDes,     /* Message Packet queue from which to receive */
-                             (void *) &msgPacket,    /* buffer to receive message */
-                             (size_t) sizeof( msgPacket ), /* length of buffer */
-                              &msgPrio /* if not NULL, priority of message */
-                           )  == ERROR )
-            {
-                /* mq_receive request unsuccessful. */
-                return( FALSE );
-            }
-        } while ( msgPacket.msgData().osCode() != MessageData::TIME_UPDATE );
-    }
-    memmove( (char *) pMuSec , 
-             (char *) msgPacket.msgData().msg(), 
-             sizeof( *pMuSec ) );
-    return( TRUE );
-}
-
-/* Return the notification overrun count. */
-unsigned long int auxClockNotificationOverruns()
-{
-    unsigned long int overruns = auxClockNotifyOverruns;
-    auxClockNotifyOverruns = 0;
-    return overruns;
+		if( auxClockMsgPktQDes != (mqd_t)ERROR )
+		{
+			auxClockMsgPacket.msgData().osCode( MessageData::TIME_UPDATE );
+			auxClockQueueNanoSecInterval = microSecInterval * 1000;
+	   }
+   }
 }
 
 /* Return the notification count. */
-unsigned long int auxClockNotifications()
+unsigned long int auxClockQueueNotifications()
 {
-    return auxClockNotifyCount;
+    return auxClockQueueNotifyCount;
 }
 
 /* Return the notification count when the first failure occurred. */
-unsigned long int auxClockNotificationFailedAt()
+unsigned long int auxClockQueueNotificationFailedAt()
 {
-    return auxClockNotifyFailedAt;
+    return auxClockQueueNotifyFailedAt;
 }
 
 /* Return the errno value for the first notification failure that occurred. */
-int auxClockNotificationErrno()
+int auxClockQueueNotificationErrno()
 {
-    return auxClockNotifyErrno;
+    return auxClockQueueNotifyErrno;
 }
 

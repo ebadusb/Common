@@ -3,6 +3,8 @@
  * PURPOSE: option parsing class
  * CHANGELOG:
  *   $Log: optionparser.cpp $
+ *   Revision 1.2  2002/09/19 20:13:13  td07711
+ *   add public init() variants
  *   Revision 1.1  2002/09/18 23:33:07  td07711
  *   Initial revision
  *   Revision 6.2  2002/05/01 18:04:54  td07711
@@ -140,7 +142,7 @@ void OptionParser::done()
     {
         for(int i = 1; i < _argc; i++)
         {  
-            fprintf(stderr, "unparsed token %s", _argv[i]);
+            fprintf(stderr, "OptionParser: unparsed token %s\n", _argv[i]);
         }
 
         fprintf(stderr, "%s", _usage.get_usage() );

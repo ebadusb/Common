@@ -6,6 +6,8 @@
  * CHANGELOG:
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/checkself.cpp 1.2 2002/08/14 15:40:05Z pn02526 Exp ms10234 $
  * $Log: checkself.cpp $
+ * Revision 1.1  1999/05/24 17:32:05  TD10216
+ * Initial revision
  * Revision 1.1  1999/03/20 00:45:20  TD10216
  * Initial revision
  * Revision 1.1  1997/11/21 02:07:13  TD07711
@@ -22,6 +24,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef VXWORKS
+ // Temporarily disabled in vxWorks
+ int checkself(int argc, char** argv, char* start, char* filename)
+ {
+     return 0;
+ }
+#else
  static char Last_init_data=1;  // must be assigned nonzero to be placed in initialized data region
 
  // SPECIFICATION:  checkself() - generates a CRC over text and a portion of initialized data, and
@@ -114,4 +123,4 @@
     _LOG_ERROR(__FILE__, __LINE__, TRACE_CODE, 0, buf);
     return 0;
  }
-
+#endif

@@ -5,6 +5,8 @@ rem
 rem $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/create_common.bat 1.2 2002/08/15 21:00:52Z jl11312 Exp ms10234 $
 rem
 rem $Log: create_common.bat $
+rem Revision 1.1  2002/04/30 20:07:22  rm70006
+rem Initial revision
 rem
 
 if not exist .\makefile.vxc goto not_common_sandbox
@@ -19,6 +21,9 @@ if not defined WIND_BASE goto find_tornado
 goto tornado_ok
 
 :tornado_ok
+echo Start of common build
+date/t
+time/t
 make -f makefile.vx %*
 goto end_of_script
 

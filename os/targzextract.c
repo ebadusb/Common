@@ -376,6 +376,7 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
       size -= rc*TBLOCK ;
       nblks -= rc ;
    }
+   fprintf( stdout, "                                                                      \r");
 
 
    /* Close the newly created file */

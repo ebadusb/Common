@@ -1,8 +1,12 @@
 /*
  * copyright 1995, 1996 Cobe BCT Lakewood, Colorado
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/msgcrc.cpp 1.1 2002/05/01 14:45:54 ms10234 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/msgcrc.cpp 1.2 2002/07/17 18:54:38 ms10234 Exp ms10234 $
  * $Log: msgcrc.cpp $
+ * Revision 1.3  2002/07/17 18:43:55  ms10234
+ * Added vxWorks.h as the first include file
+ * Revision 1.2  2002/07/03 20:10:36  ms10234
+ * Completed some code cleanup and minor fixes.
  * Revision 1.1  1999/05/24 23:30:00  TD10216
  * Initial revision
  * Revision 1.2  1996/07/24 19:49:20  SS03309
@@ -19,6 +23,8 @@
  * Test:             I:\ieee1498\STP2.DOC
  */
 
+#include <vxWorks.h>
+
 #include "msgcrc.h"
 #include "crcgen.h"
 
@@ -31,7 +37,7 @@
 // ERROR HANDLING:   none
 */
 
-unsigned long crc32( unsigned char* blk_adr, unsigned long blk_len)
+unsigned long msgcrc32( unsigned char* blk_adr, unsigned long blk_len)
 {
    unsigned long crc = INITCRC_DEFAULT;
    crcgen32( &crc, blk_adr, blk_len );
@@ -48,7 +54,7 @@ unsigned long crc32( unsigned char* blk_adr, unsigned long blk_len)
 // ERROR HANDLING:   none
 */
 
-unsigned long addToCrc32( unsigned char* blk_adr,
+unsigned long addToMsgCrc32( unsigned char* blk_adr,
                           unsigned long blk_len,
                           unsigned long crc)
 {

@@ -1,8 +1,10 @@
-# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/makefile.vx 1.3 2002/07/09 16:23:31 ms10234 Exp ms10234 $
+# @(#) $Header: //Bctquad3/HOME/BCT_Development/vxWorks/Common/softcrc/rcs/makefile.vx 1.4 2002/07/17 12:54:38 ms10234 Exp pn02526 $
 #
 # Makefile - makefile for softcrc library
 #
 # $Log: makefile.vx $
+# Revision 1.3  2002/07/09 16:23:31  ms10234
+# changed name and location of library
 # Revision 1.2  2002/06/18 16:55:41  jl11312
 # - removed unecessary additional include directory
 # Revision 1.1  2002/05/17 14:49:20  jl11312
@@ -31,7 +33,7 @@ include $(MAINDIR)/makefile.vxc
 # to be compiled for the library
 #
 LIB_C_FILES   = 
-LIB_CXX_FILES = crcgen.cpp
+LIB_CXX_FILES = crcgen.cpp msgcrc.cpp
 LIB_S_FILES =
 
 #

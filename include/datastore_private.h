@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.1  2002/06/24 19:30:42Z  rm70006
+ * HISTORY:    Initial revision
  * HISTORY:    Revision 1.4  2002/06/17 18:40:44Z  rm70006
  * HISTORY:    Change design to make data store instance based instead of static.  Changed from taskVars to using the symbol table library.
  * HISTORY:    Revision 1.3  2002/06/04 18:52:54Z  rm70006
@@ -345,7 +347,7 @@ const char DATASTORE_WRITE_SEM[]    = "_DataStore_%s_writesem";
 const char DATASTORE_SIGNAL_WRITE[] = "_DataStore_%s_signalwrite";
 const char DATASTORE_READ_COUNT[]   = "_DataStore_%s_readcount";
 
-const int DATASTORE_SYMTBL_SIZE = 7;
+const int DATASTORE_SYMTBL_SIZE = 9;
 
 
 

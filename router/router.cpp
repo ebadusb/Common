@@ -1148,6 +1148,7 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
 #endif // #if BUILD_TYPE!=DEBUG && CPU!=SIMNT
 
    }
+#if MESSAGE_SYSTEM_STATISTICS
    else if ( qattributes.mq_curmsgs >= qattributes.mq_maxmsg/10 )
    {
       DataLog( log_level_router_info ) << "Sending message=" << hex << mp.msgData().msgId() 
@@ -1157,6 +1158,7 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
                            << " contains " << dec << qattributes.mq_curmsgs << " messages" 
                            << endmsg;
    }
+#endif
 
 
    //

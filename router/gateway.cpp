@@ -263,12 +263,14 @@ void Gateway::sendMsgToRouter( const MessagePacket &mp )
 #endif // #if CPU!=SIMNT && BUILD_TYPE!=DEBUG
       return;
    }
+#if MESSAGE_SYSTEM_STATISTICS
    else if ( qattributes.mq_curmsgs >= qattributes.mq_maxmsg/10 )
    {
       DataLog( log_level_gateway_info ) << "Sending message=" << hex << mp.msgData().msgId() 
                            << " Router queue contains " << dec << qattributes.mq_curmsgs << " messages" 
                            << endmsg;
    }
+#endif
 
 
    //

@@ -29,7 +29,7 @@ _StopLoop( false ),
 _QueueEnabled( false ),
 _ReceivedSignal( 0 ),
 _MessagesToDeregister(),
-_MessageMapInUse( false )
+_MessageIdInUse( 0 )
 {
 }
 
@@ -328,9 +328,15 @@ void Dispatcher :: registerMessage( const unsigned long mId, const MessageBase &
       _MessageMap[ mId ] = newSet;
    }
 
-   if ( _MessagesToDeregister.find( ((MessageBase*)(&mb)) ) != _MessagesToDeregister.end() )
+   if ( !_MessagesToDeregister.empty() )
    {
-      _MessagesToDeregister.erase( ((MessageBase*)(&mb)) );
+      map< MessageBase*, unsigned long >::iterator diter = _MessagesToDeregister.find( ((MessageBase*)(&mb)) );
+      if (    diter != _MessagesToDeregister.end() 
+           && (*diter).second == mId 
+         )
+      {
+         _MessagesToDeregister.erase( diter );
+      }
    }
 }
 
@@ -360,9 +366,9 @@ void Dispatcher :: deregisterMessage( const unsigned long mId, const MessageBase
       set< MessageBase* > &rSet = (*miter).second;
 
       //
-      // If we are not currently in a message callback ...
+      // If we are not currently in a message callback for this message Id ...
       //
-      if ( _MessageMapInUse )
+      if ( _MessageIdInUse == mId )
       {
          if ( rSet.find( ((MessageBase*)(&mb)) ) != rSet.end() )
          {
@@ -417,7 +423,16 @@ void Dispatcher :: dump( DataLog_Stream &outs )
       {
          ( (MessageBase*)(*siter) )->dump( outs );
       }
-    }
+   }
+   outs << "Dereg Map size = " << dec << _MessagesToDeregister.size() << " " << (int)(_MessagesToDeregister.begin() == _MessagesToDeregister.end()) << endmsg;
+   map< MessageBase*, unsigned long >::iterator diter;
+   for ( diter = _MessagesToDeregister.begin() ;
+         diter != _MessagesToDeregister.end() ;
+         ++diter )
+   {
+      outs << " Message: " << hex << (int)(MessageBase*)((*diter).first) << " id: " << (*diter).second;
+   }
+   outs << endmsg;
    outs << "************************** DUMP finished **************************" << endmsg;
 }
 
@@ -433,7 +448,7 @@ void Dispatcher :: processMessage( MessagePacket &mp )
       set< MessageBase* >::iterator siter;
       map< unsigned long, set< MessageBase* > >::iterator miter;
 
-      _MessageMapInUse = true;
+      _MessageIdInUse = mp.msgData().msgId();
       miter = _MessageMap.find( mp.msgData().msgId() ); // find the message in the reg. messages list ...
 
       //
@@ -451,14 +466,17 @@ void Dispatcher :: processMessage( MessagePacket &mp )
             }
          }
       }
-      _MessageMapInUse = false;
+      _MessageIdInUse = 0;
 
-      map < MessageBase*, unsigned long >::iterator diter;
-      for ( diter = _MessagesToDeregister.begin() ; diter != _MessagesToDeregister.end() ; ++diter )
+      if ( !_MessagesToDeregister.empty() ) 
       {
-         deregisterMessage( (*diter).second, (*(MessageBase*)(*diter).first) );
+         map < MessageBase*, unsigned long >::iterator diter;
+         for ( diter = _MessagesToDeregister.begin() ; diter != _MessagesToDeregister.end() ; ++diter )
+         {
+            deregisterMessage( (*diter).second, (*(MessageBase*)(*diter).first) );
+         }
+         _MessagesToDeregister.clear();
       }
-      if ( !_MessagesToDeregister.empty() ) _MessagesToDeregister.erase( _MessagesToDeregister.begin(), _MessagesToDeregister.end() );
    }
    else
    {
@@ -498,6 +516,7 @@ bool Dispatcher :: send( mqd_t mqueue,  const MessagePacket &mp, const int prior
 #endif // #if CPU!=SIMNT && BUILD_TYPE!=DEBUG
       return false;
    }
+#if MESSAGE_SYSTEM_STATISTICS
    else if ( qattributes.mq_curmsgs >= qattributes.mq_maxmsg/10 )
    {
       DataLog( log_level_message_system_info ) << "Sending message=" << hex << mp.msgData().msgId() 
@@ -505,6 +524,7 @@ bool Dispatcher :: send( mqd_t mqueue,  const MessagePacket &mp, const int prior
                            << dec << qattributes.mq_curmsgs << " messages" 
                            << endmsg;
    }
+#endif
 
    //
    // Send message packet to router ...

@@ -572,6 +572,7 @@ void MsgSysTimer::checkTimers()
                return;
 
             }
+#if MESSAGE_SYSTEM_STATISTICS
             else if ( qattributes.mq_curmsgs >= qattributes.mq_maxmsg/10 )
             {
                DataLog( log_level_message_system_timer_info ) << "Sending message=" << hex << mpPtr->msgData().msgId() 
@@ -580,6 +581,7 @@ void MsgSysTimer::checkTimers()
                                     << " contains " << dec << qattributes.mq_curmsgs << " messages" 
                                     << endmsg;
             }
+#endif
 
 
             //

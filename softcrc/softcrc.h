@@ -12,6 +12,8 @@
  *
  * $Header: I:/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.h 1.3 2000/12/08 23:22:55 td07711 Exp td07711 $
  * $Log: softcrc.h $
+ * Revision 1.3  2000/12/08 23:22:55  td07711
+ *   IT4896 - incurease buffer size to accomodate 2 256char strings plus some.
  * Revision 1.2  2000/06/07 22:05:09  bd10648
  * Moved CRC seed out of this file into common crcgen.h
  * Revision 1.1  1999/05/24 23:32:04  TD10216
@@ -51,7 +53,7 @@
  #define IGNORE_KEYWORD  "IGNORE"
 
  // function protos
- void parseCmdline(int argc, char** argv);
+ void parseCmdline(int argc, const char** argv);
  char* getnextitem(FILE* filelist);
  void doitem(unsigned long* pcrc, char* pathname, int filelistItem);
  void dofile(unsigned long* pcrc, char* pathname);

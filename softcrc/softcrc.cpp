@@ -7,6 +7,11 @@
  * CHANGELOG:
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.cpp 1.6 2002/09/20 19:30:23Z td07711 Exp rm70006 $
  * $Log: softcrc.cpp $
+ * Revision 1.4  2000/12/08 01:54:04  ms10234
+ * IT4896 - A maximum length was placed on all string operations to prevent
+ * overflows from a non-terminated string.  The root path for ignore files was
+ * set to 70 characters.  This was too short to accomodate long paths.  The
+ * maximum for all strings was changed to 256 to prevent the problem.
  * Revision 1.3  1999/08/21 21:34:09  BS04481
  * Machcrc produces read-only crc files but softcrc produces 
  * read/write crc files
@@ -62,20 +67,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <sys/uio.h>
+// #include <sys/uio.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <dirent.h>
-#include <sys/trace.h>
+// #include <sys/trace.h>
+
 #include "softcrc.h"
 #include "crcgen.h"
-
+#include "optionparser.h"
 #include "error.h"
 
+#define TRACELOG(buf) fprintf(stderr, "%s: %s\n", ProgramName, buf);
+
 // softcrc is for usage on Cobe QNX servers by non-root users
-#ifdef RESTRICT_TO_COBE
+//#ifdef RESTRICT_TO_COBE
 char* ProgramName = "softcrc";
-#define TRACELOG(buf)   ((void)0)
 
 // must redefine to avoid linking in trace calls whose linkage results in
 // SIGSEGV when run by nonroot user.
@@ -86,13 +93,12 @@ char* ProgramName = "softcrc";
 #define ASSERT(expr)  assert(expr)
 #define LOG_ASSERT(expr, errmsg)  ((void)0)
 
-#endif // ifdef RESTRICT_TO_COBE
+//#endif // ifdef RESTRICT_TO_COBE
 
 
 // machcrc is for use on Trima machines by root
 #ifdef RESTRICT_TO_MACHINE
 char* ProgramName = "machcrc";
-#define TRACELOG(buf) Trace3b(TRACE_DISKCRC, _TRACE_SEVERE, __LINE__, 0, 0, strlen(buf)+1, buf)
 #endif
 
 int compare(const void*, const void*);
@@ -142,7 +148,7 @@ static int FollowSymlinks = 0;        // flag to enable following symlinks
 static int TraverseFileSystems = 0;  // flag to enable following symlinks across file systems
 static int SubdirLimit = LIMIT_DEFAULT;    // subdirectory recursion limit
 static int ReadbufSize = READBUF_DEFAULT;  // size of read buffer
-static char* Readbuf = 0;        // address of read buffer, initialized with malloc
+static unsigned char* Readbuf = 0;        // address of read buffer, initialized with malloc
 static char* Rootdir = 0;       // prefix to added to absolute pathnames in filelist
 
 struct node {
@@ -154,7 +160,7 @@ static struct node* pList = 0;
 //
 // main entry point
 //
-int main(int argc, char** argv)
+int softcrc(const char* options)
 {
    FILE* filelist;
    FILE* fp;
@@ -166,10 +172,12 @@ int main(int argc, char** argv)
    Filelist[0] = NULL;
    Rootdirlist[0] = NULL;
 
-   parseCmdline(argc, argv);
+   OptionParser cmdline( ProgramName, "crc file verification" );
+   cmdline.init( options );
+   parseCmdline( cmdline.getArgc(), cmdline.getArgv() );
 
    // get readbuffer
-   if ((Readbuf = (char*)malloc(ReadbufSize)) == NULL) {
+   if ((Readbuf = (unsigned char*)malloc(ReadbufSize)) == NULL) {
       logerrno("malloc failed\n");
       exit(-1);
    }
@@ -207,7 +215,7 @@ int main(int argc, char** argv)
          doitem(&InitCRC, path, 1);
 
          if (Verbosity == 2) {
-            printf("ICRC: 0x%08x   %s\n", InitCRC, path);
+            printf("ICRC: 0x%08lx   %s\n", InitCRC, path);
          }
       } // end while
 
@@ -234,7 +242,7 @@ int main(int argc, char** argv)
    // output final CRC to stdout
    //
    if (Verbosity != 0)
-      printf("CRC: 0x%08x\n", InitCRC);
+      printf("CRC: 0x%08lx\n", InitCRC);
 
    //
    // CRC verification
@@ -249,13 +257,13 @@ int main(int argc, char** argv)
          logerrno("fgets failed on -verify filename\n");
          exit(-1);
       }
-      if (sscanf(buf, "%x", &crc) != 1) {
+      if (sscanf(buf, "%lx", &crc) != 1) {
          logerrno("sscanf could not read -verify CRC\n");
          exit(-1);
       }
       if (crc != InitCRC) {
          if (Verbosity > 0) {
-            sprintf(buf, "%.256s verification failed, crc=0x%08x  expected=0x%08x\n",
+            sprintf(buf, "%.256s verification failed, crc=0x%08lx  expected=0x%08lx\n",
                     VerifyFile, InitCRC, crc);
             logerror(buf);
          }
@@ -263,7 +271,7 @@ int main(int argc, char** argv)
       }
       else {
          if (Verbosity > 0) {
-            sprintf(buf, "%.256s verified OK crc=0x%08x\n", VerifyFile, InitCRC);
+            sprintf(buf, "%.256s verified OK crc=0x%08lx\n", VerifyFile, InitCRC);
             loginfo(buf);
          }
       }
@@ -273,19 +281,19 @@ int main(int argc, char** argv)
    // CRC update
    //
    if (UpdateFile) {
-      if ((fp = fopen(UpdateFile, "w")) == NULL) {
+      if ((fp = fopen(UpdateFile, "w")) == 0 ) {
          sprintf(buf, "fopen failed on %.256s, cannot update\n", UpdateFile);
          logerrno(buf);
          exit(-1);
       }
-      if (fprintf(fp, "0x%08x\n", InitCRC) < 0) {
+      if (fprintf(fp, "0x%08lx\n", InitCRC) < 0) {
          logerrno("fprintf failed to update -update filename\n");
          exit(-1);
       }
 
-      if (fp != NULL)
+      if (fp != 0 )
       {
-         if (fclose(fp) != NULL)
+         if (fclose(fp) != 0 )
          {
             sprintf(buf, "fclose failed on %.256s\n", UpdateFile);
             logerrno(buf);
@@ -305,7 +313,7 @@ int main(int argc, char** argv)
       }
 
       if (Verbosity > 0) {
-         sprintf(buf, "%.256s updated with new crc=0x%08x\n", UpdateFile, InitCRC);
+         sprintf(buf, "%.256s updated with new crc=0x%08lx\n", UpdateFile, InitCRC);
          loginfo(buf);
       }
    }
@@ -449,7 +457,7 @@ void parseCmdline(int argc, char** argv)
          if (--n <= 0) {
             usage("needs -initcrc value\n");
          }
-         if (sscanf(*(++parg), "%x", &InitCRC) != 1) {
+         if (sscanf(*(++parg), "%lx", &InitCRC) != 1) {
             usage("invalid -initcrc value\n");
          }
       }
@@ -496,7 +504,7 @@ void doitem(unsigned long* pcrc, char* path, int filelistItem)
 {
    struct stat statbuf;
    char buf[BUF_SIZE];
-   static Device = 0;
+   static int Device = 0;
 
    ASSERT(pcrc != 0);
    ASSERT(path != 0);
@@ -508,39 +516,11 @@ void doitem(unsigned long* pcrc, char* path, int filelistItem)
       return;
    }
 
-   // check for symlink first
-   if (lstat(path, &statbuf) == -1) {
-      sprintf(buf, "failed to lstat %.256s\n", path);
-      logerrno(buf);
-      exit(-1);
-   }
 
    if (filelistItem) {
       Device = statbuf.st_dev;
    }
 
-   if (S_ISLNK(statbuf.st_mode)) { // handle symlinks
-      if (FollowSymlinks) {
-         // note: stat() does follow symlinks
-         if (stat(path, &statbuf) == -1) {
-            sprintf(buf, "failed to stat %.256s\n", path);
-            logerrno(buf);
-            exit(-1);
-         }
-
-         // check for symlink to different filesystem
-         if (Device != statbuf.st_dev && TraverseFileSystems == 0) {
-            sprintf(buf, "doitem: skipping symlink across FS: %.256s\n", path);
-            logdebug(buf);
-            return;
-         }
-      }
-      else {
-         sprintf(buf, "doitem: skipping symlink: %.256s\n", path);
-         logdebug(buf);
-         return;
-      }
-   }
 
    // check for mount point of different file system
    if (Device != statbuf.st_dev && TraverseFileSystems == 0) {
@@ -550,7 +530,7 @@ void doitem(unsigned long* pcrc, char* path, int filelistItem)
    }
 
    if (Debug) {
-      sprintf(buf, "doitem: %.256s device=0x%x\n", path, statbuf.st_dev);
+      sprintf(buf, "doitem: %.256s device=0x%lx\n", path, statbuf.st_dev);
       logdebug(buf);
    }
 
@@ -577,7 +557,7 @@ void dodir(unsigned long* pcrc, char* dirname)
    struct dirent* pde;
    int nument = 0;
    char buf[BUF_SIZE];
-   static NestLevel = 0;
+   static int NestLevel = 0;
    char** pent;  // ptr to table entry
    char** table; // NULL terminated table of char*'s
    int i;
@@ -684,10 +664,10 @@ void dodir(unsigned long* pcrc, char* dirname)
    free(table);
 
    if (Verbosity == 3)
-      printf("ICRC: 0x%08x   %s\n", *pcrc, dirname);
+      printf("ICRC: 0x%08lx   %s\n", *pcrc, dirname);
 
    if (Debug) {
-      sprintf(buf, "dodir: dir=%.256s numentries=%d icrc=0x%08x\n",
+      sprintf(buf, "dodir: dir=%.256s numentries=%d icrc=0x%08lx\n",
               dirname, nument, *pcrc);
       logdebug(buf);
    }
@@ -716,7 +696,7 @@ void dofile(unsigned long* pcrc, char* filename)
    ASSERT(pcrc != 0);
    ASSERT(filename != 0);
 
-   if ((fd = open(filename, O_RDONLY)) == -1) {
+   if ((fd = open(filename, O_RDONLY, 0444)) == -1) {
       sprintf(buf, "failed to open %.256s\n", filename);
       logerrno(buf);
       exit(-1);
@@ -724,7 +704,7 @@ void dofile(unsigned long* pcrc, char* filename)
 
    // read the file and calculate new crc
    while(1) {
-      if ((n = read(fd, Readbuf, ReadbufSize)) == -1) {
+      if ((n = read(fd, (char*)Readbuf, ReadbufSize)) == -1) {
          sprintf(buf, "read failed on %.256s\n", filename);
          logerrno(buf);
          exit(-1);
@@ -740,10 +720,10 @@ void dofile(unsigned long* pcrc, char* filename)
    }
 
    if (Verbosity == 3)
-      printf("ICRC: 0x%08x   %.256s\n", *pcrc, filename);
+      printf("ICRC: 0x%08lx   %.256s\n", *pcrc, filename);
 
    if (Debug) {
-      sprintf(buf, "dofile: file=%.256s length=%ld icrc=0x%08x\n",
+      sprintf(buf, "dofile: file=%.256s length=%ld icrc=0x%08lx\n",
            filename, length, *pcrc);
       logdebug(buf);
    }

@@ -11,6 +11,10 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.23  2003/04/07 14:21:21Z  rm70006
+ * HISTORY:    IT 5818.
+ * HISTORY:    
+ * HISTORY:    Change logging levels.
  * HISTORY:    Revision 1.22  2002/12/16 18:31:30Z  jl11312
  * HISTORY:    - checked logging mode before logging semaphore information
  * HISTORY:    Revision 1.21  2002/11/18 18:29:10  jl11312
@@ -73,6 +77,7 @@
 #include "datastore.h"
 #include "error.h"
 #include "common_datalog.h"
+#include "crcgen.h"
 
 
 
@@ -96,34 +101,22 @@ enum { DATASTORE_SYMTBL_SIZE = 6 };   // Create Max 64 datastore derived classes
 // ElementType
 ////////////////////////////////////////////////////////////////
 
-
-//
-// Default Constructor
-//
-ElementType::ElementType()
+ElementType::ElementType() :
+_ds( NULL ),
+_pfrType( PfrType( -1 ) )
 {
-   _ds      = NULL;
-   _pfrType = PfrType(-1);
 }
 
-
-
-//
-// Destructor
-//
 ElementType::~ElementType()
 {
 }
 
-
-
-//
-// Register
-//
-void ElementType::Register(DataStore *ds, PfrType pfr)
+bool ElementType::Register(DataStore *ds, PfrType pfr)
 {
    _ds      = ds;
    _pfrType = pfr;
+
+   return false;
 }
 
 
@@ -134,16 +127,17 @@ void ElementType::Register(DataStore *ds, PfrType pfr)
 #include <memLib.h>
 
 
-DataStore::DATASTORE_LISTTYPE DataStore::_datastoreList;
-
+DATASTORE_LISTTYPE DataStore::_pfrDataStoreList;
+unsigned int DataStore::_pfCompleteLength=0;
+unsigned char *DataStore::_pfCompleteDataPtr=0;
 SYMTAB_ID DataStore::_datastoreTable = NULL;
-
 bool DataStore::_logging = false;
 
-//
-// Default Constructor
-//
-DataStore::DataStore()
+DataStore::DataStore() :
+   _handle( 0 ),
+   _role( ROLE_RO ),
+   _name( ),
+   _refCount( 0 )
 {
    DataLog_Critical _fatal;
 
@@ -152,11 +146,6 @@ DataStore::DataStore()
    _FATAL_ERROR(__FILE__, __LINE__, "Datastore default constructor called.");
 }
 
-
-
-//
-// CreateSymbolTableEntry
-//
 void DataStore::CreateSymbolTableEntry()
 {
    const int MUTEX_SEM_FLAGS = SEM_Q_PRIORITY | SEM_DELETE_SAFE | SEM_INVERSION_SAFE;
@@ -178,7 +167,7 @@ void DataStore::CreateSymbolTableEntry()
    if (_handle->_mutexSemaphore == NULL)
    {
       // Fatal Error
-      DataLog(_fatal) << "_mutexSemaphore could not be created for " << _name 
+      DataLog(_fatal) << "_mutexSemaphore could not be created for " << _name
                        << ".  Errno " << errnoMsg << "." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "_mutexSemaphore could not be created.");
    }
@@ -222,7 +211,12 @@ void DataStore::CreateSymbolTableEntry()
 }
 
 
-
+DataStore::DataStore(const char *name, Role role) :
+   _handle( 0 ),
+   _role(role),
+   _name( name ),
+   _refCount(0)
+{
 //
 // DataStore Constructor
 //
@@ -237,11 +231,6 @@ void DataStore::CreateSymbolTableEntry()
 // 6) allocates the _readCount and environment variable
 //
 //
-DataStore::DataStore(const char *name, Role role) :
-   _role(role),
-   _name(name),
-   _refCount(0)
-{
    bool created;
    int event_type;
 
@@ -264,12 +253,17 @@ DataStore::DataStore(const char *name, Role role) :
    // If first time, populate handle
    if (created)
    {
+      _handle->_name = name;
+      _handle->_pfDataPtr = 0;
+      _handle->_pfDataStoreLength = 0;
+      _handle->_pfDataRestored = true;
+
       CreateSymbolTableEntry();
-      
+
       // First derived datastore instance.  Save it in the list of datastores.
       // The list of datastores is used during by PFR to restore all datastores
       // (element values) to their last state.
-      _datastoreList.push_back(this);
+      _pfrDataStoreList[ _name ] = _handle;
 
       DataLog(log_level_cds_debug) << "First instance of " << _name << " created.  Saving datastore." << endmsg;
    }
@@ -279,78 +273,98 @@ DataStore::DataStore(const char *name, Role role) :
 #endif
 }
 
-
-
-//
-// Base Destructor
-//
 DataStore::~DataStore()
 {
    // Don't delete anything.  The rest of the system is still using it.
 }
 
-
-
-//
-// SavePfrData
-//
-void DataStore::SavePfrData (ofstream &pfrFile)
+unsigned int DataStore::SetAllPfData ( )
 {
-   // iterate the list.  Put out to the ofstream all elements that need to be
-   // saved for PFR for every datastore created (duplicates were filtered out on create). 
-   // Note:  Order is important only in that it needs to be consistent.
-   //        List order is assigned by the container class Register calls.
-   //        The restore function will put back in the same order.
-   for (DATASTORE_LISTTYPE::iterator datastoreIterator = _datastoreList.begin(); datastoreIterator != _datastoreList.end(); ++datastoreIterator)
+   for (DATASTORE_LISTTYPE::iterator datastoreIterator = _pfrDataStoreList.begin(); datastoreIterator != _pfrDataStoreList.end(); ++datastoreIterator)
    {
-      DataLog(log_level_cds_info) << "saving datastore " << (*datastoreIterator)->_name << endmsg;
+      DataLog(log_level_cds_debug) << "datastore " << (*datastoreIterator).first
+                                  << " " << (*datastoreIterator).second->_pfrList.size()
+                                  << " " << (*datastoreIterator).second->_pfDataStoreLength << endmsg;
+   }
 
-      int count = 0;
+   //
+   // Create the correct size of memory for the data
+   //
+   if ( PfMemoryBlock() == 0 )
+   {
+      DataLog( log_level_cds_error ) << "Datastore memory block creation failed." << endmsg;
+      return 0;
+   }
+   DataLog( log_level_cds_debug ) << "Datastore memory block created." << endmsg;
 
-      for (ELEMENT_LISTTYPE::iterator pfrListIterator = (*datastoreIterator)->_handle->_pfrList.begin(); pfrListIterator != (*datastoreIterator)->_handle->_pfrList.end(); ++pfrListIterator)
+   DataLog( log_level_cds_debug ) << "Datastore list " << &_pfrDataStoreList << endmsg;
+   unsigned int location=0;
+   for (DATASTORE_LISTTYPE::iterator datastoreIterator = _pfrDataStoreList.begin(); datastoreIterator != _pfrDataStoreList.end(); ++datastoreIterator)
+   {
+      DataLog(log_level_cds_debug) << "saving datastore " << (*datastoreIterator).first 
+                                  << " " << (*datastoreIterator).second->_pfDataStoreLength << endmsg;
+
+      if ( location+(*datastoreIterator).second->_pfDataStoreLength > _pfCompleteLength )
       {
-         if ((*pfrListIterator)->_pfrType == PFR_RECOVER)
-         {
-            (*pfrListIterator)->WriteSelf(pfrFile);
-            count++;
-
-            DataLog(log_level_cds_debug) << "saving element " << count << " in " << (*datastoreIterator)->_name << " to PFR File." << endmsg;
-         }
+         DataLog( log_level_cds_error ) << "PF Data size mismatch for " << (*datastoreIterator).first 
+                                        << ".  expected->" << _pfCompleteLength << ", actual->" 
+                                        << (location+(*datastoreIterator).second->_pfDataStoreLength) << endmsg;
+         return location;
       }
 
-      DataLog(log_level_cds_info) << "saved " << count << " elements in " << (*datastoreIterator)->_name << "." << endmsg;
-   }
-}
-
-
-
-//
-// RestorePfrData
-//
-void DataStore::RestorePfrData (ifstream &pfrFile)
-{
-   for (DATASTORE_LISTTYPE::iterator datastoreIterator = _datastoreList.begin(); datastoreIterator != _datastoreList.end(); ++datastoreIterator)
-   {
-      DataLog(log_level_cds_info) << "restoring datastore " << (*datastoreIterator)->_name << endmsg;
-
-      int count = 0;
-
-      for (ELEMENT_LISTTYPE::iterator pfrListIterator = (*datastoreIterator)->_handle->_pfrList.begin(); pfrListIterator != (*datastoreIterator)->_handle->_pfrList.end(); ++pfrListIterator)
+      unsigned int actual = (*datastoreIterator).second->SetPfData( (unsigned char*)(_pfCompleteDataPtr+location) );
+      if ( actual != (*datastoreIterator).second->_pfDataStoreLength )
       {
-         if ((*pfrListIterator)->_pfrType == PFR_RECOVER)
-         {
-            (*pfrListIterator)->ReadSelf(pfrFile);
-            count++;
-
-            DataLog(log_level_cds_debug) << "restoring element " << count << "in " << (*datastoreIterator)->_name << " to PFR File." << endmsg;
-         }
+         DataLog( log_level_cds_error ) << "PF Data size mismatch for " << (*datastoreIterator).first
+                                        << ".  expected->" << (*datastoreIterator).second->_pfDataStoreLength
+                                        << ", actual->" << actual << endmsg;
+         return location;
       }
-
-      DataLog(log_level_cds_info) << "restored " << count << " elements in " << (*datastoreIterator)->_name << "." << endmsg;
+      location += (*datastoreIterator).second->_pfDataStoreLength;
    }
+   return location;
 }
 
+bool DataStore::RetrieveAllPfData ()
+{
+   //
+   // Create the correct size of memory for the data
+   //
+   if ( PfMemoryBlock() == 0 )
+   {
+      DataLog( log_level_cds_error ) << "Datastore memory block creation failed." << endmsg;
+      return false;
+   }
+   DataLog( log_level_cds_debug ) << "Datastore memory block created." << endmsg;
 
+   DataLog( log_level_cds_debug ) << "Datastore list " << &_pfrDataStoreList << endmsg;
+   unsigned int location=0;
+   for (DATASTORE_LISTTYPE::iterator datastoreIterator = _pfrDataStoreList.begin(); datastoreIterator != _pfrDataStoreList.end(); ++datastoreIterator)
+   {
+      DataLog(log_level_cds_debug) << "retrieving PF data for datastore " << (*datastoreIterator).first << " " << (*datastoreIterator).second << endmsg;
+      if ( !( (*datastoreIterator).second->RetrievePfData( (unsigned char*)(_pfCompleteDataPtr+location) ) ) )
+      {
+         DataLog( log_level_cds_error ) << "PF data retrieve failed for datastore " << (*datastoreIterator).first << endmsg;
+         return false;
+      }
+      location += (*datastoreIterator).second->_pfDataStoreLength;
+   }
+   return true;
+}
+
+bool DataStore::RestoreAllPfData()
+{
+   for (DATASTORE_LISTTYPE::iterator datastoreIterator = _pfrDataStoreList.begin(); datastoreIterator != _pfrDataStoreList.end(); ++datastoreIterator)
+   {
+      DataLog(log_level_cds_debug) << "restoring datastore " << (*datastoreIterator).first << endmsg;
+      if ( !( (*datastoreIterator).second->RestorePfData() ) )
+      {
+         DataLog( log_level_cds_error ) << "PF data restore failed for datastore " << (*datastoreIterator).first << endmsg;
+         return false;
+      }
+   }
+   return true;
+}
 
 //
 // Semaphore Take macro
@@ -365,7 +379,6 @@ void DataStore::RestorePfrData (ifstream &pfrFile)
       _FATAL_ERROR(__FILE__, __LINE__, "semTake failed");                             \
    }                                                                                  \
 }
-
 
 
 //
@@ -383,7 +396,6 @@ void DataStore::RestorePfrData (ifstream &pfrFile)
 }
 
 
-
 //
 // Semaphore Flush macro
 //
@@ -399,13 +411,11 @@ void DataStore::RestorePfrData (ifstream &pfrFile)
 }
 
 
-
 //
 // Begin Critical Section macro
 //
 //#define BEGIN_CRITICAL_SECTION() SEM_TAKE(*_mutexSemaphore, WAIT_FOREVER);
 #define BEGIN_CRITICAL_SECTION() ;
-
 
 
 //
@@ -415,17 +425,13 @@ void DataStore::RestorePfrData (ifstream &pfrFile)
 #define END_CRITICAL_SECTION() ;
 
 
-
-//
-// Lock
-//
-void DataStore::Lock()
+void DataStoreSymbolContainer::Lock( Role role )
 {
    bool crit_section_released = false;
    int event_type = 0;
 
    // If instance is RO, perform RO semaphore lock
-   if (_role == ROLE_RO || _role == ROLE_SPOOFER )
+   if (role == ROLE_RO || role == ROLE_SPOOFER )
    {
 #if EVENT_TRACE == 1
       event_type = DS_LOCK_RO_EVENT;
@@ -436,25 +442,25 @@ void DataStore::Lock()
 
       // If a writer has signaled to write, readers should block until after 
       // writer releases semaphore.
-      if (_handle->_signalWrite)
+      if (_signalWrite)
       {
 
          DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) << " RBOW in " << _name << ".\t"
-                         << "WF(" << _handle->_signalWrite << ")\t"
-                         << "RF(" << _handle->_signalRead << ")." << endmsg;
+                         << "WF(" << _signalWrite << ")\t"
+                         << "RF(" << _signalRead << ")." << endmsg;
          
          END_CRITICAL_SECTION();
 
          crit_section_released = true;
 
          // Block waiting for writer
-         SEM_TAKE(_handle->_readSemaphore, WAIT_FOREVER);
+         SEM_TAKE(_readSemaphore, WAIT_FOREVER);
 
          DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) 
                              << " unblocked by writer, continuing in " << _name << endmsg;
          
          // Reset semaphore for next writer
-         SEM_GIVE(_handle->_readSemaphore);
+         SEM_GIVE(_readSemaphore);
 
          event_type += 0x1;
       }
@@ -465,24 +471,24 @@ void DataStore::Lock()
       }
 
       // Increment the read count
-      ++(_handle->_readCount);
+      ++(_readCount);
 
-      if (_handle->_signalRead == false)
+      if (_signalRead == false)
       {
          // Signal Writers to block for read
-         _handle->_signalRead = true;
+         _signalRead = true;
 
          DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) << " first reader in " 
-                             << _name << "(" << _handle->_readCount << ").  Blocking future writers." << endmsg;
+                             << _name << "(" << _readCount << ").  Blocking future writers." << endmsg;
 
-         SEM_TAKE(_handle->_writeSemaphore, WAIT_FOREVER);   // Non-blocking
+         SEM_TAKE(_writeSemaphore, WAIT_FOREVER);   // Non-blocking
 
          event_type += 0x2;
       }
       else
       {
          DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) << " free pass (" 
-                         << _handle->_readCount << ") in " << _name << "." << endmsg;
+                         << _readCount << ") in " << _name << "." << endmsg;
 
          event_type += 0x4;
       }
@@ -499,9 +505,9 @@ void DataStore::Lock()
       BEGIN_CRITICAL_SECTION();
 
       // Set write count.
-      _handle->_signalWrite = true;
+      _signalWrite = true;
 
-      if (_handle->_signalRead)
+      if (_signalRead)
       {
          event_type += 0x1;
 
@@ -509,16 +515,16 @@ void DataStore::Lock()
                              << " blocking future readers in " << _name << "." << endmsg;
 
          // Block future readers (RBOW).  At this point, we shouldn't block.
-         SEM_TAKE(_handle->_readSemaphore, WAIT_FOREVER);    // Non-blocking
+         SEM_TAKE(_readSemaphore, WAIT_FOREVER);    // Non-blocking
 
          DataLog(log_level_cds_debug) << "writer " << taskName(taskIdSelf()) << " WBOR in " << _name << ".\t"
-                             << "WF(" << _handle->_signalWrite << ")\t"
-                             << "RF(" << _handle->_signalRead << ")." << endmsg;
+                             << "WF(" << _signalWrite << ")\t"
+                             << "RF(" << _signalRead << ")." << endmsg;
 
          END_CRITICAL_SECTION();
 
          // Block on the Read semaphore (WBOR)
-         SEM_TAKE(_handle->_writeSemaphore, WAIT_FOREVER);    // Blocking
+         SEM_TAKE(_writeSemaphore, WAIT_FOREVER);    // Blocking
 
          BEGIN_CRITICAL_SECTION();
 
@@ -526,7 +532,7 @@ void DataStore::Lock()
                              << _name << "." << endmsg;
 
          // Give back read semaphore.
-         SEM_GIVE(_handle->_writeSemaphore);    // Reset for next reader.
+         SEM_GIVE(_writeSemaphore);    // Reset for next reader.
 
          END_CRITICAL_SECTION();
       }
@@ -538,7 +544,7 @@ void DataStore::Lock()
                              << _name << "." << endmsg;
 
          // Block future writers (RBOW).  At this point, we shouldn't block.
-         SEM_TAKE(_handle->_readSemaphore, WAIT_FOREVER);    // Non-blocking
+         SEM_TAKE(_readSemaphore, WAIT_FOREVER);    // Non-blocking
 
          END_CRITICAL_SECTION();
       }
@@ -549,17 +555,12 @@ void DataStore::Lock()
 #endif
 }
 
-
-
-//
-// Unlock
-//
-void DataStore::Unlock()
+void DataStoreSymbolContainer::Unlock( Role role )
 {
    int event_type = 0;
 
    // If instance is RO, perform RO semaphore lock
-   if (_role == ROLE_RO || _role == ROLE_SPOOFER )
+   if (role == ROLE_RO || role == ROLE_SPOOFER )
    {
 #if EVENT_TRACE == 1
       event_type = DS_UNLOCK_RO_EVENT;
@@ -568,45 +569,45 @@ void DataStore::Unlock()
 
       BEGIN_CRITICAL_SECTION();
 
-      if (_handle->_readCount > 0)
+      if (_readCount > 0)
       {
-         --(_handle->_readCount);
+         --(_readCount);
       }
 
-      if (_handle->_signalWrite && _handle->_signalRead)   // Only do the first time.
+      if (_signalWrite && _signalRead)   // Only do the first time.
       {
          event_type += 0x1;
 
          // Unlock the writer
-         SEM_GIVE(_handle->_writeSemaphore);
+         SEM_GIVE(_writeSemaphore);
 
          // Clear/Reset read flag
-         _handle->_signalRead = false;
+         _signalRead = false;
 
          DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) << " released SEMWRITE in " << _name 
-                             << ". WF(" << _handle->_signalWrite << ") "
-                             << "RC(" << _handle->_readCount << ")." << endmsg;
+                             << ". WF(" << _signalWrite << ") "
+                             << "RC(" << _readCount << ")." << endmsg;
       }
-      else if (_handle->_readCount == 0)   // No more readers.
+      else if (_readCount == 0)   // No more readers.
       {
          event_type += 0x2;
 
          // Unlock the writer
-         SEM_GIVE(_handle->_writeSemaphore);
+         SEM_GIVE(_writeSemaphore);
 
          // Clear/Reset read flag
-         _handle->_signalRead = false;
+         _signalRead = false;
 
          DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) << " released SEMWRITE in " << _name 
-                             << ". No more readers.  WF(" << _handle->_signalWrite << ")." << endmsg;
+                             << ". No more readers.  WF(" << _signalWrite << ")." << endmsg;
       }
       else
       {
          event_type += 0x4;
 
          DataLog(log_level_cds_debug) << "reader " << taskName(taskIdSelf()) << " free out in " << _name << ".  "
-                             << "RF(" << _handle->_signalRead << ") "
-                             << "RC(" << _handle->_readCount << ")." << endmsg;
+                             << "RF(" << _signalRead << ") "
+                             << "RC(" << _readCount << ")." << endmsg;
       }
 
       END_CRITICAL_SECTION();
@@ -621,17 +622,17 @@ void DataStore::Unlock()
       BEGIN_CRITICAL_SECTION();
 
       DataLog(log_level_cds_debug) << "writer " << taskName(taskIdSelf()) << " releasing SEMREAD in " << _name 
-                      << ". WF(" << _handle->_signalWrite << ") "
-                      << "RF(" << _handle->_signalRead << ")." << endmsg;
+                      << ". WF(" << _signalWrite << ") "
+                      << "RF(" << _signalRead << ")." << endmsg;
 
       // Clear the Write signal
-      _handle->_signalWrite = false;
+      _signalWrite = false;
 
       END_CRITICAL_SECTION();
 
       // Unlock the semaphore
-      SEM_GIVE(_handle->_readSemaphore);
-      SEM_FLUSH(_handle->_readSemaphore);
+      SEM_GIVE(_readSemaphore);
+      SEM_FLUSH(_readSemaphore);
 
       event_type += 0x1;
    }
@@ -642,15 +643,190 @@ void DataStore::Unlock()
 }
 
 
+void DataStore::AddElement (BaseElementSymbolContainerAbs *element, unsigned int size )
+{ 
+   DataLog( log_level_cds_debug ) << "Add element to datastore " << _name << endmsg;
 
-//
-// symbolName
-//
+   //
+   // Add the crc to the size totals once, determined if this
+   //  is the first time adding an element to the pfr list.
+   //
+   if ( _handle->_pfDataStoreLength == 0 )
+   {
+      //
+      // Add on a CRC specific to this datastore and
+      //  accumulate it in the total size of all datastores
+      //
+      _handle->_pfDataStoreLength = sizeof( unsigned long );  // Spacer at the beginning
+      _handle->_pfDataStoreLength += _name.size();            // Add the CDS name
+      _handle->_pfDataStoreLength += sizeof( unsigned long ); // Spacer in between the name and the data
+      _handle->_pfDataStoreLength += sizeof( unsigned long ); // Spacer between the data and the CRC
+      _handle->_pfDataStoreLength += sizeof( unsigned long ); // Add the CRC
+
+      _pfCompleteLength += _handle->_pfDataStoreLength;       // Add this Datastore's overhead to the total size
+   }
+
+   //
+   // Add the element ...
+   //
+   _handle->_pfrList.push_back(element); 
+
+   //
+   // Increment the size variables, both for the overall and this particular datastore
+   //
+   _handle->_pfDataStoreLength += size; 
+   _pfCompleteLength += size; 
+}
+
+unsigned int DataStoreSymbolContainer::SetPfData( unsigned char *memBlock )
+{
+   //
+   // No need to mess with a DataStore object with no PFR elements ...
+   //
+   if ( _pfDataStoreLength == 0 )
+      return 0;
+
+   unsigned int size=0;
+
+   //
+   // Make sure we have data to restore ...
+   //
+   if ( !memBlock )
+   {
+      DataLog( log_level_cds_error ) << "NULL memory block pointer for datastore " << _name << endmsg;
+      return false;
+   }
+
+   unsigned long separator=0xAAAAAAAA;
+   memcpy( (memBlock+size), &separator, sizeof( separator ) ); size += sizeof( separator );
+   char namechar;
+   for (int i=0 ; i<_name.size() ; i++ )
+   {
+      namechar = _name[i];
+      memcpy( (memBlock+size), &namechar, sizeof( char ) ); size += sizeof( char );
+   }
+   separator=0xBBBBBBBB;
+   memcpy( (memBlock+size), &separator, sizeof( separator ) ); size += sizeof( separator );
+
+   int count = 0;
+   unsigned int dataSize=0;
+   Lock( ROLE_RO );
+   for (ELEMENT_LISTTYPE::iterator pfrListIterator = _pfrList.begin(); pfrListIterator != _pfrList.end(); ++pfrListIterator)
+   {
+      count++;
+      DataLog(log_level_cds_debug) << "saving element " << count << " in " << _name << " to PFR block" << endmsg;
+      dataSize = (*pfrListIterator)->Save( memBlock+size );
+      DataLog(log_level_cds_debug) << "element " << count << " saved " << dataSize << " bytes at " << hex << memBlock+size << endmsg;
+      size += dataSize;
+   }
+   Unlock( ROLE_RO );
+   separator=0xCCCCCCCC;
+   memcpy( (memBlock+size), &separator, sizeof( separator ) ); size += sizeof( separator );
+
+   //
+   // Generate the CRC for the memory block ...
+   //
+   unsigned long CRC=0;
+   crcgen32( &CRC, memBlock, size );
+   
+   //
+   // Set the CRC as the last entry in the block ...
+   //
+   memcpy( (memBlock+size), &CRC, sizeof( CRC ) );
+   size += sizeof( CRC );
+
+   //
+   // Return the size of the block used for our data
+   //
+   return size;
+}
+
+bool DataStoreSymbolContainer::RetrievePfData( unsigned char *memBlock )
+{
+   //
+   // No need to mess with a DataStore object with no PFR elements ...
+   //
+   if ( _pfDataStoreLength == 0 )
+      return true;
+
+   //
+   // Make sure we have data to restore ...
+   //
+   if ( !memBlock )
+   {
+      DataLog( log_level_cds_error ) << "NULL memory block pointer for datastore " << _name << endmsg;
+      return false;
+   }
+
+   //
+   // Save the location of the data ...
+   //
+   _pfDataPtr = memBlock;
+   _pfDataRestored = false;
+
+   //
+   // Check the CRC of the memory block ...
+   //
+   unsigned long actualCRC=0;
+   crcgen32( &actualCRC, memBlock, _pfDataStoreLength - sizeof(unsigned long) );
+   unsigned long storedCRC = *((unsigned long*)(memBlock+_pfDataStoreLength-sizeof(unsigned long)));
+   if ( actualCRC != storedCRC )
+   {
+      DataLog( log_level_cds_error ) << "PF Data CRC mismatch for datastore " << _name << ".  expected->" << storedCRC 
+                                     << ", actual->" << actualCRC << endmsg;
+      return false;
+   }
+
+   return true;
+}
+
+bool DataStoreSymbolContainer::RestorePfData( )
+{
+   //
+   // No need to mess with a DataStore object with no PFR elements ...
+   //
+   if ( _pfDataStoreLength == 0 )
+      return true;
+
+   //
+   // If we have already restored the CDS once, then we don't have to do it again,
+   //  so just skip it ...
+   //
+   if ( _pfDataRestored )
+   {
+      DataLog( log_level_cds_error ) << "Data for datastore " << _name << " has already been restored." << endmsg;
+      return true;
+   }
+
+   //
+   // Make sure we have data to restore ...
+   //
+   if ( !_pfDataPtr )
+   {
+      DataLog( log_level_cds_error ) << "NULL PF Data pointer for datastore " << _name << endmsg;
+      return false;
+   }
+
+   unsigned int pos = ( 2*sizeof( unsigned long ) ) + _name.size();
+   int count = 0;
+   Lock( ROLE_RW );
+   for (ELEMENT_LISTTYPE::iterator pfrListIterator = _pfrList.begin(); pfrListIterator != _pfrList.end(); ++pfrListIterator)
+   {
+      count++;
+      DataLog(log_level_cds_debug) << "restoring element " << count << " in " << _name << " to PFR File." << endmsg;
+      pos += (*pfrListIterator)->Restore( _pfDataPtr+pos );
+   }
+   Unlock( ROLE_RW );
+
+   DataLog(log_level_cds_debug) << "restored " << count << " elements in " << _name << "." << endmsg;
+   return true;
+}
+
 void DataStore::GetSymbolName(string &s, const BIND_ITEM_TYPE item)
 {
    int size = 0;
    const int s_len = s.size();
-   DataLog_Critical _fatal;                                                        \
+   DataLog_Critical _fatal;                                                        
 
    // Create the Symbol name to search for.
    switch (item)
@@ -680,16 +856,6 @@ void DataStore::GetSymbolName(string &s, const BIND_ITEM_TYPE item)
 }
 
 
-
-//
-// SingleWriteDataStore
-//
-
-
-
-//
-// Base Constructor
-// 
 SingleWriteDataStore::SingleWriteDataStore(const char * name, Role role) :
    DataStore (name, role)
 {
@@ -697,11 +863,6 @@ SingleWriteDataStore::SingleWriteDataStore(const char * name, Role role) :
    CheckForMultipleWriters();
 }
 
-
-
-//
-// Class Destructor
-//
 SingleWriteDataStore::~SingleWriteDataStore()
 {
    if (GetRole() == ROLE_RW)
@@ -712,10 +873,6 @@ SingleWriteDataStore::~SingleWriteDataStore()
 }
 
 
-
-//
-// CheckForMultipleWriters
-//
 void SingleWriteDataStore::CheckForMultipleWriters()
 {
    if (GetRole() == ROLE_RW)
@@ -735,16 +892,6 @@ void SingleWriteDataStore::CheckForMultipleWriters()
 }
 
 
-
-//
-// MultWriteDataStrore
-//
-
-
-
-//
-// Base Constructor
-// 
 MultWriteDataStore::MultWriteDataStore(const char * name, Role role) :
    DataStore (name, role)
 {
@@ -753,44 +900,23 @@ MultWriteDataStore::MultWriteDataStore(const char * name, Role role) :
 }
 
 
-
-//
-// Class Destructor
-// 
 MultWriteDataStore::~MultWriteDataStore()
 {
 }
 
 
 
-//
-// DynamicSingleWriteDataStrore
-//
-
-
-
-//
-// Base Constructor
-// 
 DynamicSingleWriteDataStore::DynamicSingleWriteDataStore(const char * name, Role role) :
    SingleWriteDataStore (name, role)
 {
 }
 
 
-
-//
-// Class Destructor
-// 
 DynamicSingleWriteDataStore::~DynamicSingleWriteDataStore()
 {
 }
 
 
-
-//
-// SetRead
-//
 void DynamicSingleWriteDataStore::SetRead()
 {
    // If you are currently the writer, then unset the _writerDeclared flag
@@ -802,11 +928,6 @@ void DynamicSingleWriteDataStore::SetRead()
    _role = ROLE_RO;
 }
 
-
-
-//
-// SetWrite
-//
 void DynamicSingleWriteDataStore::SetWrite()
 {
    _role = ROLE_RW;

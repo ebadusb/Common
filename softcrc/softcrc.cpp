@@ -7,6 +7,8 @@
  * CHANGELOG:
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.cpp 1.6 2002/09/20 19:30:23Z td07711 Exp rm70006 $
  * $Log: softcrc.cpp $
+ * Revision 1.2  1999/08/20 23:58:18  BS04481
+ * Chmod the resulting update file to readonly
  * Revision 1.1  1999/05/24 23:32:16  TD10216
  * Initial revision
  * Revision 1.1  1999/03/20 00:45:01  TD10216
@@ -286,6 +288,7 @@ int main(int argc, char** argv)
             logerrno(buf);
             exit(-1);
          }
+#ifdef RESTRICT_TO_MACHINE
          else
          {
             if (chmod(UpdateFile, (S_IRUSR|S_IRGRP|S_IROTH)) != 0)
@@ -295,6 +298,7 @@ int main(int argc, char** argv)
                exit(-1);
             }
          }
+#endif
       }
 
       if (Verbosity > 0) {

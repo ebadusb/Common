@@ -3,6 +3,19 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/ostime.hpp 1.7 2002/11/22 21:07:37 pn02526 Exp jl11312 $
  * $Log: ostime.hpp $
+ * Revision 1.5  1999/10/28 14:29:19  BS04481
+ * Code review change.  Previous design disabled soft watchdogs
+ * while the clock was being set.  This was unacceptable.  This code
+ * changes the soft watchdogs to run off of an element of the 
+ * kernel's ticks space which is not sensitive to changes in the 
+ * real-time clock.    All code with disables the soft watchdogs is
+ * disabled.  The soft watchdog will go off if not petted within 2
+ * seconds under all conditions.  The machine will also safe-state
+ * if the soft watchdogs ever go backward.   In addition, time set
+ * changes are rejected if received while air-to-donor monitoring is
+ * in effect.  This is done because the time jumps in the real-time
+ * clocks effect the control loops.
+ * 
  * Revision 1.4  1999/10/08 18:35:01  BS04481
  * Reference the variable that controls the watchdogs during time 
  * setting via a function instead of directly.
@@ -32,9 +45,9 @@
 #define OSTIME_HPP
 
 #include <time.h>
-#include <sys/kernel.h>
-#include <sys/osinfo.h>
 #include <unistd.h>
+
+#include "auxclock.h"
 
 
 typedef struct
@@ -43,22 +56,44 @@ typedef struct
    time_t   nanosec;
 }timeFromTick;
 
-typedef struct
-{
-   time_t   sec;
-   time_t   nanosec;
-   unsigned long cnt8254;
-   unsigned long cycles_per_sec;
-   unsigned long cycle;
-}rawTick;
-
 class osTime
 {
    public:
       osTime();
       ~osTime();
-      inline void snapshotTime(timeFromTick* now); // get new time from kernel
-      inline void snapshotRaw(rawTick* now);       // get new time from kernel in raw clock ticks
+
+      // SPECIFICATION:    TimeFromRawTicks.
+      //                   osTime method to convert the rawTick type to a timeFromTick struct.
+      //
+      // ERROR HANDLING:   none.
+      inline void TimeFromRawTicks(timeFromTick *tftptr, rawTick rt )
+      {
+          rawTick rtSec = (rt) / (rawTick)_TicksPerSecond;
+          tftptr->sec  = (time_t) rtSec;
+      	tftptr->nanosec = (time_t) ( (rt - rtSec*(rawTick)_TicksPerSecond ) *  (rawTick)_NanoSecondsPerTick );
+          return;
+      }
+      
+      // SPECIFICATION:    snapshotTime.
+      //                   osTime method to get time from the kernel.
+      //
+      // ERROR HANDLING:   none.
+      inline void snapshotTime(timeFromTick* now)
+      {
+         TimeFromRawTicks( now, auxClockTicksGet() );
+      };
+      
+      
+      // SPECIFICATION:    snapshotRaw.
+      //                   osTime method to get raw ticks from the kernel.
+      //                   (assumes typedef TICK rawTick)
+      //
+      // ERROR HANDLING:   none.
+      inline void snapshotRaw(rawTick* now)
+      {
+         *now = auxClockTicksGet();
+      };
+
       void whatTimeIsIt(timeFromTick* now);        // get new time from object
       int howLong(timeFromTick then);              // return delta between then and now
       int howLongMicro(timeFromTick then);         // return delta in usecond between then and now
@@ -66,16 +101,8 @@ class osTime
       int howLongMicroAndUpdate(timeFromTick* then); // update then with time from object and return delta in usec
       int howLongRaw(rawTick then);                // return delta between now and then based on raw clock ticks
       void delayTime(int deltaTime);               // holds in a tight loop for specified time
-      int getTimeCounter(void);                    // timeCounter != 0 => time reset in progress
-      void countDown(void);                        // decrement timeCounter
-      int* _timeCounter;                           
    private:
-      struct _timesel far *_timeptr;
-      int    _fd_timecounter;
+     int _TicksPerSecond, _NanoSecondsPerTick;
 };
 
 #endif
-
-
-
-

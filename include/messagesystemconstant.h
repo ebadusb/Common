@@ -43,7 +43,7 @@ public:
    static const int DEFAULT_TIMER_MESSAGE_PRIORITY;
    //
    // Size of the user data inside the message packets
-   const int MAX_MESSAGE_SIZE=127;
+   static const int MAX_MESSAGE_SIZE=127;
 
 };
 

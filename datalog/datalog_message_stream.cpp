@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.9 2003/04/29 17:07:54Z jl11312 Exp jl11312 $
  * $Log: datalog_message_stream.cpp $
+ * Revision 1.8  2003/02/25 16:10:19Z  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.7  2003/01/31 21:52:19  jl11312
  * - added check for null string pointers for operator <<
  * Revision 1.6  2003/01/31 19:52:51  jl11312
@@ -312,7 +314,7 @@ DataLog_Stream::~DataLog_Stream()
 
 DataLog_Stream & DataLog_Stream::operator << (char c)
 {
-	if ( _consoleOutput == DataLog_ConsoleEnabled ) putchar(c);
+	if ( _consoleOutput == DataLog_ConsoleEnabled ) putc(c, datalog_ConsoleFile());
 	if ( _logOutput == DataLog_LogEnabled) writeArg(SignedChar, &c, sizeof(char));
 	return *this;
 }
@@ -344,7 +346,7 @@ DataLog_Stream & DataLog_Stream::operator << (unsigned long val)
 
 DataLog_Stream & DataLog_Stream::operator << (bool val)
 {
-	if ( _consoleOutput == DataLog_ConsoleEnabled ) printf((val) ? "true" : "false");
+	if ( _consoleOutput == DataLog_ConsoleEnabled ) fprintf(datalog_ConsoleFile(), (val) ? "true" : "false");
 	if ( _logOutput == DataLog_LogEnabled)
 	{
 		DataLog_UINT8 byte = (val) ? 1 : 0;
@@ -356,7 +358,7 @@ DataLog_Stream & DataLog_Stream::operator << (bool val)
 
 DataLog_Stream & DataLog_Stream::operator << (const char * s)
 {
-	if ( _consoleOutput == DataLog_ConsoleEnabled ) printf("%s", s);
+	if ( _consoleOutput == DataLog_ConsoleEnabled ) fprintf(datalog_ConsoleFile(), "%s", s);
 	if ( _logOutput == DataLog_LogEnabled)
 	{
 		if (s) writeStringArg(String, s, strlen(s)*sizeof(char));
@@ -499,7 +501,7 @@ void DataLog_Stream::printLong(long val)
 	else if ( _flags & f_hex ) format="%lx";
 	else format="%ld";
 
-	printf(format, val);
+	fprintf(datalog_ConsoleFile(), format, val);
 }
 
 void DataLog_Stream::printUnsignedLong(unsigned long val)
@@ -509,7 +511,7 @@ void DataLog_Stream::printUnsignedLong(unsigned long val)
 	else if ( _flags & f_hex ) format="%lx";
 	else format="%lu";
 
-	printf(format, val);
+	fprintf(datalog_ConsoleFile(), format, val);
 }
 
 void DataLog_Stream::printDouble(double val)
@@ -518,7 +520,7 @@ void DataLog_Stream::printDouble(double val)
 	if ( _flags && f_scientific ) format="%.*g";
 	else format="%.*f";
 
-	printf(format, _precision, val);
+	fprintf(datalog_ConsoleFile(), format, _precision, val);
 }
 
 void DataLog_Stream::setFlags(unsigned int flagSetting)
@@ -591,7 +593,7 @@ DataLog_Stream & manipfunc_errnoMsg(DataLog_Stream & stream, int param)
 
 DataLog_Stream & endmsg(DataLog_Stream & stream)
 {
-	if ( stream._consoleOutput == DataLog_ConsoleEnabled ) putchar('\n');
+	if ( stream._consoleOutput == DataLog_ConsoleEnabled ) putc('\n', datalog_ConsoleFile());
 
 	stream.writeComplete();
 	return stream;

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_print.cpp 1.7 2003/02/25 16:10:17Z jl11312 Exp jl11312 $
  * $Log: datalog_message_print.cpp $
+ * Revision 1.7  2003/02/25 16:10:17Z  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.6  2003/01/31 19:52:50  jl11312
  * - new stream format for datalog
  * Revision 1.5  2002/11/20 16:46:47  rm70006
@@ -231,9 +233,9 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 	{
 		argList = savedArgList;
 
-		printf("%s(%d): ", file, line);
-		vprintf(format, argList);
-		printf("\n");
+		fprintf(datalog_ConsoleFile(), "%s(%d): ", file, line);
+		vfprintf(datalog_ConsoleFile(), format, argList);
+		fprintf(datalog_ConsoleFile(), "\n");
 	}
 
 	return result;

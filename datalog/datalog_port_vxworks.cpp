@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.9 2003/10/16 14:57:40Z jl11312 Exp jl11312 $
  * $Log: datalog_port_vxworks.cpp $
+ * Revision 1.6  2003/03/27 16:27:04Z  jl11312
+ * - added support for new datalog levels
  * Revision 1.5  2003/02/25 16:10:26Z  jl11312
  * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.4  2003/01/10 14:21:46  jl11312
@@ -335,6 +337,23 @@ void datalog_GetTimeStamp(DataLog_TimeStamp * stamp)
 
 	stamp->_seconds = (DataLog_UINT32)seconds;
 	stamp->_nanoseconds = (DataLog_UINT32)nanoseconds;
+}
+
+static FILE * consoleFile = NULL;
+extern int consoleFd;
+
+FILE * datalog_ConsoleFile(void)
+{
+	if ( !consoleFile )
+	{
+		consoleFile = fdopen(consoleFd, "w");
+		if ( !consoleFile )
+		{
+			consoleFile = stderr;
+		}
+	}
+ 
+	return consoleFile;
 }
 
 DataLog_TaskID datalog_CurrentTask(void)

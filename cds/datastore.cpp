@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.29  2003/11/13 14:49:26Z  rm70006
+ * HISTORY:    IT 6507.  Change Lock/Unlock scheme to solve deadlock issues.
  * HISTORY:    Revision 1.28  2003/11/06 17:12:35Z  rm70006
  * HISTORY:    IT 6507.  Put back in critical section code.
  * HISTORY:    Revision 1.27  2003/08/29 21:09:37Z  ms10234
@@ -174,7 +176,7 @@ void DataStore::CreateSymbolTableEntry()
    //
 
    // Create the read semaphore
-   _handle->_readSemaphore = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+   _handle->_readSemaphore = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
 
    // Fatal if _readSemaphore = NULL
    if (_handle->_readSemaphore == NULL)
@@ -187,7 +189,7 @@ void DataStore::CreateSymbolTableEntry()
       DataLog(log_level_cds_debug) << "_readSemaphore value(" << hex << _handle->_readSemaphore << dec << ")." << endmsg;
    
    // Create the write semaphore.
-   _handle->_writeSemaphore = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+   _handle->_writeSemaphore = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
 
    // Fatal if _writeSemaphore = NULL
    if (_handle->_writeSemaphore == NULL)
@@ -206,7 +208,7 @@ void DataStore::CreateSymbolTableEntry()
 }
 
 
-static SEM_ID 	datastoreInitSem = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+static SEM_ID 	datastoreInitSem = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
 
 DataStore::DataStore(const char *name, Role role) :
    _handle( 0 ),
@@ -488,7 +490,7 @@ void DataStoreSymbolContainer::Unlock( Role role )
       if (_readCount == 0)
       {
          SEM_GIVE(_writeSemaphore);
-         SEM_FLUSH(_writeSemaphore);
+         //SEM_FLUSH(_writeSemaphore);
       }
 
       SEM_GIVE(_readSemaphore);
@@ -502,7 +504,7 @@ void DataStoreSymbolContainer::Unlock( Role role )
 
       // Unlock the semaphore
       SEM_GIVE(_writeSemaphore);
-      SEM_FLUSH(_writeSemaphore);
+      //SEM_FLUSH(_writeSemaphore);
    }
 
 #if EVENT_TRACE == 1

@@ -8,9 +8,11 @@
 #include <vxWorks.h>
 
 #include <taskVarLib.h>
+#include <signal.h>
 #include <stdio.h>
 
 #include "datalog.h"
+#include "datalog_levels.h"
 #include "error.h"
 #include "messagesystem.h"
 
@@ -27,6 +29,16 @@ void MessageSystem::datalogErrorHandler( const char * file, int line,
       _FATAL_ERROR( __FILE__, __LINE__, "Data log error" );
    }
    cerr << "Data log error - " << error << " : " << msg << endl;
+}
+
+void MessageSystem::signalHandler( int sig )
+{
+   if (    _TheMessageSystem 
+        && _TheMessageSystem->_Dispatcher )
+   {
+      _TheMessageSystem->_Dispatcher->stopLoop();
+      _TheMessageSystem->_Dispatcher->receivedSignal( sig );
+   }
 }
 
 MessageSystem::MessageSystem() :
@@ -118,8 +130,7 @@ bool MessageSystem::init( const char *qname, const unsigned int qsize, const boo
 
    if ( _Dispatcher != 0 )
    {
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "MessageSystem object already initialized." << endmsg;
+      DataLog( log_level_critical ) << "MessageSystem object already initialized." << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "MessageSystem initialization failed" );
       return false;
    }
@@ -134,8 +145,7 @@ bool MessageSystem::init( const char *qname, const unsigned int qsize, const boo
 
 	if ( taskVarGet(taskIdSelf(), (int *)&_TheMessageSystem) != ERROR )
 	{
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Task variable _TheMessageSystem has already been added for this task ("
+      DataLog( log_level_critical ) << "Task variable _TheMessageSystem has already been added for this task ("
                            << hex << (unsigned long)_TheMessageSystem << " currentObj=" 
                            << (unsigned long)this << " )" << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "MessageSystem initialization failed" );
@@ -147,8 +157,7 @@ bool MessageSystem::init( const char *qname, const unsigned int qsize, const boo
    {
       //
       // Notify the system of the error ...
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "taskVarAdd failed.  errno=" << errno << endmsg;
+      DataLog( log_level_critical ) << "taskVarAdd failed.  errno=" << errno << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "MessageSystem initialization failed" );
    }
 
@@ -163,6 +172,11 @@ bool MessageSystem::init( const char *qname, const unsigned int qsize, const boo
    //
    // The dispatcher will call an error function if it fails to initialize ...
    _Dispatcher->init( qname, qsize, block );
+
+   //
+   // Set up the task's signal handler for the appropriate signals ...
+   signal( SIGHUP,  &MessageSystem::signalHandler );
+   signal( SIGQUIT, &MessageSystem::signalHandler );
 
    return true;
 }

@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.19  2002/11/07 00:11:53Z  td07711
+ * HISTORY:    modified spoofer caching
  * HISTORY:    Revision 1.18  2002/11/06 15:42:48  rm70006
  * HISTORY:    Removed unnecessary new's.
  * HISTORY:    Removed some inline functions to relieve compiler problems.
@@ -58,20 +60,19 @@
  * HISTORY:    Initial revision
 *******************************************************************************/
 
-#include "datastore.h"
+#ifndef _DATASTORE_PRIVATE_INCLUDE
+#define _DATASTORE_PRIVATE_INCLUDE
 
+#include <a_out.h>
 #include "error.h"
-#include <a_out.h>  // Needed for symbol table
-
-
 
 ////////////////////////////////////////////////////////////////
 // BindItem
 ////////////////////////////////////////////////////////////////
 
-//template <class T> void DataStore::BindItem(T** dataPtr, BIND_ITEM_TYPE item, bool &created)
 template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item, bool &created)
 {
+	enum { SYM_NAME_SIZE = 200 };
    string nameKey(SYM_NAME_SIZE, ' ');
 
    SYM_TYPE symbolType;
@@ -124,6 +125,27 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
 // BaseElement
 ////////////////////////////////////////////////////////////////
 
+template <class dataType> inline void BaseElement<dataType>::Access(AccessOp op)
+{
+	if ( op == LockAccess )
+	{
+		_ds->Lock();
+	}
+	else
+	{
+		_ds->Unlock();
+	}
+}
+
+template<> inline void BaseElement<bool>::Access(AccessOp op) { }
+template<> inline void BaseElement<char>::Access(AccessOp op) { }
+template<> inline void BaseElement<unsigned char>::Access(AccessOp op) { }
+template<> inline void BaseElement<short>::Access(AccessOp op) { }
+template<> inline void BaseElement<unsigned short>::Access(AccessOp op) { }
+template<> inline void BaseElement<int>::Access(AccessOp op) { }
+template<> inline void BaseElement<unsigned int>::Access(AccessOp op) { }
+template<> inline void BaseElement<long>::Access(AccessOp op) { }
+template<> inline void BaseElement<unsigned long>::Access(AccessOp op) { }
 
 //
 // Default Constructor (no default value)
@@ -215,53 +237,18 @@ template <class dataType> void BaseElement<dataType>::Get(dataType *item) const
    // If calling instance is spoofer or no spoof has been registered, return real value
    if( *_handle->_fp == NULL || _ds->GetRole() == ROLE_SPOOFER )
    {
-       _ds->Lock();
+       AccessOp(LockAccess);
        *item = *_handle->_data;
-       _ds->Unlock();
+       AccessOp(UnlockAccess);
    }
    else // spoofer callback returns spoofed value
    {
-       _ds->Lock();
+       AccessOp(LockAccess);
        pair< dataType*, const dataType* > toFrom( item, _handle->_data );
        (*(*_handle->_fp))( &toFrom );  // runs spoofer callback
-       _ds->Unlock();
+       AccessOp(UnlockAccess);
    }
 }
-
-
-
-#define NOLOCK_FASTGET(T)                                                                  \
-template<> inline void BaseElement<T>::Get(T *item) const                                  \
-{                                                                                          \
-   if (_ds == 0)                                                                           \
-   {                                                                                       \
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");        \
-   }                                                                                       \
-                                                                                           \
-   /* If calling instance is spoofer or no spoof has been registered, return real value */ \
-   if ( *_handle->_fp == NULL || _ds->GetRole() == ROLE_SPOOFER )                          \
-   {                                                                                       \
-      *item = *_handle->_data;                                                             \
-   }                                                                                       \
-   else /* spoofer callback returns spoofed value */                                       \
-   {                                                                                       \
-      pair< T*, const T* > toFrom( item, _handle->_data );                                 \
-      (*(*_handle->_fp))( &toFrom );  /* runs spoofer callback */                          \
-   }                                                                                       \
-}
-
-
-
-//
-// Get Specializations.
-// The following types are "safe" and do not require locking as a read operation is atomic.
-//
-NOLOCK_FASTGET(int);
-NOLOCK_FASTGET(char);
-NOLOCK_FASTGET(bool);
-NOLOCK_FASTGET(float);
-NOLOCK_FASTGET(double);
-
 
 
 //
@@ -278,62 +265,24 @@ template <class dataType> dataType BaseElement<dataType>::Get() const
    // If calling instance is spoofer or no spoof has been registered, return real value
    if ( *_handle->_fp == NULL || _ds->GetRole() == ROLE_SPOOFER ) 
    {
-      _ds->Lock();
+      AccessOp(LockAccess);
       dataType temp = *_handle->_data;
-      _ds->Unlock();
+      AccessOp(UnlockAccess);
       return temp;
    }
    else // spoofer callback returns spoofed value
    {
       dataType temp;
       pair< dataType*, const dataType* > toFrom( &temp, _handle->_data );
-      _ds->Lock();
+
+      AccessOp(LockAccess);
  
       (*(*_handle->_fp))( &toFrom );  // runs spoofer callback
  
-      _ds->Unlock();
+      AccessOp(UnlockAccess);
       return temp;
    }
 }
-
-
-
-#define NOLOCK_GET(T)                                                                      \
-template<> inline T BaseElement<T>::Get() const                                            \
-{                                                                                          \
-   if (_ds == 0)                                                                           \
-   {                                                                                       \
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");        \
-   }                                                                                       \
-                                                                                           \
-   /* If calling instance is spoofer or no spoof has been registered, return real value */ \
-   if ( *_handle->_fp == NULL || _ds->GetRole() == ROLE_SPOOFER )                          \
-   {                                                                                       \
-      T temp = *_handle->_data;                                                            \
-      return temp;                                                                         \
-   }                                                                                       \
-   else /* spoofer callback returns spoofed value */                                       \
-   {                                                                                       \
-      T temp;                                                                              \
-      pair< T*, const T* > toFrom( &temp, _handle->_data );                                \
-      (*(*_handle->_fp))( &toFrom );  /* runs spoofer callback */                          \
-      return temp;                                                                         \
-   }                                                                                       \
-}
-
-
-
-//
-// Get Specializations.
-// The following types are "safe" and do not require locking as a read operation is atomic.
-//
-NOLOCK_GET(int);
-NOLOCK_GET(char);
-NOLOCK_GET(bool);
-NOLOCK_GET(float);
-NOLOCK_GET(double);
-
-
 
 //
 // Set method
@@ -347,60 +296,21 @@ template <class dataType> bool BaseElement<dataType>::Set(const dataType &data)
 
    if (_ds->GetRole() != ROLE_RO)
    {
-      _ds->Lock();
+      AccessOp(LockAccess);
       _handle->_spooferCacheIsValid = false;
       *_handle->_data = data;
-      _ds->Unlock();
-
-      return true;
+      AccessOp(UnlockAccess);
    }
    else
    {
       // Log Fatal Error
       DataLog(_ds->_fatal) << "BaseElement: Set Failed in CDS " << _ds->Name() << ".  Role is RO." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
-      return false;
    }
+
+   return true;
 }
 
-
-
-#define NOLOCK_SET(T)                                                                \
-template<> inline bool BaseElement<T>::Set(const T &data)                            \
-{                                                                                    \
-   if (_ds == 0)                                                                     \
-   {                                                                                 \
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");  \
-   }                                                                                 \
-                                                                                     \
-   if (_ds->GetRole() != ROLE_RO)                                                    \
-   {                                                                                 \
-      _handle->_spooferCacheIsValid = false;                                         \
-      *_handle->_data = data;                                                        \
-                                                                                     \
-      return true;                                                                   \
-   }                                                                                 \
-   else                                                                              \
-   {                                                                                 \
-      /* Log Fatal Error */                                                          \
-      DataLog(_ds->_fatal) << "BaseElement: Set Failed in " << _ds->Name()           \
-                              << ".  Role is RO." << endmsg;                         \
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");                               \
-      return false;                                                                  \
-   }                                                                                 \
-}
-
-
-
-//
-// Set Specializations.
-// The following types are "safe" and do not require locking as a read operation is atomic.
-//
-NOLOCK_SET(int);
-NOLOCK_SET(char);
-NOLOCK_SET(bool);
-NOLOCK_SET(float);
-NOLOCK_SET(double);
 
 
 
@@ -491,8 +401,7 @@ template <class dataType> void BaseElement<dataType>::CreateSymbolTableEntry()
 //
 // Default Constructor
 //
-template <class dataType> RangedElement<dataType>::RangedElement() :
-   BaseElement()
+template <class dataType> RangedElement<dataType>::RangedElement()
 {
 }
 
@@ -515,7 +424,7 @@ template <class dataType> void RangedElement<dataType>::Register (DataStore *ds,
    _min = min;
    _max = max;
 
-   BaseElement::Register(ds, pfr);
+   BaseElement<dataType>::Register(ds, pfr);
 }
 
 
@@ -528,7 +437,7 @@ template <class dataType> void RangedElement<dataType>::Register (DataStore *ds,
    _min = min;
    _max = max;
 
-   BaseElement::Register(ds, pfr, initValue);
+   BaseElement<dataType>::Register(ds, pfr, initValue);
 }
 
 
@@ -541,7 +450,7 @@ template <class dataType> bool RangedElement<dataType>::Set(const dataType &data
    if ( (data >= _min) && 
         (data <= _max) )
    {
-      return BaseElement::Set(data);
+      return BaseElement<dataType>::Set(data);
    }
    else
    {
@@ -553,16 +462,5 @@ template <class dataType> bool RangedElement<dataType>::Set(const dataType &data
    }
 }
 
-
-
-//
-// DataStore
-//
-const unsigned int SYM_NAME_SIZE = 200;
-
-const char DATASTORE_SYMBOL_CONTAINER[]    = "_DataStore_%s_container";
-const char BASE_ELEMENT_SYMBOL_CONTAINER[] = "_Base_Element_%s_ref_%d";
-
-const int DATASTORE_SYMTBL_SIZE = 6;   // Create Max 64 datastore derived classes
-
+#endif /* ifndef _DATASTORE_PRIVATE_INCLUDE */
 

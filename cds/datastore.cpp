@@ -11,6 +11,10 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.20  2002/11/06 15:43:56  rm70006
+ * HISTORY:    Remove unnecessary new's.
+ * HISTORY:    remove inline functions to fix compiler bug.
+ * HISTORY:    fix bug in register call.
  * HISTORY:    Revision 1.19  2002/10/31 19:22:31Z  rm70006
  * HISTORY:    Changed internal structure to use less symbols which improved speed of datastore creation.
  * HISTORY:    Revision 1.18  2002/10/25 20:46:36Z  td07711
@@ -58,12 +62,15 @@
  * HISTORY:    Initial revision
 *******************************************************************************/
 
+#include <vxWorks.h>
+#include <stdio.h>
+#include <wvLib.h>      // Needed for Event Timing
+
 #include "datastore.h"
+#include "error.h"
 #include "common_datalog.h"
 
 
-#include <stdio.h>
-#include "wvLib.h"      // Needed for Event Timing
 
 
 #define DS_LOCK_RO_EVENT   10
@@ -75,6 +82,11 @@
 
 // Set to turn on event logging for timing info.
 #define EVENT_TRACE 1
+
+const char DATASTORE_SYMBOL_CONTAINER[]    = "_DataStore_%s_container";
+const char BASE_ELEMENT_SYMBOL_CONTAINER[] = "_Base_Element_%s_ref_%d";
+enum { DATASTORE_SYMTBL_SIZE = 6 };   // Create Max 64 datastore derived classes
+
 
 ////////////////////////////////////////////////////////////////
 // ElementType

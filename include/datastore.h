@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.20  2002/11/07 00:11:35Z  td07711
+ * HISTORY:    modified spoofer caching - added setSpooferCacheValid() and isSpooferCacheValid()
  * HISTORY:    Revision 1.19  2002/11/06 15:42:47  rm70006
  * HISTORY:    Removed unnecessary new's.
  * HISTORY:    Removed some inline functions to relieve compiler problems.
@@ -61,8 +63,9 @@
  * HISTORY:    Initial revision
 *******************************************************************************/
 
-#ifndef __DP_ELEMENT
-#define __DP_ELEMENT
+#ifndef _DATASTORE_INCLUDE
+#define _DATASTORE_INCLUDE
+
 
 #include <fstream.h>
 #include <string>
@@ -123,11 +126,11 @@ public:
    virtual dataType Get() const;
    virtual void     Get(dataType *item) const;  // Faster version.  Better for large data items.
 
-   operator dataType () const { return Get(); } // Implicit get call.
+   inline operator dataType () const { return Get(); } // Implicit get call.
 
    virtual bool Set(const dataType &data);
 
-   dataType operator = (const dataType &data) { Set(data); return Get();}  // Implicit Set call.
+   inline dataType operator = (const dataType &data) { Set(data); return Get();}  // Implicit Set call.
 
    void SetSpoof   (const CallbackBase* fp);
    void ClearSpoof ();
@@ -136,15 +139,18 @@ public:
    virtual void Register (DataStore *ds, PfrType pfr, const dataType &initValue);
 
    // these two functions for use by spoofer to avoid unnecessary data copies
-   void setSpooferCacheValid() { _handle->_spooferCacheIsValid = true; };
-   bool isSpooferCacheValid() { return _handle->_spooferCacheIsValid; };
+   inline void setSpooferCacheValid() { _handle->_spooferCacheIsValid = true; };
+   inline bool isSpooferCacheValid() { return _handle->_spooferCacheIsValid; };
 
 // Class Methods
 protected:
-   const dataType & GetRef() const { return *_handle->_data; };
+   inline const dataType & GetRef() const { return *_handle->_data; };
 
    virtual void ReadSelf  (ifstream &pfrfile);
    virtual void WriteSelf (ofstream &pfrfile);
+
+	enum AccessOp { LockAccess, UnloadAccess };
+	void Access(AccessOp op);
 
 // Class Methods
 private:
@@ -162,7 +168,7 @@ private:
       const CallbackBase  **_fp;                   // Points to the callback function
       bool                  _spooferCacheIsValid;  // if true, spoofer get() is bypassed to avoid unecessary copy 
 
-      BaseElementSymbolContainer() : _data(0), _fp(0), _spooferCacheIsValid(false) {}
+      inline BaseElementSymbolContainer() : _data(0), _fp(0), _spooferCacheIsValid(false) {}
    };
 
    BaseElementSymbolContainer *_handle;
@@ -187,7 +193,7 @@ public:
    virtual void Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max);
    virtual void Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max, const dataType &initValue);
 
-   dataType operator = (const dataType &data) { Set(data); return Get();}  // Implicit Set call.
+   inline dataType operator = (const dataType &data) { Set(data); return Get();}  // Implicit Set call.
 
 // Data Members
 private:
@@ -201,7 +207,6 @@ private:
 // Base CDS Container Class.  All CDS Containers are derived from this class.
 //
 #include <list>
-
 #include <symLib.h>
 
 #include "datalog.h"
@@ -346,7 +351,7 @@ protected:
    MultWriteDataStore (const char *name, Role role);
    virtual ~MultWriteDataStore();
 
-   virtual void CheckForMultipleWriters() { };
+   inline virtual void CheckForMultipleWriters() { }
 
 private:
    MultWriteDataStore();    // Base Constructor not available
@@ -376,8 +381,7 @@ private:
    DynamicSingleWriteDataStore();    // Base Constructor not available
 };
 
-
 #include "datastore_private.h"
 
+#endif /* ifndef _DATASTORE_INCLUDE */
 
-#endif

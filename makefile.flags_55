@@ -1,8 +1,10 @@
-# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.flags_55 1.7 2004/12/02 22:02:58Z jl11312 Exp jl11312 $
+# @(#) $Header: Z:/BCT_Development/vxWorks/Common/rcs/makefile.flags_55 1.9 2005/05/26 18:48:30Z jheiusb Exp agauusb $
 #
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags_55 $
+# Revision 1.7  2004/12/02 22:02:58Z  jl11312
+# - changed optimization flags (IT 15)
 # Revision 1.6  2004/11/22 15:22:36Z  jl11312
 # - put split-by-reloc option in correct flag (IT 12)
 # Revision 1.5  2004/11/17 16:41:56Z  jl11312
@@ -244,7 +246,7 @@ ifndef OPTFLAGS
 ifeq ($(CPU),SIMNT)
 OPTFLAGS := -O0
 else
-OPTFLAGS := -Os -Wuninitialized
+OPTFLAGS := -O2 -Wuninitialized
 endif
 endif
 

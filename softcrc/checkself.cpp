@@ -4,8 +4,10 @@
  * FILENAME: checkself.c
  * PURPOSE: checkself() is used to verify crc of self
  * CHANGELOG:
- * $Header: //bctquad3/HOME/BCT_Development/vxWorks/Common/softcrc/rcs/checkself.cpp 1.3 2002/12/20 14:30:39 ms10234 Exp pn02526 $
+ * $Header: I:/BCT_Development/vxWorks/Common/softcrc/rcs/checkself.cpp 1.10 2003/06/17 18:57:13Z td07711 Exp td07711 $
  * $Log: checkself.cpp $
+ * Revision 1.3  2002/12/20 14:30:39  ms10234
+ * Changed function definition to take const char *'s
  * Revision 1.2  2002/08/14 15:40:05Z  pn02526
  * TEMPORARILY disabled for vxWorks.
  * Revision 1.1  1999/05/24 17:32:05  TD10216
@@ -26,7 +28,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef VXWORKS
+#ifndef ENABLE_CRC_CHECKING
  // Temporarily disabled in vxWorks
  int checkself(int argc, const char** argv, const char* start, const char* filename)
  {
@@ -125,4 +127,4 @@
     _LOG_ERROR(__FILE__, __LINE__, TRACE_CODE, 0, buf);
     return 0;
  }
-#endif
+#endif /*ENABLE_CRC_CHECKING*/

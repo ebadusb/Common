@@ -3,6 +3,10 @@
  *
  * $Header: Y:/BCT_Development/Common/INCLUDE/rcs/DISPATCH.HPP 1.7 2000/05/31 17:14:59 BD10648 Exp ms10234 $
  * $Log: dispatch.hpp $
+ * Revision 1.4  1999/09/30 04:02:12  BS04481
+ * Port fix from Spectra.  Avoids SIGSEV which can occur if a 
+ * message object is deleted from inside of a notify for another
+ * message.
  * Revision 1.3  1999/09/17 04:21:59  BS04481
  * Changes in support of greater determinism in the drivers.  
  * Revision 1.2  1999/05/31 20:34:54  BS04481
@@ -82,7 +86,7 @@ class focusTimerMsg;
 
 static const short ARG_COUNT=4;              // command line args
 #define COUNT_OF(x) (sizeof(x)/sizeof(*x))   // array size
-static const int   DEFAULT_Q_SIZE=30;        // default Q size
+static const int   DEFAULT_Q_SIZE=22;        // default Q size
 static const short PROG_NAME=0;              // command arg for prog name
 static const int   MAX_ARG_LENGTH=68;        // 80  - 12
 static const int   MAX_QUEUE_NAME_LENGTH=80; // buffer length

@@ -458,16 +458,20 @@ void Router::connectWithGateway( const MessagePacket &mp )
       {
          //
          // If not connected, add message to the queue to try again ...
-         if ( status == ETIMEDOUT )
-         {
-            sendMessage( mp, _RouterQueue, taskIdSelf(), 0 );
-         }
-         else
+         if ( status != ETIMEDOUT )
          {
             DataLog_Critical criticalLog;
             DataLog(criticalLog) << "Connect with gateway=" << hex << mp.msgData().nodeId() 
                                  << " failed with error-" << strerror( status ) << endmsg;
+            //
+            // Nanosleep the same amount of time it would have been blocked
+            //  had it timed out instead of erroring.  This allows the system
+            //  some free processing time while giving the network time to
+            //  correct the problem before retrying.
+            struct timespec ts = { 0, MessageSystemConstant::CONNECT_DELAY * 1000000 /* milliseconds to nanoseconds */ };
+            nanosleep( &ts, 0 );
          }
+         sendMessage( mp, _RouterQueue, taskIdSelf(), 0 );
 
          //
          // ... give back my socket memory.

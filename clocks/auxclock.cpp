@@ -3,6 +3,8 @@
  *
  * $Header: //Bctquad3/home/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.6 2002/07/18 13:18:37 pn02526 Exp pn02526 $
  * $Log: auxclock.cpp $
+ * Revision 1.5  2002/07/02 10:06:04  ms10234
+ * Removed a check to see in the interrupt was enabled inside the function which enabled the interrupt.
  * Revision 1.4  2002/06/19 22:53:29  pn02526
  * Change rawTickString to use sprintf to format the string, rather than its own conversion code.
  * Revision 1.3  2002/06/19 10:01:14  pn02526
@@ -25,11 +27,11 @@
  *  int auxClockEnable();                             Enable the auxClockTicks counter.
  *  rawTick auxClockTicksGet();                       Get the current value of the auxClockTicks counter.
  *  char *auxClockTicksString();                      Get the current value of the auxClockTicks counter as a decimal string.
- *  int auxClockMsgPktEnable(                         Enable the auxClock Message Packet queue to send auxClockTicks every given number of ticks.
- *        unsigned int number_of_ticks,
+ *  int auxClockMsgPktEnable(                         Enable the auxClock Message Packet queue to send auxClockMuSec every given number of microseconds.
+ *        unsigned int number_of_microseconds,
  *        const char * Name_of_Message_Packet_queue,
  *        int *        Flag_for_detecting_overruns );
- *  int auxClockMsgPktReceive( mqd_t, rawTick *  );   Post a receive for the auxClock Message Packet queue.
+ *  int auxClockMsgPktReceive( mqd_t, long long *  ); Post a receive for the auxClock Message Packet queue.
  *  unsigned long int auxClockNotificationOverruns(); Return the notification overrun count.
  *  unsigned long int auxClockNotifications();        Return the notification count.
  *  unsigned long int auxClockNotificationFailedAt(); Return the notification count when the first failure occurred.
@@ -46,19 +48,28 @@
 #include <ctype.h>
 #include <limits.h>
 #include <iv.h>
-#include <intLib.h>
 #include <extraAuxClock.h>
 
 #include "auxclock.h"
 
 #include "messagepacket.h"
 
+/* Free-running counters */
 static rawTick auxClockTicks;
+static long long int auxClockMuSec; /* microseconds */
+
+/* Notification microsecond accumulator  */
+static long long int auxClockNotifyMuSec;
+
+/* Microsecond counter/accumulator increment */
+static long long int auxClockMuSecPerTick;
+
+/* Notification period in microseconds */
+static long long int auxClockNotifyMuSecPerPeriod;
+
 static int *auxClockNotifyPointer;
 static char auxClockTicksStr[21];
 
-static unsigned int auxClockNotifyDivisor;
-static unsigned int auxClockNotifyCountDown;
 static unsigned int auxClockNotifyExpected;
 static mqd_t auxClockMsgPktQDes;
 static MessagePacket auxClockMsgPacket;
@@ -68,7 +79,7 @@ static unsigned long int auxClockNotifyFailedAt;
 static int auxClockNotifyErrno;
 
 /*                                                            */
-/* Interrupt Service Routine for the vanilla auxClockTicks counter. */
+/* Interrupt Service Routine for the vanilla (non-notification) auxClockTicks counter. */
 /*                                                            */
 static void auxClockISR( int arg )
 {
@@ -78,41 +89,40 @@ static void auxClockISR( int arg )
 }
 
 /*                                                            */
-/* Interrupt Service Routine for the Message Packet auxClockTicks counter. */
+/* Interrupt Service Routine for the Message Packet (notification) auxClockTicks counter. */
 /*                                                            */
 static void auxClockMsgPktISR( int arg )
 {
     auxClockTicks++;            /* Bump the tick counter. */
 
-    if( auxClockNotifyCountDown )  /* A non-zero Count Down Counter indicates that notification is enabled. */
+    auxClockNotifyMuSec += auxClockMuSecPerTick; /* Increment the notification microsecond accumulator */
+    auxClockMuSec += auxClockMuSecPerTick;       /* Increment the free-running microsecond counter */
+    if( auxClockNotifyMuSec >= auxClockNotifyMuSecPerPeriod )  /* Is the count completed? */
     {
-       if( (--auxClockNotifyCountDown) == 0 )         /* Is the count down completed? */
-       {
-           auxClockNotifyCountDown = auxClockNotifyDivisor;  /* Reset the count down divisor for the next period. */
-           if( auxClockMsgPktQDes )                        /* Make sure we have a non-NULL Message Queue Descriptor. */
-           {
-               /* Fill in the static MessagePacket buffer before sending. */
-               auxClockMsgPacket.msgData().msg( (const unsigned char *) &auxClockTicks, (int) sizeof( auxClockTicks ) );
-               auxClockMsgPacket.updateCRC();
-               if( ! *auxClockNotifyPointer )     /* Is a task expecting the notification? */
-               {                                     /* There is not a task expecting the notification. */
-                   auxClockNotifyOverruns++;         /* So, bump the overrun counter. */
-               }
-               /* Post the message on the given Message Packet queue. */
-               auxClockNotifyCount++;            /* Bump the notification counter. */
-               if( mq_send (
-                         auxClockMsgPktQDes,                    /* message queue descriptor */
-                         (const void *) &auxClockMsgPacket,    /* message to send */
-                         (size_t) sizeof( auxClockMsgPacket ), /* size of message, in bytes */
-                         MQ_PRIORITY_MAX                       /* priority of message */
-                       ) == ERROR  && auxClockNotifyFailedAt == 0 )
-               {
-                   auxClockNotifyErrno = errno;
-                   auxClockNotifyFailedAt = auxClockNotifyCount;
-               }
-               *auxClockNotifyPointer = FALSE;   /* Clear the notification-expected flag. */  
-           }
-       }
+        auxClockNotifyMuSec -= auxClockNotifyMuSecPerPeriod; /* Decrement the notification accumulator, probably leaving a remainder */
+        if( auxClockMsgPktQDes )                        /* Make sure we have a non-NULL Message Queue Descriptor. */
+        {
+            /* Fill in the static MessagePacket buffer before sending. */
+            auxClockMsgPacket.msgData().msg( (const unsigned char *) &auxClockMuSec, (int) sizeof( auxClockMuSec ) );
+            auxClockMsgPacket.updateCRC();
+            if( ! *auxClockNotifyPointer )     /* Is a task expecting the notification? */
+            {                                     /* There is not a task expecting the notification. */
+                auxClockNotifyOverruns++;         /* So, bump the overrun counter. */
+            }
+            /* Post the message on the given Message Packet queue for task notification. */
+            auxClockNotifyCount++;            /* Bump the notification counter. */
+            if( mq_send (
+                      auxClockMsgPktQDes,                    /* message queue descriptor */
+                      (const void *) &auxClockMsgPacket,    /* message to send */
+                      (size_t) sizeof( auxClockMsgPacket ), /* size of message, in bytes */
+                      MQ_PRIORITY_MAX                       /* priority of message */
+                    ) == ERROR  && auxClockNotifyFailedAt == 0 )
+            {
+                auxClockNotifyErrno = errno;
+                auxClockNotifyFailedAt = auxClockNotifyCount;
+            }
+            *auxClockNotifyPointer = FALSE;   /* Clear the notification-expected flag. */  
+        }
     }
     return;
 }
@@ -126,8 +136,8 @@ int auxClockRateGet()
 /* Initialize the auxClockTicks facility. Call at system initialization time. */
 void auxClockInit()
 {
-    auxClockNotifyDivisor = 0;
-    auxClockNotifyCountDown = 0;
+    auxClockNotifyMuSecPerPeriod = 0ll;
+    auxClockNotifyMuSec = 0ll;
     auxClockNotifyCount = 0;
     auxClockNotifyExpected = FALSE;
     auxClockNotifyPointer = (int *) &auxClockNotifyExpected;
@@ -186,19 +196,11 @@ char *auxClockTicksString()
     return( rawTickString( auxClockTicksStr, auxClockTicksGet() ) );
 }
 
-/* Enable the auxClock Message Packet queue to send auxClockTicks every given number of ticks. */
-int auxClockMsgPktEnable( unsigned int periodicity /* number of ticks */,
-                          const char * MsgPktQName  /* Name of Message Packet queue to which to send auxClockTicks in a Message Packet */,
+/* Enable the auxClock Message Packet queue to send auxClockMuSec every given number of microseconds. */
+int auxClockMsgPktEnable( unsigned int periodicity /* number of microseconds */,
+                          const char * MsgPktQName  /* Name of Message Packet queue to which to send auxClockMuSec in a Message Packet */,
                           int *MsgPktOverrunFlag /* Flag for detecting overruns by the calling task */ )
 {
-    int lockKey;
-
-    // if( auxClockTicks == (rawTick)0 )  /* At least 1 tick will have accumulated if auxClock is enabled */
-    // {
-        // /* Can't enable a Message Packet queue without an ISR enabled! */
-        // return( FALSE );
-    // }
-
     if (periodicity < 1)
     {
         /* Can't enable a Message Packet queue with a <= 0 period! */
@@ -211,56 +213,52 @@ int auxClockMsgPktEnable( unsigned int periodicity /* number of ticks */,
         return( FALSE );
     }
 
-    /* Open the Message Packet Queue if necessary */
-    if( auxClockNotifyDivisor == 0 ) 
+    /* Is a notification already enabled? */
+    if( auxClockNotifyMuSecPerPeriod > 0ll ) 
     {
-        auxClockMsgPktQDes = mq_open(
-                                    MsgPktQName, /* name of queue to open */
-                                    O_WRONLY  /* open flags */
-                                   );
+        /* Can't enable a Message Packet queue if notification is already enabled! */
+        return( FALSE );
     }
+
+    /* Open the Message Packet Queue */
+    auxClockMsgPktQDes = mq_open(
+                                 MsgPktQName, /* name of queue to open */
+                                 O_WRONLY  /* open flags */
+                                );
     if( auxClockMsgPktQDes == (mqd_t)ERROR )
     {
         /* Can't enable a Message Packet queue if the queue can't be opened! */
         return FALSE;
     }
 
+    auxClockMsgPacket.msgData().osCode( MessageData::TIME_UPDATE );
+    *MsgPktOverrunFlag = FALSE;
+    auxClockNotifyPointer = MsgPktOverrunFlag; 
 
-    lockKey = intLock();
+    /* Clear the free-running microsecond counter */
+    auxClockMuSec = 0ll;
 
-    /* Is a notification already enabled? */
-    if( auxClockNotifyDivisor == 0 ) 
-    {
-        /* No, set it up */
-        auxClockMsgPacket.msgData().osCode( MessageData::TIME_UPDATE );
-        auxClockNotifyCountDown = 0;
-        auxClockNotifyDivisor = periodicity;
-        *MsgPktOverrunFlag = FALSE;
-        auxClockNotifyPointer = MsgPktOverrunFlag; 
-    }
-    else
-    {
-        intUnlock( lockKey );
-        /* Can't enable a Message Packet queue if notification is already enabled! */
-        return( FALSE );
-    }
+    /* Clear the microsecond accumulator */
+    auxClockNotifyMuSec = 0ll;
 
-    intUnlock( lockKey );
+    /* Set up the ISR's microsecond increment value */
+    auxClockMuSecPerTick = 1000000ll / ( (long long)auxClockRateGet() );
 
+    /* Give the ISR the average microsecond periodicity of notification */
+    auxClockNotifyMuSecPerPeriod = (long long)periodicity;
+
+    /* This tells the ISR to start mq_send-ing the auxClockMuSec value. */
     if( extraAuxClockConnect( (FUNCPTR) &auxClockMsgPktISR, (int)0x3BADDEED ) == ERROR )
     {
         /* Enabling the extraAuxClock failed! */
         return( FALSE );
     }
 
-    /* This tells the ISR to start mq_send-ing the auxClockTicks value. */
-    auxClockNotifyCountDown = auxClockNotifyDivisor;
-
     return( TRUE );
 }
 
 /* Post a receive for the auxClock Message Packet queue. */
-int auxClockMsgPktReceive( mqd_t MsgPktQDes, rawTick *ticks /* Pointer to buffer to put current value of the auxClock tick counter */ )
+int auxClockMsgPktReceive( mqd_t MsgPktQDes, long long *pMuSec /* Pointer to buffer to put current value of the free-running auxClocki microsecond counter  */ )
 {
     MessagePacket msgPacket;
     int msgPrio;
@@ -288,9 +286,9 @@ int auxClockMsgPktReceive( mqd_t MsgPktQDes, rawTick *ticks /* Pointer to buffer
             }
         } while ( msgPacket.msgData().osCode() != MessageData::TIME_UPDATE );
     }
-    memmove( (char *) ticks , 
+    memmove( (char *) pMuSec , 
              (char *) msgPacket.msgData().msg(), 
-             sizeof( *ticks ) );
+             sizeof( *pMuSec ) );
     return( TRUE );
 }
 

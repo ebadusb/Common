@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/auxclock.h 1.6 2002/12/16 18:29:31Z jl11312 Exp ms10234 $
  * $Log: auxclock.h $
+ * Revision 1.3  2002/06/19 16:59:28  pn02526
+ * Make usable by either C or C++ programs.  Modify some comments.
  * Revision 1.2  2002/06/19 09:57:01  pn02526
  * Change the typedef for the tick counter to long long; completely qualify other type declarations; correct spelling in comments.
  * Revision 1.1  2002/06/18 09:07:27  pn02526
@@ -65,32 +67,32 @@ char *auxClockTicksString();
 #endif
 
 
-/* Enable the auxClock Message Packet queue to send auxClockTicks every given number of ticks. */
+/* Enable the auxClock Message Packet queue to send auxClockMuSec every given number of microseconds. */
 #ifdef __cplusplus 
-extern "C" int auxClockMsgPktEnable( unsigned int /* number of ticks */,
-                          const char * /* Name of Message Packet queue to which to send auxClockTicks in a Message Packet */,
+extern "C" int auxClockMsgPktEnable( unsigned int /* number of microseconds */,
+                          const char * /* Name of Message Packet queue to which to send auxClockMuSec in a Message Packet */,
                           int *        /* Flag for detecting overruns by the calling task */ );
 #else 
-int auxClockMsgPktEnable( unsigned int /* number of ticks */,
-                          const char * /* Name of Message Packet queue to which to send auxClockTicks in a Message Packet */,
+int auxClockMsgPktEnable( unsigned int /* number of microseconds */,
+                          const char * /* Name of Message Packet queue to which to send auxClockMuSec in a Message Packet */,
                           int *        /* Flag for detecting overruns by the calling task */ );
 #endif
 
 /* Post a receive for the auxClock Message Packet queue. */
 #ifdef __cplusplus 
-extern "C" int auxClockMsgPktReceive( mqd_t, rawTick * /* Pointer to buffer to put current value of the auxClock tick counter */ );
+extern "C" int auxClockMsgPktReceive( mqd_t, long long * /* Pointer to buffer to put current value of the free-running auxClocki microsecond counter  */ );
 #else 
-int auxClockMsgPktReceive( mqd_t, rawTick * /* Pointer to buffer to put current value of the auxClock tick counter */ );
+int auxClockMsgPktReceive( mqd_t, long long * /* Pointer to buffer to put current value of the free-running auxClocki microsecond counter  */ );
 #endif
 
-/* Return the semaphore/MsgQ overrun count. */
+/* Return the MsgQ overrun count. */
 #ifdef __cplusplus 
 extern "C" unsigned long int auxClockNotificationOverruns();
 #else 
 unsigned long int auxClockNotificationOverruns();
 #endif
 
-/* Return the semaphore Give/MsgQ Send count. */
+/* Return the MsgQ Send count. */
 #ifdef __cplusplus 
 extern "C" unsigned long int auxClockNotifications();
 #else 

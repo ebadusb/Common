@@ -3,6 +3,8 @@
  *
  * $Header: Y:/BCT_Development/Common/INCLUDE/rcs/DISPATCH.HPP 1.7 2000/05/31 17:14:59 BD10648 Exp ms10234 $
  * $Log: dispatch.hpp $
+ * Revision 1.5  2000/03/07 00:30:05  BD10648
+ * Default Queue size reduced in conjunction with increased message size.
  * Revision 1.4  1999/09/30 04:02:12  BS04481
  * Port fix from Spectra.  Avoids SIGSEV which can occur if a 
  * message object is deleted from inside of a notify for another
@@ -124,7 +126,13 @@ class routeBuffer
       routeBuffer( void** msg,                     // pointer to msg pointer
                    unsigned short msgLength,       // message length
                    int id)             // message id
-	  { routeBuffer(msg,msgLength,(unsigned short) id); }
+     { routeBuffer(msg,msgLength,(unsigned short) id); }
+     
+     routeBuffer( void** msg,                     // pointer to msg pointer
+                  unsigned short msgLength,       // message length
+                  int id,              // message id
+                  bounce_t bounce);               // handling of message back to originator
+     { routeBuffer(msg,msgLength,(unsigned short) id, bounce_t bounce); }
 #endif
       virtual ~routeBuffer();
 
@@ -149,8 +157,6 @@ class routeBuffer
  * dispatchLoop() loops forever (doesn't return) getting messages from
  * the router and sending them to the proper message class(es).
  */
-
-class timerMsg;                                    // forward ref
 
 class dispatcher
 {
@@ -177,7 +183,7 @@ class dispatcher
                                                    // dispatchLoop to exit
       void trace( unsigned short msgID);           // trace message events
 
-	  // 12/02/96 msm method added for an2 support 
+     // 12/02/96 msm method added for an2 support 
       void send_tcp( void* );                       // tcp/ip send message for AN2 Beta 2.3
  
       char *programName( void);                    // return program name (argv[0])

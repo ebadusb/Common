@@ -3,6 +3,10 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.7 2003/02/20 20:53:24 jl11312 Exp jl11312 $
  * $Log: datalog_output.cpp $
+ * Revision 1.6  2003/02/06 20:41:30  jl11312
+ * - added support for binary record type
+ * - added support for symbolic node names in networked configurations
+ * - enabled compression/encryption of log files
  * Revision 1.5  2002/11/20 16:52:06  rm70006
  * Changed code to match changes made to new inet.h
  * Revision 1.4  2002/09/23 15:35:36Z  jl11312
@@ -95,12 +99,12 @@ int DataLog_OutputTask::main(void)
 		if ( !datalog_WaitSignal("DataLog_Output", 0) )
 		{
 			flushOutput();
+			datalog_WaitSignal("DataLog_Output", -1);
 		}
 
 		//
 		// Wait for data available to be output
 		//
-		datalog_WaitSignal("DataLog_Output", -1);
 		if ( datalog_WaitSignal("DataLog_DataLost", 0) )
 		{
 			writeTimeStampRecord();

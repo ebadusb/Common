@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/router.c 1.11 2001/05/11 19:57:01 jl11312 Exp jl11312 $
  * $Log: router.c $
+ * Revision 1.4  1999/07/30 20:49:55  TD10216
+ * IT4154
  * Revision 1.3  1999/07/14 22:44:21  BS04481
  * Arg!  No memory was allocated for name while searching the 
  * ps_info data.  Found by inspection.
@@ -1124,9 +1126,6 @@ static void taskRegister( char* msg)
    int i;
    struct _trace_info info;
    pid_t id;
-   char nameBuffer[256];
-   char *name=&nameBuffer[0];
-   int found = 0;
 
    if(newEntry == NULL)
    {
@@ -1195,20 +1194,11 @@ static void taskRegister( char* msg)
       id = 1;
       while ( (id = qnx_psinfo(0, id, &psdata, 0, 0)) != -1) 
       {
-         //Find the last forward slash and compare the name to Photon
-         name = strrchr(psdata.un.proc.name,'/');
-         if ( name != NULL )
+         if ( (stricmp(basename(psdata.un.proc.name),"Photon")) == 0 )
          {
-            name++;
-            if ( (stricmp(name,"Photon")) == 0 )
-            {
-               if (id != 0)
-               {
-                  taskKillTable[PHOTON].pid = id;
-                  found = 1;
-               }
-               break;
-            }
+            if (id != 0)
+               taskKillTable[PHOTON].pid = id;
+            break;
          }
          id++;
       }
@@ -1307,6 +1297,7 @@ static void taskDeregister( char* msg)
          p2 = p2->next;
       }
    }
+   free(taskToGo);
 
    // internal check, deregister with empty list
 

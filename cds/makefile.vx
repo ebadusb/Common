@@ -1,8 +1,8 @@
-# @(#) $Header: K:/BCT_Development/vxWorks/Common/cds/rcs/makefile.vx 1.3 2002/07/09 16:23:13 ms10234 Exp jl11312 $
+# @(#) $Header$
 #
 # Makefile - makefile for cds library
 #
-# $Log: makefile.vx $
+# $Log$
 # Revision 1.3  2002/07/09 16:23:13  ms10234
 # changed to create a library instead of a .out file
 #

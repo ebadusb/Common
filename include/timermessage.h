@@ -104,6 +104,11 @@ protected:
    //
    // Flag to signify whether or not the timer is active ...
    TimerState _TimerArmed;
+
+   //
+   // Callback to disable the callback if the timer is disarmed ...
+   CallbackBase _DisarmedCallback;
+
 };
 
 #endif

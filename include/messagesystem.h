@@ -51,7 +51,7 @@ public:
    //
    // Go into the message loop, or try to receive a message in the message
    //  loop is disabled ...
-   unsigned int dispatchMessages();
+   int dispatchMessages();
 
    //
    // Stop the receive messages loop ...

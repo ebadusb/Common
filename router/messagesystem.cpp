@@ -49,7 +49,7 @@ bool MessageSystem::initNonBlock( const char *qname, const unsigned int qsize )
    return init( qname, qsize, false );
 }
 
-unsigned int MessageSystem::dispatchMessages()
+int MessageSystem::dispatchMessages()
 {
    //
    // Give control to the dispatcher ...

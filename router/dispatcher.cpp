@@ -122,7 +122,7 @@ void Dispatcher :: send( const MessagePacket &mp )
 
 }
 
-unsigned int Dispatcher :: dispatchMessages()
+int Dispatcher :: dispatchMessages()
 {
 
    //
@@ -145,7 +145,7 @@ unsigned int Dispatcher :: dispatchMessages()
          else
             //
             // Error ...
-            return;
+            return ERROR;
       }
 
    } while ( _StopLoop == false );
@@ -153,9 +153,9 @@ unsigned int Dispatcher :: dispatchMessages()
    //
    // Check the task's queue to see if it is full or not ...
    mq_attr qattributes;
-   mq_getattr( (*tqiter).second, &qattributes );
+   mq_getattr( _MyQueue, &qattributes );
 
-   return (unsigned int)qattributes.mq_curmsgs;
+   return (int)qattributes.mq_curmsgs;
 }
 
 void Dispatcher :: registerMessage( const MessageBase &mb, MessagePacket &mp )

@@ -12,6 +12,8 @@
  *             usage in a datastore.
  *
  * HISTORY:    $Log: carray.h $
+ * HISTORY:    Revision 1.3  2002/06/21 18:37:41Z  sb07663
+ * HISTORY:    Added single include guardian
  * HISTORY:    Revision 1.2  2002/05/30 14:21:43  rm70006
  * HISTORY:    Added file header
 *******************************************************************************/
@@ -52,7 +54,7 @@ public:
    size_type max_size() const { return thesize; }
 
    // conversion to ordinary array
-   T* as_array() { return v; }
+   const T* as_array() const { return v; }
 };
 #endif
 

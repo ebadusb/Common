@@ -202,11 +202,22 @@ protected:
 #endif // _S_NOLIBGXX
 
 public:
-   sockbuf (int soc = -1);
-   sockbuf (int, type, int proto=0);
-   sockbuf (const sockbuf&);
-   sockbuf&      operator = (const sockbuf&);
-   virtual       ~sockbuf ();
+   // Use this to initialize with an existing socket descriptor
+   sockbuf (int descriptor = -1);
+
+
+   // Copy Constructor.
+   sockbuf (const sockbuf &sb);
+
+   // Use this to create a socket using all options.
+   // for domain, use:
+   //    AF_INET for TCP, UDP
+   sockbuf (int domain, type sock_type, int protocol = 0);
+
+
+   sockbuf & operator = (const sockbuf&);
+   virtual   ~sockbuf ();
+   
    operator int () const
    {
       return rep->sock;

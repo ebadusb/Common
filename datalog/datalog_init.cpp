@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_init.cpp 1.8 2003/04/11 15:26:11Z jl11312 Exp jl11312 $
  * $Log: datalog_init.cpp $
+ * Revision 1.5  2003/02/25 16:10:11  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.4  2003/02/06 20:41:30  jl11312
  * - added support for binary record type
  * - added support for symbolic node names in networked configurations
@@ -20,9 +22,9 @@
 #include "datalog_internal.h"
 
 #ifdef DATALOG_NETWORK_SUPPORT
-DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * nodeName)
+DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * nodeName, const char * platformInfo)
 #else /* ifdef DATALOG_NETWORK_SUPPORT */
-DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName)
+DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * platformInfo)
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 {
 	DataLog_Result	result = DataLog_OK;
@@ -61,9 +63,9 @@ DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKByte
 		taskUnlock();
 
 #ifdef DATALOG_NETWORK_SUPPORT
-		datalog_StartLocalOutputTask(platformName, nodeName);
+		datalog_StartLocalOutputTask(platformName, nodeName, platformInfo);
 #else /* ifdef DATALOG_NETWORK_SUPPORT */
-		datalog_StartLocalOutputTask(platformName, NULL);
+		datalog_StartLocalOutputTask(platformName, NULL, platformInfo);
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 #ifdef DATALOG_NETWORK_SUPPORT

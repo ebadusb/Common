@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.11 2003/10/03 12:35:06Z jl11312 Exp jl11312 $
  * $Log: datalog_output.cpp $
+ * Revision 1.8  2003/02/25 16:10:23  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.6  2003/02/06 20:41:30  jl11312
  * - added support for binary record type
  * - added support for symbolic node names in networked configurations
@@ -188,7 +190,7 @@ void DataLog_OutputTask::writeSystemLevelRecord(void)
 	delete[] buffer;
 }
 
-DataLog_LocalOutputTask::DataLog_LocalOutputTask(const char * platformName, const char * nodeName)
+DataLog_LocalOutputTask::DataLog_LocalOutputTask(const char * platformName, const char * nodeName, const char * platformInfo)
 {
 	DataLog_CommonData common;
 
@@ -205,7 +207,7 @@ DataLog_LocalOutputTask::DataLog_LocalOutputTask(const char * platformName, cons
 	}
 
 	ftruncate(_outputFD, 0);
-	writeLogFileHeader(platformName, nodeName);
+	writeLogFileHeader(platformName, nodeName, platformInfo);
 }
 
 void DataLog_LocalOutputTask::startOutputRecord(void)
@@ -265,12 +267,22 @@ void DataLog_LocalOutputTask::flushOutput(void)
 	}
 }
 
-void DataLog_LocalOutputTask::writeLogFileHeader(const char * platformName, const char * nodeName)
+void DataLog_LocalOutputTask::writeLogFileHeader(const char * platformName, const char * nodeName, const char * platformInfo)
 {
+	DataLog_CommonData common;
 	static const char * plainTextMsg = "CONFIDENTIAL: This file is intended only for the use of Gambro BCT and contains information that "
 												  "is proprietary and confidential. You are hereby notified that any use, dissemination, distribution, "
-												  "or copying of this file is strictly prohibited.";
+												  "or copying of this file is strictly prohibited."
+												  "\nLog file: ";
 	write(_outputFD, (char *)plainTextMsg, strlen(plainTextMsg));
+
+	write(_outputFD, (char *)common.connectName(), strlen(common.connectName()));
+	if ( platformInfo )
+	{
+		write(_outputFD, "\n", 1);
+		write(_outputFD, (char *)platformInfo, strlen(platformInfo));
+	}
+
 	write(_outputFD, "\032\004\000", 3);
 
 	DataLog_UINT32	byteOrderMark = 0x12345678;

@@ -3,6 +3,11 @@
  *
  * $Header: Y:/BCT_Development/Common/INCLUDE/rcs/DISPATCH.HPP 1.7 2000/05/31 17:14:59 BD10648 Exp ms10234 $
  * $Log: dispatch.hpp $
+ * Revision 1.2  1999/05/31 20:34:54  BS04481
+ * Remove unused MSGHEADER structure from messages. 
+ * Decrease maximum message size.  Add new version of 
+ * focusBufferMsg and focusInt32Msg that do not bounce the message
+ * back to the originator.  All changes to increase free memory.
  * Revision 1.1  1999/05/24 23:26:27  TD10216
  * Initial revision
  * Revision 1.7  1999/03/29 17:10:10  TD10216
@@ -97,6 +102,7 @@ static const int   RETRY_COUNT = 3;          // mq retry count
 class routeBuffer
 {
    friend class dispatcher;                        // dispatcher copies data
+   friend class controlDispatcher;
    friend class spooferDispatcher;
    friend class msglog;                            // tracks msg traffic
 

@@ -8,9 +8,10 @@
 #include <vxWorks.h>
 
 #include "error.h"
-#include "timermessage.h"
 #include "messagepacket.h"
 #include "messagesystem.h"
+#include "systemoverrides.h"
+#include "timermessage.h"
 
 TimerMessage :: TimerMessage()
 :  Message< unsigned long >(), 
@@ -94,9 +95,9 @@ void TimerMessage :: deregisterTimer()
 
 const char *TimerMessage::genMsgName() 
 {
-   char buffer[13];
-   sprintf( buffer, "Timer%x", (unsigned int)this );
-   buffer[12] = '\0';
+   char buffer[21];
+   sprintf( buffer, "Timer%lx%lx", (unsigned long)this, getNetworkAddress() );
+   buffer[20] = '\0';
    _MessageName = buffer;
 
    return (const char *)_MessageName.data();

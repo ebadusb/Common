@@ -42,6 +42,7 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
                                 MessageSystemConstant::MAX_MESSAGE_QUEUE_SIZE :     //            ... maximum queue size
                                 ( maxMessages==0 ? 1 : maxMessages ) );             // ... minimun queue size = 1              
    attr.mq_msgsize = sizeof( MessagePacket );     // set message size 
+   attr.mq_flags = 0;
    if ( block == false )
    {
       attr.mq_flags = O_NONBLOCK;                 // set non-block 
@@ -173,12 +174,14 @@ int Dispatcher :: dispatchMessages()
    //
    // mq_receive loop ...
    int size;
+   MessagePacket mp;
+   unsigned int retries;
    do
    {
-      MessagePacket mp;
-      unsigned int retries=0;
+      retries=0;
       while (    ( size = mq_receive( _MyQueue, &mp, sizeof( MessagePacket ), 0 ) ) == ERROR 
-              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
+              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES )
+         nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
       if ( size != ERROR )
       {
          processMessage( mp );

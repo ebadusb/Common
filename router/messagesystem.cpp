@@ -98,6 +98,14 @@ void MessageSystem::createDispatcher()
 
 bool MessageSystem::init( const char *qname, const unsigned int qsize, const bool block )
 {
+   if ( _Dispatcher != 0 )
+   {
+      char buffer[80];
+      sprintf( buffer, "MessageSystem object already initialized.");
+      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+      return false;
+   }
+
    if ( qname == 0 )
    {
       //
@@ -116,10 +124,6 @@ bool MessageSystem::init( const char *qname, const unsigned int qsize, const boo
    }
 
    //
-   // Assign this instance to be the task wide object
-   _TheMessageSystem = this;
-
-   //
    // Set up the task variable
    if ( taskVarAdd( 0, (int *)&_TheMessageSystem ) != OK )
    {
@@ -130,6 +134,10 @@ bool MessageSystem::init( const char *qname, const unsigned int qsize, const boo
       _FATAL_ERROR( __FILE__, __LINE__, buffer);
       return false;
    }
+
+   //
+   // Assign this instance to be the task wide object
+   _TheMessageSystem = this;
 
    //
    // Create the dispatcher ...

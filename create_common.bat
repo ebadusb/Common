@@ -2,9 +2,11 @@
 rem
 rem create_common.bat - Rebuild Common under vxWorks
 rem
-rem $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/create_common.bat 1.2 2002/08/15 21:00:52Z jl11312 Exp ms10234 $
+rem $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/create_common.bat 1.4 2003/01/31 21:45:52Z ms10234 Exp ms10234 $
 rem
 rem $Log: create_common.bat $
+rem Revision 1.2  2002/08/15 21:00:52  jl11312
+rem - added date/time stamp
 rem Revision 1.1  2002/04/30 20:07:22  rm70006
 rem Initial revision
 rem
@@ -25,6 +27,12 @@ echo Start of common build
 date/t
 time/t
 make -f makefile.vx %*
+if ERRORLEVEL 1 goto end_of_script
+         
+make -f makefile.vx %* latest_common_build_dir.mk
+date/t
+time/t
+echo Common build completed successfully
 goto end_of_script
 
 :find_tornado

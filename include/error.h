@@ -1,8 +1,10 @@
 /*
- * Copyright (c) 1996 by Cobe BCT, Inc.  All rights reserved.
+ * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/error.h 1.11 2002/10/29 21:19:03Z jl11312 Exp ms10234 $
  * $Log: error.h $
+ * Revision 1.8  2002/03/20 15:16:21  sb07663
+ * Removed QNX dependencies and assorted macros
  * Revision 1.7  2001/08/30 17:22:53  rm70006
  * IT 5252.
  * Change VIP logging to not use display option.
@@ -45,64 +47,54 @@
  * Revision 1.3  1996/06/27 16:34:02  SS03309
  * Added comments
  *
- * TITLE:      error.h, Focussed System standard error processing.
+ * TITLE:      error.h, common fatal error handling routines
  *
- * ABSTRACT:   Defines two error handling routines:
- *             FATAL_ERROR - logs error and terminates program via SIGHUP.
- *             LOG_ERROR - logs error, allows program to continue
- *
- * DOCUMENTS
- * Requirements:
- * Test:
+ * 				Note that the prototypes for these routines are required in the
+ *					common area, since common code uses these functions.  The
+ *					implementations for these functions are platform-specific and
+ *					are within the platform build area, defined as part of the
+ *					vxWorks operating system image.
  */
 
-#ifndef ERROR_HPP
-#define ERROR_HPP
-
-
+#ifndef _ERROR_INCLUDE
+#define _ERROR_INCLUDE
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-// SPECIFICATION:    FATAL_ERROR
-//                      logs error and terminates program
-//                   Parameters:
-//                   file - file name string, typically __FILE__
-//                   line - file line number, __LINE__
-//                   code - trace code from above
-//                   usercode - user data
-//                   eString - error string
-//                   logged message is prefixed with "FATAL "
-//
-// ERROR HANDLING:   none.
+/*
+ * SPECIFICATION:    _FATAL_ERROR
+ *                      logs error and terminates program
+ *                   Parameters:
+ *                   file - file name string, typically __FILE__
+ *                   line - file line number, __LINE__
+ *                   eString - error string
+ *                   logged message is prefixed with "FATAL "
+ *
+ * ERROR HANDLING:   none.
+ */
 void
-_FATAL_ERROR( char* file, int line, char* eString);
+_FATAL_ERROR(char* file, int line, char* eString);
 
+/*
+ * SPECIFICATION:		CHAIN_FATAL_ERROR_HANDLER
+ *								Specifies a function to be called for the current task
+ *								after _FATAL_ERROR has completed any common fatal error
+ *								handling, and can be used to implement task specific
+ *								error handling requirements.
+ *
+ * ERROR HANDLING:   none.
+ */
+typedef void FatalErrorHandler(void * arg);
 
-// SPECIFICATION:    FATAL_ERROR
-//                      logs error and terminates program
-//                   Parameters:
-//                   file - file name string, typically __FILE__
-//                   line - file line number, __LINE__
-//                   code - trace code from above
-//                   usercode - user data
-//                   eString - error string
-//                   Differs from normal fatal error call in that it does
-//                   not exit through this function.  This is done in order
-//                   to keep the hard watchdogs happy until the router is
-//                   shutdown.
-//                   logged message is prefixed with "FATAL "
-//
-// ERROR HANDLING:   none.
 void
-_FATAL_ERROR_DRV( char* file, int line, char* eString);
+_CHAIN_FATAL_ERROR_HANDLER(FatalErrorHandler * func, void * arg);
 
 #ifdef __cplusplus
 };
 #endif
 
-#endif
+#endif /* ifndef _ERROR_INCLUDE */
 
 

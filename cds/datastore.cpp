@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.24  2003/06/19 18:39:06Z  ms10234
+ * HISTORY:    5829 - changes for PFR
  * HISTORY:    Revision 1.23  2003/04/07 14:21:21Z  rm70006
  * HISTORY:    IT 5818.
  * HISTORY:    
@@ -786,15 +788,18 @@ bool DataStoreSymbolContainer::RestorePfData( )
    // No need to mess with a DataStore object with no PFR elements ...
    //
    if ( _pfDataStoreLength == 0 )
+   {
+      DataLog( log_level_cds_debug ) << "Data length for datastore " << _name << " was 0." << endmsg;
       return true;
+   }
 
    //
-   // If we have already restored the CDS once, then we don't have to do it again,
+   // If we have already restored or reset the CDS, then we don't need to do anything,
    //  so just skip it ...
    //
    if ( _pfDataRestored )
    {
-      DataLog( log_level_cds_error ) << "Data for datastore " << _name << " has already been restored." << endmsg;
+      DataLog( log_level_cds_info ) << "Data for datastore " << _name << " has already been restored." << endmsg;
       return true;
    }
 
@@ -818,7 +823,14 @@ bool DataStoreSymbolContainer::RestorePfData( )
    }
    Unlock( ROLE_RW );
 
-   DataLog(log_level_cds_debug) << "restored " << count << " elements in " << _name << "." << endmsg;
+   DataLog(log_level_cds_info) << "restored " << count << " elements in " << _name << "." << endmsg;
+   return true;
+}
+
+bool DataStoreSymbolContainer::ForgetPfData( )
+{
+   _pfDataRestored = true;
+   _pfDataPtr = 0;
    return true;
 }
 

@@ -20,6 +20,8 @@
 #include <sys/times.h>
 #include <netinet/tcp.h>
 
+#include "datalog.h"
+
 #ifndef _G_config_h
 // non libg++ or g++ compilation
    #define _S_NOLIBGXX
@@ -158,6 +160,8 @@ public:
    };
 
 protected:
+   DataLog_Critical _fatal;
+
    struct sockcnt
    {
       int   sock;
@@ -244,7 +248,7 @@ public:
    virtual int      connect  (sockAddr&);
    virtual int      connectWithTimeout(sockAddr&, timeval*);
 
-   void    listen   (int num=somaxconn);
+   int              listen   (int num=somaxconn);
    virtual sockbuf  accept   ();
    virtual sockbuf  accept   (sockAddr& sa);
 
@@ -258,35 +262,33 @@ public:
    int        sendmsg  (msghdr* msg, int msgf=0);
 #endif
 
-   int        write (const void* buf, int len);
-   int        send  (const void* buf, int len, int msgf=0);
-   int        sendto   (const sockAddr& sa, const void* buf, int len, int msgf=0);
+   int     write (const void* buf, int len);
+   int     send  (const void* buf, int len, int msgf=0);
+   int     sendto   (const sockAddr& sa, const void* buf, int len, int msgf=0);
 
-   int        sendtimeout (int wp=-1);
-   int        recvtimeout (int wp=-1);
-   int        is_readready (int wp_sec, int wp_usec=0) const;
-   int        is_writeready (int wp_sec, int wp_usec=0) const;
-   int        is_exceptionpending (int wp_sec, int wp_usec=0) const;
+   int     sendtimeout (int wp=-1);
+   int     recvtimeout (int wp=-1);
+   int     is_readready (int wp_sec, int wp_usec=0) const;
+   int     is_writeready (int wp_sec, int wp_usec=0) const;
+   int     is_exceptionpending (int wp_sec, int wp_usec=0) const;
 
    void    shutdown (shuthow sh);
 
-   int        getopt(option op, void* buf,int len,
-                     level l=sol_socket) const;
-   void    setopt(option op, void* buf,int len,
-                  level l=sol_socket) const;
+   int     getopt(option op, void* buf,int len, level l=sol_socket) const;
+   void    setopt(option op, const void *buf,int len, level l=sol_socket) const;
 
    type    gettype () const;
-   int        clearerror () const;
-   int        debug   (int opt= -1) const;
-   int        reuseaddr (int opt= -1) const;
-   int        keepalive (int opt= -1) const;
-   int        nodelay (int opt= -1) const;
-   int        dontroute (int opt= -1) const;
-   int        broadcast (int opt= -1) const;
-   int        oobinline (int opt= -1) const;
-   int        linger    (int tim= -1) const;
-   int        sendbufsz (int sz=-1)   const;
-   int        recvbufsz (int sz=-1)   const;
+   int     clearerror () const;
+   int     debug   (int opt= -1) const;
+   int     reuseaddr (int opt= -1) const;
+   int     keepalive (int opt= -1) const;
+   int     nodelay (int opt= -1) const;
+   int     dontroute (int opt= -1) const;
+   int     broadcast (int opt= -1) const;
+   int     oobinline (int opt= -1) const;
+   int     linger    (int tim= -1) const;
+   int     sendbufsz (int sz=-1)   const;
+   int     recvbufsz (int sz=-1)   const;
 
    void    error (const char* errmsg) const;
 };

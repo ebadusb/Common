@@ -26,6 +26,8 @@ protected:
     void		setaddr (const char* hn);
 #endif
 public:
+   enum byte_order {network, host};
+
 
    ~sockinetaddr () { }
 
@@ -77,7 +79,7 @@ public:
 
    // Sets the address in standard IP dot notation (no host names)
    void setaddr(const char *inet_addr);
-   void setaddr(unsigned long addr);
+   void setaddr(unsigned long addr, byte_order order = host);
 };
 
 

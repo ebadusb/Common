@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.9 2005/03/02 01:37:51Z cf10242 Exp psanusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.6  2005/01/03 20:40:55Z  cf10242
+ * add defensive coding to catch gui crashes
  * Revision 1.5  2004/12/09 13:16:03Z  jl11312
  * - needed to move fix to ugl source for now, complete fix would have required accessing private (to UGL) data structures from the application
  * Revision 1.4  2004/12/09 00:19:37Z  cf10242
@@ -528,7 +530,7 @@ void CGUIWindow::drawObjects(UGL_GC_ID gc)
    uglClipRegionSet(gc, clippedDrawRegion);
 
 #if CPU == SIMNT
-   uglRectangle(_display.gc(), 0, 0, 800, 600);
+   uglRectangle(_display.gc(), 0, 0, _display.width(), _display.height());
 #endif  //  if CPU=SIMNT  */
 
    list<CGUIWindowObject *>::iterator objIter;

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.10  2005/01/17 17:58:59Z  cf10242
+ * Clean up some pointer references where the pointer existence is not checked before reference
  * Revision 1.9  2005/01/03 23:49:50Z  cf10242
  * add a setRegion to cguiText to invalidate region even if region size did not change
  * Revision 1.8  2005/01/03 20:40:52Z  cf10242
@@ -520,7 +522,7 @@ bool CGUIText::convertLinePosition(int width, int height, CGUIRegion & region)
    {
       // LEFT alignment: text will start at _requestedRegion.x
       region.x = _requestedRegion.x;
-      available_pixel_width = ( _requestedRegion.width == 0 ) ? 800-region.x : _requestedRegion.width;
+      available_pixel_width = ( _requestedRegion.width == 0 ) ? _display.width()-region.x : _requestedRegion.width;
    }
 
    region.y = 0;

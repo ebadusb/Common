@@ -151,6 +151,10 @@ public:
    void msgData( const MessageData &md ) { _MessageData = md; }
 
    //
+   // Update the send time for the message
+   void updateTime();
+
+   //
    // Generate the crc for the message
    void updateCRC();
 

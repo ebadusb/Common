@@ -1,8 +1,10 @@
-# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.12 2002/09/19 21:42:40Z jl11312 Exp ms10234 $
+# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.13 2002/11/12 23:55:54Z ms10234 Exp ms10234 $
 #
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.12  2002/09/19 21:42:40  jl11312
+# - removed clean target
 # Revision 1.11  2002/09/19 21:16:12  jl11312
 # - removed common.out build
 # Revision 1.10  2002/09/18 23:34:46  td07711
@@ -51,4 +53,5 @@ libs:
 	@cd clocks && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd cds && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd cmdline && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
+	@cd zlib && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 

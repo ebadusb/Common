@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.1  2002/06/24 20:33:48  rm70006
+ * HISTORY:    Initial revision
  * HISTORY:    Revision 1.1  2002/06/24 19:24:25Z  rm70006
  * HISTORY:    Initial revision
  * HISTORY:    Revision 1.3  2002/06/17 18:40:39Z  rm70006
@@ -100,7 +102,7 @@ DataStore::DataStore()
 {
    // Assert an error.
    DataLog(_fatal) << "Datastore Constructor Error: " << endmsg;
-   _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
+   _FATAL_ERROR(__FILE__, __LINE__, "Datastore default Constructor");
 }
 
 
@@ -139,8 +141,8 @@ DataStore::DataStore(char *name, Role role) :
       if (_writerDeclared)
       {
          // This is an error.
-         DataLog(_fatal) << "Error.  Multiple Writers Declared.  Abort!!!!!!" << endmsg;
-         _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
+         DataLog(_fatal) << "Error.  Multiple Writers Declared for CDS " << _name << ".  Abort!!!!!!" << endmsg;
+         _FATAL_ERROR(__FILE__, __LINE__, "Datastore multiple writers");
          return;
       }
       else
@@ -180,8 +182,8 @@ DataStore::DataStore(char *name, Role role) :
       if (*_readCountSemaphore == NULL)
       {
          // Fatal Error
-         DataLog(_fatal) << "_readCountSemaphore could not be created." << endmsg;
-         _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
+         DataLog(_fatal) << "_readCountSemaphore could not be created for CDS " << _name << endmsg;
+         _FATAL_ERROR(__FILE__, __LINE__, "_readCountSemaphore could not be created.");
       }
    }
 
@@ -196,8 +198,8 @@ DataStore::DataStore(char *name, Role role) :
       // Fatal if _writeSemaphore = NULL
       if (*_writeSemaphore == NULL)
       {
-         DataLog(_fatal) << "_writeSemaphoreSemaphore could not be created." << endmsg;
-         _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
+         DataLog(_fatal) << "_writeSemaphoreSemaphore could not be createdfor CDS " << _name << endmsg;
+         _FATAL_ERROR(__FILE__, __LINE__, "_writeSemaphoreSemaphore could not be created.");
       }
    }
 
@@ -250,8 +252,8 @@ void DataStore::SavePfrData (ofstream &pfrFile)
       // Check for existence
       if ((*datastoreIterator)->_pfrList == NULL)
       {
-         DataLog(_fatal) << "_pfrList is NULL.  Datastore is invalid" << endmsg;
-         _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
+         DataLog(_fatal) << "SavePfrData _pfrList is NULL.  Datastore " << (*datastoreIterator)->_name << " is invalid" << endmsg;
+         _FATAL_ERROR(__FILE__, __LINE__, "Datastore SavePfrData _pfrList is NULL");
       }
       else
       {
@@ -280,8 +282,8 @@ void DataStore::RestorePfrData (ifstream &pfrFile)
       // Check for existence
       if ((*datastoreIterator)->_pfrList == NULL)
       {
-         DataLog(_fatal) << "_pfrList is NULL.  Datastore is invalid" << endmsg;
-         _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
+         DataLog(_fatal) << "RestorePfrData _pfrList is NULL.  Datastore " << (*datastoreIterator)->_name << " is invalid" << endmsg;
+         _FATAL_ERROR(__FILE__, __LINE__, "Datastore RestorePfrData _pfrList is NULL");
       }
       else
       {
@@ -305,8 +307,8 @@ void DataStore::AddElement (ElementType *member)
 {
    if (_pfrList == NULL)
    {
-      DataLog(_fatal) << "_pfrList is null" << endmsg;
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
+      DataLog(_fatal) << "AddElement _pfrList is null for CDS " << _name << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "AddElement _pfrList is null");
    }
    else
    {
@@ -323,8 +325,8 @@ void DataStore::DeleteElement (ElementType *member)
 {
    if (_pfrList == NULL)
    {
-      DataLog(_fatal) << "_pfrList is null" << endmsg;
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
+      DataLog(_fatal) << "DeleteElement _pfrList is null for CDS " << _name << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "DeleteElement _pfrList is null");
    }
    else
    {
@@ -341,8 +343,8 @@ void DataStore::Lock()
 {
    if (_signalWrite == NULL)
    {
-      DataLog(_fatal) << "_signalWrite is null.  DataStore writer must have exited." << endmsg;
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");
+      DataLog(_fatal) << "_signalWrite is null for CDS " << _name << ".  DataStore writer must have exited." << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "Datastore Lock _signalWrite is null.");
    }
    else
    {

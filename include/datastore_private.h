@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.26  2003/06/19 18:38:34Z  ms10234
+ * HISTORY:    5829 - Changes for PFR
  * HISTORY:    Revision 1.25  2003/05/19 17:11:10Z  ms10234
  * HISTORY:    5816 - changed Access function to be usable with const objects
  * HISTORY:    Revision 1.24  2003/05/19 16:16:13Z  ms10234
@@ -93,6 +95,27 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
 
    SYM_TYPE symbolType;
    char *valPtr;
+
+   if ( ds == 0 )
+   {
+      // Log Fatal Error
+      DataLog( log_level_critical ) << "BindItem: ds=0" << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "BindItem failed");
+   }
+
+   if ( DataStore::getTable() == 0 )
+   {
+      // Log Fatal Error
+      DataLog( log_level_critical ) << "BindItem: symbol table NULL - ds->name=" << ds->Name() << "." << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "BindItem failed");
+   }
+
+   if ( dataPtr == 0 )
+   {
+      // Log Fatal Error
+      DataLog( log_level_critical ) << "BindItem: dataPtr=0" << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "BindItem failed");
+   }
 
    ds->GetSymbolName (nameKey, item);
 
@@ -178,11 +201,15 @@ template <class dataType> BaseElement<dataType>::~BaseElement()
 
 
 
+static SEM_ID 	baseElementInitSem = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+
 //
 // Register method
 //
 template <class dataType> bool BaseElement<dataType>::Register (DataStore *ds, PfrType pfr)
 {
+   semTake( baseElementInitSem, WAIT_FOREVER );
+
    bool created = ElementType::Register(ds, pfr);
 
    BindItem(ds, &_handle, ITEM_BASE_ELEMENT_SYMBOL_CONTAINER, created);
@@ -198,6 +225,8 @@ template <class dataType> bool BaseElement<dataType>::Register (DataStore *ds, P
          _ds->AddElement( _handle, sizeof( dataType ) );
       }
    }
+
+   semGive( baseElementInitSem );
 
    return created;
 }

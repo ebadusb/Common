@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/sinver.c 1.2 1999/08/13 23:00:55 BS04481 Exp jl11312 $
  * $Log: sinver.c $
+ * Revision 1.1  1999/05/24 23:29:54  TD10216
+ * Initial revision
  * Revision 1.2  1996/07/24 19:50:10  SS03309
  * fix MKS 
  * Revision 1.2  1996/07/22 14:43:50  SS03309
@@ -147,7 +149,7 @@ unsigned char sinVerMessage( pid_t pid, SINVERMSG* msg)
          Reply( pid, &reply.header, sizeof( reply.header));
          kill( getpid(), ((SIGNAL_MESSAGE*)msg)->signal.bits);
       }
-      else
+      else if (msg->header.subtype != _SYSMSG_SUBTYPE_DEATH)
       {
          reply.header.status = ENOSYS;
          Reply( pid, &reply.header, sizeof( reply.header));

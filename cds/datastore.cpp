@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.15  2002/09/24 16:48:39Z  rm70006
+ * HISTORY:    Add extra debugging ability
  * HISTORY:    Revision 1.14  2002/09/19 21:46:07Z  jl11312
  * HISTORY:    - added initialization to avoid compiler warning for BUILD_TYPE=PRODUCTION
  * HISTORY:    Revision 1.13  2002/09/18 22:13:57  rm70006
@@ -116,8 +118,10 @@ bool DataStore::_logging = false;
 //
 DataStore::DataStore()
 {
+   DataLog_Critical _fatal;
+
    // Assert an error.
-   DataLog(*_fatal) << "Datastore default constructor was called." << endmsg;
+   DataLog(_fatal) << "Datastore default constructor was called." << endmsg;
    _FATAL_ERROR(__FILE__, __LINE__, "Datastore default constructor called.");
 }
 

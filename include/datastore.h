@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.12  2002/09/25 16:03:16Z  rm70006
+ * HISTORY:    Added GetRef call for Config DataStore
  * HISTORY:    Revision 1.11  2002/09/24 16:46:09Z  rm70006
  * HISTORY:    Add extra debugging ability.
  * HISTORY:    Revision 1.10  2002/09/19 16:04:10Z  rm70006
@@ -105,7 +107,11 @@ public:
    virtual dataType Get() const;
    virtual void     Get(dataType *item) const;  // Faster version.  Better for large data items.
 
+   operator dataType () const { return Get(); } // Implicit get call.
+
    virtual bool     Set(const dataType &data);
+
+   dataType operator = (const dataType &data) { Set(data); return Get();}  // Implicit Set call.
 
    void SetSpoof   (FP fp);
    void ClearSpoof ();

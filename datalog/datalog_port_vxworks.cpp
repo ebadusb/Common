@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.9 2003/10/16 14:57:40Z jl11312 Exp jl11312 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.12 2003/12/16 21:56:59Z jl11312 Exp rm70006 $
  * $Log: datalog_port_vxworks.cpp $
+ * Revision 1.9  2003/10/16 14:57:40Z  jl11312
+ * - corrected time stamp problem when Trima time/date changes (IT 6516)
  * Revision 1.8  2003/10/03 12:35:13Z  jl11312
  * - improved DataLog_Handle lookup time
  * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
@@ -397,29 +399,11 @@ void datalog_ReleaseAccess(DataLog_Lock lock)
 //
 // Buffer manager
 //
-struct DataLog_BufferList
-{
-	DataLog_BufferPtr _head;
-	DataLog_BufferPtr _tail;
-
-	volatile unsigned long _currentBufferCount;
-	volatile unsigned long _bytesWritten;
-	volatile unsigned long _bytesMissed;
-
-#ifdef DATALOG_BUFFER_STATISTICS
-	volatile unsigned long _minBufferCount;
-	volatile unsigned long _maxBufferCount;
-
-	volatile unsigned long _sumBufferCountSamples;
-	volatile unsigned long _numBufferCountSamples;
-#endif /* ifdef DATALOG_BUFFER_STATISTICS */
-};
-
 static DataLog_SignalInfo *	outputSignal = NULL;
 static DataLog_SignalInfo *   dataLostSignal = NULL;
-static DataLog_BufferList	traceList;
-static DataLog_BufferList	criticalList;
-static DataLog_BufferList	freeList;
+static DataLog_BufferManager::DataLog_BufferList	traceList;
+static DataLog_BufferManager::DataLog_BufferList	criticalList;
+static DataLog_BufferManager::DataLog_BufferList	freeList;
 
 void DataLog_BufferManager::initialize(size_t bufferSizeKBytes)
 {
@@ -474,6 +458,7 @@ DataLog_BufferPtr DataLog_BufferManager::getFreeBuffer(unsigned long reserveBuff
 	{
 		result = freeList._head;
 		freeList._head = freeList._head->_next;
+		if ( !freeList._head ) freeList._tail = NULL;
 		freeList._currentBufferCount -= 1;
 	}
 
@@ -518,9 +503,9 @@ bool DataLog_BufferManager::getNextChain(DataLog_BufferChain & chain)
 	return (chain._head != NULL);
 }
 
-inline DataLog_BufferList * getListPtr(DataLog_BufferManager::BufferList list)
+inline DataLog_BufferManager::DataLog_BufferList * getListPtr(DataLog_BufferManager::BufferList list)
 {
-	DataLog_BufferList * bufferList = NULL;
+	DataLog_BufferManager::DataLog_BufferList * bufferList = NULL;
 
 	switch ( list )
 	{
@@ -681,4 +666,9 @@ unsigned long DataLog_BufferManager::avgBufferCount(DataLog_BufferManager::Buffe
 	return sumBufferCountSamples/numBufferCountSamples;
 }
 #endif /* ifdef DATALOG_BUFFER_STATISTICS */
+
+DataLog_BufferManager::DataLog_BufferList * DataLog_BufferManager::getInternalList(BufferList list)
+{
+	return getListPtr(list);
+}
 

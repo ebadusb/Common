@@ -1,17 +1,16 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_buffer.cpp 1.6 2003/02/25 16:10:07Z jl11312 Exp jl11312 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_buffer.cpp 1.7 2003/11/10 17:46:05Z jl11312 Exp rm70006 $
  * $Log: datalog_buffer.cpp $
+ * Revision 1.6  2003/02/25 16:10:07Z  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  *
  */
 
 #include "datalog.h"
 #include "datalog_internal.h"
 #include "error.h"
-
-extern unsigned long firstBufferAddr;
-extern unsigned long lastBufferAddr;
 
 bool DataLog_BufferManager::createChain(DataLog_BufferChain & chain, unsigned long reserveBuffers)
 {

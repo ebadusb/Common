@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_init.cpp 1.8 2003/04/11 15:26:11Z jl11312 Exp jl11312 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_init.cpp 1.9 2003/11/10 17:46:09Z jl11312 Exp ms10234 $
  * $Log: datalog_init.cpp $
+ * Revision 1.8  2003/04/11 15:26:11Z  jl11312
+ * - added support for pre-initialized critical levels and handles
  * Revision 1.7  2003/03/27 16:26:59Z  jl11312
  * - added support for new datalog levels
  * Revision 1.6  2003/02/25 20:43:02Z  jl11312
@@ -54,6 +56,15 @@ DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKByte
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 {
 	DataLog_Result	result = DataLog_OK;
+
+	assert(1024*bufferSizeKBytes > 10*DataLog_BufferSize);
+	assert(criticalReserveKBytes < bufferSizeKBytes);
+	assert(logPath != NULL);
+	assert(platformName != NULL);
+
+#ifdef DATALOG_NETWORK_SUPPORT
+	assert(nodeName != NULL);
+#endif
 
 	if ( !DataLog_CommonData::startInitialization() )
 	{
@@ -110,6 +121,11 @@ DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKByte
 DataLog_Result datalog_InitNet(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * ipAddress, int port, long connectTimeout, const char * nodeName)
 {
 	DataLog_Result	result = DataLog_OK;
+
+	assert(1024*bufferSizeKBytes > 10*DataLog_BufferSize);
+	assert(criticalReserveKBytes < bufferSizeKBytes);
+	assert(ipAddress != NULL);
+	assert(nodeName != NULL);
 
 	if ( !DataLog_CommonData::startInitialization() )
 	{

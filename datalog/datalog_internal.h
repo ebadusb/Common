@@ -1,8 +1,11 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.10 2003/10/03 12:35:02Z jl11312 Exp jl11312 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.12 2003/12/09 14:14:23Z jl11312 Exp rm70006 $
  * $Log: datalog_internal.h $
+ * Revision 1.10  2003/10/03 12:35:02Z  jl11312
+ * - improved DataLog_Handle lookup time
+ * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
  * Revision 1.9  2003/02/25 16:10:13Z  jl11312
  * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.8  2003/02/06 20:41:30  jl11312
@@ -55,6 +58,8 @@ struct DataLog_Buffer
 
 class DataLog_BufferManager
 {
+	friend class Test_DataLog_BufferManager;
+
 public:
 	//
 	// Platform specific routines
@@ -86,6 +91,27 @@ public:
 	static bool writeToChain(DataLog_BufferChain & chain, DataLog_BufferData * data, size_t size);
 
 	static void modifyChainData(DataLog_BufferChain & chain, unsigned long offset, DataLog_BufferData * data, size_t size);
+
+private:
+	struct DataLog_BufferList
+	{
+		DataLog_BufferPtr _head;
+		DataLog_BufferPtr _tail;
+	
+		volatile unsigned long _currentBufferCount;
+		volatile unsigned long _bytesWritten;
+		volatile unsigned long _bytesMissed;
+	
+	#ifdef DATALOG_BUFFER_STATISTICS
+		volatile unsigned long _minBufferCount;
+		volatile unsigned long _maxBufferCount;
+	
+		volatile unsigned long _sumBufferCountSamples;
+		volatile unsigned long _numBufferCountSamples;
+	#endif /* ifdef DATALOG_BUFFER_STATISTICS */
+	};
+
+	static DataLog_BufferList * getInternalList(BufferList list);
 };
 
 struct DataLog_HandleInfo

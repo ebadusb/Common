@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.9 2003/04/29 17:07:54Z jl11312 Exp jl11312 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.12 2003/11/25 16:10:03Z jl11312 Exp rm70006 $
  * $Log: datalog_message_stream.cpp $
+ * Revision 1.9  2003/04/29 17:07:54Z  jl11312
+ * - direct console output directly to console instead of stdout
  * Revision 1.8  2003/02/25 16:10:19Z  jl11312
  * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.7  2003/01/31 21:52:19  jl11312
@@ -413,6 +415,7 @@ void DataLog_Stream::writeComplete(void)
 				DataLog_BufferManager::addChainToList(DataLog_BufferManager::FreeList, _outputChain);
 
 				_outputChain._head = NULL;
+				_outputChain._tail = NULL;
 				_outputChain._missedBytes = length;
 			}
 			else
@@ -429,6 +432,8 @@ void DataLog_Stream::writeComplete(void)
 
 		DataLog_BufferManager::addChainToList( (_critical) ? DataLog_BufferManager::CriticalList : DataLog_BufferManager::TraceList, _outputChain);
 		_outputChain._head = NULL;
+		_outputChain._tail = NULL;
+		_outputChain._missedBytes = 0;
 
 		//
 		// Reset initial flags in case application has saved a stream reference and starts

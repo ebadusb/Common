@@ -1,8 +1,11 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.11 2003/10/03 12:35:06Z jl11312 Exp jl11312 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.13 2003/12/09 14:14:34Z jl11312 Exp rm70006 $
  * $Log: datalog_output.cpp $
+ * Revision 1.11  2003/10/03 12:35:06Z  jl11312
+ * - improved DataLog_Handle lookup time
+ * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
  * Revision 1.10  2003/06/18 18:56:14Z  jl11312
  * - handle both SIGINT and SIGQUIT
  * Revision 1.9  2003/02/25 20:43:04Z  jl11312
@@ -211,10 +214,13 @@ DataLog_LocalOutputTask::DataLog_LocalOutputTask(const char * platformName, cons
 	{
 		perror(common.connectName());
 		common.setTaskError(DataLog_OpenOutputFileFailed, __FILE__, __LINE__);
+		_state = Exit;
 	}
-
-	ftruncate(_outputFD, 0);
-	writeLogFileHeader(platformName, nodeName, platformInfo);
+	else
+	{
+		ftruncate(_outputFD, 0);
+		writeLogFileHeader(platformName, nodeName, platformInfo);
+	}
 }
 
 void DataLog_LocalOutputTask::startOutputRecord(void)
@@ -252,14 +258,17 @@ void DataLog_LocalOutputTask::endOutputRecord()
 
 void DataLog_LocalOutputTask::shutdown(void)
 {
-	writeFileCloseRecord();
-	if ( _compressedFile )
+	if ( _outputFD >= 0 )
 	{
-		gzclose(_compressedFile);
-	}
-	else
-	{
-		close(_outputFD);
+		writeFileCloseRecord();
+		if ( _compressedFile )
+		{
+			gzclose(_compressedFile);
+		}
+		else
+		{
+			close(_outputFD);
+		}
 	}
 
 	_outputFD = -1;
@@ -369,9 +378,12 @@ DataLog_NetworkOutputTask::DataLog_NetworkOutputTask(long connectTimeout, const 
 	{
 		perror(common.connectName());
 		common.setTaskError(DataLog_NetworkConnectionFailed, __FILE__, __LINE__);
+		_state = Exit;
 	}
-
-	writeLogFileNetworkHeader(nodeName);
+	else
+	{
+		writeLogFileNetworkHeader(nodeName);
+	}
 }
 
 void DataLog_NetworkOutputTask::writeLogFileNetworkHeader(const char * nodeName)
@@ -437,9 +449,14 @@ void DataLog_NetworkOutputTask::endOutputRecord(void)
 
 void DataLog_NetworkOutputTask::shutdown(void)
 {
-	writeConnectionEndRecord();
-   ::shutdown(_outputFD, 2);
-   close(_outputFD);
+	if ( _outputFD >= 0 )
+	{
+		writeConnectionEndRecord();
+		::shutdown(_outputFD, 2);
+		close(_outputFD);
+	}
+
+	_outputFD = -1;
 }
 
 void DataLog_NetworkOutputTask::writeConnectionEndRecord(void)

@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.3 2004/09/30 17:00:52Z cf10242 Exp rm10919 $
  * $Log: cgui_text.h $
+ * Revision 1.1  2004/09/20 18:18:09Z  rm10919
+ * Initial revision
  *
  */
 
@@ -52,7 +54,7 @@ public:
 
    enum
    {
-      NTS = 0x0000, BOLD = 0x0100, ITALIC = 0x0200, BOLDITALIC = 0x0300
+      NTS = 0x0000, BOLD = 0x0100, ITALIC = 0x0200, BOLD_ITALIC = 0x0300
    };    // text style options, this may be controled by the font or the font driver.  
          // NTS - no text style, default attribute.
 
@@ -65,7 +67,7 @@ public:
    //
    enum
    {
-      LEFTTORIGHT = 0x0000, RIGHTTOLEFT = 0x1000
+      LEFT_TO_RIGHT = 0x0000, RIGHT_TO_LEFT = 0x1000
    };    // text direction options
    
    struct StylingRecord
@@ -80,14 +82,14 @@ public:
    //
    // Constructors
    //
-   OSText(CGUIDisplay & display);
-   OSText(CGUIDisplay & display, CGUIWindow * parent, TextItem * textItem, StylingRecord * stylingRecord = NULL);
-   OSText(CGUIDisplay & display, CGUIWindow * parent, TextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL);
+   CGIText(CGUIDisplay & display);
+   CGUIText(CGUIDisplay & display, CGUIWindow * parent, TextItem * textItem, StylingRecord * stylingRecord = NULL);
+   CGUIText(CGUIDisplay & display, CGUIWindow * parent, TextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL);
 
    //
    // Destructor
    //
-   virtual ~OSText();
+   virtual ~CGUIText();
 
    //
    // SET_ATTRIBUTES
@@ -133,8 +135,8 @@ public:
    // The font is also dependent on the language
    // to be displayed.
    //
-   void setFontId(OSFontId fontId);
-   OSFontId getFontId(void) { return _stylingRecord.fontId;}
+   void setFontId(CGUIFontId fontId);
+   CGUIFontId getFontId(void) { return _stylingRecord.fontId;}
 
    //
    // SET_FONT_SIZE
@@ -169,6 +171,7 @@ public:
    // calling each individual method.
    //
    void setStylingRecord(StylingRecord * stylingRecord);
+   StylingRecord * getStylingRecord(void) { return * _sytlingRecord;}
 
    //
    // SET_TEXT

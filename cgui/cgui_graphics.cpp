@@ -3,6 +3,8 @@
  *
  * $Header: L:/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.8 2004/10/29 15:11:14Z rm10919 Exp cf10242 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.1  2004/09/20 18:18:05Z  rm10919
+ * Initial revision
  *
  */
 
@@ -110,9 +112,9 @@ void CGUIDisplay::deleteFont(CGUIFontId font)
 }
 
 
-OSBitmapId CGUIDisplay::loadBitmap(BITMAP_ID guiId)
+CGUIBitmapId CGUIDisplay::loadBitmap(BITMAP_ID guiId)
 {
-   OSBitmapId  result = UGL_NULL_ID;
+   CGUIBitmapId  result = UGL_NULL_ID;
 
    if (guiId <= BITMAP_NULL || guiId >= BITMAP_ID_COUNT)
    {
@@ -252,7 +254,7 @@ void CGUIDisplay::drawRootWindow(void)
 
 void CGUIDisplay::loadBitmapFromCompressedData(BITMAP_ID guiId)
 {
-   unsigned long   bmpSize = bitmap_data_table[guiId].height * bitmap_data_table[guiId].width * sizeof(OSColor);
+   unsigned long   bmpSize = bitmap_data_table[guiId].height * bitmap_data_table[guiId].width * sizeof(CGUIColor);
    unsigned char * bmpImage = new unsigned char[bmpSize];
 
    uncompress(bmpImage, &bmpSize, bitmap_data_table[guiId].data, bitmap_data_table[guiId].dataSize);

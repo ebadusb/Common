@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_rectangle.cpp 1.3 2005/04/15 21:35:18Z cf10242 Exp jl11312 $
  * $Log: cgui_rectangle.cpp $
+ * Revision 1.1  2004/09/20 18:18:06Z  rm10919
+ * Initial revision
  *
  */
 
@@ -12,12 +14,12 @@
 
 
 CGUIRectangle::CGUIRectangle(CGUIDisplay & display, CGUIColor color)
-: OSWindowObject(display), _color(color)
+: CGUIWindowObject(display), _color(color)
 {
 }
 
 CGUIRectangle::CGUIRectangle(CGUIDisplay & display, const CGUIRegion & region, CGUIColor color)
-: OSWindowObject(display, region), _color(color)
+: CGUIWindowObject(display, region), _color(color)
 {
 }
 

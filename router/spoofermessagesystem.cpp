@@ -26,6 +26,21 @@ SpooferMessageSystem::~SpooferMessageSystem()
                               << " has been deleted." << endmsg;
 }
 
+void SpooferMessageSystem :: spoofMessage( MessageBase &mb )
+{
+   ((SpooferDispatcher*)_Dispatcher)->spoofMessage( mb );
+}
+
+void SpooferMessageSystem :: spoofMessage( MessageBase &mb, const CallbackBase &cb )
+{
+   ((SpooferDispatcher*)_Dispatcher)->spoofMessage( mb, cb );
+}
+
+void SpooferMessageSystem :: despoofMessage( MessageBase &mb )
+{
+   ((SpooferDispatcher*)_Dispatcher)->despoofMessage( mb );
+}
+
 void SpooferMessageSystem::createDispatcher()
 {
    if ( _Dispatcher )

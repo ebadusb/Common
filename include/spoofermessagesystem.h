@@ -24,6 +24,21 @@ public:
    // Default destructor
    virtual ~SpooferMessageSystem();
 
+   //
+   // Make the message base object a spoofer message.  Use
+   //  the function without a callback function to send spoof
+   //  messages without receiving anything first.  Use the 
+   //  function with a callback function to receive the message
+   //  type first to trigger spoofing.
+   void spoofMessage( MessageBase &mb );
+   void spoofMessage( MessageBase &mb, const CallbackBase &cb );
+
+   //
+   // Change the message base object back to a normal, non-spoofed
+   //  message.
+   void despoofMessage( MessageBase &mb );
+
+
 protected:
 
    //

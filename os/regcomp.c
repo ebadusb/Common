@@ -361,8 +361,10 @@ int cflags;
 	register int i;
 	register size_t len;
 #ifdef REDEBUG
+#undef GOODFLAGS
 #	define	GOODFLAGS(f)	(f)
 #else
+#undef GOODFLAGS
 #	define	GOODFLAGS(f)	((f)&~REG_DUMP)
 #endif
 

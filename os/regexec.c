@@ -208,8 +208,10 @@ int eflags;
 {
 	register struct re_guts *g = preg->re_g;
 #ifdef REDEBUG
+#undef GOODFLAGS
 #	define	GOODFLAGS(f)	(f)
 #else
+#undef GOODFLAGS
 #	define	GOODFLAGS(f)	((f)&(REG_NOTBOL|REG_NOTEOL|REG_STARTEND))
 #endif
 	nope = 0;	/* XXX jcf: remove warning */

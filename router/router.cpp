@@ -615,7 +615,10 @@ void Router::connectWithGateway( const MessagePacket &mp )
    //
    if ( sockiter != _InetGatewayMap.end() )
    {
-      close( (*sockiter).second );
+      if ( (*sockiter).second != ERROR)
+      {
+         close( (*sockiter).second );
+      }
 
       int sock;
       memmove( (char *) &sock , 
@@ -624,8 +627,24 @@ void Router::connectWithGateway( const MessagePacket &mp )
       _InetGatewayMap[ mp.msgData().nodeId() ] = sock;
 
       int optval=1;
-      setsockopt( sock, SOL_SOCKET, SO_KEEPALIVE, (char*)&optval, sizeof(optval) );
-      setsockopt( sock, IPPROTO_TCP, TCP_NODELAY, (char*)&optval, sizeof(optval) );
+
+      if ( setsockopt( sock, SOL_SOCKET, SO_KEEPALIVE, (char*)&optval, sizeof(optval) ) == ERROR )
+      {
+         //
+         // Error ...
+         DataLog( log_level_critical ) << "router::connectWithGateway : socket set option SO_KEEPALIVE failed, error->" << errnoMsg << ", sock=" << sock << endmsg;
+         _FATAL_ERROR( __FILE__, __LINE__, "router::connectWithGateway: socket set option failed" );
+         return;
+      }
+
+      if ( setsockopt( sock, IPPROTO_TCP, TCP_NODELAY, (char*)&optval, sizeof(optval) ) == ERROR )
+      {
+         //
+         // Error ...
+         DataLog( log_level_critical ) << "router::connectWithGateway : socket set option TCP_NODELAY failed, error->" << errnoMsg << ", sock=" << sock << endmsg;
+         _FATAL_ERROR( __FILE__, __LINE__, "router::connectWithGateway: socket set option failed" );
+         return;
+      }
 
       //
       // Synch up with the remote node ...
@@ -667,7 +686,14 @@ void Router::disconnectWithGateway( unsigned long address )
    {
       //
       // disconnect the socket interface
-      close((*sockiter).second);
+      if (close((*sockiter).second) == ERROR)
+      {
+         //
+         // Error ...
+         DataLog( log_level_critical ) << "router::disconnectWithGateway : socket close failed, error->" << errnoMsg << ", sock=" << (*sockiter).second << endmsg;
+         //_FATAL_ERROR( __FILE__, __LINE__, "router::disconnectWithGateway: socket close failed" );
+         //return;
+      }
 
       //
       // remove the entry from the list

@@ -134,17 +134,7 @@ bool Gateway::init( short port )
 
    //
    //
-   int optval=16384; // Set the size of the receive buffer to 16
-   if ( setsockopt( _ClientSocket, SOL_SOCKET, SO_RCVBUF, (char*)&optval, sizeof(optval) ) == ERROR )
-   {
-      //
-      // Error ...
-      DataLog( log_level_critical ) << "Gateway::init : socket set receive buffer size option SO_RCVBUF failed, error->" << errnoMsg << endmsg;
-      _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket set option failed" );
-      return false;
-   }
-
-   optval=1;
+   int optval=1;
    if ( setsockopt( _ClientSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&optval, sizeof(optval) ) == ERROR )
    {
       //

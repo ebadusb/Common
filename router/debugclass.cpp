@@ -5,8 +5,10 @@
  *   with debug.c
  * PURPOSE: implementation of Debug class
  * CHANGELOG:
- * $Header: Z:/BCT_Development/Common/ROUTER/rcs/DEBUGCLASS.CPP 1.2 1999/09/14 16:51:29 TD10216 Exp MS10234 $
+ * $Header: Z:/BCT_Development/Common/ROUTER/rcs/DEBUGCLASS.CPP 1.2 1999/09/14 16:51:29 TD10216 Exp $
  * $Log: DEBUGCLASS.CPP $
+ * Revision 1.2  1999/09/14 16:51:29  TD10216
+ * IT4333
  * Revision 1.1  1999/05/24 23:29:29  TD10216
  * Initial revision
  * Revision 1.2  1998/09/30 20:44:46  TD07711
@@ -26,7 +28,7 @@
 #include <sys/timeb.h>
 #include <stdlib.h>
 
-#include "Debug.hpp"
+#include "debug.hpp"
 #include "error.h"
 
 

@@ -1,6 +1,6 @@
 #
 # PURPOSE: makefile for COBE BCT common router
-# $Header: Z:/BCT_Development/Common/ROUTER/rcs/MAKEFILE 1.6 1999/08/31 17:53:06 BS04481 Exp MS10234 $
+# $Header: Z:/BCT_Development/Common/ROUTER/rcs/MAKEFILE 1.7 2000/03/03 17:34:30 MS10234 Exp MS10234 $
 # NB:Do NOT save & try to run this file with DOS CR/LFs
 # Set MKS option Configuration->Personal->Checkout->UNIX
 # symptom:cant open ../commonrules.mk
@@ -29,7 +29,7 @@ MQUEUE_LIB=/usr/lib/mqueue3r.lib
 
 CPPSRCS=tcp_gate.cpp \
 	msg.cpp new.cpp dispatch.cpp phdspat.cpp spoofdsp.cpp \
-	DebugClass.cpp RegisterMsgs.cpp
+	debugclass.cpp registermsgs.cpp
 CPPOBJS=${CPPSRCS:.cpp=.o}
 
 CSRCS=gateway.c router.c pearlyg.c sinver.c \
@@ -51,10 +51,10 @@ $(PEARLYGATE) : pearlyg.o $(LIBDIR)/$(ROUTERLIB)
 	$(LD) $(LDFLAGS) pearlyg.o $(ROUTERLIB) -o $(PEARLYGATE)
 
 $(LIBDIR)/$(ROUTERLIB) : msg.o new.o dispatch.o crc.o sinver.o phdspat.o \
-		spoofdsp.o mq_check.o error.o DebugClass.o debug.o RegisterMsgs.o router.o
+		spoofdsp.o mq_check.o error.o debugclass.o debug.o registermsgs.o router.o
 		$(LIB_BLD_CMD) $(LIBDIR)/$(ROUTERLIB) +$(MQUEUE_LIB) +msg.o +new.o +dispatch.o +crc.o \
 		+sinver.o +phdspat.o +spoofdsp.o +mq_check.o +error.o +router.o \
-		+debug.o +DebugClass.o RegisterMsgs.o
+		+debug.o +debugclass.o registermsgs.o
 
 #
 # setup commonsharedtargets.mk
@@ -73,8 +73,6 @@ include $(COMMONSHAREDTARGETS)
 
 # NOTE: Do not edit below this line
 ## dependencies will be put after this line... ##
-tcp_gate.o:../include/PreRegisterMsgs.h
-tcp_gate.o:../include/RegisterMsgs.hpp
 tcp_gate.o:../include/an2msgs.h
 tcp_gate.o:../include/buffmsg.hpp
 tcp_gate.o:../include/buffmsgs.h
@@ -84,6 +82,8 @@ tcp_gate.o:../include/error.h
 tcp_gate.o:../include/intmsgs.h
 tcp_gate.o:../include/msg.hpp
 tcp_gate.o:../include/msghdr.h
+tcp_gate.o:../include/preregistermsgs.h
+tcp_gate.o:../include/registermsgs.hpp
 tcp_gate.o:../include/reply.hpp
 tcp_gate.o:../include/sinver.h
 tcp_gate.o:tcp_gate.cpp
@@ -126,22 +126,22 @@ spoofdsp.o:../include/msghdr.h
 spoofdsp.o:../include/sinver.h
 spoofdsp.o:../include/spoofdsp.hpp
 spoofdsp.o:spoofdsp.cpp
-DebugClass.o:../include/error.h
-DebugClass.o:Debug.hpp
-DebugClass.o:DebugClass.cpp
-RegisterMsgs.o:../include/RegisterMsgs.hpp
-RegisterMsgs.o:../include/an2msgs.h
-RegisterMsgs.o:../include/buffmsg.hpp
-RegisterMsgs.o:../include/buffmsgs.h
-RegisterMsgs.o:../include/crc.h
-RegisterMsgs.o:../include/dispatch.hpp
-RegisterMsgs.o:../include/error.h
-RegisterMsgs.o:../include/intmsgs.h
-RegisterMsgs.o:../include/msg.hpp
-RegisterMsgs.o:../include/msghdr.h
-RegisterMsgs.o:../include/reply.hpp
-RegisterMsgs.o:../include/sinver.h
-RegisterMsgs.o:RegisterMsgs.cpp
+debugclass.o:../include/error.h
+debugclass.o:debug.hpp
+debugclass.o:debugclass.cpp
+registermsgs.o:../include/an2msgs.h
+registermsgs.o:../include/buffmsg.hpp
+registermsgs.o:../include/buffmsgs.h
+registermsgs.o:../include/crc.h
+registermsgs.o:../include/dispatch.hpp
+registermsgs.o:../include/error.h
+registermsgs.o:../include/intmsgs.h
+registermsgs.o:../include/msg.hpp
+registermsgs.o:../include/msghdr.h
+registermsgs.o:../include/registermsgs.hpp
+registermsgs.o:../include/reply.hpp
+registermsgs.o:../include/sinver.h
+registermsgs.o:registermsgs.cpp
 gateway.o:../include/crc.h
 gateway.o:../include/error.h
 gateway.o:../include/msghdr.h
@@ -150,6 +150,7 @@ gateway.o:gateway.c
 router.o:../include/crc.h
 router.o:../include/error.h
 router.o:../include/msghdr.h
+router.o:../include/router.h
 router.o:../include/shutdown.h
 router.o:../include/sinver.h
 router.o:mq_check.h

@@ -2,13 +2,13 @@
 #ifndef anAgentInterface_h
 #define anAgentInterface_h 1
 
-#include <Rope.h>
-#include <Set.h>
+#include <rope.h>
+#include <set.h>
 #include <sys/stat.h>
 
 #include "ap2agent.h"
-#include "aSectionfile_element.hpp"
-#include "aSectionfile.hpp"
+#include "asectionfile_element.hpp"
+#include "asectionfile.hpp"
 #include "agent_sem.h"
 
 #ifndef RUN_WINDOWS

@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Z:/BCT_Development/Common/ROUTER/rcs/TCP_GATE.CPP 1.4 1999/08/10 00:09:03 TD10216 Exp MS10234 $
+ * $Header: Z:/BCT_Development/Common/ROUTER/rcs/TCP_GATE.CPP 1.4 1999/08/10 00:09:03 TD10216 Exp $
  * $Log: TCP_GATE.CPP $
+ * Revision 1.4  1999/08/10 00:09:03  TD10216
+ * IT3724
  * Revision 1.3  1999/07/24 21:07:35  TD10216
  * IT4154
  * Revision 1.2  1999/06/30 21:40:21  TD10216
@@ -95,7 +97,7 @@
 #include "sinver.h"
 #include "an2msgs.h"
 #include "reply.hpp"
-#include "RegisterMsgs.hpp"
+#include "registermsgs.hpp"
 
 #define Q_LENGTH 80			// queue name length
 #define MAX_MSGS 64			// max msgs in queue
@@ -135,7 +137,7 @@ static void processGatewayQueue( mqd_t gq, struct sigevent* qnotify);
 //                  Parameter: none
 //
 // ERROR HANDLING:  none
-#include "PreRegisterMsgs.h"
+#include "preregistermsgs.h"
 
 
 // SPECIFICATION:	signal handler, causes program to stop, called by QNX

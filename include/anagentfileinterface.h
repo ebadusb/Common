@@ -2,9 +2,9 @@
 #ifndef anAgentFileInterface_h
 #define anAgentFileInterface_h 
 
-#include <Rope.h>
+#include <rope.h>
 
-#include "anAgentInterface.h"
+#include "anagentinterface.h"
 
 class anAgentFileInterface : public anAgentInterface
 {

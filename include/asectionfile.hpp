@@ -5,8 +5,10 @@
  * PURPOSE:    Focussed system prediction functions - wrapper for
  *             data file reader abstractions.
  * CHANGELOG:
- *   $Header: Z:/BCT_Development/Common/INCLUDE/rcs/ASECTIONFILE.HPP 1.2 1999/12/08 00:39:14 BD10648 Exp MS10234 $
+ *   $Header: Z:/BCT_Development/Common/INCLUDE/rcs/ASECTIONFILE.HPP 1.2 1999/12/08 00:39:14 BD10648 Exp $
  *   $Log: ASECTIONFILE.HPP $
+ *   Revision 1.2  1999/12/08 00:39:14  BD10648
+ *   Removed STL Map in section file defn for speed up.
  *   Revision 1.1  1999/05/24 23:26:12  TD10216
  *   Initial revision
  *   Revision 1.10  1999/04/20 00:40:31  TD07711
@@ -19,10 +21,10 @@
 #ifndef ASECTIONFILE_HPP
 #define ASECTIONFILE_HPP
 
-#include <Rope.h>
-#include <List.h>
+#include <rope.h>
+#include <list.h>
 
-#include "aSectionfile_element.hpp"
+#include "asectionfile_element.hpp"
 
 typedef list<aSectionfile_element> elementListType;
 

@@ -2,7 +2,7 @@
 #define anAgentMemoryInterface_h 1
 
 // anAgentInterface
-#include "anAgentInterface.h"
+#include "anagentinterface.h"
 
 //## Class: anAgentMemoryInterface%3589669D0355
 //	This class is ABSTRACT (it does not implement data

@@ -5,6 +5,8 @@
  * CHANGELOG:
  * $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/DEBUG.HPP 1.1 1999/05/24 2
  * $Log: RegisterMsgs.cpp $
+ * Revision 1.3  1999/08/14 00:20:26  TD10216
+ * IT4219
  * Revision 1.2  1999/07/29 15:53:02  TD10216
  * IT4154
  * Revision 1.1  1999/07/24 20:51:35  TD10216
@@ -23,7 +25,7 @@
 #include "sinver.h"
 #include "an2msgs.h"
 #include "reply.hpp"
-#include "RegisterMsgs.hpp"
+#include "registermsgs.hpp"
 
 RegisterMsgs::RegisterMsgs(void)
 {

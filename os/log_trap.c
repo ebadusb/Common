@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/log_trap.c 1.3 2003/06/19 20:05:59Z jl11312 Exp jl11312 $
  * $Log: log_trap.c $
+ * Revision 1.1  2003/04/30 14:54:39Z  jl11312
+ * Initial revision
  */
 
 #include "log_trap.h"
@@ -16,10 +18,10 @@ static SEM_ID	logDataAvailSem;
 static void logTrapTask(const char * pipeName, size_t pipeBufferSize)
 {
 	int	logTrapFD = open(pipeName, O_RDONLY, DEFAULT_FILE_PERM);
+	char	* buff = malloc(pipeBufferSize);
 
 	while ( logTrapFD > 0 )
 	{
-		char	* buff = malloc(pipeBufferSize);
 		size_t  size;
 
 		size = read(logTrapFD, buff, PIPE_LOGTRAP_BUFFER);
@@ -70,10 +72,10 @@ static void logTrapTask(const char * pipeName, size_t pipeBufferSize)
 		{
 			close(logTrapFD);
 			logTrapFD = -1;
-
-			free(buff);
 		}
 	}
+
+	free(buff);
 }
 
 void logTrapWaitData(void)
@@ -136,7 +138,7 @@ int logTrapInit(const char * pipeName, size_t pipeBufferSize, size_t logBufferSi
 		logBufferReadIdx = logBufferWriteIdx = 0;
 
 		logDataAvailSem = semBCreate(SEM_Q_PRIORITY, SEM_EMPTY);
-		taskSpawn("log_trap", 2, 0, 4096, logTrapTask, (int)pipeName, (int)pipeBufferSize, 0, 0, 0, 0, 0, 0, 0, 0);
+		taskStart("log_trap", 2, 4000, logTrapTask, (int)pipeName, (int)pipeBufferSize, 0, 0, 0, 0, 0, 0, 0, 0);
 	}
 	else
 	{

@@ -39,6 +39,8 @@ public:
    // Send a packet to the router ...
    void send( const MessagePacket &mp, 
               const int priority=MessageSystemConstant::DEFAULT_MESSAGE_PRIORITY );
+   // 
+   // Send a packet to the timer task ...
    void sendTimerMessage( const MessagePacket &mp, 
                           const int priority=MessageSystemConstant::DEFAULT_MESSAGE_PRIORITY );
 
@@ -63,6 +65,12 @@ protected:
    //
    // Distribute the message received from the router ...
    virtual void processMessage( MessagePacket &mp );
+
+   //
+   // Send a message to the specified queue ...
+   void send( mqd_t mqueue,
+              const MessagePacket &mp, 
+              const int priority=MessageSystemConstant::DEFAULT_MESSAGE_PRIORITY );
 
    // 
    // Shutdown message queues ...

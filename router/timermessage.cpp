@@ -42,7 +42,7 @@ bool TimerMessage :: init( unsigned long intrvl, const CallbackBase &cb, TimerSt
    if ( armTimer == ARMED )
       interval( intrvl );
    else
-      Message::setData( intrvl );
+      Message< unsigned long >::setData( intrvl );
 
    return status;
 }
@@ -58,7 +58,7 @@ void TimerMessage :: armTimer( TimerState arm )
       return;
    }
 
-   unsigned long intrvl = Message::getData();
+   unsigned long intrvl = Message< unsigned long >::getData();
 
    _TimerArmed=arm;
    if ( intrvl == 0 )
@@ -95,7 +95,7 @@ void TimerMessage :: armTimer( TimerState arm )
 
 void TimerMessage :: interval( unsigned long interval)
 {
-   Message::setData( interval );
+   Message< unsigned long >::setData( interval );
    armTimer();
 }
 

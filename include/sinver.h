@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/sinver.h 1.2 2001/05/24 23:09:49 jl11312 Exp ms10234 $
  * $Log: sinver.h $
+ * Revision 1.1  1999/05/24 23:26:45  TD10216
+ * Initial revision
  * Revision 1.2  1996/07/24 19:50:11  SS03309
  * fix MKS 
  * Revision 1.2  1996/07/22 14:43:51  SS03309
@@ -42,6 +44,15 @@ typedef struct  {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// SPECIFICATION:    getAppRevisionData can be provided to override
+//                   the common project version information.  The
+//                   default version simply returns NULL, so that
+//                   the common build revision data will be used.
+//
+// ERROR HANDLING:   none
+
+const char * getAppRevisionData( );
 
 // SPECIFICATION:    sinVerInitialize should be called once
 //                   before receiving any messages.  If it is not

@@ -3,6 +3,10 @@
  *
  * $Header: M:/BCT_Development/vxWorks/Common/include/rcs/dispatch.hpp 1.12 2000/12/14 23:53:47 ms10234 Exp sb07663 $
  * $Log: dispatch.hpp $
+ * Revision 1.8  2000/06/06 19:02:01  ms10234
+ * Removed message enums from the common project.  Default
+ * constructors and initialization functions were added to make creation
+ * more robust.
  * Revision 1.5  2000/03/07 00:30:05  BD10648
  * Default Queue size reduced in conjunction with increased message size.
  * Revision 1.4  1999/09/30 04:02:12  BS04481
@@ -283,7 +287,6 @@ class dispatcher
       void logData( long line, long msgID, long code); // internal data logging
 
    private:
-      dispatcher();                                // not implemented
       dispatcher( dispatcher const &);             // not implemented
       dispatcher& operator=(dispatcher const&);    // not implemented
       pid_t qproxy;                                // input q proxy

@@ -3,6 +3,8 @@
 *
 * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.7 1999/08/18 17:08:16 TD10216 Exp TD10216 $
 * $Log: AN2MSGS.H $
+* Revision 1.5  1999/08/04 22:51:45  TD10216
+* IT3640
 * an2msgs.h
 *
 * Abstract : 12/04/96
@@ -129,13 +131,14 @@ typedef struct
 enum AN2_SERVICE_REQUEST_REPSONSE
 {
 	SERVICE_ALLOWED,								
-	SERVICE_DENIED_DONOR_CONNECTED,	// ftp operations are not permitted during donor connected states
-	SERVICE_DENIED,					// non-differentaited service denial...specific conditions will be defined as known 
+	SERVICE_DENIED_DONOR_CONNECTED,	// agent file ops are not permitted during donor connected states
+	SERVICE_DENIED,			// non-differentaited service denial
 	SERVICE_NOT_AVAILABLE,
 	SERVICE_CONNECTED_ALREADY,
 	SERVICE_COMD_NOT_AVAILABLE,
 	SERVICE_DENIED_REQUESTOR_NOT_CURRENT_SERVER,
 	SERVICE_DENIED_AP2_DISALLOWED,
+	SERVICE_DENIED_AP2_NOT_CONNECTED,
 	SERVICE_DENIED_NOT_IN_SERVICE_MODE,
 	SERVICE_DENIED_INVALID_FILE,
 	SERVICE_DENIED_INVALID_FILE_CRC,

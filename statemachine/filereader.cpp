@@ -144,13 +144,14 @@ int FileReader :: readNewFile( char *buffer )
    //
    // Check buffer for 'include' keyword ...
    //
-   char *p = strtok( buffer, DELIMITERS );
+   char *savePtr=0;
+   char *p = strtok_r( buffer, DELIMITERS, &savePtr );
    if ( strncmp( p, "[include]", 9 ) == 0 ) 
    {
       //
       // Parse the file name ...
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( !p || strlen( p ) == 0 )
       {
          // 
@@ -205,13 +206,14 @@ int FileReader :: readState( char *buffer )
    //
    // Check buffer for 'state' keyword ...
    //
-   char *p = strtok( buffer, DELIMITERS );
+   char *savePtr=0;
+   char *p = strtok_r( buffer, DELIMITERS, &savePtr );
    if ( strncmp( p, "[state]", 7 ) == 0 )
    {
       //
       // Parse the state name ...
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -239,7 +241,7 @@ int FileReader :: readState( char *buffer )
       //
       // Parse the parent state name ...
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( !p || strlen( p ) == 0 ) 
       {
          _StateList->push_back( newState );
@@ -346,7 +348,8 @@ int FileReader :: readMonitor( char *buffer, StateAbs *state )
    //
    // Check buffer for 'alarm', 'algorithm', or 'monitor' keywords ...
    //
-   char *p = strtok( buffer, DELIMITERS );
+   char *savePtr=0;
+   char *p = strtok_r( buffer, DELIMITERS, &savePtr );
    if (    strncmp( p, "[alarm]", 7 ) == 0 
         || strncmp( p, "[algorithm]", 11 ) == 0 
         || strncmp( p, "[monitor]", 9 ) == 0 ) 
@@ -354,7 +357,7 @@ int FileReader :: readMonitor( char *buffer, StateAbs *state )
       //
       // Parse the monitor name ...
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -446,9 +449,10 @@ int FileReader :: readComplexTrans( char *constBuffer, TransComplex *trans )
    //
    // Check buffer for 'complex' keyword ...
    //
+   char *savePtr=0;
    char buffer[FILEREADER_BUFFER_SIZE];
    strcpy( buffer, constBuffer );
-   char *p = strtok( buffer, DELIMITERS );
+   char *p = strtok_r( buffer, DELIMITERS, &savePtr );
    if ( strncmp( p, "[complex]", 9 ) == 0 ) 
    {
       //
@@ -460,7 +464,7 @@ int FileReader :: readComplexTrans( char *constBuffer, TransComplex *trans )
       //
       // Parse the number of transitions under this one
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -474,7 +478,7 @@ int FileReader :: readComplexTrans( char *constBuffer, TransComplex *trans )
       //
       // Parse the condition type ...
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -497,7 +501,7 @@ int FileReader :: readComplexTrans( char *constBuffer, TransComplex *trans )
       //
       // Parse the transition state name ...
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( p && strlen( p ) > 0 ) 
       {
          //
@@ -537,9 +541,10 @@ int FileReader :: readCondTrans( char *constBuffer, TransComplex *trans )
    //
    // Check buffer for 'conditional' keyword ...
    //
+   char *savePtr=0;
    char buffer[FILEREADER_BUFFER_SIZE];
    strcpy( buffer, constBuffer );
-   char *p = strtok( buffer, DELIMITERS );
+   char *p = strtok_r( buffer, DELIMITERS, &savePtr );
    if ( strncmp( buffer, "[conditional]", 13 ) == 0 )
    {
       //
@@ -551,7 +556,7 @@ int FileReader :: readCondTrans( char *constBuffer, TransComplex *trans )
       //
       // Parse the return code
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -565,7 +570,7 @@ int FileReader :: readCondTrans( char *constBuffer, TransComplex *trans )
       //
       // Parse the transition state name ...
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( p && strlen( p ) > 0 ) 
       {
          //
@@ -595,9 +600,10 @@ int FileReader :: readUncondTrans( char *constBuffer, TransComplex *trans )
    //
    // Check buffer for 'unconditional' keyword ...
    //
+   char *savePtr=0;
    char buffer[FILEREADER_BUFFER_SIZE];
    strcpy( buffer, constBuffer );
-   char *p = strtok( buffer, DELIMITERS );
+   char *p = strtok_r( buffer, DELIMITERS, &savePtr );
    if ( strncmp( buffer, "[unconditional]", 13 ) == 0 )
    {
       //
@@ -609,7 +615,7 @@ int FileReader :: readUncondTrans( char *constBuffer, TransComplex *trans )
       //
       // Parse the transition state name ...
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( p && strlen( p ) > 0 ) 
       {
          //
@@ -639,9 +645,10 @@ int FileReader :: readTimerTrans( char *constBuffer, TransComplex *trans )
    //
    // Check buffer for 'timer' keyword ...
    //
+   char *savePtr=0;
    char buffer[FILEREADER_BUFFER_SIZE];
    strcpy( buffer, constBuffer );
-   char *p = strtok( buffer, DELIMITERS );
+   char *p = strtok_r( buffer, DELIMITERS, &savePtr );
    if ( strncmp( buffer, "[timer]", 7 ) == 0 ) 
    {
       //
@@ -653,7 +660,7 @@ int FileReader :: readTimerTrans( char *constBuffer, TransComplex *trans )
       //
       // Parse the timeout time
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -668,7 +675,7 @@ int FileReader :: readTimerTrans( char *constBuffer, TransComplex *trans )
       //
       // Parse the transition state name ...
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( p && strlen( p ) > 0 ) 
       {
          //
@@ -698,9 +705,10 @@ int FileReader :: readMessageTrans( char *constBuffer, TransComplex *trans )
    //
    // Check buffer for 'message' keyword ...
    //
+   char *savePtr=0;
    char buffer[FILEREADER_BUFFER_SIZE];
    strcpy( buffer, constBuffer );
-   char *p = strtok( buffer, DELIMITERS );
+   char *p = strtok_r( buffer, DELIMITERS, &savePtr );
    if ( strncmp( buffer, "[message]", 9 ) == 0 ) 
    {
       //
@@ -712,7 +720,7 @@ int FileReader :: readMessageTrans( char *constBuffer, TransComplex *trans )
       //
       // Parse the message enumeration
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -736,7 +744,7 @@ int FileReader :: readMessageTrans( char *constBuffer, TransComplex *trans )
       //
       // Parse the transition state name ...
       //
-      p = strtok( NULL, DELIMITERS );
+      p = strtok_r( NULL, DELIMITERS, &savePtr );
       if ( p && strlen( p ) > 0 ) 
       {
          //
@@ -841,7 +849,8 @@ int FileReader :: removeComments( char *buffer )
          // Grab everything up to the comment ...
          //  ( this will change buffer removing the comment )
          //
-         p = strtok( buffer, COMMENT_CHAR );
+         char *savePtr=0;
+         p = strtok_r( buffer, COMMENT_CHAR, &savePtr );
       }
    }
    return NORMAL;

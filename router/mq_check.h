@@ -5,6 +5,8 @@
  * CHANGELOG:
  *   $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/MQ_CHECK.H 1.1 1999/05/24 23:29:44 TD10216 Exp BS04481 $
  *   $Log: MQ_CHECK.H $
+ *   Revision 1.1  1999/05/24 23:29:44  TD10216
+ *   Initial revision
  *   Revision 1.1  1998/08/03 20:29:47  TD07711
  *   Initial revision
  *   07/24/98 - dyes - initial version
@@ -27,6 +29,7 @@ extern "C" {
 // ARGUMENTS: mqd_t mqdes - msg queue descriptor to check
 // RETURNS: void
 void mq_check(mqd_t mqdes);
+void mq_highWater(void);
 
 #ifdef __cplusplus
 };

@@ -14,6 +14,7 @@
 
 #include "dispatcher.h"
 #include "messagesystemconstant.h"
+#include "datalog_port.h"
 
 class MessageSystem
 {

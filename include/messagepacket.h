@@ -47,7 +47,7 @@ public:
 
 public:
 
-   MessageData() { }
+   MessageData() { memset( _Msg, 0, MAX_MESSAGE_SIZE + 1 ); }
    MessageData( const MessageData &d ) { operator=( d ); }
    ~MessageData() {}
 
@@ -64,7 +64,7 @@ public:
          seqNum(       d.seqNum() );
          totalNum(     d.totalNum() );
          packetLength( d.packetLength() );
-         msg(          d.msg(), packetLength() );
+         msg(          d.msg(), MAX_MESSAGE_SIZE );
       }
       return *this;
    }
@@ -132,7 +132,8 @@ public:
    void msg( const unsigned char * v, const int length ) 
    {
       memset( _Msg, 0, MAX_MESSAGE_SIZE + 1 ); 
-      memmove( (void*) _Msg , (void*) v , ( length > MAX_MESSAGE_SIZE ? MAX_MESSAGE_SIZE : length ) ); 
+      if ( length > 0 && v != 0 )
+         memmove( (void*) _Msg , (void*) v , ( length > MAX_MESSAGE_SIZE ? MAX_MESSAGE_SIZE : length ) ); 
    }
    const unsigned char *msg() const { return _Msg;} 
 
@@ -146,6 +147,7 @@ public:
       outs << "Tid: " << hex << _TaskId << " Time: " << dec << _SendTime.tv_sec << " " << _SendTime.tv_nsec << " ";
       outs << "Seq: " << _SeqNum << " Tot: " << _TotNum << " ";
       outs << "PcktLngth: " << _PacketLength << " Msg: " << _Msg << endl;
+      outs << "Msg: "; for (int i=0;i<MAX_MESSAGE_SIZE+1;i++) outs << hex << (int)((unsigned char)(*(_Msg+i))); outs << endl;
       outs << "###################################################################" << endl;
    }
 
@@ -198,14 +200,14 @@ public:
    // Generate the crc for the message
    void updateCRC()
    {
-      _CRC = crc32( (unsigned char *) &_MessageData, sizeof( MessageData ) );
+      _CRC = msgcrc32( (unsigned char *) &_MessageData, sizeof( MessageData )-1 );
    }
 
    //
    // Validate the crc for the message
    bool validCRC() const
    {
-      if ( _CRC != crc32( (unsigned char *) &_MessageData, sizeof( MessageData ) ) )
+      if ( _CRC != msgcrc32( (unsigned char *) &_MessageData, sizeof( MessageData )-1 ) )
       {
          //
          // The crc's do not match, return an error ...

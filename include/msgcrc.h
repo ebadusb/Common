@@ -1,8 +1,10 @@
 /*
  * copyright 1995, 1996 Cobe BCT Lakewood, Colorado
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/msgcrc.h 1.1 2002/05/01 14:44:09 ms10234 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/msgcrc.h 1.1 2002/05/01 14:44:09 ms10234 Exp $
  * $Log: msgcrc.h $
+ * Revision 1.1  2002/05/01 14:44:09  ms10234
+ * Initial revision
  * Revision 1.1  1999/05/24 23:26:21  TD10216
  * Initial revision
  * Revision 1.2  1996/07/24 19:49:21  SS03309
@@ -43,7 +45,7 @@ extern "C" {
 // ERROR HANDLING:   none
 */
 
-unsigned long crc32( unsigned char* blk_adr, unsigned long blk_len);
+unsigned long msgcrc32( unsigned char* blk_adr, unsigned long blk_len);
 
 /*
 // SPECIFICATION:    add to existing 32 bit CRC
@@ -55,7 +57,7 @@ unsigned long crc32( unsigned char* blk_adr, unsigned long blk_len);
 // ERROR HANDLING:   none
 */
 
-unsigned long addToCrc32( unsigned char* blk_adr,
+unsigned long addToMsgCrc32( unsigned char* blk_adr,
                           unsigned long blk_len,
                           unsigned long crc);
 

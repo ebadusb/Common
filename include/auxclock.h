@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/auxclock.h 1.9 2004/01/26 18:51:21Z jl11312 Exp jl11312 $
  * $Log: auxclock.h $
+ * Revision 1.7  2003/01/08 23:43:01Z  ms10234
+ * Added new function to return auxClock initialization time.
  * Revision 1.6  2002/12/16 18:29:31Z  jl11312
  * - optimized low-level timer related functions
  * Revision 1.5  2002/12/13 19:03:06  pn02526
@@ -26,7 +28,9 @@
 #if !defined(AUXCLOCK_H)
 #define AUXCLOCK_H
 
+#include <vxWorks.h>
 #include <mqueue.h>
+#include <semLib.h>
 #include <time.h>
 
 typedef struct
@@ -39,36 +43,32 @@ typedef struct
 extern "C" {
 #endif /* ifdef __cplusplus */
 
+/* Maximum number of tasks attached to an aux clock driven semaphore */
+enum { MaxAuxClockSemaphores = 3 };
+
 /* Get the interrupt rate (in Hertz) for the auxClockTicks counter. */
-int auxClockRateGet();
+int auxClockRateGet(void);
 
 /* Initialize the auxClockTicks facility. Call at system initialization time. */
-void auxClockInit();
+void auxClockInit(void);
 
 /* Get the current value of the raw auxClock time. */
-void auxClockTimeGet(rawTime *);
+void auxClockTimeGet(rawTime * current);
 
 /* Get the time the auxClock was initialized. */
-void auxClockInitTimeGet(timespec *);
+void auxClockInitTimeGet(timespec * initTime);
 
 /* Enable the auxClock Semaphore to toggle every given number of microseconds. */
-void auxClockSemaphoreEnable( unsigned int /* number of microseconds */ );
+typedef enum
+{
+	AuxClockCountingSemaphore,
+	AuxClockBinarySemaphore
+} AuxClockSemaphoreType;
 
-/* Wait for the auxClock Semaphore to toggle. */
-STATUS auxClockBlockOnSemaphore();
+SEM_ID auxClockSemaphoreAttach(unsigned int microSecInterval, AuxClockSemaphoreType semaphoreType);
 
 /* Enable the auxClock Message Packet queue to send auxClockMuSec every given number of microseconds. */
-void auxClockMsgPktEnable( unsigned int /* number of microseconds */,
-                           const char * /* Name of Message Packet queue to which to send auxClockMuSec in a Message Packet */ );
-
-/* Return the MsgQ Send count. */
-unsigned long int auxClockQueueNotifications();
-
-/* Return the notification count when the first failure occurred. */
-unsigned long int auxClockQueueNotificationFailedAt();
-
-/* Return the errno value for the first notification failure that occurred. */
-int auxClockQueueNotificationErrno();
+void auxClockMsgPktEnable(unsigned int microSecInterval, const char * MsgPktQName);
 
 #ifdef __cplusplus
 }; // extern "C"

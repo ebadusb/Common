@@ -3,6 +3,8 @@
  *
  * $Header: Q:/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.14 2004/01/26 18:56:15Z jl11312 Exp jd11007 $
  * $Log: auxclock.cpp $
+ * Revision 1.12  2003/04/24 19:04:09Z  jl11312
+ * - corrected routine to capture current aux clock time (IT 6009)
  * Revision 1.11  2003/01/08 23:41:46Z  ms10234
  * Added function to get the time when the auxClockInit function was called
  * Revision 1.10  2002/12/16 18:30:25Z  jl11312
@@ -74,13 +76,10 @@ static long long int auxClockSemaphoreNanoSecInterval;
 /* Queue notification related data */
 static mqd_t auxClockMsgPktQDes;
 static MessagePacket auxClockMsgPacket;
-
 static volatile unsigned long auxClockQueueNotifyCount;
-static volatile unsigned long auxClockQueueNotifyFailedAt;
-static volatile int auxClockQueueNotifyErrno;
 
 /* Semaphore notification related data */
-static SEM_ID auxClockSemaphoreID;
+static SEM_ID auxClockSemaphoreID[MaxAuxClockSemaphores];
 static bool   auxClockInitDone = false;
 
 static void auxClockISR( int arg )
@@ -98,15 +97,16 @@ static void auxClockISR( int arg )
 	if ( auxClockSemaphoreNanoSecInterval > 0 )
 	{
 		semaphoreNanoSecIntervalTime += auxClockNanoSecPerTick;
-		if ( semaphoreNanoSecIntervalTime >= auxClockSemaphoreNanoSecInterval )  /* Is the count completed? */
+		if ( semaphoreNanoSecIntervalTime >= auxClockSemaphoreNanoSecInterval )
 		{
-			semFlush( auxClockSemaphoreID );     /* Resume all tasks pending on the semaphore. */
-			semaphoreNanoSecIntervalTime -= auxClockSemaphoreNanoSecInterval; /* Decrement the notification accumulator, probably leaving a remainder */
+			/* Notify all tasks attached to an aux clock semaphore */
+			for ( int idx=0; idx<MaxAuxClockSemaphores; idx++ )
+			{
+				if ( auxClockSemaphoreID[idx] ) semGive(auxClockSemaphoreID[idx]);
+			}
+
+			semaphoreNanoSecIntervalTime -= auxClockSemaphoreNanoSecInterval;
 	   }
-	}
-	else
-	{
-		semaphoreNanoSecIntervalTime = 0;
 	}
 
 	if ( auxClockQueueNanoSecInterval > 0 )
@@ -122,21 +122,9 @@ static void auxClockISR( int arg )
 			auxClockMsgPacket.updateCRC();
 	
 			/* Post the message on the given Message Packet queue for task notification. */
-			if ( mq_send ( auxClockMsgPktQDes,                   /* message queue descriptor */
-								(const void *) &auxClockMsgPacket,    /* message to send */
-								(size_t) sizeof( auxClockMsgPacket ), /* size of message, in bytes */
-								MQ_PRIORITY_MAX                       /* priority of message */
-							 ) == ERROR  && auxClockQueueNotifyFailedAt == 0 )
-			{
-				auxClockQueueNotifyErrno = errno;
-				auxClockQueueNotifyFailedAt = auxClockQueueNotifyCount;
-			}
+			mq_send(auxClockMsgPktQDes, &auxClockMsgPacket, sizeof(auxClockMsgPacket), MQ_PRIORITY_MAX);
 		}
    }
-   else
-	{
-		queueNanoSecIntervalTime = 0;
-	}
 
    return;
 }
@@ -152,14 +140,12 @@ void auxClockInit()
 {
 	if ( !auxClockInitDone )
 	{
-		auxClockSemaphoreID = NULL;
+		memset(auxClockSemaphoreID, 0, sizeof(auxClockSemaphoreID));
 		auxClockSemaphoreNanoSecInterval = 0;
 
 		auxClockMsgPktQDes = NULL;
 		auxClockQueueNanoSecInterval = 0;
 		auxClockQueueNotifyCount = 0;
-		auxClockQueueNotifyFailedAt = 0;
-		auxClockQueueNotifyErrno = 0;
 
 		memset((void *)&auxClockTime, 0, sizeof(auxClockTime));
 		auxClockNanoSecPerTick = 1000000000/auxClockRateGet();
@@ -190,25 +176,45 @@ void auxClockInitTimeGet(struct timespec * initTime)
 }
 
 /* Enable the auxClock semaphore to toggle every given number of microseconds. */
-void auxClockSemaphoreEnable( unsigned int microSecInterval )
+SEM_ID auxClockSemaphoreAttach(unsigned int microSecInterval, AuxClockSemaphoreType semaphoreType)
 {
+	SEM_ID	result = NULL;
+
 	if ( !auxClockInitDone )
 	{
 		auxClockInit();
 	}
 
-	if ( !auxClockSemaphoreNanoSecInterval )
+	/*
+	 *	All clock semaphores must be at the same rate (this limitation
+	 * is necessary to avoid excess computation time in the timer
+	 * interrupt handler).
+	 */
+	if ( !auxClockSemaphoreNanoSecInterval ||
+		  auxClockSemaphoreNanoSecInterval == microSecInterval*1000 )
 	{
-		auxClockSemaphoreID = semBCreate( SEM_Q_FIFO, SEM_EMPTY );
 		auxClockSemaphoreNanoSecInterval = microSecInterval * 1000;
+		for ( int idx=0; idx<MaxAuxClockSemaphores && !result; idx++ )
+		{
+			if ( !auxClockSemaphoreID[idx] )
+			{
+				switch ( semaphoreType )
+				{
+				case AuxClockCountingSemaphore:
+					auxClockSemaphoreID[idx] = semCCreate(SEM_Q_PRIORITY, SEM_EMPTY);
+					break;
+
+				case AuxClockBinarySemaphore:
+					auxClockSemaphoreID[idx] = semBCreate(SEM_Q_PRIORITY, SEM_EMPTY);
+					break;					
+				}
+				
+				result = auxClockSemaphoreID[idx];
+			}
+		}
 	}
-}
 
-
-/* Wait for the auxClock Semaphore to toggle. */
-STATUS auxClockBlockOnSemaphore()
-{
-	return semTake( auxClockSemaphoreID, WAIT_FOREVER );
+	return result;
 }
 
 /* Enable the auxClock Message Packet queue to send auxClockMuSec every given number of microseconds. */
@@ -234,23 +240,5 @@ void auxClockMsgPktEnable( unsigned int microSecInterval /* number of microsecon
 			auxClockQueueNanoSecInterval = microSecInterval * 1000;
 	   }
    }
-}
-
-/* Return the notification count. */
-unsigned long int auxClockQueueNotifications()
-{
-    return auxClockQueueNotifyCount;
-}
-
-/* Return the notification count when the first failure occurred. */
-unsigned long int auxClockQueueNotificationFailedAt()
-{
-    return auxClockQueueNotifyFailedAt;
-}
-
-/* Return the errno value for the first notification failure that occurred. */
-int auxClockQueueNotificationErrno()
-{
-    return auxClockQueueNotifyErrno;
 }
 

@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.11  2002/09/24 16:46:09Z  rm70006
+ * HISTORY:    Add extra debugging ability.
  * HISTORY:    Revision 1.10  2002/09/19 16:04:10Z  rm70006
  * HISTORY:    Added fast get for large datastore items.
  * HISTORY:    Revision 1.9  2002/09/18 22:13:21Z  rm70006
@@ -113,6 +115,8 @@ public:
 
 // Class Methods
 protected:
+   const dataType & GetRef() const { return *_data; };
+
    virtual void ReadSelf  (ifstream &pfrfile);
    virtual void WriteSelf (ofstream &pfrfile);
 

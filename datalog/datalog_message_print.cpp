@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_print.cpp 1.4 2002/10/08 12:09:50Z jl11312 Exp rm70006 $
  * $Log: datalog_message_print.cpp $
+ * Revision 1.3  2002/08/28 14:37:07  jl11312
+ * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.2  2002/08/15 20:53:56  jl11312
  * - added support for periodic logging
  * Revision 1.1  2002/07/18 21:20:56  jl11312
@@ -291,6 +293,7 @@ static PrintArg_Type getNextFormatArg(const char * format, size_t& currentIndex,
 			case 'd':
 			case 'u':
 			case 'x':
+			case 'X':
 				result = ( longModifierPresent ) ? PrintArg_Long : PrintArg_Int;
 				parseDone = true;
 				break;

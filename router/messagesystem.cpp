@@ -10,10 +10,24 @@
 #include <taskVarLib.h>
 #include <stdio.h>
 
+#include "datalog.h"
 #include "error.h"
 #include "messagesystem.h"
 
 MessageSystem *MessageSystem::_TheMessageSystem=0;
+
+
+void MessageSystem::datalogErrorHandler( const char * file, int line, 
+                                         DataLog_ErrorType error, 
+                                         const char * msg, 
+                                         int continuable )
+{
+   if ( !continuable )
+   {
+      _FATAL_ERROR( __FILE__, __LINE__, "Data log error" );
+   }
+   cerr << "Data log error - " << error << " : " << msg << endl;
+}
 
 MessageSystem::MessageSystem() :
    _Dispatcher( 0 )
@@ -98,11 +112,15 @@ void MessageSystem::createDispatcher()
 
 bool MessageSystem::init( const char *qname, const unsigned int qsize, const bool block )
 {
+   //
+   // Install the datalog error handler ...
+   datalog_SetTaskErrorHandler( taskIdSelf(), &MessageSystem::datalogErrorHandler );
+
    if ( _Dispatcher != 0 )
    {
-      char buffer[80];
-      sprintf( buffer, "MessageSystem object already initialized.");
-      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "MessageSystem object already initialized." << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "MessageSystem initialization failed" );
       return false;
    }
 
@@ -116,10 +134,11 @@ bool MessageSystem::init( const char *qname, const unsigned int qsize, const boo
 
    if ( _TheMessageSystem != 0 )
    {
-      char buffer[80];
-      sprintf( buffer, "Static variable, _TheMessageSystem not = 0 ( value=%lx, currentObj=%lx ).",
-               (unsigned long)_TheMessageSystem, (unsigned long)this );
-      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "Static variable, _TheMessageSystem not = 0 ( value=" 
+                           << hex << (unsigned long)_TheMessageSystem << ", currentObj=" 
+                           << (unsigned long)this << " )." << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "MessageSystem initialization failed" );
       return false;
    }
 
@@ -129,9 +148,9 @@ bool MessageSystem::init( const char *qname, const unsigned int qsize, const boo
    {
       //
       // Notify the system of the error ...
-      char buffer[80];
-      sprintf( buffer, "taskVarAdd failed.  errno=%d", errno  );
-      _FATAL_ERROR( __FILE__, __LINE__, buffer);
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "taskVarAdd failed.  errno=" << errno << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "MessageSystem initialization failed" );
       return false;
    }
 

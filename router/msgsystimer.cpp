@@ -67,6 +67,18 @@ int MsgSysTimer::taskDeleteHook( WIND_TCB *pTcb )
    return 1;
 }
 
+void MsgSysTimer::datalogErrorHandler( const char * file, int line, 
+                                       DataLog_ErrorType error, 
+                                       const char * msg, 
+                                       int continuable )
+{
+   if ( !continuable )
+   {
+      _FATAL_ERROR( __FILE__, __LINE__, "Data log error" );
+   }
+   cerr << "Data log error - " << error << " : " << msg << endl;
+}
+
 MsgSysTimer::MsgSysTimer() 
  : _Time( 0 ),
    _TimerMsgMap(),
@@ -93,6 +105,10 @@ bool MsgSysTimer::init()
    // Add the task delete hooks to catch all task deletion and 
    //  keep the timer lists up to date ...
    taskDeleteHookAdd( (FUNCPTR) &MsgSysTimer::taskDeleteHook );
+
+   //
+   // Install the datalog error handler ...
+   datalog_SetTaskErrorHandler( taskIdSelf(), &MsgSysTimer::datalogErrorHandler );
 
    //
    // Set up my queue ...
@@ -182,12 +198,12 @@ void MsgSysTimer::maintainTimers()
       {
          //
          // Error ...
-         char buffer[256];
          unsigned long crc = mp.crc();
          mp.updateCRC();
-         sprintf( buffer,"Maintain timers - message CRC validation failed for MsgId=%lx, CRC=%lx and should be %lx",
-                  mp.msgData().msgId(), crc, mp.crc() );
-         _FATAL_ERROR( __FILE__, __LINE__, buffer );
+         DataLog_Critical criticalLog;
+         DataLog(criticalLog) << "Maintain timers - message CRC validation failed for MsgId=" << hex << mp.msgData().msgId() 
+                              << ", CRC=" << crc << " and should be " << mp.crc() << endmsg;
+         _FATAL_ERROR( __FILE__, __LINE__, "CRC check failed" );
          return;
       }  
 
@@ -196,7 +212,7 @@ void MsgSysTimer::maintainTimers()
       //
       // Check the overrun counter to see if I'm behind on time ...
       //  ( Log the result if I am behind )
-      unsigned long overruns =0; // = auxClockNotificationOverruns();
+      unsigned long overruns = auxClockNotificationOverruns();
       if ( overruns > 0 )
       {
          DataLog_Level logError( LOG_ERROR );
@@ -408,10 +424,10 @@ void MsgSysTimer::checkTimers()
                  && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
          if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
          {
-            char buffer[256];
-            sprintf( buffer,"Check timers - timer Id=%lx, send failed",
-                     mpPtr->msgData().msgId() );
-            _FATAL_ERROR( __FILE__, __LINE__, buffer );
+            DataLog_Critical criticalLog;
+            DataLog(criticalLog) << "Check timers - timer Id=" << hex << mpPtr->msgData().msgId() 
+                                 << ", send failed" << endmsg;
+            _FATAL_ERROR( __FILE__, __LINE__, "mq_send failed" );
          }
          
       }

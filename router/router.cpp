@@ -70,6 +70,18 @@ int Router::taskDeleteHook( WIND_TCB *pTcb )
    return 1;
 }
 
+void Router::datalogErrorHandler( const char * file, int line, 
+                                  DataLog_ErrorType error, 
+                                  const char * msg, 
+                                  int continuable )
+{
+   if ( !continuable )
+   {
+      _FATAL_ERROR( __FILE__, __LINE__, "Data log error" );
+   }
+   cerr << "Data log error - " << error << " : " << msg << endl;
+}
+
 Router::Router()
 :  _RouterQueue( 0 ),
    _MsgIntegrityMap(),
@@ -97,6 +109,10 @@ bool Router::init()
    //  to catch all task deletion and keep the task lists up to date ...
    taskCreateHookAdd( (FUNCPTR) &Router::taskCreateHook );
    taskDeleteHookAdd( (FUNCPTR) &Router::taskDeleteHook );
+
+   //
+   // Install the datalog error handler ...
+   datalog_SetTaskErrorHandler( taskIdSelf(), &Router::datalogErrorHandler );
 
    struct mq_attr attr;                                    // message queue attributes 
    attr.mq_maxmsg =  MessageSystemConstant::DEFAULT_ROUTER_Q_SIZE; // set max number of messages 
@@ -166,12 +182,12 @@ void Router::dispatchMessages()
       {
          //
          // Error ...
-         char buffer[256];
          unsigned long crc = mp.crc();
          mp.updateCRC();
-         sprintf( buffer,"Dispatching message - message CRC validation failed for MsgId=%lx, CRC=%lx and should be %lx",
-                  mp.msgData().msgId(), crc, mp.crc() );
-         _FATAL_ERROR( __FILE__, __LINE__, buffer );
+         DataLog_Critical criticalLog;
+         DataLog(criticalLog) << "Dispatching message - message CRC validation failed for MsgId=" << hex << mp.msgData().msgId() 
+                              << ", CRC=" << crc << " and should be " << mp.crc() << endmsg;
+         _FATAL_ERROR( __FILE__, __LINE__, "CRC check failed" );
       }  
 
       processMessage( mp, priority );
@@ -295,10 +311,9 @@ bool Router::initGateways()
          {
             //
             // Error ...
-            char buffer[256];
-            sprintf( buffer,"Router init - could not spawn gateway for address -> %lx",
-                     netAddress );
-            _FATAL_ERROR( __FILE__, __LINE__, buffer );
+            DataLog_Critical criticalLog;
+            DataLog(criticalLog) << "Router init - could not spawn gateway for address -> " << hex << netAddress << endmsg;
+            _FATAL_ERROR( __FILE__, __LINE__, "Gateway spawn error" );
             return false;
          }
    
@@ -440,9 +455,9 @@ void Router::connectWithGateway( const MessagePacket &mp )
       // ... error, the gateway has already established a connection
       //
       // Error ...
-      char buffer[256];
-      sprintf( buffer,"Connect with gateway=%lx - already connected", mp.msgData().nodeId() );
-      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "Connect with gateway=" << hex << mp.msgData().nodeId() << " - already connected" << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "Gateway connect failed" );
    }
 }
 
@@ -501,9 +516,9 @@ void Router::registerTask( unsigned long tId, const char *qName )
          //  before connecting to the router.
          //
          // Error ...
-         char buffer[256];
-         sprintf( buffer,"Register task=%lx - message queue open failed", tId );
-         _FATAL_ERROR( __FILE__, __LINE__, buffer );
+         DataLog_Critical criticalLog;
+         DataLog(criticalLog) << "Register task=" << hex << tId << " - message queue open failed" << endmsg;
+         _FATAL_ERROR( __FILE__, __LINE__, "mq_open failed" );
       }
    }
 
@@ -572,10 +587,9 @@ void Router::checkMessageId( unsigned long msgId, const char *mname )
       {
          //
          // Error ...
-         char buffer[256];
-         sprintf( buffer,"Check message Id - Message name=%s to Id=%lx integrity check failed",
-                  mname, msgId );
-         _FATAL_ERROR( __FILE__, __LINE__, buffer );
+         DataLog_Critical criticalLog;
+         DataLog(criticalLog) << "Check message Id - Message name=" << mname << " to Id=" << hex << msgId << " integrity check failed" << endmsg;
+         _FATAL_ERROR( __FILE__, __LINE__, "Message integrity check failed" );
       }
    }
    //
@@ -603,9 +617,9 @@ void Router::checkMessageId( unsigned long msgId )
    {
       //
       // Error ...
-      char buffer[256];
-      sprintf( buffer,"Check message Id - Message Id=%lx unregistered use in message system", msgId );
-      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "Check message Id - Message Id=" << hex << msgId << " unregistered use in message system" << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "Message integrity check failed" );
    }
 }
 
@@ -863,10 +877,9 @@ void Router::sendMessage( const MessagePacket &mp, int priority )
          {
             //
             // Error ...
-            char buffer[256];
-            sprintf( buffer,"Sending message=%lx - Task Id=%lx not found in task list",
-                     mp.msgData().msgId(), (*titer).first );
-            _FATAL_ERROR( __FILE__, __LINE__, buffer );
+            DataLog_Critical criticalLog;
+            DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() << "- Task Id=" << (*titer).first << " not found in task list" << endmsg;
+            _FATAL_ERROR( __FILE__, __LINE__, "Task lookup failed" );
          }
          //
          // If the task was found to be registered ...
@@ -897,10 +910,10 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
       // The task's queue is full!
       //
       // Error ...
-      char buffer[256];
-      sprintf( buffer,"Sending message=%lx - Task Id=%lx queue full (%d messages)",
-               mp.msgData().msgId(), tId, qattributes.mq_curmsgs );
-      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() << " - Task Id=" << tId 
+                           << " queue full (" << dec << qattributes.mq_curmsgs << " messages)" << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
    }
 
    //
@@ -913,10 +926,10 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
    {
       //
       // Error ...
-      char buffer[256];
-      sprintf( buffer,"Sending message=%lx - Task Id=%lx send failed",
-               mp.msgData().msgId(), tId );
-      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+                           << " - Task Id=" << tId << " send failed" << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "mq_send failed" );
    }
 }
 
@@ -962,10 +975,9 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
                {
                   //
                   // Error ...
-                  char buffer[256];
-                  sprintf( buffer,"Gateway not found=%lx - Gateway registered for a message, but no active connection",
-                           (*gatewayiter) );
-                  _FATAL_ERROR( __FILE__, __LINE__, buffer );
+                  DataLog_Critical criticalLog;
+                  DataLog(criticalLog) << "Gateway not found=" << hex << (*gatewayiter) << " - Gateway registered for a message, but no active connection" << endmsg;
+                  _FATAL_ERROR( __FILE__, __LINE__, "Gateway lookup failed" );
                }
             }
          }
@@ -1002,12 +1014,9 @@ void Router::sendMessageToGateway( sockinetbuf *sockbuffer, const MessagePacket 
    {
       //
       // Error ...
-      char buffer[256];
-      sprintf( buffer,"Sending message=%lx - Gateway=%s (%ld) send failed",
-               mp.msgData().msgId(), 
-               sockbuffer->peerhost(), 
-               mp.msgData().nodeId() );
-      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() << " - Gateway=" << sockbuffer->peerhost() << " (" << mp.msgData().nodeId() << ") send failed" << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "socket send failed" );
    }
    sockbuffer->flush_all();
 }
@@ -1032,10 +1041,9 @@ bool Router::sendMessageToSpoofer( const MessagePacket &mp, int priority )
             {
                //
                // Error ...
-               char buffer[256];
-               sprintf( buffer,"Sending message=%lx - Task Id=%lx not found in task list",
-                        mp.msgData().msgId(), mp.msgData().taskId() );
-               _FATAL_ERROR( __FILE__, __LINE__, buffer );
+               DataLog_Critical criticalLog;
+               DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() << " - Task Id=" << mp.msgData().taskId() << " not found in task list" << endmsg;
+               _FATAL_ERROR( __FILE__, __LINE__, "Task lookup failed" );
             }
             
             sendMessage( mp, (*tqiter).second, (*tqiter).first, priority );

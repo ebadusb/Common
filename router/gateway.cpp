@@ -13,6 +13,7 @@
 #include <time.h>
 #include <taskHookLib.h>
 
+#include "datalog.h"
 #include "error.h"
 #include "gateway.h"
 #include "messagesystemconstant.h"
@@ -30,6 +31,18 @@ int Gateway::Gateway_main( short port )
    return OK;
 }
 
+void Gateway::datalogErrorHandler( const char * file, int line, 
+                                   DataLog_ErrorType error, 
+                                   const char * msg, 
+                                   int continuable )
+{
+   if ( !continuable )
+   {
+      _FATAL_ERROR( __FILE__, __LINE__, "Data log error" );
+   }
+   cerr << "Data log error - " << error << " : " << msg << endl;
+}
+
 Gateway::Gateway()
 :  _ServerSocket( sockbuf::sock_stream ),
    _ClientSocket( ),
@@ -45,6 +58,10 @@ Gateway::~Gateway()
 
 bool Gateway::init( short port )
 {
+   //
+   // Install the datalog error handler ...
+   datalog_SetTaskErrorHandler( taskIdSelf(), &Gateway::datalogErrorHandler );
+
    //
    // Open the Router's queue
    //
@@ -92,10 +109,9 @@ void Gateway::receiveLoop()
 
       if ( byte_count == ERROR )
       {
-         char buffer[256];
-         sprintf( buffer,"Gateway::receiveLoop : socket receive failed, error no -> %d",
-                  errnoGet() );
-         _FATAL_ERROR( __FILE__, __LINE__, buffer );
+         DataLog_Critical criticalLog;
+         DataLog(criticalLog) << "Gateway::receiveLoop : socket receive failed, error no -> " << errnoGet() << endmsg;
+         _FATAL_ERROR( __FILE__, __LINE__, "socket receive failed" );
          return;
       }
 

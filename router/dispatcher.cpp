@@ -7,8 +7,9 @@
 
 #include <vxWorks.h>
 
-#include "error.h"
+#include "datalog.h"
 #include "dispatcher.h"
+#include "error.h"
 #include "messagesystemconstant.h"
 
 
@@ -328,9 +329,9 @@ void Dispatcher :: processMessage( MessagePacket &mp )
          {
             if ( ((MessageBase*)(*siter))->notify( mp ) == false )
             {
-               char buffer[256];
-               sprintf( buffer, "Message notification failed for MsgId=%lx", mp.msgData().msgId() );
-               _FATAL_ERROR( __FILE__, __LINE__, buffer );
+               DataLog_Critical criticalLog;
+               DataLog(criticalLog) << "Message notification failed for MsgId=" << hex << mp.msgData().msgId() << endmsg;
+               _FATAL_ERROR( __FILE__, __LINE__, "Message notification failed" );
             }
          }
    }
@@ -338,12 +339,12 @@ void Dispatcher :: processMessage( MessagePacket &mp )
    {
       //
       // Error ...
-      char buffer[256];
       unsigned long crc = mp.crc();
       mp.updateCRC();
-      sprintf( buffer, "Message CRC validation failed for MsgId=%lx, CRC=%lx and should be %lx",
-               mp.msgData().msgId(), crc, mp.crc() );
-      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "Message CRC validation failed for MsgId=" << hex << mp.msgData().msgId() 
+                           << ", CRC=" << crc << " and should be " <<  mp.crc() << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "CRC check failed" );
       return;
    }
 }

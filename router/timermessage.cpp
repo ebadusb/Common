@@ -7,6 +7,7 @@
 
 #include <vxWorks.h>
 
+#include "datalog.h"
 #include "error.h"
 #include "messagepacket.h"
 #include "messagesystem.h"
@@ -48,9 +49,9 @@ void TimerMessage :: armTimer( TimerState arm )
    if ( _DistributionType == SNDRCV_RECEIVE_ONLY )
    {
       postConstructInit();
-      char buffer[80];
-      sprintf( buffer, "Message Id %lx ( %s ) not initialized for sending", _MsgId, _MessageName.data() );
-      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "Message Id " << hex << _MsgId << " ( " << _MessageName.data() << " ) not initialized for sending" << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "Message usage error" );
       return;
    }
 

@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.4  2002/08/23 14:53:51Z  rm70006
+ * HISTORY:    changed binditem to work with 486 compiler bug
  * HISTORY:    Revision 1.3  2002/07/16 21:05:05Z  rm70006
  * HISTORY:    Fix bug in check for multiple writers.
  * HISTORY:    Revision 1.2  2002/06/24 20:37:26Z  rm70006
@@ -60,7 +62,7 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
       *dataPtr = (T *)valPtr;
       created = false;
 
-      DataLog(*(ds->_debug)) << "Attaching item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
+      //DataLog(*(ds->_debug)) << "Attaching item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
    }
    else
    {
@@ -284,10 +286,10 @@ template <class dataType> RangedElement<dataType>::~RangedElement()
 //
 template <class dataType> void RangedElement<dataType>::Register (DataStore *ds, Role role, PfrType pfr, const dataType min, const dataType max)
 {
-   BaseElement::Register(ds, role, pfr);
-
    _min = min;
    _max = max;
+
+   BaseElement::Register(ds, role, pfr);
 }
 
 
@@ -297,10 +299,10 @@ template <class dataType> void RangedElement<dataType>::Register (DataStore *ds,
 //
 template <class dataType> void RangedElement<dataType>::Register (DataStore *ds, Role role, PfrType pfr, const dataType min, const dataType max, const dataType &initValue)
 {
-   BaseElement::Register(ds, role, pfr, initValue);
-
    _min = min;
    _max = max;
+
+   BaseElement::Register(ds, role, pfr, initValue);
 }
 
 
@@ -313,12 +315,13 @@ template <class dataType> bool RangedElement<dataType>::Set(const dataType &data
    if ( (data >= _min) && 
         (data <= _max) )
    {
-      return Set(data);
+      return BaseElement::Set(data);
    }
    else
    {
       // Log Error
-      DataLog(*(_ds->_debug)) << "RangedElement: Set Failed.  Value is out of Range.  Value=" << data 
+      DataLog(*(_ds->_debug)) << "RangedElement: Set Failed in datastore " << _ds->Name() 
+           << ".  Value is out of Range.  Value=" << data 
            << " Range=" << _min << "->" << _max << endmsg;
       return false;
    }

@@ -120,7 +120,7 @@ protected:
    //  into the message data format.  The type of the 
    //  message data is not known, so derived classes must
    //  supply the functionality.
-   virtual bool retrieveMsgData() = 0;
+   virtual void retrieveMsgData() = 0;
 
    //
    // Function to produce a unique message Id
@@ -132,6 +132,12 @@ protected:
    //  corrupt, the function returns 'false'
    bool notify( const MessagePacket &mp );
    bool notify( const MessagePacket &mp, const CallbackBase &cb );
+
+   //
+   // This function finds the given message packet in the
+   //  message packet list and copies it, preserving the distribution
+   //  type.
+   bool findAndCopy( const MessagePacket &mp );
 
    //
    // Clean-up any dynamic memory

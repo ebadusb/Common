@@ -71,7 +71,7 @@ protected:
 
    //
    // Put the packet's data into the 'T' data format ...
-   virtual bool retrieveMsgData();
+   virtual void retrieveMsgData();
 
 private:
    Message( Message const &);           // not implemented
@@ -169,7 +169,7 @@ void Message<T>::setMsgData()
 }
 
 template < class T >
-bool Message<T>::retrieveMsgData()
+void Message<T>::retrieveMsgData()
 {
    //
    // Get the message data out of the packets ...
@@ -185,12 +185,7 @@ bool Message<T>::retrieveMsgData()
       offset += ((MessagePacket*)(*pckt))->msgData().packetLength();
 
       (*pckt)->unopened( false );
-
-      if ( (*pckt)->validCRC() == false )
-         return false;
    }
-
-   return true;
 }
 
 #endif

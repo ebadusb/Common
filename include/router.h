@@ -153,6 +153,12 @@ protected:
    //
    // This function will synchronize the remote node's registered messages with my list
    void synchUpRemoteNode( sockinetbuf *sockbuffer );
+
+   //
+   // This function will return the TCP port to which all requests to remote
+   //  nodes will be attempted.
+   short getGatewayPort();
+
    //
    // This function will close the router's message queues and socket connections.
    void shutdown();
@@ -165,6 +171,9 @@ protected:
    //
    // The router message queue ...
    mqd_t                                                        _RouterQueue;
+   //
+   // The router message queue ...
+   mqd_t                                                        _TimerQueue;
 
    //
    // This structure will be used to verify that no different messages with
@@ -197,6 +206,7 @@ protected:
    //  will be indexed on gateway inet address.  The second entry in the map will contain
    //  the socket connection to the gateway.
    map< unsigned long, sockinetbuf* >                           _InetGatewayMap;
+   map< unsigned long, unsigned int >                           _GatewayConnAtmptMap;
 
    //
    // This structure will hold the message Ids of the messages the spoofer wants.  The map

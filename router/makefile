@@ -22,18 +22,17 @@ include $(LOCAL_TOP)/offset.mk
 
 GATEWAY=$(BINDIR)/gateway
 PEARLYGATE=$(BINDIR)/pearlygate
-ROUTER=$(BINDIR)/router
 TCP_GATE=$(BINDIR)/tcp_gate
-PROGRAMS=$(GATEWAY) $(PEARLYGATE) $(ROUTER) $(TCP_GATE)
+PROGRAMS=$(GATEWAY) $(PEARLYGATE) $(TCP_GATE)
 
 MQUEUE_LIB=/usr/lib/mqueue3r.lib
 
 CPPSRCS=tcp_gate.cpp \
-	msg.cpp new.cpp dispatch.cpp sinver.cpp phdspat.cpp spoofdsp.cpp \
+	msg.cpp new.cpp dispatch.cpp phdspat.cpp spoofdsp.cpp \
 	DebugClass.cpp RegisterMsgs.cpp
 CPPOBJS=${CPPSRCS:.cpp=.o}
 
-CSRCS=gateway.c router.c pearlyg.c \
+CSRCS=gateway.c router.c pearlyg.c sinver.c \
 	crc.c mq_check.c error.c debug.c
 COBJS=${CSRCS:.c=.o}
 
@@ -51,13 +50,10 @@ $(GATEWAY): gateway.o $(LIBDIR)/$(ROUTERLIB)
 $(PEARLYGATE) : pearlyg.o $(LIBDIR)/$(ROUTERLIB)
 	$(LD) $(LDFLAGS) pearlyg.o $(ROUTERLIB) -o $(PEARLYGATE)
 
-$(ROUTER): router.o $(LIBDIR)/$(ROUTERLIB)
-	$(LD) $(LDFLAGS) router.o $(ROUTERLIB) -o $(ROUTER)
-
 $(LIBDIR)/$(ROUTERLIB) : msg.o new.o dispatch.o crc.o sinver.o phdspat.o \
-		spoofdsp.o mq_check.o error.o DebugClass.o debug.o RegisterMsgs.o
+		spoofdsp.o mq_check.o error.o DebugClass.o debug.o RegisterMsgs.o router.o
 		$(LIB_BLD_CMD) $(LIBDIR)/$(ROUTERLIB) +$(MQUEUE_LIB) +msg.o +new.o +dispatch.o +crc.o \
-		+sinver.o +phdspat.o +spoofdsp.o +mq_check.o +error.o \
+		+sinver.o +phdspat.o +spoofdsp.o +mq_check.o +error.o +router.o \
 		+debug.o +DebugClass.o RegisterMsgs.o
 
 #
@@ -154,12 +150,15 @@ gateway.o:gateway.c
 router.o:../include/crc.h
 router.o:../include/error.h
 router.o:../include/msghdr.h
+router.o:../include/shutdown.h
 router.o:../include/sinver.h
 router.o:mq_check.h
 router.o:router.c
 pearlyg.o:../include/error.h
 pearlyg.o:../include/sinver.h
 pearlyg.o:pearlyg.c
+sinver.o:../include/sinver.h
+sinver.o:sinver.c
 crc.o:../include/crc.h
 crc.o:crc.c
 mq_check.o:../include/error.h

@@ -5,8 +5,10 @@
  * FILENAME: softcrc.c
  * PURPOSE: main code for crc utilities
  * CHANGELOG:
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.cpp 1.6 2002/09/20 19:30:23Z td07711 Exp rm70006 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.cpp 1.10 2003/06/26 22:33:44Z jl11312 Exp MS10234 $
  * $Log: softcrc.cpp $
+ * Revision 1.6  2002/09/20 19:30:23Z  td07711
+ * fix some constness mismatches
  * Revision 1.5  2002/09/19 22:34:44  td07711
  * port to vxworks
  * Revision 1.4  2000/12/08 01:54:04  ms10234
@@ -827,8 +829,10 @@ void loginfo(char* msg)
    ASSERT(msg != 0);
 
    sprintf(buf, "%.256s: %.256s", ProgramName, msg);
+
    if (Verbosity > 0)
-      fprintf(stdout, buf);
+      fprintf(stdout, "%.256s: %.256s", ProgramName, msg);
+
    TRACELOG(buf);
 }
 
@@ -848,8 +852,11 @@ void logerrno(char* msg)
 
    sprintf(buf, "ERROR %.256s: %.256s\n    errno=%d %.256s\n",
            ProgramName, msg, errno, strerror(errno));
+
    if (Verbosity > 0)
-      fprintf(stderr, buf);
+      fprintf(stderr, "ERROR %.256s: %.256s\n    errno=%d %.256s\n",
+           ProgramName, msg, errno, strerror(errno));
+   
    TRACELOG(buf);
 }
 
@@ -867,8 +874,10 @@ void logerror(char* msg)
    ASSERT(msg != 0);
 
    sprintf(buf, "ERROR %.256s: %.256s", ProgramName, msg);
+
    if (Verbosity > 0)
-      fprintf(stderr, buf);
+      fprintf(stderr, "ERROR %.256s: %.256s", ProgramName, msg);
+
    TRACELOG(buf);
 }
 
@@ -899,8 +908,10 @@ void logwarning(char* msg)
    ASSERT(msg != 0);
 
    sprintf(buf, "Warning %.256s: %.256s", ProgramName, msg);
+
    if (Verbosity > 0)
-      fprintf(stdout, buf);
+      fprintf(stdout, "Warning %.256s: %.256s", ProgramName, msg);
+
    TRACELOG(buf);
 }
 

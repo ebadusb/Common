@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.2  2002/03/19 16:27:20  jl11312
+ * - added the missing periodic logging functions
  * Revision 1.1  2002/03/19 16:11:36  jl11312
  * Initial revision
  *
@@ -117,16 +119,13 @@ public:
 
 #define DataLog(instance) (instance)(__FILE__, __LINE__)
 
-template<class Value> DataLog_Result datalog_AddRef(const Value& ref, const char * key, const char * description);
-template<class Value, class Arg> DataLog_Result datalog_AddFunc(Value (* func)(const Arg& arg), const Arg& arg, const char * key, const char * description);
-
-template<class Value> DataLog_Result datalog_AddRef(const Value& ref, const char * key, const char * description)
+template<class Value> inline DataLog_Result datalog_AddRef(const Value& ref, const char * key, const char * description)
    {
       printf("datalog_AddRef key = %s, description = %s\n", key, description);
       return DataLog_OK;
    }
 
-template<class Value, class Arg> DataLog_Result datalog_AddFunc(Value (* func)(const Arg& arg), const Arg& arg, const char * key, const char * description)
+template<class Value, class Arg> inline DataLog_Result datalog_AddFunc(Value (* func)(const Arg& arg), const Arg& arg, const char * key, const char * description)
    {
       printf("datalog_AddFunc key = %s, description = %s\n", key, description);
       return DataLog_OK;
@@ -137,26 +136,26 @@ template<class Value, class Arg> DataLog_Result datalog_AddFunc(Value (* func)(c
  * handled correctly
  */
 typedef char * DataLog_CharPtr;
-template<> DataLog_Result datalog_AddRef<DataLog_CharPtr>(const DataLog_CharPtr& ref, const char * key, const char * description)
+template<> inline DataLog_Result datalog_AddRef<DataLog_CharPtr>(const DataLog_CharPtr& ref, const char * key, const char * description)
    {
       printf("datalog_AddRef(char *) key = %s, description = %s\n", key, description);
       return DataLog_OK;
    }
 
-template<class Arg> DataLog_Result datalog_AddFunc(DataLog_CharPtr (* func)(const Arg& arg), const Arg& arg, const char * key, const char * description)
+template<class Arg> inline DataLog_Result datalog_AddFunc(DataLog_CharPtr (* func)(const Arg& arg), const Arg& arg, const char * key, const char * description)
    {
       printf("datalog_AddFunc(char *) key = %s, description = %s\n", key, description);
       return DataLog_OK;
    }
 
 typedef const char * DataLog_ConstCharPtr;
-template<> DataLog_Result datalog_AddRef<DataLog_ConstCharPtr>(const DataLog_ConstCharPtr& ref, const char * key, const char * description)
+template<> inline DataLog_Result datalog_AddRef<DataLog_ConstCharPtr>(const DataLog_ConstCharPtr& ref, const char * key, const char * description)
    {
       printf("datalog_AddRef(const char *) key = %s, description = %s\n", key, description);
       return DataLog_OK;
    }
 
-template<class Arg> DataLog_Result datalog_AddFunc(DataLog_ConstCharPtr (* func)(const Arg& arg), const Arg& arg, const char * key, const char * description)
+template<class Arg> inline DataLog_Result datalog_AddFunc(DataLog_ConstCharPtr (* func)(const Arg& arg), const Arg& arg, const char * key, const char * description)
    {
       printf("datalog_AddFunc(const char *) key = %s, description = %s\n", key, description);
       return DataLog_OK;

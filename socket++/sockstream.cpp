@@ -480,6 +480,8 @@ int sockbuf::send (const void* buf, int len, int msgf)
 {
    if(stmo != -1 && is_writeready (stmo)==0) return 0;
 
+   DataLog_Critical _error;
+
 	char * cbuf = (char *)buf;
    int wlen=0;
    while(len>0)
@@ -492,6 +494,8 @@ int sockbuf::send (const void* buf, int len, int msgf)
       }
       len -= wval;
       wlen += wval;
+      if ( len > 0 )
+         DataLog( _error ) << "Send interrupted after " << wval << " bytes" << endmsg;
    }
    return wlen;
 }
@@ -696,7 +700,7 @@ int sockbuf::nodelay (int opt) const
    int old=0;
    getopt (so_nodelay, &old, sizeof (old));
    if(opt != -1)
-      setopt (so_nodelay, &opt, sizeof (opt));
+      setopt (so_nodelay, &opt, sizeof (opt), ipproto_tcp );
    return old;
 }
 

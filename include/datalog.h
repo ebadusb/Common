@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.16  2002/10/25 16:56:13  jl11312
+ * - added new form of errnoMsg stream manipulator which takes an argument for errno
  * Revision 1.15  2002/09/23 13:54:46  jl11312
  * - added access function for current log file name
  * Revision 1.14  2002/09/19 21:26:37  jl11312
@@ -42,7 +44,6 @@
 #define _DATALOG_INCLUDE
 
 #include <in.h>
-#include <iomanip.h>
 #include <inetLib.h>
 #include <sockLib.h>
 #include <stdio.h>
@@ -156,6 +157,7 @@ DataLog_Result datalog_GetBytesMissed(size_t * byteCount);
  */
 #ifdef __cplusplus
 
+#include <iomanip.h>
 #include <strstream.h>
 
 class DataLog_OutputBuffer;

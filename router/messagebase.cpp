@@ -79,6 +79,12 @@ void MessageBase::registerMsg( const CallbackBase &cb )
    if ( _RegisteredFlag == false )
    {
       int len = _MessageName.length();
+
+      //
+      // Reset my data because I am sending the message ...
+      _TaskId = taskIdSelf();
+      _NodeId = 0;
+
       //
       // Register this message with the dispatcher...
       MessagePacket regPckt;
@@ -111,6 +117,11 @@ void MessageBase::deregisterMsg( )
    _VirtualNotify = CallbackBase();
 
    int len = _MessageName.length();
+
+   //
+   // Reset my data because I am sending the message ...
+   _TaskId = taskIdSelf();
+   _NodeId = 0;
 
    //
    // Deregister this message with the dispatcher...
@@ -283,6 +294,11 @@ bool MessageBase::init( )
    unsigned long dataSize = sizeOfData();
    unsigned long leftOver = dataSize % MessageSystemConstant::MAX_MESSAGE_SIZE;
    unsigned long numPackets = ( dataSize / MessageSystemConstant::MAX_MESSAGE_SIZE ) + ( leftOver > 0 ? 1 : 0 );
+
+   //
+   // Set my data to the initial state 
+   _TaskId = taskIdSelf();
+   _NodeId = 0;
 
    for ( unsigned long i=0 ; i<numPackets ; i++ )
    {

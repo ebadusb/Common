@@ -9,6 +9,8 @@
 #ifndef _MESSAGE_H_
 #define _MESSAGE_H_
 
+#include <typeinfo>
+
 #include "messagebase.h"
 
 template < class T >
@@ -138,7 +140,8 @@ unsigned long Message<T>::sizeOfData() const
 template < class T >
 const char *Message<T>::genMessageName() 
 {
-   return typeid( *this ).name();
+   _MessageName = typeid( *this ).name();
+   return (const char*)_MessageName.data();
 }
 
 template < class T >

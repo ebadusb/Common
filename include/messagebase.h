@@ -93,7 +93,7 @@ protected:
 
    //
    // Get the message name from the member data
-   const char *messageName() const { return _MessageName.data(); }
+   const string &messageName() const { return _MessageName; }
 
    //
    // Initialization that needs to occur after construction

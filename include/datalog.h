@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.13  2002/08/28 14:36:40  jl11312
+ * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.12  2002/08/22 20:18:26  jl11312
  * - added network support
  * Revision 1.11  2002/08/15 20:54:52  jl11312
@@ -191,6 +193,7 @@ protected:
 };
 
 ostream & endmsg(ostream & stream);
+ostream & errnoMsg(ostream & stream);
 ostream & datalog_GetDefaultStream(const char * file, int line);
 
 class DataLog_Critical : public DataLog_Level

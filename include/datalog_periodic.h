@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog_periodic.h 1.2 2004/01/26 18:51:28Z jl11312 Exp jl11312 $
+ * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog_periodic.h 1.2 2004/01/26 18:51:28Z jl11312 Exp $
  * $Log: datalog_periodic.h $
+ * Revision 1.2  2004/01/26 18:51:28Z  jl11312
+ * - modifications for building under Tornado 2.2
  * Revision 1.1  2003/02/25 16:11:37Z  jl11312
  * Initial revision
  * Revision 1.3  2003/01/21 20:53:55  ms10234
@@ -134,7 +136,7 @@ public:
 
 private:
 	T * _obj;
-	Value (T::* _func)(void);
+	Value (T::* _func)(void) const;
 };
 
 template<class Value, class T> inline DataLog_Result datalog_AddMemberFunc(DataLog_SetHandle handle, T * obj, Value (T::* func)(void), const char * key, const char * description, const char * format)

@@ -40,6 +40,7 @@ public:
                                                 //  who registered 
       MESSAGE_MULTICAST_LOCAL,                  // distribute the message to everyone
                                                 //  who registered on the local node
+      TIME_UPDATE,                              // time update from the ISR
 
       SPOOFED_MESSAGE                           // spoofer has modified message
    };

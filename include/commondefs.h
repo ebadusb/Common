@@ -2,7 +2,7 @@
  *
  * Copyright (c) 1996 by Cobe BCT, Inc. All rights reserved.
  *
- * TITLE:           $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/COMMONDEFS.H 1.5 1999/08/14 00:10:33 TD10216 Exp TD10216 $:
+ * TITLE:           $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/COMMONDEFS.H 1.4 1999/08/13 00:35:42 TD10216 Exp TD10216 $:
  *
  * AUTHOR:      I D Shukov
  *
@@ -24,7 +24,7 @@
 // for a better, safer world (formerly in procdefs.h)
 typedef int iBool;
 
-// for an2_update_config (formerly in guiproc.h)
+// for an2_update_agent (formerly in guiproc.h)
 enum CONFIG_UPDATE_RESPONSES
 {
    RUN_INIT_UPDATE_COMPLETE,
@@ -44,17 +44,24 @@ extern int 	GetMachineCRC(unsigned long *iCRC, char *cCRC);
 extern char *GetLogName(void);
 
 // for an2_connected
-// This routine must be provided by a device
+// This routine must be provided by a machine
 // where return of SERVICE_ALLOWED (an2msgs.h) means continue
 extern int AN2_ConnectionOK(void);
 // provided by the library
 extern void an2_connected(int argc, char **argv);
 
 // for an2_load_agent
-// This routine must be provided by a device
+// This routine must be provided by a machine
 // where non-zero return value means its 'OK'
 extern int AN2_load_agentOK(void);
 // provided by the library
 extern void an2_load_agent(int argc, char** argv);
+
+// for an2_update_agent
+// This routine must provided by a machine
+// where non-zero return value means its 'OK'
+extern int AN2_update_agentOK(void);
+// provided by the library
+extern void an2_update_agent(int argc, char** argv);
 
 #endif

@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.6  2004/11/02 20:48:19Z  rm10919
+ *  change setText() fucntions & add checks for bitmaps in enable() & disable().
  *  Revision 1.5  2004/11/01 17:27:22Z  cf10242
  *  Change TextItem to CGUITextItem
  *  Revision 1.4  2004/10/29 15:11:13Z  rm10919
@@ -59,16 +61,16 @@ public:
       unsigned short vMargin;            // vertical and horizontal margins from edge of button to
       unsigned short hMargin;            // where any button labels are allowed to start
 
-      CGUIBitmapInfo * enabledBitmapId;  // enabled state bitmap id
-      CGUITextItem       * enabledCGUITextItem;  // label text (if any) used in enabled state
+      CGUIBitmapInfo    * enabledBitmapId;  // enabled state bitmap id
+      CGUITextItem      * enabledTextItem;  // label text (if any) used in enabled state
       CGUIText::StylingRecord * enabledTextStyle; // label text styling information in enabled state
 
-      CGUIBitmapInfo * disabledBitmapId; // disableded state bitmap id
-      CGUITextItem       * disabledCGUITextItem; // attributes for label text used in disabled state
+      CGUIBitmapInfo    * disabledBitmapId; // disableded state bitmap id
+      CGUITextItem      * disabledTextItem; // attributes for label text used in disabled state
       CGUIText::StylingRecord * disabledTextStyle; // label text styling information in disableded state
 
-      CGUIBitmapInfo * pressedBitmapId;  // pressed state bitmap id
-      CGUITextItem       * pressedCGUITextItem;  // label text used in pressed state
+      CGUIBitmapInfo    * pressedBitmapId;  // pressed state bitmap id
+      CGUITextItem      * pressedTextItem;  // label text used in pressed state
       CGUIText::StylingRecord * pressedTextStyle; // label text styling information in pressed state
 
       ButtonBehavior type;               // button behavior  

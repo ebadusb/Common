@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.h 1.6 2005/02/21 17:17:13Z cf10242 Exp psanusb $
  * $Log: cgui_window.h $
+ * Revision 1.3  2004/10/22 20:14:35Z  rm10919
+ * CGUIButton updates and changes.
  * Revision 1.2  2004/09/30 17:00:53Z  cf10242
  * Correct for initial make to work
  * Revision 1.1  2004/09/20 18:18:10Z  rm10919
@@ -60,6 +62,9 @@ public:
    void setObjectRegion  (CGUIWindowObject * obj, const CGUIRegion & newRegion);
    void setObjectVisible (CGUIWindowObject * obj, bool newVisible);
    void invalidateObjectRegion(CGUIWindowObject * obj);
+
+   void setWindowVisibility(bool newVisible);
+   bool getWindowVisibility(void){ return winVisibleGet(_id);}
 
    virtual void setDisabled(bool newDisabled) { _disabled = newDisabled;}
    virtual bool disabled(void);

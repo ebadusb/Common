@@ -3,6 +3,8 @@
  *
  * $Header: L:/vxWorks/Common/cgui/rcs/cgui_text.h 1.7 2004/11/18 22:31:41Z rm10919 Exp cf10242 $
  * $Log: cgui_text.h $
+ * Revision 1.5  2004/11/01 17:27:24Z  cf10242
+ * Change TextItem to CGUITextItem
  * Revision 1.4  2004/10/22 20:14:34Z  rm10919
  * CGUIButton updates and changes.
  * Revision 1.3  2004/09/30 17:00:52Z  cf10242
@@ -89,8 +91,8 @@ public:
    // Constructors
    //
    CGUIText(CGUIDisplay & display, CGUIWindow * parent);
-   CGUIText(CGUIDisplay & display, CGUIWindow * parent, CGUITextItem * CGUITextItem, StylingRecord * stylingRecord = NULL);
-   CGUIText(CGUIDisplay & display, CGUIWindow * parent, CGUITextItem * CGUITextItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL);
+   CGUIText(CGUIDisplay & display, CGUIWindow * parent, CGUITextItem * textItem, StylingRecord * stylingRecord = NULL);
+   CGUIText(CGUIDisplay & display, CGUIWindow * parent, CGUITextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL);
 
    //
    // Destructor
@@ -184,7 +186,7 @@ public:
    // This methods sets the text string.  When using this method
    // only use strings from the text database.
    //
-   void setText(CGUITextItem * CGUITextItem);
+   void setText(CGUITextItem * textItem);
    void setText(const char * string);
    void setText(const StringChar * string);
    void getText(char &bufferPtr);
@@ -215,7 +217,7 @@ private:
    //
    // Initialize values for text string object.
    //
-   void initializeData(CGUIWindow * parent, CGUITextItem * CGUITextItem, StylingRecord * stylingRecord);
+   void initializeData(CGUIWindow * parent, CGUITextItem * textItem, StylingRecord * stylingRecord);
    
    //
    // Substitute value in for varible in text string object.
@@ -235,7 +237,7 @@ protected:
                                     // the ofsset for RIGHTTOLEFT text string may have a negative offset.
    };
 
-   CGUITextItem       _CGUITextItem;        // This is the string id or the key to the string id
+   CGUITextItem   _textItem;        // This is the string id or the key to the string id
    StylingRecord  _stylingRecord;   // holds the styling record for an object
 
    list<LineData> _lineData;        // list of text lines for object
@@ -257,6 +259,6 @@ private:
    StringChar *   _textString;
 
    CGUIRegion     _requestedRegion; // used to determine area for LineData
-   LanguageId     _configLanguage;  // language of text string, need to know where to look for string. Not sure if this is need _CGUITextItem._languageId may be used.
+   LanguageId     _configLanguage;  // language of text string, need to know where to look for string. Not sure if this is need _textItem.languageId may be used.
 };
 #endif /* #ifndef _CGUI_TEXT_INCLUDE */

@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.4  2004/11/02 20:48:19Z  rm10919
+ *  change setText() fucntions & add checks for bitmaps in enable() & disable().
  *  Revision 1.3  2004/11/01 17:27:21Z  cf10242
  *  Change TextItem to CGUITextItem
  *  Revision 1.2  2004/10/29 15:11:13Z  rm10919
@@ -25,7 +27,7 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
                          CGUIWindow         * parent,                 // pointer to a parent window
                          ButtonData         & buttonData,             // reference to button data for bitmaps, text and behavior
                          Message<long>      * pressEventObject = NULL,// ptr to int message object to output when button is pressed and released
-                         // can be NULL to indicate no message is output
+                                                                      // can be NULL to indicate no message is output
                          Message<long>      * audioMessage = NULL,    // ptr to audio message to send when button is pressed
                          DataLog_Level      * buttonLevel = NULL,     // datalog level object used to log button press events
                          bool                 enabled = true,         // button will be constructed as enabled unless specified here
@@ -48,7 +50,6 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       buttonRegion = CGUIRegion(buttonData.left, buttonData.top, _enabledBitmap->getRegion().width, _enabledBitmap->getRegion().height);
       setRegion(buttonRegion);
       addObjectToFront(_enabledBitmap);
-
    }
    else
    {
@@ -62,16 +63,28 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _disabledBitmap = new CGUIBitmap (display, CGUIRegion(0,0,0,0), *buttonData.disabledBitmapId);
       addObjectToFront(_disabledBitmap);
    }
-
+   
    if (buttonData.pressedBitmapId)
    {
       _pressedBitmap = new CGUIBitmap (display, CGUIRegion(0,0,0,0), *buttonData.pressedBitmapId);
-      addObjectToFront(_pressedBitmap);
+      if (_pressed) 
+      { 
+         addObjectToFront(_pressedBitmap);
+      }//else
+     // {
+     //    addObjectToBack(_pressedBitmap);
+     // }
    }
 
-   if (buttonData.enabledCGUITextItem)
+
+   if (buttonData.enabledTextItem)
    {
-      _enabledText = new CGUIText(display, this, buttonData.enabledCGUITextItem, buttonData.enabledTextStyle);
+      if ((buttonData.enabledTextStyle->region.width == 0) && (buttonData.enabledTextStyle->region.height == 0))
+      {
+         buttonData.enabledTextStyle->region.width = _enabledBitmap->getRegion().width;
+         buttonData.enabledTextStyle->region.height = _enabledBitmap->getRegion().height;
+      }
+      _enabledText = new CGUIText(display, this, buttonData.enabledTextItem, buttonData.enabledTextStyle);
       _enabledText->setCaptureBackgroundColor();
    }
    else
@@ -79,9 +92,14 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _enabledText = NULL;
    }
 
-   if (buttonData.disabledCGUITextItem)
+   if (buttonData.disabledTextItem)
    {
-      _disabledText = new CGUIText(display, this, buttonData.disabledCGUITextItem, buttonData.disabledTextStyle);
+      if ((buttonData.disabledTextStyle->region.width == 0) && (buttonData.disabledTextStyle->region.height == 0))
+      {
+         buttonData.disabledTextStyle->region.width = _enabledBitmap->getRegion().width;
+         buttonData.disabledTextStyle->region.height = _enabledBitmap->getRegion().height;
+      }
+      _disabledText = new CGUIText(display, this, buttonData.disabledTextItem, buttonData.disabledTextStyle);
       _disabledText->setCaptureBackgroundColor();
       _disabledText->setVisible(false);
    }
@@ -90,9 +108,14 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _disabledText = NULL;
    }
 
-   if (buttonData.pressedCGUITextItem)
+   if (buttonData.pressedTextItem)
    {
-      _pressedText = new CGUIText(display, this, buttonData.pressedCGUITextItem, buttonData.pressedTextStyle);
+      if ((buttonData.pressedTextStyle->region.width == 0) && (buttonData.pressedTextStyle->region.height == 0))
+      {
+         buttonData.pressedTextStyle->region.width = _enabledBitmap->getRegion().width;
+         buttonData.pressedTextStyle->region.height = _enabledBitmap->getRegion().height;
+      }
+      _pressedText = new CGUIText(display, this, buttonData.pressedTextItem, buttonData.pressedTextStyle);
       _pressedText->setCaptureBackgroundColor();
       _pressedText->setVisible(false);
    }
@@ -150,8 +173,8 @@ void CGUIButton::enable(void)
    if (!_enabled)
    {
       _enabled = true;
-      if (_disabledBitmap) deleteObject(_disabledBitmap);
-      if (_enabledBitmap) addObjectToFront(_enabledBitmap);
+      if (_disabledBitmap) moveObjectToBack(_disabledBitmap);
+      if (_enabledBitmap) moveObjectToFront(_enabledBitmap);
 
       if (_iconPointer) moveObjectToFront(_iconPointer);
 
@@ -174,11 +197,10 @@ void CGUIButton::disable()
    if (_enabled)
    {
       _enabled = false;
-      if (_enabledBitmap) deleteObject(_enabledBitmap);
-      if (_disabledBitmap) deleteObject(_disabledBitmap);
+      if (_enabledBitmap) moveObjectToBack(_enabledBitmap);
+      if (_disabledBitmap) moveObjectToFront(_disabledBitmap);
 
       if (_iconPointer) deleteObject(_iconPointer);
-      if (_disabledBitmap) addObjectToFront(_disabledBitmap);
 
       if (_enabledText)  _enabledText->setVisible(false);
       if (_pressedText)  _pressedText->setVisible(false);
@@ -710,11 +732,11 @@ void CGUIButton::doOnPress()
       {
          _pressedText->setCaptureBackgroundColor();
          _pressedText->setVisible(true);
-
-         if (_enabledText)  _enabledText->setVisible(false);
-         if (_disabledText) _disabledText->setVisible(false);
-
       }
+
+      if (_enabledText)  _enabledText->setVisible(false);
+      if (_disabledText) _disabledText->setVisible(false);
+
       invalidateObjectRegion(_enabledBitmap);
 
       _pressed = true;

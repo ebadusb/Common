@@ -3,6 +3,9 @@
  *
  * $Header: //Bctquad3/HOME/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.8 2001/04/05 14:16:14 jl11312 Exp pn02526 $
  * $Log: ostime.cpp $
+ * Revision 1.2  1999/09/23 00:30:16  BS04481
+ * Change snapshot to an inline function and call from the howLong
+ * functions.
  * Revision 1.1  1999/09/17 15:05:15  BS04481
  * Initial revision
  * TITLE:      osTime.cpp, Time measurement
@@ -24,11 +27,13 @@
 #include <conio.h>
 #include <signal.h>
 #include <time.h>
+#include <fcntl.h>
 #include <sys/sched.h>
 #include <sys/proxy.h>
 #include <sys/kernel.h>
 #include <unistd.h>
 #include <sys/osinfo.h>
+#include <sys/mman.h>
 
 #include "error.h"
 #include "common.h"
@@ -50,6 +55,20 @@ osTime::osTime(void)
    _timeptr = (struct _timesel far *)MK_FP(osdata.timesel,0);
    if (_timeptr == NULL)
       FATAL_ERROR( __LINE__, __FILE__ "No ticktime pointer!");
+
+   // open shared memory area for time reset indicator
+   _fd_timecounter = shm_open("timecounter", O_RDWR, 0777);
+   if (_fd_timecounter == -1)
+      FATAL_ERROR( __LINE__, __FILE__ "timecounter share create failed");
+
+   // map the share memory objects
+   _timeCounter = (int *)mmap(0,sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, 
+                                    _fd_timecounter, 0);
+   if (_timeCounter == (void *) -1)
+      FATAL_ERROR( __LINE__, __FILE__ "timecounter share map failed");
+
+   // initialize counter to indicate no time set is in progress
+   *_timeCounter = 0;
 };
 
 // SPECIFICATION:    osTime destructor.

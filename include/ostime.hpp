@@ -3,6 +3,9 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/ostime.hpp 1.7 2002/11/22 21:07:37 pn02526 Exp jl11312 $
  * $Log: ostime.hpp $
+ * Revision 1.2  1999/09/23 00:30:19  BS04481
+ * Change snapshot to an inline function and call from the howLong
+ * functions.
  * Revision 1.1  1999/09/17 15:04:34  BS04481
  * Initial revision
  * TITLE:      osTime.hpp, Time measurement
@@ -45,9 +48,11 @@ class osTime
       int howLongMicro(timeFromTick then);         // return delta in usecond between then and now
       int howLongAndUpdate(timeFromTick* then);    // update then with time from object and return delta
       int howLongMicroAndUpdate(timeFromTick* then); // update then with time from object and return delta in usec
-      void delayTime(int deltaTime);               // holds in a tight loop for specified time
+      void delayTime(int deltaTime);               // hol                                                            ds in a tight loop for specified time
+      int* _timeCounter;
    private:
       struct _timesel far *_timeptr;
+      int    _fd_timecounter;
 };
 
 #endif

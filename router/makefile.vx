@@ -3,6 +3,8 @@
 # Makefile - makefile for router library
 #
 # $Log: makefile.vx $
+# Revision 1.11  2002/07/17 18:54:02  ms10234
+# removed msgcrc.cpp from router library to the softcrc library.
 # Revision 1.10  2002/07/17 18:43:53  ms10234
 # Added vxWorks.h as the first include file
 # Revision 1.9  2002/07/11 21:54:32  ms10234
@@ -28,8 +30,13 @@
 # Something goofy happened.  the upper level make file got checked in it's place.
 #
 
+ifeq ($(BUILD_TYPE),CLEAN)
+.PHONY: all
+all: clean
+else
 .PHONY: all
 all: check_opt_change lib
+endif
 
 #
 # Define include directories needed for apps built in this directory
@@ -51,8 +58,8 @@ include $(MAINDIR)/makefile.vxc
 #
 LIB_C_FILES   = 
 LIB_CXX_FILES = dispatcher.cpp messagebase.cpp messagesystem.cpp router.cpp \
-timermessage.cpp msgsystimer.cpp objdictionary.cpp gateway.cpp \
-messagesystemconstant.cpp spoofermessagesystem.cpp spooferdispatcher.cpp
+                timermessage.cpp msgsystimer.cpp objdictionary.cpp gateway.cpp \
+                messagesystemconstant.cpp spoofermessagesystem.cpp spooferdispatcher.cpp
 LIB_S_FILES =
 
 #

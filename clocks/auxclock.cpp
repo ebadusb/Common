@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.4 2002/06/19 22:53:29 pn02526 Exp ms10234 $
  * $Log: auxclock.cpp $
+ * Revision 1.3  2002/06/19 10:01:14  pn02526
+ * Simplify the rawTick string formatting code because of the change in typdef from unsigned long long to long long int; completely qualify other type declarations; correct spelling in comments.
  * Revision 1.2  2002/06/18 10:28:09  pn02526
  * Remove embedded comment for compiler.
  * Revision 1.1  2002/06/18 08:55:18  pn02526
@@ -169,38 +171,14 @@ rawTick auxClockTicksGet()
     return( t );
 }
 
-/* Workaround for the lack of a %ll format in vxWorks' [sf]printf() */
+/* Convert the given rawTick value to a numeric string. */
 char * rawTickString( char * s, rawTick rtValue )
 {
-    rawTick rti,rtq;
-    char *cp, *cp1;
-    char c;
-
-    rti = rtValue;
-
-    /* Build the string in the buffer backwards, since that is easier.  It will be reversed below. */
-    cp = s;
-    do {
-        rtq = rti / 10;
-        *cp++ = (char)( rti - rtq*10  ) + '0';  /* Convert the low-order digit to a char and put it in the string */
-        rti = rtq;
-    } while( rti > 0 && cp - s < 20 );
-    /* Null-terminate the string */
-    *cp='\0';
-
-    /* Since the string was built low->high order in a left->right orientation,
-       reverse the order of the characters so that it reads high->low. */
-    for( cp1 = s; cp1 < (--cp); cp1++)
-    {
-        c = *cp;
-        *cp = *cp1;
-        *cp1 = c;
-    }
-
+    sprintf( s, "%lld", rtValue );
     return s;
 }
 
-/* Get the current value of the auxClockTicks counter as a decimal string. */
+/* Get the current value of the auxClockTicks counter as a numeric string. */
 char *auxClockTicksString()
 {
     return( rawTickString( auxClockTicksStr, auxClockTicksGet() ) );

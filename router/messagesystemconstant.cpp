@@ -15,6 +15,7 @@ const unsigned int MessageSystemConstant::MAX_MESSAGE_QUEUE_SIZE=400;
 const unsigned int MessageSystemConstant::CONNECT_DELAY=500; // milliseconds
 const unsigned int MessageSystemConstant::MAX_NUM_RETRIES=1;
 const struct timespec MessageSystemConstant::RETRY_DELAY={ 1 /* seconds */, 0 /*nanoseconds*/ };
+const int MessageSystemConstant::DEFAULT_REGISTER_PRIORITY=17;
 const int MessageSystemConstant::DEFAULT_MESSAGE_PRIORITY=15;
 const int MessageSystemConstant::DEFAULT_TIMER_MESSAGE_PRIORITY=16;
 

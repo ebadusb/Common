@@ -126,17 +126,16 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
 
    //
    // Send register message to router ...
-   send( mp );
+   send( mp, MessageSystemConstant::DEFAULT_REGISTER_PRIORITY );
 
 }
 
-void Dispatcher :: send( const MessagePacket &mp )
+void Dispatcher :: send( const MessagePacket &mp, const int priority )
 {
    //
    // Send message packet to router ...
    unsigned int retries=0;
-   while (    mq_send( _RQueue, &mp, sizeof( MessagePacket ), 
-                       MessageSystemConstant::DEFAULT_MESSAGE_PRIORITY ) == ERROR 
+   while (    mq_send( _RQueue, &mp, sizeof( MessagePacket ), priority ) == ERROR 
            && retries++ < MessageSystemConstant::MAX_NUM_RETRIES )
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
@@ -149,13 +148,12 @@ void Dispatcher :: send( const MessagePacket &mp )
 
 }
 
-void Dispatcher :: sendTimerMessage( const MessagePacket &mp )
+void Dispatcher :: sendTimerMessage( const MessagePacket &mp, const int priority  )
 {
    //
    // Send message packet to timer task ...
    unsigned int retries=0;
-   while (    mq_send( _TimerQueue, &mp, sizeof( MessagePacket ), 
-                       MessageSystemConstant::DEFAULT_MESSAGE_PRIORITY ) == ERROR 
+   while (    mq_send( _TimerQueue, &mp, sizeof( MessagePacket ), priority ) == ERROR 
            && retries++ < MessageSystemConstant::MAX_NUM_RETRIES )
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
@@ -215,7 +213,7 @@ void Dispatcher :: registerMessage( const MessageBase &mb, MessagePacket &mp )
 {
    //
    // Register this message with the router ...
-   send( mp );
+   send( mp, MessageSystemConstant::DEFAULT_REGISTER_PRIORITY );
 
    //
    // Add this message to the local list ...
@@ -256,7 +254,7 @@ void Dispatcher :: deregisterMessage( const MessageBase &mb, MessagePacket &mp )
 {
    //
    // Deregister this message with the router ...
-   send( mp );
+   send( mp, MessageSystemConstant::DEFAULT_REGISTER_PRIORITY );
 
    //
    // Remove this message from the local list
@@ -378,8 +376,8 @@ void Dispatcher :: shutdown()
 
    //
    // Send deregister message to router ...
-   send( mp );
-   sendTimerMessage( mp );
+   send( mp, MessageSystemConstant::DEFAULT_REGISTER_PRIORITY );
+   sendTimerMessage( mp, MessageSystemConstant::DEFAULT_REGISTER_PRIORITY );
 
    //
    // Close the router's queue ...

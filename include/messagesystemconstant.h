@@ -34,6 +34,9 @@ public:
    static const struct timespec RETRY_DELAY;
    //
    // Default priority of messages ( 1-31 )
+   static const int DEFAULT_REGISTER_PRIORITY;
+   //
+   // Default priority of messages ( 1-31 )
    static const int DEFAULT_MESSAGE_PRIORITY;
    //
    // Default priority of timer message notifications ( 1-31 )

@@ -20,6 +20,7 @@
 
 #include "messagebase.h"
 #include "messagepacket.h"
+#include "messagesystemconstant.h"
 
 class Dispatcher
 {
@@ -36,8 +37,10 @@ public:
 
    //
    // Send a packet to the router ...
-   void send( const MessagePacket &mp );
-   void sendTimerMessage( const MessagePacket &mp );
+   void send( const MessagePacket &mp, 
+              const int priority=MessageSystemConstant::DEFAULT_MESSAGE_PRIORITY );
+   void sendTimerMessage( const MessagePacket &mp, 
+                          const int priority=MessageSystemConstant::DEFAULT_MESSAGE_PRIORITY );
 
    //
    // receive messages from the router

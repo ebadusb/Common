@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window_object.cpp 1.5 2005/03/02 01:37:51Z cf10242 Exp jl11312 $
  * $Log: cgui_window_object.cpp $
+ * Revision 1.2  2004/09/30 17:00:53Z  cf10242
+ * Correct for initial make to work
  * Revision 1.1  2004/09/20 18:18:11Z  rm10919
  * Initial revision
  * Initial revision

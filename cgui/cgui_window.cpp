@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.9 2005/03/02 01:37:51Z cf10242 Exp psanusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.5  2004/12/09 13:16:03Z  jl11312
+ * - needed to move fix to ugl source for now, complete fix would have required accessing private (to UGL) data structures from the application
  * Revision 1.4  2004/12/09 00:19:37Z  cf10242
  * GUI crash test
  * Revision 1.3  2004/11/04 20:19:09Z  rm10919
@@ -124,7 +126,7 @@ void CGUIWindow::attach(CGUIWindow * window, WIN_ATTRIB winAttrib /* = WIN_ATTRI
          do
          {
             CGUIWindow * child = *--childIter;
-            if (child->_id != UGL_NULL_ID)
+            if (child && (child->_id != UGL_NULL_ID) )
             {
                winAttach(child->_id, _id, UGL_NULL_ID);
             }
@@ -171,7 +173,7 @@ void CGUIWindow::detach(void)
       for (childIter=_childWindows.begin(); childIter!=_childWindows.end(); ++childIter)
       {
          CGUIWindow * child = *childIter;
-         if (child->_id != UGL_NULL_ID)
+         if (child && (child->_id != UGL_NULL_ID) )
          {
             winDetach(child->_id);
          }
@@ -208,56 +210,68 @@ void CGUIWindow::detach(void)
 
 void CGUIWindow::addObject(CGUIWindowObject * obj)
 {
-   obj->_owner = this;
-   invalidateObjectRegion(obj);
+	if(obj)
+	{
+		obj->_owner = this;
+		invalidateObjectRegion(obj);
+	}
 }
 
 
 void CGUIWindow::addObjectToFront(CGUIWindowObject * obj)
 {
-   if (obj->clipSiblings())
-   {
-      _clippedObjects.push_front(obj);
-   }
-   else
-   {
-      _nonClippedObjects.push_front(obj);
-   }
+	if(obj)
+	{
+		if (obj->clipSiblings())
+		{
+			_clippedObjects.push_front(obj);
+		}
+		else
+		{
+			_nonClippedObjects.push_front(obj);
+		}
 
-   addObject(obj);
+		addObject(obj);
+	}
 }
 
 
 void CGUIWindow::addObjectToBack(CGUIWindowObject * obj)
 {
-   if (obj->clipSiblings())
-   {
-      _clippedObjects.push_back(obj);
-   }
-   else
-   {
-      _nonClippedObjects.push_back(obj);
-   }
+	if(obj)
+	{
+		if (obj->clipSiblings())
+		{
+			_clippedObjects.push_back(obj);
+		}
+		else
+		{
+			_nonClippedObjects.push_back(obj);
+		}
 
-   addObject(obj);
+		addObject(obj);
+	}
 }
 
 void CGUIWindow::deleteObject(CGUIWindowObject * obj)
 {
-   if (obj->_owner == this)
-   {
-      //
-      // Can't check clipSiblings method since deleteObject is
-      // called from CGUIWindowObject destructor, and clipSiblings()
-      // is defined only by classes derived from CGUIWindowObject.  So
-      // here we just attempt to remove the object from both lists.
-      //
-      _clippedObjects.remove(obj);
-      _nonClippedObjects.remove(obj);
+	if(obj)
+	{
+		if (obj->_owner == this)
+		{
+			//
+			// Can't check clipSiblings method since deleteObject is
+			// called from CGUIWindowObject destructor, and clipSiblings()
+			// is defined only by classes derived from CGUIWindowObject.  So
+			// here we just attempt to remove the object from both lists.
+			//
+			_clippedObjects.remove(obj);
+			_nonClippedObjects.remove(obj);
 
-      invalidateObjectRegion(obj);
-      obj->_owner = NULL;
-   }
+			invalidateObjectRegion(obj);
+			obj->_owner = NULL;
+		}
+	}
 }
 
 void CGUIWindow::moveObjectToFront(CGUIWindowObject * obj)
@@ -265,13 +279,16 @@ void CGUIWindow::moveObjectToFront(CGUIWindowObject * obj)
    //
    // Order is important only for clipped objects
    //
-   if (obj->clipSiblings() &&
-       _clippedObjects.front() != obj)
-   {
-      _clippedObjects.remove(obj);
-      _clippedObjects.push_front(obj);
-      invalidateObjectRegion(obj);
-   }
+	if(obj)
+	{
+		if (obj->clipSiblings() &&
+			_clippedObjects.front() != obj)
+		{
+			_clippedObjects.remove(obj);
+			_clippedObjects.push_front(obj);
+			invalidateObjectRegion(obj);
+		}
+	}
 }
 
 void CGUIWindow::moveObjectToBack(CGUIWindowObject * obj)
@@ -279,13 +296,16 @@ void CGUIWindow::moveObjectToBack(CGUIWindowObject * obj)
    //
    // Order is important only for clipped objects
    //
-   if (obj->clipSiblings() &&
-       _clippedObjects.back() != obj)
-   {
-      _clippedObjects.remove(obj);
-      _clippedObjects.push_back(obj);
-      invalidateObjectRegion(obj);
-   }
+	if(obj)
+	{
+		if (obj->clipSiblings() &&
+			_clippedObjects.back() != obj)
+		{
+			_clippedObjects.remove(obj);
+			_clippedObjects.push_back(obj);
+			invalidateObjectRegion(obj);
+		}
+	}
 }
 
 
@@ -295,15 +315,18 @@ void CGUIWindow::setObjectRegion(CGUIWindowObject * obj, const CGUIRegion & newR
    // Since we may be resizing/moving the object, we need to invalidate
    // both the old object position and the new position.
    //
-   invalidateObjectRegion(obj);
-   obj->_region = newRegion;
-   invalidateObjectRegion(obj);
+	if(obj)
+	{
+		invalidateObjectRegion(obj);
+		obj->_region = newRegion;
+		invalidateObjectRegion(obj);
+	}
 }
 
 
 void CGUIWindow::setObjectVisible(CGUIWindowObject * obj, bool newVisible)
 {
-   if (obj->_visible != newVisible)
+   if (obj && (obj->_visible != newVisible) )
    {
       //
       // Force _visible to true for call to invalidateObjectRegion to insure
@@ -319,7 +342,7 @@ void CGUIWindow::setObjectVisible(CGUIWindowObject * obj, bool newVisible)
 
 void CGUIWindow::invalidateObjectRegion(CGUIWindowObject * obj)
 {
-   if (_id != UGL_NULL_ID &&
+   if (_id != UGL_NULL_ID && obj &&
        obj->isVisible())
    {
       UGL_RECT rect;
@@ -479,7 +502,7 @@ void CGUIWindow::preDrawObjects(void)
    for (objIter = _clippedObjects.begin(); objIter != _clippedObjects.end(); ++objIter)
    {
       CGUIWindowObject * obj = *objIter;
-      if (obj->_visible)
+      if (obj && obj->_visible)
       {
          obj->preDraw();
       }
@@ -488,7 +511,7 @@ void CGUIWindow::preDrawObjects(void)
    for (objIter = _nonClippedObjects.begin(); objIter != _nonClippedObjects.end(); ++objIter)
    {
       CGUIWindowObject * obj = *objIter;
-      if (obj->_visible)
+      if (obj && obj->_visible)
       {
          obj->preDraw();
       }
@@ -512,7 +535,7 @@ void CGUIWindow::drawObjects(UGL_GC_ID gc)
    for (objIter = _clippedObjects.begin(); objIter != _clippedObjects.end(); ++objIter)
    {
       CGUIWindowObject * obj = *objIter;
-      if (obj->_visible)
+      if (obj && obj->_visible)
       {
          obj->draw(gc);
 
@@ -531,7 +554,7 @@ void CGUIWindow::drawObjects(UGL_GC_ID gc)
    for (objIter = _nonClippedObjects.begin(); objIter != _nonClippedObjects.end(); ++objIter)
    {
       CGUIWindowObject * obj = *objIter;
-      if (obj->_visible)
+      if (obj && obj->_visible)
       {
          UGL_RECT objRect;
          obj->_region.convertToUGLRect(objRect);

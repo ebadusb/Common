@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.7  2004/12/10 23:29:20Z  cf10242
+ * Correct issues with length of text in UGL.
  * Revision 1.6  2004/11/30 16:43:21Z  rm10919
  * Assigning value for production compile.
  * Revision 1.5  2004/11/04 20:19:08Z  rm10919

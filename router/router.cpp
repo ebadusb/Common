@@ -460,9 +460,6 @@ void Router::connectWithGateway( const MessagePacket &mp )
          // If not connected, add message to the queue to try again ...
          if ( status != ETIMEDOUT )
          {
-            DataLog_Critical criticalLog;
-            DataLog(criticalLog) << "Connect with gateway=" << hex << mp.msgData().nodeId() 
-                                 << " failed with error-" << strerror( status ) << endmsg;
             //
             // Nanosleep the same amount of time it would have been blocked
             //  had it timed out instead of erroring.  This allows the system

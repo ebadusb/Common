@@ -3,6 +3,14 @@
  *
  * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/BUFFMSGS.H 1.9 2000/04/13 14:27:08 BD10648 Exp MS10234 $
  * $Log: BUFFMSGS.H $
+ * Revision 1.8  2000/03/24 18:08:05  BS04481
+ * Change several messages to NOTUSED in the message structure
+ * which is used for AN2.  Service Control is not used because 
+ * stuffer is not part of the project.  VD-HAL messages not used 
+ * because the interface disappears.  TaskManagerCommand no
+ * longer used.  Optimizer Command and Status temporarily changed
+ * to not used to allow AN2 code to compile without the optimizer
+ * code.
  * Revision 1.7  2000/03/07 00:29:00  BD10648
  * Additional messages for resturcturing: HalStatus, HalOrders, Calibration
  * Revision 1.6  1999/08/04 22:51:48  TD10216
@@ -188,6 +196,7 @@ enum BUFFER_MESSAGES
     HalOrdersMsg,           // sent to hal task
     ArcCalibrationMsg,      // Cal.dat message from Archive
     ArcConfigMsg,           // Config.dat message to/from Archive
+    ProcDonorMsg,
 
    LAST_BUFFER_MESSAGE           // don't change this entry
 };
@@ -332,10 +341,11 @@ MsgStructMapEntry MsgStructMap[LAST_BUFFER_MESSAGE+1] =
    { ModifyProduct, "ModifyProductStruct" },
    { BasinTempStatus, "basinTemp" },
    { EverestConfigLog, "ConfigDataItem" },
-    { HalStatusMsg , NOTUSED },
-    { HalOrdersMsg , NOTUSED },
-    { ArcCalibrationMsg, NOTUSED },
-    { ArcConfigMsg, NOTUSED },
+   { HalStatusMsg , NOTUSED },
+   { HalOrdersMsg , NOTUSED },
+   { ArcCalibrationMsg, NOTUSED },
+   { ArcConfigMsg, NOTUSED },
+   { ProcDonorMsg , NOTUSED },
 
     // don't change this entry
    { LAST_BUFFER_MESSAGE, NULL }

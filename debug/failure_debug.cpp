@@ -5,6 +5,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/debug/rcs/failure_debug.cpp 1.11 2004/02/24 22:31:40Z jl11312 Exp ms10234 $
  * $Log: failure_debug.cpp $
+ * Revision 1.7  2003/06/25 17:10:09Z  jl11312
+ * - added logging for safety side CPU idle time and memory availability
  * Revision 1.6  2003/05/29 16:26:11Z  jl11312
  * - added logging of trace back information for all tasks
  * Revision 1.5  2003/05/23 16:09:32Z  jl11312
@@ -123,7 +125,7 @@ void DBG_DumpData(void)
 		outStream << " " << (unsigned int)taskList[i] << ":" << (unsigned int)taskList[i]->regs.pc;
 		unsigned int * frame = (unsigned int *)taskList[i]->regs.ebp;
 		int	stackCount = 0;
-		while ( (char *)frame < taskList[i]->pStackBase && (char *)frame > taskList[i]->pStackLimit && stackCount < 5 )
+		while ( (char *)frame < taskList[i]->pStackBase && (char *)frame > taskList[i]->pStackLimit && stackCount < 10 )
 		{
 			outStream << " " << frame[1];
 			frame = (unsigned int *)(*frame);

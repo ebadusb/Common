@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.24  2003/05/19 16:16:13Z  ms10234
+ * HISTORY:    5816 - fixing misstyped name for Access function
  * HISTORY:    Revision 1.23  2003/04/11 22:15:48Z  td07711
  * HISTORY:    log SetSpoof and ClearSpoof
  * HISTORY:    Revision 1.22  2003/04/07 14:47:03Z  rm70006
@@ -132,7 +134,7 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
 // BaseElement
 ////////////////////////////////////////////////////////////////
 
-template <class dataType> inline void BaseElement<dataType>::Access(AccessOp op)
+template <class dataType> inline void BaseElement<dataType>::Access(AccessOp op) const
 {
 	if ( op == LockAccess )
 	{
@@ -144,15 +146,15 @@ template <class dataType> inline void BaseElement<dataType>::Access(AccessOp op)
 	}
 }
 
-template<> inline void BaseElement<bool>::Access(AccessOp op) { }
-template<> inline void BaseElement<char>::Access(AccessOp op) { }
-template<> inline void BaseElement<unsigned char>::Access(AccessOp op) { }
-template<> inline void BaseElement<short>::Access(AccessOp op) { }
-template<> inline void BaseElement<unsigned short>::Access(AccessOp op) { }
-template<> inline void BaseElement<int>::Access(AccessOp op) { }
-template<> inline void BaseElement<unsigned int>::Access(AccessOp op) { }
-template<> inline void BaseElement<long>::Access(AccessOp op) { }
-template<> inline void BaseElement<unsigned long>::Access(AccessOp op) { }
+template<> inline void BaseElement<bool>::Access(AccessOp op) const { }
+template<> inline void BaseElement<char>::Access(AccessOp op) const { }
+template<> inline void BaseElement<unsigned char>::Access(AccessOp op) const { }
+template<> inline void BaseElement<short>::Access(AccessOp op) const { }
+template<> inline void BaseElement<unsigned short>::Access(AccessOp op) const { }
+template<> inline void BaseElement<int>::Access(AccessOp op) const { }
+template<> inline void BaseElement<unsigned int>::Access(AccessOp op) const { }
+template<> inline void BaseElement<long>::Access(AccessOp op) const { }
+template<> inline void BaseElement<unsigned long>::Access(AccessOp op) const { }
 
 //
 // Default Constructor (no default value)

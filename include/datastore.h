@@ -11,6 +11,10 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.22  2003/04/07 14:46:59Z  rm70006
+ * HISTORY:    IT 5818.
+ * HISTORY:    
+ * HISTORY:    Fix log levels.
  * HISTORY:    Revision 1.21  2002/11/18 18:29:28Z  jl11312
  * HISTORY:    - modifications to improve compile speed, reduce inline function sizes
  * HISTORY:    Revision 1.20  2002/11/07 00:11:35Z  td07711
@@ -102,6 +106,11 @@ protected:
    virtual void ReadSelf  (ifstream &pfrfile) = 0;
    virtual void WriteSelf (ofstream &pfrfile) = 0;
 
+private:
+
+   // ElementType ( const ElementType &cElem );           // not implemented 
+   // ElementType &operator =( const ElementType &cElem );  // not implemented
+
 // Data Members
 protected:
    PfrType    _pfrType;
@@ -151,12 +160,15 @@ protected:
    virtual void ReadSelf  (ifstream &pfrfile);
    virtual void WriteSelf (ofstream &pfrfile);
 
-	enum AccessOp { LockAccess, UnloadAccess };
-	void Access(AccessOp op);
+	enum AccessOp { LockAccess, UnlockAccess };
+	void Access(AccessOp op) const;
 
 // Class Methods
 private:
    void CreateSymbolTableEntry();
+
+   // BaseElement ( const BaseElement &cElem );                 // not implemented
+   // BaseElement &operator =( const BaseElement &cElem ); // not implemented
 
 // Data Members
 private:

@@ -1,8 +1,13 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/BUFFMSG.HPP 1.2 1999/05/31 20:34:42 BS04481 Exp MS10234 $
+ * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/BUFFMSG.HPP 1.2 1999/05/31 20:34:42 BS04481 Exp $
  * $Log: BUFFMSG.HPP $
+ * Revision 1.2  1999/05/31 20:34:42  BS04481
+ * Remove unused MSGHEADER structure from messages. 
+ * Decrease maximum message size.  Add new version of 
+ * focusBufferMsg and focusInt32Msg that do not bounce the message
+ * back to the originator.  All changes to increase free memory.
  * Revision 1.1  1999/05/24 23:26:14  TD10216
  * Initial revision
  * Revision 1.25  1999/04/03 14:53:10  TD10216
@@ -189,8 +194,26 @@ class focusBufferMsg : public routeBuffer
             _FATAL_ERROR( __FILE__, __LINE__, TRACE_DISPATCHER, 0, "focusBufferMsg copy");
          }
          send();
-      }
+      };
 
+      inline void notify() 
+      {
+         // Call the appropriate notify function
+         _VirtualNotify();
+      };
+   
+      // Set the virtual notify function by
+      //   using the Callback constructor and passing the
+      //   this pointer along with a member function that
+      //   matches the definition inside the Callback class
+      void virtualNotify( Callback cb ) { _VirtualNotify = cb; };
+   
+   protected:
+   
+      // This will call a user specified member function of any
+      //  type of class.
+      Callback _VirtualNotify;
+                                              
    private:
       // these functions are not implemented and
       // are made private so that default types by the

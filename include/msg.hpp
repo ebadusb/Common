@@ -1,8 +1,13 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/MSG.HPP 1.2 1999/05/31 20:34:57 BS04481 Exp MS10234 $
+ * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/MSG.HPP 1.2 1999/05/31 20:34:57 BS04481 Exp $
  * $Log: MSG.HPP $
+ * Revision 1.2  1999/05/31 20:34:57  BS04481
+ * Remove unused MSGHEADER structure from messages. 
+ * Decrease maximum message size.  Add new version of 
+ * focusBufferMsg and focusInt32Msg that do not bounce the message
+ * back to the originator.  All changes to increase free memory.
  * Revision 1.1  1999/05/24 23:26:40  TD10216
  * Initial revision
  * Revision 1.22  1998/10/23 19:38:45  TM02109
@@ -108,6 +113,7 @@
 #ifndef MSG_HPP                  // prevent multiple includes
 #define MSG_HPP
 
+#include "callback.h"
 #include "dispatch.hpp"
 
 // class definitions
@@ -140,9 +146,21 @@ class focusTimerMsg
    public:
       focusTimerMsg( unsigned long interval);
       virtual ~focusTimerMsg();
-      virtual void notify() = 0;
+      virtual void notify();
       void interval( unsigned long interval);
 
+      // Set the virtual timeout function by
+      //   using the Callback constructor and passing the
+      //   this pointer along with a member function that
+      //   matches the definition inside the Callback class
+      void virtualTimeout( Callback cb ) { _VirtualTimeout = cb; };
+   
+   protected:
+
+      // This will call a user specified member function of any
+      //  type of class.
+      Callback _VirtualTimeout;
+                                           
    private:
       focusTimerMsg();              // default constructor, not implemented
       focusTimerMsg( focusTimerMsg const &);
@@ -174,7 +192,20 @@ class focusInt32Msg : public routeBuffer
    long get() const;                                     // get current value
    void set( long newValue);                             // set and send message with new value
    void set();                                           // send message with old values
+   void notify();                                        // called when message received
 
+   // Set the virtual notify function by
+   //   using the Callback constructor and passing the
+   //   this pointer along with a member function that
+   //   matches the definition inside the Callback class
+   void virtualNotify( Callback cb ) { _VirtualNotify = cb; };
+
+protected:
+
+   // This will call a user specified member function of any
+   //  type of class.
+   Callback _VirtualNotify;
+                                           
 private:
    focusInt32Msg();                                      // default ctr disabled
    focusInt32Msg( focusInt32Msg const &);

@@ -160,6 +160,10 @@ protected:
    short getGatewayPort();
 
    //
+   // Dump the contents of the given queue
+   void dumpQueue( unsigned long tId, mqd_t mqueue, ostream &out );
+
+   //
    // This function will close the router's message queues and socket connections.
    void shutdown();
    //

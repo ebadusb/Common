@@ -3,6 +3,8 @@
 # Makefile.lib - common makefile for libraries
 #
 # $Log: makefile.lib $
+# Revision 1.2  2002/04/19 17:28:54  jl11312
+# - moved output directory creation to .o build rule
 # Revision 1.1  2002/04/18 14:27:47  jl11312
 # Initial revision
 #
@@ -20,7 +22,7 @@
 # All file names and paths must be specified relative to the directory
 # containing the main makefile for the library (makefile.vx).  A single
 # makefile.vx can define only one library (this could be extended if
-# necessary in the future - see makefile.app)
+# necessary in the future - see makefile.process_app, makefile.build_apps)
 #    
 LIB_OBJ := $(addprefix $(CPU)/, $(notdir $(LIB_C_FILES:.c=.o))) \
            $(addprefix $(CPU)/, $(notdir $(LIB_CXX_FILES:.cpp=.o))) \
@@ -40,23 +42,28 @@ $(LIB_ARCHIVE) : $(LIB_DEPEND) $(LIB_OBJ)
 	@rm -f $@
 	$(AR) -rcs $@ $(LIB_OBJ)
 
+ifeq ($(BUILD_TYPE),CLEAN)
 .PHONY: clean
 clean:
-	rm -f $(LIB_DEPEND) $(LIB_OBJ) $(LIB_ARCHIVE)
-
-ifndef FORCE_REBUILD
- ifneq ($(strip $(LIB_CXX_FILES)),)
-  -include $(DEPEND_CXX_FILES)
- endif
-
- ifneq ($(strip $(LIB_C_FILES)),)
-  -include $(DEPEND_C_FILES)
- endif
-
- ifneq ($(strip $(LIB_S_FILES)),)
-  -include $(DEPEND_S_FILES)
- endif
-else
- include $(MAINDIR)/makefile.rules
+	rm -f $(LIB_ARCHIVE)
+	rm -f $(COMMON_CLEAN_FILELIST)
+	rm -f $(ADDN_CLEAN)
 endif
 
+ifneq ($(BUILD_TYPE),CLEAN)
+ ifndef FORCE_REBUILD
+  ifneq ($(strip $(LIB_CXX_FILES)),)
+   -include $(DEPEND_CXX_FILES)
+  endif
+
+  ifneq ($(strip $(LIB_C_FILES)),)
+   -include $(DEPEND_C_FILES)
+  endif
+
+  ifneq ($(strip $(LIB_S_FILES)),)
+   -include $(DEPEND_S_FILES)
+  endif
+ else
+  include $(MAINDIR)/makefile.rules
+ endif
+endif

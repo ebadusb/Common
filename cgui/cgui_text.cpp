@@ -3,12 +3,17 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.12  2005/02/21 17:17:12Z  cf10242
+ * IT 133 - delete all allocated memory to avoid 
+ * unrecovered memory
  * Revision 1.11  2005/02/07 18:53:55Z  rm10919
  * Fix screen size references to be generic.
  * Revision 1.10  2005/01/17 17:58:59Z  cf10242
- * Clean up some pointer references where the pointer existence is not checked before reference
+ * Clean up some pointer references where the 
+ * pointer existence is not checked before reference
  * Revision 1.9  2005/01/03 23:49:50Z  cf10242
- * add a setRegion to cguiText to invalidate region even if region size did not change
+ * add a setRegion to cguiText to invalidate 
+ * region even if region size did not change
  * Revision 1.8  2005/01/03 20:40:52Z  cf10242
  * add defensive coding to catch gui crashes
  * Revision 1.7  2004/12/10 23:29:20Z  cf10242
@@ -40,28 +45,25 @@ UGL_ORD option;
 int currentLanguage = 0;
 
 
-CGUIText::CGUIText(CGUIDisplay & display, CGUIWindow * parent)
+CGUIText::CGUIText(CGUIDisplay & display)
 : CGUIWindowObject(display)
 {   
-   assert(parent);
-   parent->addObjectToFront(this);
+//   assert(parent);
+//   parent->addObjectToFront(this);
 }
 
-CGUIText::CGUIText(CGUIDisplay & display, CGUIWindow * parent, CGUITextItem * textItem, StylingRecord * stylingRecord = NULL)
+CGUIText::CGUIText(CGUIDisplay & display, CGUITextItem * textItem, StylingRecord * stylingRecord = NULL)
 : CGUIWindowObject(display), _requestedRegion(stylingRecord->region), _textString(NULL)
 {
-   initializeData(parent, textItem, stylingRecord);
+   initializeData(textItem, stylingRecord);
 }
 
-
-CGUIText::CGUIText(CGUIDisplay & display, CGUIWindow * parent, CGUITextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL)
+CGUIText::CGUIText(CGUIDisplay & display, CGUITextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL)
 : CGUIWindowObject(display), _requestedRegion(stylingRecord->region), _textString(NULL)
 {
-
-   initializeData(parent, textItem, stylingRecord);
+   initializeData(textItem, stylingRecord);
    setBackgroundColor(backgroundColor);
 }
-
 
 CGUIText::~CGUIText()
 {
@@ -71,15 +73,18 @@ CGUIText::~CGUIText()
 		_textString = NULL;
    }
 }
+void CGUIText::attachText( CGUIWindow * parent)
+{
+   assert(parent);
+   parent->addObjectToFront(this);
+}
 
-
-void CGUIText::initializeData(CGUIWindow * parent, CGUITextItem * textItem, StylingRecord * stylingRecord)
+void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRecord)
 {
    _textItem =  textItem;
    _stylingRecord = * stylingRecord;
    if (_textItem)
    {
-
       if (_textItem->isInitialized())
       {
          const StringChar * string = _textItem->getText(_textItem->getLanguageId());
@@ -93,13 +98,21 @@ void CGUIText::initializeData(CGUIWindow * parent, CGUITextItem * textItem, Styl
             _textString = new StringChar[1];
             *_textString =  null_char;
          }
+         //
+         //  If styling record from constructor is null, 
+         //  set the the cgui_text._stylingRecord to 
+         //  the cgui_text_item._stylingRecord by default.
+         //
+         if (!stylingRecord)
+         {
+            _stylingRecord = _textItem->getStylingRecord();
+         }
       }
    }
-   assert(parent);
-   parent->addObjectToFront(this);
+//   assert(parent);
+//   parent->addObjectToFront(this);
    _languageSetByApp = false;
 }
-
 
 void CGUIText::setAttributes(unsigned int attributes)
 {
@@ -108,27 +121,23 @@ void CGUIText::setAttributes(unsigned int attributes)
    _owner->invalidateObjectRegion(this);
 }
 
-
 void CGUIText::setBackgroundColor(CGUIColor color)
 {
    _backgroundColorSet = true;
    _backgroundColor = color;
 }
 
-
-void CGUIText::setColor(CGUIColor color)
+void CGUIText::setColor(CGUIColor * color)
 {
    _stylingRecord.color = color;
    _owner->invalidateObjectRegion(this);
 }
 
-
 void CGUIText::setColor(int red, int green, int blue)
 {
-   _stylingRecord.color = MakeCGUIColor(red, green, blue);
+   _stylingRecord.color = (CGUIColor *)(MakeCGUIColor(red, green, blue));
    _owner->invalidateObjectRegion(this);
 }
-
 
 void CGUIText::setFontId(CGUIFontId fontId)
 {
@@ -137,14 +146,12 @@ void CGUIText::setFontId(CGUIFontId fontId)
    _owner->invalidateObjectRegion(this);
 }
 
-
 void CGUIText::setFontSize(int fontSize)
 {
    _stylingRecord.fontSize = fontSize;
    computeTextRegion();
    _owner->invalidateObjectRegion(this);
 }
-
 
 void CGUIText::setLanguage(LanguageId configLanguage)
 {  
@@ -157,7 +164,6 @@ void CGUIText::setLanguage(LanguageId configLanguage)
    _languageSetByApp = true;
 }
 
-
 void CGUIText::setStylingRecord (StylingRecord * stylingRecord)
 {
    _stylingRecord = * stylingRecord;
@@ -166,7 +172,6 @@ void CGUIText::setStylingRecord (StylingRecord * stylingRecord)
 	if(_owner)
 		_owner->invalidateObjectRegion(this);
 }
-
 
 void CGUIText::setText(CGUITextItem * textItem)
 {
@@ -226,7 +231,6 @@ void CGUIText::setText(const StringChar * string)
    }
 }
 
-
 void CGUIText::setText(const char * string)                 
 {                              
    if (_textString)
@@ -260,7 +264,6 @@ void CGUIText::setText(const char * string)
    }
 } // END set_text
 
-
 void CGUIText::getText(char &bufferPtr)
 {                                                                      
    // This will involve looking for the                               
@@ -269,7 +272,6 @@ void CGUIText::getText(char &bufferPtr)
 
    string = _textItem->getText(_configLanguage);
 }
-
 
 void CGUIText::getSize(CGUIRegion & region, int startIndex, int length)
 {
@@ -308,7 +310,6 @@ void CGUIText::getSize(CGUIRegion & region, int startIndex, int length)
       region = CGUIRegion(0, 0, width, height);
    }
 } // END get_size
-
 
 int CGUIText::getToken(int start_index)
 {
@@ -660,7 +661,7 @@ void CGUIText::draw(UGL_GC_ID gc)
    } 
 
    uglBackgroundColorSet(gc, backgroundColor);
-   uglForegroundColorSet(gc, _stylingRecord.color);
+   uglForegroundColorSet(gc, *_stylingRecord.color);
    uglFontSet(gc, _stylingRecord.fontId);
 
    list<LineData>::const_iterator   lineIter = _lineData.begin();

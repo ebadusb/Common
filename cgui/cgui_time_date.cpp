@@ -3,6 +3,8 @@
  *
  * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_time_date.cpp 1.7 2007/01/29 09:08:39 rm10919 Exp pn02526 $
  * $Log: cgui_time_date.cpp $
+ * Revision 1.4  2005/01/28 23:52:18Z  rm10919
+ * CGUITextItem class changed and put into own file.
  * Revision 1.3  2005/01/17 17:59:18Z  cf10242
  * some code clean-up issues
  * Revision 1.2  2005/01/03 20:40:54Z  cf10242
@@ -16,10 +18,10 @@
 #include "cgui_time_date.h"
 
 
-CGUITimeDate::CGUITimeDate(CGUIDisplay & display, CGUIWindow * parent,
+CGUITimeDate::CGUITimeDate(CGUIDisplay & display,
                            StylingRecord * stylingRecord, unsigned int displayAttributes = 0,
                            CGUITextItem * timeDateTextItem = NULL)
-:CGUIText(display, parent),
+:CGUIText(display),
 _displayAttributes(displayAttributes)
 {
    if (timeDateTextItem)

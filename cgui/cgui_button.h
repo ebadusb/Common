@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.13  2005/02/21 17:17:11Z  cf10242
+ *  IT 133 - delete all allocated memory to avoid unrecovered memory
  *  Revision 1.12  2005/01/28 23:52:17Z  rm10919
  *  CGUITextItem class changed and put into own file.
  *  Revision 1.11  2005/01/03 20:41:25Z  cf10242
@@ -279,9 +281,9 @@ public:
    StylingRecord * getDisabledStylingRecord(void){ return _disabledText->getStylingRecord();}
    StylingRecord * getPressedStylingRecord(void){ return _pressedText->getStylingRecord();}
   
-   void setEnabledTextColor(CGUIColor color);
-   void setDisabledTextColor(CGUIColor color);
-   void setPressedTextColor(CGUIColor color);
+   void setEnabledTextColor(CGUIColor * color);
+   void setDisabledTextColor(CGUIColor * color);
+   void setPressedTextColor(CGUIColor * color);
    
    // ICON METHODS //
 

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.7 2005/11/22 00:34:43Z rm10919 Exp MS10234 $
  * $Log: cgui_text_item.h $
+ * Revision 1.2  2005/02/21 17:17:13Z  cf10242
+ * IT 133 - delete all allocated memory to avoid unrecovered memory
  * Revision 1.1  2005/01/31 17:36:39Z  rm10919
  * Initial revision
  *
@@ -15,7 +17,7 @@
 
 struct StylingRecord
 {
-   CGUIColor     color;       // color of the text as applied to whole string
+   CGUIColor     * color;     // color of the text as applied to whole string
    unsigned int  attributes;  // attributes from the attribute enums above
    CGUIRegion    region;      // placement in window or _owner relative
    CGUIFontId    fontId;      // font used, this should use the _owner default value

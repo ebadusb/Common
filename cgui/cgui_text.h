@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.10  2005/02/21 17:17:12Z  cf10242
+ * IT 133 - delete all allocated memory to avoid unrecovered memory
  * Revision 1.9  2005/01/28 23:52:18Z  rm10919
  * CGUITextItem class changed and put into own file.
  * Revision 1.8  2005/01/03 23:49:51Z  cf10242
@@ -90,14 +92,19 @@ public:
    //
    // Constructors
    //
-   CGUIText(CGUIDisplay & display, CGUIWindow * parent);
-   CGUIText(CGUIDisplay & display, CGUIWindow * parent, CGUITextItem * textItem, StylingRecord * stylingRecord = NULL);
-   CGUIText(CGUIDisplay & display, CGUIWindow * parent, CGUITextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL);
+   CGUIText(CGUIDisplay & display);
+   CGUIText(CGUIDisplay & display, CGUITextItem * textItem, StylingRecord * stylingRecord = NULL);
+   CGUIText(CGUIDisplay & display, CGUITextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL);
 
    //
    // Destructor
    //
    virtual ~CGUIText();
+
+   //
+   // Add text object to window.
+   //
+   void attachText(CGUIWindow * parent);
 
    //
    // SET_ATTRIBUTES
@@ -121,9 +128,9 @@ public:
    // These methods set the text color by sending on CGUIColor
    // or by sending the RGB numbers.
    //
-   void setColor( CGUIColor color);
+   void setColor( CGUIColor * color);
    void setColor(int red, int green, int blue);
-   CGUIColor getColor(void) { return _stylingRecord.color;}
+   CGUIColor * getColor(void) { return _stylingRecord.color;}
 
    //
    // SET_CAPTURE_BACKGROUND_COLOR
@@ -217,7 +224,7 @@ private:
    //
    // Initialize values for text string object.
    //
-   void initializeData(CGUIWindow * parent, CGUITextItem * textItem, StylingRecord * stylingRecord);
+   void initializeData(CGUITextItem * textItem, StylingRecord * stylingRecord);
    
    //
    // Substitute value in for varible in text string object.

@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.11  2005/02/21 17:17:11Z  cf10242
+ *  IT 133 - delete all allocated memory to avoid unrecovered memory
  *  Revision 1.10  2005/01/28 23:52:17Z  rm10919
  *  CGUITextItem class changed and put into own file.
  *  Revision 1.9  2005/01/18 18:38:52Z  rm10919
@@ -98,13 +100,18 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
    
    if (buttonData.enabledTextItem)
    {
+      if (!buttonData.enabledStylingRecord)
+      {
+         buttonData.enabledStylingRecord = new StylingRecord(buttonData.enabledTextItem->getStylingRecord());
+      }
       if ((buttonData.enabledStylingRecord->region.width == 0) && (buttonData.enabledStylingRecord->region.height == 0))
       {
          buttonData.enabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
          buttonData.enabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
       }
-      _enabledText = new CGUIText(display, this, buttonData.enabledTextItem, buttonData.enabledStylingRecord);
+      _enabledText = new CGUIText(display, buttonData.enabledTextItem, buttonData.enabledStylingRecord);
       _enabledText->setCaptureBackgroundColor();
+      _enabledText->attachText(this);
    }
    else
    {
@@ -113,14 +120,20 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
 
    if (buttonData.disabledTextItem)
    {
+      if (!buttonData.disabledStylingRecord)
+      {
+         buttonData.disabledStylingRecord = new StylingRecord(buttonData.disabledTextItem->getStylingRecord());
+      }
+      
       if ((buttonData.disabledStylingRecord->region.width == 0) && (buttonData.disabledStylingRecord->region.height == 0))
       {
          buttonData.disabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
          buttonData.disabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
       }
-      _disabledText = new CGUIText(display, this, buttonData.disabledTextItem, buttonData.disabledStylingRecord);
+      _disabledText = new CGUIText(display, buttonData.disabledTextItem, buttonData.disabledStylingRecord);
       _disabledText->setCaptureBackgroundColor();
       _disabledText->setVisible(false);
+      _disabledText->attachText(this);
    }
    else
    {
@@ -129,14 +142,20 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
 
    if (buttonData.pressedTextItem)
    {
+      if (!buttonData.pressedStylingRecord)
+      {
+         buttonData.pressedStylingRecord = new StylingRecord(buttonData.pressedTextItem->getStylingRecord());
+      }
+      
       if ((buttonData.pressedStylingRecord->region.width == 0) && (buttonData.pressedStylingRecord->region.height == 0))
       {
          buttonData.pressedStylingRecord->region.width = _enabledBitmap->getRegion().width;
          buttonData.pressedStylingRecord->region.height = _enabledBitmap->getRegion().height;
       }
-      _pressedText = new CGUIText(display, this, buttonData.pressedTextItem, buttonData.pressedStylingRecord);
+      _pressedText = new CGUIText(display, buttonData.pressedTextItem, buttonData.pressedStylingRecord);
       _pressedText->setCaptureBackgroundColor();
       _pressedText->setVisible(false);
+      _pressedText->attachText(this);
    }
    else
    {
@@ -511,7 +530,8 @@ void CGUIButton::setEnabledText (CGUITextItem * textItem = NULL)
       }
       else
       {
-         _enabledText = new CGUIText(_display, this, textItem);
+         _enabledText = new CGUIText(_display, textItem);
+         _enabledText->attachText(this);
       }      
    }
    if (!textItem)
@@ -541,8 +561,9 @@ void CGUIButton::setEnabledText (const char * string = NULL)
       }
       else
       {
-         _enabledText = new CGUIText(_display, this);
+         _enabledText = new CGUIText(_display);
          _enabledText->setText(string);
+         _enabledText->attachText(this);
       }      
    }
    if (!string)
@@ -572,7 +593,8 @@ void CGUIButton::setDisabledText (CGUITextItem * textItem = NULL)
       }
       else
       {
-         _disabledText = new CGUIText(_display, this, textItem);
+         _disabledText = new CGUIText(_display, textItem);
+         _disabledText->attachText(this);
       }      
    }
    if (!textItem)
@@ -602,8 +624,9 @@ void CGUIButton::setDisabledText (const char * string = NULL)
       }
       else
       {
-         _disabledText = new CGUIText(_display, this);
+         _disabledText = new CGUIText(_display);
          _disabledText->setText(string);
+         _disabledText->attachText(this);
       }      
    }
    if (!string)
@@ -633,7 +656,8 @@ void CGUIButton::setPressedText (CGUITextItem * textItem = NULL)
       }
       else
       {
-         _pressedText = new CGUIText(_display, this, textItem);
+         _pressedText = new CGUIText(_display, textItem);
+         _pressedText->attachText(this);
       }      
    }else
    {
@@ -651,8 +675,9 @@ void CGUIButton::setPressedText (const char * string = NULL)
       }
       else
       {
-         _pressedText = new CGUIText(_display, this);
+         _pressedText = new CGUIText(_display);
          _pressedText->setText(string);
+         _pressedText->attachText(this);
       }      
    }else
    {
@@ -692,17 +717,17 @@ void CGUIButton::setPressedStylingRecord (StylingRecord * pressedTextStylingReco
    if (_pressedText)  _pressedText->setStylingRecord(pressedTextStylingRecord);
 }
   
-void CGUIButton::setEnabledTextColor(CGUIColor color)
+void CGUIButton::setEnabledTextColor(CGUIColor * color)
 {
    _enabledText->setColor(color);
 }
 
-void CGUIButton::setDisabledTextColor(CGUIColor color)
+void CGUIButton::setDisabledTextColor(CGUIColor * color)
 {
    _disabledText->setColor(color);
 }
 
-void CGUIButton::setPressedTextColor(CGUIColor color)
+void CGUIButton::setPressedTextColor(CGUIColor * color)
 {
    _pressedText->setColor(color);
 }

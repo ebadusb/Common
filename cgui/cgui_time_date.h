@@ -3,6 +3,8 @@
  *
  * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_time_date.h 1.4 2005/03/14 18:21:37 rm10919 Exp pn02526 $
  * $Log: cgui_time_date.h $
+ * Revision 1.3  2005/01/28 23:52:18Z  rm10919
+ * CGUITextItem class changed and put into own file.
  * Revision 1.2  2004/11/03 17:43:55Z  rm10919
  * Finally Working!
  * Revision 1.1  2004/09/24 21:30:56Z  rm10919
@@ -33,7 +35,7 @@ public:
    enum LineOrderAttributes
    { ONE_LINE_DATE_TIME = 0x0000, ONE_LINE_TIME_DATE = 0x1000, TWO_LINE_DATE_TIME = 0x2000, TWO_LINE_TIME_DATE = 0x3000 };
 
-   CGUITimeDate(CGUIDisplay & display, CGUIWindow * parent,
+   CGUITimeDate(CGUIDisplay & display,
                 StylingRecord * stylingRecord, unsigned int displayAttributes = 0,
                 CGUITextItem * timeDateTextItem = NULL);
 

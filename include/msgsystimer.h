@@ -46,7 +46,7 @@ private:
    static WIND_TCB    *_TheTimerTid;
    static MsgSysTimer *_TheTimer;
 
-   static int _ReadyToReceiveTickMsg;
+   static int _ReadyToReceiveTimeMsg;
 
 public:
 
@@ -75,8 +75,8 @@ protected:
    void processMessage( const MessagePacket &mp );
    
    //
-   // Function to update the current tick count
-   void updateTime( const long long tickCount );
+   // Function to update the current time 
+   void updateTime( const long long usecs );
 
    //
    // Function to register a new timer
@@ -101,7 +101,7 @@ protected:
 
 private:
 
-   long long _TickCount;
+   long long _Time;
 
    struct MapEntry;
    class QueueEntry
@@ -125,7 +125,7 @@ private:
 
    public:
 
-      long long _ExpirationTickCount;
+      long long _ExpirationTime;
       MapEntry           *_MapEntryPtr;
 
    };

@@ -19,9 +19,10 @@
 #include "error.h"
 
 /*
- This function returns the local network address
+ This function returns the local network address as seen from the given
+  remote node.  If 0, the local as seen from local node will be used.
 */
-unsigned long getNetworkAddress( void );
+unsigned long getNetworkAddress( unsigned long remoteNode=0 );
 
 /*
  This function takes in a user provided set.  The function will fill

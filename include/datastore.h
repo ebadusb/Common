@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.26  2003/07/22 14:51:29Z  rm70006
+ * HISTORY:    IT 6222.  Suspected bug in get and equal operator.
  * HISTORY:    Revision 1.25  2003/07/08 22:15:39Z  ms10234
  * HISTORY:    5829 - changes for PFR
  * HISTORY:    Revision 1.24  2003/06/19 18:38:29Z  ms10234
@@ -275,13 +277,10 @@ public:
    bool _pfDataRestored;
       
    // Mutex semaphores
-   SEM_ID _mutexSemaphore;
    SEM_ID _readSemaphore;
    SEM_ID _writeSemaphore;
       
    // Mutex control flags
-   bool _signalRead;
-   bool _signalWrite;
    int  _readCount;
 
    // Flag tracking number of writers.

@@ -55,7 +55,7 @@ int StateAbs :: init()
    list< StateAbs* >::iterator state;
    for ( state = _SubstateList.begin() ;
          state != _SubstateList.end()  ;
-         state++ )
+         ++state )
    {
       if ( (*state)->init() == PROCESSING_ERROR )
       {
@@ -363,7 +363,7 @@ int StateAbs :: initMonitors()
    list< MonitorBase* >::iterator monitor;
    for ( monitor = _MonitorsList.begin() ;
          monitor != _MonitorsList.end()  ;
-         monitor++ )
+         ++monitor )
    {
       //
       // Initialize the monitor ...
@@ -381,7 +381,7 @@ void StateAbs :: enableMonitors()
    list< MonitorBase* >::iterator monitor;
    for ( monitor = _MonitorsList.begin() ;
          monitor != _MonitorsList.end()  ;
-         monitor++ )
+         ++monitor )
    {
       //
       // Enable the monitor ...
@@ -398,7 +398,7 @@ void StateAbs :: disableMonitors()
    list< MonitorBase* >::iterator monitor;
    for ( monitor = _MonitorsList.begin() ;
          monitor != _MonitorsList.end()  ;
-         monitor++ )
+         ++monitor )
    {
       //
       // Disable the monitor ...
@@ -415,7 +415,7 @@ void StateAbs :: checkMonitors()
    list< MonitorBase* >::iterator monitor;
    for ( monitor = _MonitorsList.begin() ;
          monitor != _MonitorsList.end()  ;
-         monitor++ )
+         ++monitor )
    {
       //
       // Ask each monitor to check itself with the current status
@@ -507,7 +507,7 @@ void StateAbs :: copyOver( const StateAbs &s )
    list< StateAbs* >::iterator state;
    for ( state = ( (StateAbs&)s )._SubstateList.begin() ;
          state != ( (StateAbs&)s )._SubstateList.end()  ;
-         state++ )
+         ++state )
    {
       _SubstateList.push_back( (*state)->clone() );
    }
@@ -529,7 +529,7 @@ void StateAbs :: cleanup()
    list< StateAbs* >::iterator state;
    for ( state = _SubstateList.begin() ;
          state != _SubstateList.end()  ;
-         state++ )
+         ++state )
    {
       delete (*state);
    }
@@ -537,7 +537,7 @@ void StateAbs :: cleanup()
    list< MonitorBase* >::iterator monitor;
    for ( monitor = _MonitorsList.begin() ;
          monitor != _MonitorsList.end()  ;
-         monitor++ )
+         ++monitor )
    {
       delete (*monitor);
    }

@@ -230,7 +230,7 @@ StateAbs *Manager :: findNextState( const string &newState, StateAbs const *curr
    list< StateAbs* >::iterator state;
    for ( state = _SubstateList->begin() ;
          state != _SubstateList->end()  ;
-         state++ )
+         ++state )
    {
       DataLog( log_level_state_machine_debug ) << "     SubstateList ->  " << (*state)->stateName() << endmsg;
 

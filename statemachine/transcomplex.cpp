@@ -54,7 +54,7 @@ void TransComplex :: activate()
    list< TransAbs* >::iterator trans;
    for ( trans = _TransitionList.begin();
          trans != _TransitionList.end() ;
-         trans++ ) 
+         ++trans ) 
    {
       (*trans)->activate();
    }
@@ -68,7 +68,7 @@ void TransComplex :: deactivate()
    list< TransAbs* >::iterator trans;
    for ( trans = _TransitionList.begin();
          trans != _TransitionList.end() ;
-         trans++ ) 
+         ++trans ) 
    {
       (*trans)->deactivate();
    }
@@ -148,7 +148,7 @@ bool TransComplex :: canTransition( const int status )
    list< TransAbs* >::iterator trans;
    for ( trans = _TransitionList.begin();
          trans != _TransitionList.end() ;
-         trans++ ) 
+         ++trans ) 
    {
       transStatus = (*trans)->canTransition( status );
       
@@ -239,7 +239,7 @@ void TransComplex :: copyOver( const TransComplex &trans )
    list< TransAbs* >::iterator transiter;
    for ( transiter = ( (TransComplex&)trans )._TransitionList.begin() ;
          transiter != ( (TransComplex&)trans )._TransitionList.end()  ;
-         transiter++ 
+         ++transiter 
        )
    {
       _TransitionList.push_back( (*transiter)->clone() );

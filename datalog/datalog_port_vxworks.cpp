@@ -3,6 +3,9 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.9 2003/10/16 14:57:40Z jl11312 Exp jl11312 $
  * $Log: datalog_port_vxworks.cpp $
+ * Revision 1.8  2003/10/03 12:35:13Z  jl11312
+ * - improved DataLog_Handle lookup time
+ * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
  * Revision 1.7  2003/04/29 17:07:58Z  jl11312
  * - direct console output directly to console instead of stdout
  * Revision 1.6  2003/03/27 16:27:04Z  jl11312
@@ -24,6 +27,7 @@
 
 #include <intLib.h>
 #include <taskHookLib.h>
+#include <tickLib.h>
 #include <string>
 #include <sysLib.h>
 #include <timers.h>
@@ -251,8 +255,9 @@ static SEM_ID 	timeDataLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
 static long			nanoSecPerTimestampTick;
 #endif
 
-static struct timespec	clockStart;
-static time_t				timeStart = markTimeStampStart();
+static unsigned long	tickStart;
+static unsigned long tickRate = sysClkRateGet();
+static time_t			timeStart = markTimeStampStart();
 
 static time_t markTimeStampStart(void)
 {
@@ -273,7 +278,7 @@ static time_t markTimeStampStart(void)
 	// log file is relative to this start time.
 	//
 	semTake(timeDataLock, WAIT_FOREVER);
-	clock_gettime(CLOCK_REALTIME, &clockStart);
+	tickStart = tickGet();
 
 #if (CPU != SIMNT)
 	nanoSecPerTimestampTick = 1000000000/sysTimestampFreq();
@@ -309,17 +314,14 @@ void datalog_GetTimeStamp(DataLog_TimeStamp * stamp)
 	timestampCurrent = sysTimestamp();
 #endif /* if (CPU != SIMNT) */
 
-	clock_gettime(CLOCK_REALTIME, &clockCurrent);
+   unsigned long	tickCurrent = tickGet();
 
 #if (CPU != SIMNT)
 	intUnlock(oldLevel);
 #endif /* if (CPU != SIMNT) */
 
-	long		seconds;
-	long		nanoseconds;
-
-	seconds = clockCurrent.tv_sec - clockStart.tv_sec;
-	nanoseconds = clockCurrent.tv_nsec - clockStart.tv_nsec;
+	long		seconds = (tickCurrent - tickStart)/tickRate;
+	long		nanoseconds = (((tickCurrent - tickStart) % tickRate) * 1000000000) / tickRate;
 
 #if (CPU != SIMNT)
 	nanoseconds += timestampCurrent * nanoSecPerTimestampTick;

@@ -1,8 +1,10 @@
-# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/socket++/rcs/makefile.vx 1.6 2002/06/18 16:52:59 jl11312 Exp ms10234 $
+# @(#) $Header: K:/BCT_Development/vxWorks/Common/socket++/rcs/makefile.vx 1.7 2002/07/09 16:23:53 ms10234 Exp jl11312 $
 #
 # Makefile - makefile for socket++ library
 #
 # $Log: makefile.vx $
+# Revision 1.6  2002/06/18 16:52:59  jl11312
+# - corrected comments
 # Revision 1.5  2002/06/18 16:37:54  ms10234
 # Added a connect with timeout function
 # Revision 1.4  2002/05/17 14:45:35  jl11312
@@ -46,8 +48,8 @@ LIB_S_FILES =
 # that ARCHIVE_DIR is used in DOS shell commands, and must use \ directory
 # separators.
 #
-ARCHIVE_NAME = libcommonsocket.a
-ARCHIVE_DIR = $(MAINDIR)\lib
+ARCHIVE_NAME = libsocket++.a
+ARCHIVE_DIR = .\lib
 
 #
 # This is the standard makefile for common libraries

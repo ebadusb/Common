@@ -1,8 +1,13 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Z:/BCT_Development/Common/ROUTER/rcs/MSG.CPP 1.3 1999/06/02 16:24:42 BS04481 Exp MS10234 $
+ * $Header: Z:/BCT_Development/Common/ROUTER/rcs/MSG.CPP 1.3 1999/06/02 16:24:42 BS04481 Exp $
  * $Log: MSG.CPP $
+ * Revision 1.3  1999/06/02 16:24:42  BS04481
+ * Gate timer-clear on presence of dispatcher.  This change is related 
+ * to changes made in rev 36 of the dispatcher because that 
+ * dispatcher change caused router tasks to run fault.  This corrects
+ * that.
  * Revision 1.2  1999/05/31 20:35:07  BS04481
  * Remove unused MSGHEADER structure from messages. 
  * Decrease maximum message size.  Add new version of 
@@ -139,6 +144,12 @@ focusTimerMsg::interval( unsigned long tinterval)
    timer_settime( timerID, 0, &timer, NULL);
 };
 
+void focusTimerMsg::notify() 
+{
+   // Call the appropriate timeout function
+   _VirtualTimeout();
+};
+   
 //
 // focusInt32Msg
 //
@@ -202,3 +213,9 @@ focusInt32Msg::set()
 };
 
 
+void focusInt32Msg::notify() 
+{
+   // Call the appropriate notify function
+   _VirtualNotify();
+};
+   

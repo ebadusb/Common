@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.1 2004/09/20 18:18:08Z rm10919 Exp rm10919 $
+ * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.1  2004/09/20 18:18:08Z  rm10919
+ * Initial revision
  *
  */
 
@@ -14,12 +16,16 @@ static UGL_WCHAR newline_char = '\n';
 static UGL_WCHAR space_char = ' ';
 static UGL_WCHAR null_char = '\0';
 
+UGL_ORD option;
+
 int currentLanguage = 0;
 
 
-CGUIText::CGUIText(CGUIDisplay & display)
+CGUIText::CGUIText(CGUIDisplay & display, CGUIWindow * parent)
 : CGUIWindowObject(display)
-{
+{   
+   assert(parent);
+   parent->addObjectToFront(this);
 }
 
 CGUIText::CGUIText(CGUIDisplay & display, CGUIWindow * parent, TextItem * textItem, StylingRecord * stylingRecord)
@@ -68,13 +74,15 @@ void CGUIText::initializeData(CGUIWindow * parent, TextItem * textItem, StylingR
    }
    assert(parent);
    parent->addObjectToFront(this);
-   _language_set_by_app = false;
+   _languageSetByApp = false;
 }
 
 
 void CGUIText::setAttributes(unsigned int attributes)
 {
    _stylingRecord.attributes = attributes;
+   computeTextRegion();
+   _owner->invalidateObjectRegion(this);
 }
 
 
@@ -102,12 +110,16 @@ void CGUIText::setColor(int red, int green, int blue)
 void CGUIText::setFontId(CGUIFontId fontId)
 {
    _stylingRecord.fontId = fontId;
+   computeTextRegion();
+   _owner->invalidateObjectRegion(this);
 }
 
 
 void CGUIText::setFontSize(int fontSize)
 {
    _stylingRecord.fontSize = fontSize;
+   computeTextRegion();
+   _owner->invalidateObjectRegion(this);
 }
 
 
@@ -119,15 +131,37 @@ void CGUIText::setLanguage(LanguageId configLanguage)
    //
    _configLanguage = configLanguage;
    _textItem.setLanguageId(configLanguage);
-   _language_set_by_app = true;
+   _languageSetByApp = true;
 }
 
 
 void CGUIText::setStylingRecord (StylingRecord * stylingRecord)
 {
    _stylingRecord = * stylingRecord;
+   computeTextRegion();
+   _owner->invalidateObjectRegion(this);
 }
 
+
+void CGUIText::setText(TextItem * textItem)
+{
+   _textItem =  * textItem;
+
+   if (_textItem.isInitialized())
+   {
+      const StringChar * string = _textItem.getText(_textItem.getLanguageId());
+
+      if (string)
+      {
+         setText(string);
+      }
+      else
+      {
+         _textString = new StringChar[1];
+         *_textString =  null_char;
+      }
+   }
+}
 
 void CGUIText::setText(const StringChar * string)
 {
@@ -238,7 +272,8 @@ void CGUIText::getSize(CGUIRegion & region, int startIndex, int length)
 
       if (_stylingRecord.attributes & BOLD)
       {
-         option = AGFA_ITYPE_BOLD_OFF;
+//         option = AGFA_ITYPE_BOLD_OFF;
+         option = 0;
 
          uglFontInfo(_stylingRecord.fontId, UGL_FONT_WEIGHT_SET, &option);
       }

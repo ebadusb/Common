@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.h 1.6 2005/02/21 17:17:13Z cf10242 Exp psanusb $
  * $Log: cgui_window.h $
+ * Revision 1.2  2004/09/30 17:00:53Z  cf10242
+ * Correct for initial make to work
  * Revision 1.1  2004/09/20 18:18:10Z  rm10919
  * Initial revision
  *
@@ -91,9 +93,9 @@ private:
 
 protected:
    UGL_WINDOW_ID  _id;
+   CGUIDisplay &  _display;
 
 private:
-   CGUIDisplay &  _display;
 
    CGUIRegion     _region;
    bool           _disabled;

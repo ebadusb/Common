@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.3 2004/09/30 17:00:52Z cf10242 Exp rm10919 $
+ * $Header: L:/vxWorks/Common/cgui/rcs/cgui_text.h 1.7 2004/11/18 22:31:41Z rm10919 Exp cf10242 $
  * $Log: cgui_text.h $
+ * Revision 1.3  2004/09/30 17:00:52Z  cf10242
+ * Correct for initial make to work
  * Revision 1.2  2004/09/28 19:47:27Z  rm10919
  * Missed naming changes to CGUI.
  * Revision 1.1  2004/09/20 18:18:09Z  rm10919
@@ -84,7 +86,7 @@ public:
    //
    // Constructors
    //
-   CGUIText(CGUIDisplay & display);
+   CGUIText(CGUIDisplay & display, CGUIWindow * parent);
    CGUIText(CGUIDisplay & display, CGUIWindow * parent, TextItem * textItem, StylingRecord * stylingRecord = NULL);
    CGUIText(CGUIDisplay & display, CGUIWindow * parent, TextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL);
 
@@ -161,7 +163,7 @@ public:
    // This method sets the region by x, y, Width, and height
    // for the text.
    //
-   void setRegion(CGUIRegion region);
+//   void setRegion(CGUIRegion region);
    CGUIRegion getRegion(void) { return _stylingRecord.region;}
 
 
@@ -180,6 +182,7 @@ public:
    // This methods sets the text string.  When using this method
    // only use strings from the text database.
    //
+   void setText(TextItem * textItem);
    void setText(const char * string);
    void setText(const StringChar * string);
    void getText(char &bufferPtr);
@@ -251,7 +254,7 @@ private:
    // for the string.
    StringChar *   _textString;
 
-   CGUIRegion       _requestedRegion; // used to determine area for LineData
+   CGUIRegion     _requestedRegion; // used to determine area for LineData
    LanguageId     _configLanguage;  // language of text string, need to know where to look for string. Not sure if this is need _textItem._languageId may be used.
 };
 #endif /* #ifndef _CGUI_TEXT_INCLUDE */

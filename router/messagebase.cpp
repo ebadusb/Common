@@ -179,8 +179,8 @@ void MessageBase::dump( ostream &outs )
    outs << "========================== Message Base ===========================" << endl;
    outs << "Name: " << _MessageName << " ";
    outs << "DisType: " << _DistributionType << " RegFlag: " << (bool)_RegisteredFlag 
-        << " MsgId: " << _MsgId << " NodeId: " << _NodeId  << " Tid: " << _TaskId 
-        << " Time: " << _SentTime.tv_sec << " " << _SentTime.tv_nsec << " ";
+        << " MsgId: " << hex << _MsgId << " NodeId: " << hex << _NodeId  << " Tid: " << hex << _TaskId 
+        << " Time: " << dec << _SentTime.tv_sec << " " << _SentTime.tv_nsec << " ";
 
    outs << endl;
    int i = 0;
@@ -207,6 +207,7 @@ bool MessageBase::init( )
    //
    // Break up the message data into the message packets ...
    //
+   struct timespec ts = { 0,0 };
    unsigned long dataSize = sizeOfData();
    unsigned long leftOver = dataSize % MessageData::MAX_MESSAGE_SIZE;
    unsigned long numPackets = ( dataSize / MessageData::MAX_MESSAGE_SIZE ) + ( leftOver > 0 ? 1 : 0 );
@@ -226,6 +227,7 @@ bool MessageBase::init( )
       mp->msgData().msgLength( dataSize );
       mp->msgData().nodeId( _NodeId );
       mp->msgData().taskId( _TaskId );
+      mp->msgData().sendTime( ts );
       mp->msgData().seqNum( i+1 );
       mp->msgData().totalNum( numPackets );
       mp->msgData().packetLength( ( i+1<numPackets ? MessageData::MAX_MESSAGE_SIZE : 

@@ -36,6 +36,21 @@ int MsgSysTimer::MsgSysTimer_main()
    return OK;
 }
 
+WIND_TCB *MsgSysTimer::globalMsgSysTimerTid()
+{
+   return _TheTimerTid;
+}
+
+MsgSysTimer *MsgSysTimer::globalMsgSysTimer()
+{
+   return _TheTimer;
+}
+
+int MsgSysTimer::taskCreateHook( WIND_TCB *pTcb )
+{
+   return 1;
+}
+
 int MsgSysTimer::taskDeleteHook( WIND_TCB *pTcb )
 {
    if ( _TheTimerTid == pTcb )
@@ -287,6 +302,7 @@ void MsgSysTimer::registerTimer( const MessagePacket &mp, const unsigned long in
    // Create a new Map Entry 
    MapEntry *mePtr = new MapEntry;
    MessagePacket *mpPtr = new MessagePacket( mp );
+   mpPtr->msgData().taskId( taskIdSelf() );
    mePtr->_TimerMessage = mpPtr;
    mePtr->_Interval = interval;
 
@@ -356,6 +372,7 @@ void MsgSysTimer::deregisterTimersOfTask( const unsigned long tId )
 
 void MsgSysTimer::checkTimers()
 {
+   struct timespec ts;
    // 
    // Check the top of the priority queue for entries which
    //  have expired ...
@@ -372,7 +389,9 @@ void MsgSysTimer::checkTimers()
       {
          //
          // Get the message packet to send off ...
+         clock_gettime( CLOCK_REALTIME, &ts );
          MessagePacket *mpPtr = qe._MapEntryPtr->_TimerMessage;
+         mpPtr->msgData().sendTime( ts );
          mpPtr->updateCRC();
 
          //

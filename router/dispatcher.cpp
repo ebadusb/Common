@@ -321,7 +321,14 @@ void Dispatcher :: processMessage( MessagePacket &mp )
          //
          // Distribute the message ...
          for ( siter = (*miter).second.begin() ; siter != (*miter).second.end() ; siter++ )
-            ((MessageBase*)(*siter))->notify( mp );
+         {
+            if ( ((MessageBase*)(*siter))->notify( mp ) == false )
+            {
+               char buffer[256];
+               sprintf( buffer, "Message notification failed for MsgId=%lx", mp.msgData().msgId() );
+               _FATAL_ERROR( __FILE__, __LINE__, buffer );
+            }
+         }
    }
    else
    {

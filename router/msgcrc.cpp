@@ -1,7 +1,7 @@
 /*
  * copyright 1995, 1996 Cobe BCT Lakewood, Colorado
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/msgcrc.cpp 1.1 2002/05/24 16:03:01 ms10234 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/msgcrc.cpp 1.2 2002/07/03 20:10:36 ms10234 Exp ms10234 $
  * $Log: msgcrc.cpp $
  * Revision 1.1  1999/05/24 23:30:00  TD10216
  * Initial revision
@@ -31,7 +31,7 @@
 // ERROR HANDLING:   none
 */
 
-unsigned long crc32( unsigned char* blk_adr, unsigned long blk_len)
+unsigned long msgcrc32( unsigned char* blk_adr, unsigned long blk_len)
 {
    unsigned long crc = INITCRC_DEFAULT;
    crcgen32( &crc, blk_adr, blk_len );
@@ -48,7 +48,7 @@ unsigned long crc32( unsigned char* blk_adr, unsigned long blk_len)
 // ERROR HANDLING:   none
 */
 
-unsigned long addToCrc32( unsigned char* blk_adr,
+unsigned long addToMsgCrc32( unsigned char* blk_adr,
                           unsigned long blk_len,
                           unsigned long crc)
 {

@@ -76,7 +76,7 @@ protected:
 
    //
    // Send a message to the specified queue ...
-   void send( mqd_t mqueue,
+   bool send( mqd_t mqueue,
               const MessagePacket &mp, 
               const int priority=MessageSystemConstant::DEFAULT_MESSAGE_PRIORITY );
 

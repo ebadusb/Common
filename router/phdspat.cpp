@@ -1,18 +1,20 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/Common/router/rcs/phdspat.cpp 1.2 2000/06/06 19:09:45 ms10234 Exp jl11312 $
+ * $Header: K:/BCT_Development/Common/router/rcs/phdspat.cpp 1.2 2000/06/06 19:09:45 ms10234 Exp $
  * $Log: phdspat.cpp $
+ * Revision 1.2  2000/06/06 19:09:45  ms10234
+ * Removed message enumerations from the common project
  * Revision 1.1  1999/05/24 23:29:50  TD10216
  * Initial revision
  * Revision 1.12  1996/07/24 19:49:57  SS03309
  * fix MKS 
  * Revision 1.11  1996/06/28 17:24:45  SS03309
  * 10 - Add comment to see Photon Manuals, this
- * 			may change if photon changes
- * 			44 - move stucture to dispatch.hpp
- * 			87 - magic number
- * 			99 - change to exit
+ *          may change if photon changes
+ *          44 - move stucture to dispatch.hpp
+ *          87 - magic number
+ *          99 - change to exit
  *
  * TITLE:      phdspat.cpp, Focussed System message router - photon message
  *             dispatcher.
@@ -99,6 +101,16 @@ static int input_funct( void*, pid_t pid, void* message, size_t)
          exit(1);                                  // tell photon to stop
       }
    }
+   else
+   {
+      //
+      // Prevent photon from notifying us of the same version message more
+      // than once.
+      //
+      struct _sysmsg_hdr   * hdr = (struct _sysmsg_hdr *)message;
+      hdr->type = 0xffff;
+   }
+
    return Pt_CONTINUE;                             // tell photon to keep sending msgs
 }
 

@@ -157,13 +157,14 @@ protected:
    //
    // This function will synchronize the remote node's registered messages with my list
    void synchUpRemoteNode( unsigned long nodeId );
-   void synchUpRemoteNode( unsigned long nodeId, unsigned long msgId );
+   enum MessageSynchStatus { MsgNoSynch=0, MsgNameSynch=1, MsgRegisterSynch=3 };
+   bool synchUpRemoteNode( unsigned long nodeId, unsigned long msgId, map< unsigned long, MessageSynchStatus > &gStatusMap );
 
    //
-   // This function will return the gateway connection status found for the
+   // This function will output the gateway connection status found for the
    //  passed in nodeId in the _GatewayConnSynchedMap.  The map contains an
    //  enum which will be reported as a meaningful character value.
-   const char *gatewayConnStatus( unsigned long nodeId );
+   void gatewayConnStatus( DataLog_Stream &outs, unsigned long nodeId );
 
    //
    // Dump the contents of the given queue
@@ -203,7 +204,14 @@ protected:
    //  together with the message name.  This imposes an implicite length restriction on 
    //  message names of MAX_MESSAGE_SIZE.
    map< unsigned long, string >                                 _MsgIntegrityMap;
-   map< unsigned long, set< unsigned long > >                   _MsgToGatewaySynchMap;
+
+   //
+   // This structure will be used during synchronization to keep the status of which messages
+   //  have been synchronized with the gateways.  The message will need to be registered on the
+   //  remote node, even if the remote node already knows about the message, if the message has 
+   //  a task waiting to receive it.
+   map< unsigned long, map< unsigned long, MessageSynchStatus > > _MsgToGatewaySynchMap;
+
    //
    // This structure will be used to map the message Ids with the tasks that have registered
    //  to receive them.  The map will be indexed on message Id.  The second item in the map 
@@ -231,7 +239,11 @@ protected:
    //  the socket connection to the gateway.
    map< unsigned long, int >                                    _InetGatewayMap;
 
-   enum GatewaySynched { NoConn, Connected, Inprogress, LocalComplete, RemoteComplete, Synched };
+   enum GatewaySynched { NotConn=0, LocalRouterConnected=1,  LocalRouterSynched=2,  LocalConnAndSynched=3, 
+                                    RemoteRouterConnected=4, RemoteRouterSynched=8, RemoteConnAndSynched=12,
+                                    LocalAndRemoteConnected=5, LocalSynchRemoteConn=7, RemoteSynchLocalConn=13,
+                         Synched=15 
+                       };
    map< unsigned long, GatewaySynched >                         _GatewayConnSynchedMap;
 
    //

@@ -87,6 +87,12 @@ private:
 	unsigned short _lineWidth;
 	unsigned short _shadedLineWidth;
 	unsigned short _unShadedLineWidth;
+
+private:
+	CGUIFrame();
+	CGUIFrame (const CGUIFrame &obj);
+	CGUIFrame operator=(CGUIFrame &obj);
+
 };
 
 #endif /* #ifndef _CGUI_FRAME_INCLUDE */

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.9 2005/03/02 01:37:51Z cf10242 Exp psanusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.7  2005/02/07 18:53:55Z  rm10919
+ * Fix screen size references to be generic.
  * Revision 1.6  2005/01/03 20:40:55Z  cf10242
  * add defensive coding to catch gui crashes
  * Revision 1.5  2004/12/09 13:16:03Z  jl11312
@@ -56,10 +58,12 @@ void CGUIWindow::initializeData(void)
 
 CGUIWindow::~CGUIWindow()
 {
+	winCbRemove(_id, CGUIWindow::uglDrawCallback);
    //
    // Clear _owner reference for any objects contained in this window, since
    // this reference will no longer be valid.
    //
+
    list<CGUIWindowObject *>::iterator objIter;
    for (objIter = _clippedObjects.begin(); objIter != _clippedObjects.end(); ++objIter)
    {

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.1  2005/01/31 17:36:38Z  rm10919
+ * Initial revision
  *
  */
 
@@ -27,8 +29,11 @@ CGUITextItem::CGUITextItem(const char * id, StylingRecord * stylingRecord)
 
 CGUITextItem::~ CGUITextItem()
 {
-   delete _id;
-   delete _string;
+   if(_string) 
+	{
+		delete[] _string;
+		_string = NULL;
+	}
 }
 
 
@@ -75,10 +80,11 @@ const StringChar * CGUITextItem::getText(LanguageId languageId = currentLanguage
 	return _string;
 }
 
-char * CGUITextItem::getAscii(LanguageId languageId = currentLanguage)
+void CGUITextItem::getAscii( char * myString, LanguageId languageId = currentLanguage)
 {
-   char * string;
    int stringLength = 0;
+
+	myString[0] = '\0';
 
    if (_string)
    {
@@ -89,24 +95,18 @@ char * CGUITextItem::getAscii(LanguageId languageId = currentLanguage)
       
       stringLength++;
       
-      string =  new char[stringLength];
-
       for (int i=0; i<=_stringLength; i++)
       {
          if (_string[i] > 0xff)
          {
-            //  have an invalid character!!
-            return NULL;
+            //  have an invalid character!! force an exit to the loop with no joy
+            myString[0] = '\0';
+				i = _stringLength;
          }
-         string[i] = _string[i];
+			else
+				myString[i] = _string[i];
       }
-
-      return string;
-   }
-   else
-   {
-      return NULL;
-   }
+	}
 }
 
 void CGUITextItem::setId(const char * id)

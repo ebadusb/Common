@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.7 2005/11/22 00:34:43Z rm10919 Exp MS10234 $
  * $Log: cgui_text_item.h $
+ * Revision 1.1  2005/01/31 17:36:39Z  rm10919
+ * Initial revision
  *
  */
 
@@ -40,7 +42,7 @@ public:
    //
    //
    const StringChar * getText(LanguageId languageId = currentLanguage);
-   char * getAscii(LanguageId languageId = currentLanguage);
+   void getAscii( char * myString, LanguageId languageId = currentLanguage);
 
    CGUITextItem * getTextItem(const char * id, LanguageId languageId);
 

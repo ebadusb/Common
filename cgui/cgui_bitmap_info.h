@@ -5,6 +5,8 @@
 * build_bitmap_info file.
 *
 * $Log: cgui_bitmap_info.h $
+* Revision 1.4  2004/11/11 17:44:39Z  cf10242
+* Size of bitmap change to unsigned long to handle large bitmaps.
 * Revision 1.3  2004/11/03 18:10:58Z  cf10242
 * Swap height and width in constructor to be cnsistent with CGUIRegion ordering.
 * Revision 1.2  2004/10/22 20:13:09Z  rm10919
@@ -47,7 +49,8 @@ class CGUIBitmapInfo
 							) :						_myHeight (height),
 														_myWidth (width),
 														_loadCount (0),
-														_loadState (UNLOADED)
+														_loadState (UNLOADED),
+														_myId(UGL_NULL_ID)
 		{
 			_mySize = size;
 			_myBitmap = (unsigned char *)bmp_data; 

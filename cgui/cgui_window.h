@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.h 1.6 2005/02/21 17:17:13Z cf10242 Exp psanusb $
  * $Log: cgui_window.h $
+ * Revision 1.5  2005/01/28 23:52:19Z  rm10919
+ * CGUITextItem class changed and put into own file.
  * Revision 1.4  2004/11/04 20:19:09Z  rm10919
  * Common updates and changes.
  * Revision 1.3  2004/10/22 20:14:35Z  rm10919
@@ -91,6 +93,9 @@ public:
    virtual void pointerEvent(const PointerEvent & event);
 
 private:
+	CGUIWindow();
+	CGUIWindow (const CGUIWindow &obj);
+	CGUIWindow operator=(CGUIWindow &obj);
    void initializeData(void);
    void addObject(CGUIWindowObject * obj);
    void addChildWindow(CGUIWindow * child); 

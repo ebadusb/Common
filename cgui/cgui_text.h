@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.9  2005/01/28 23:52:18Z  rm10919
+ * CGUITextItem class changed and put into own file.
  * Revision 1.8  2005/01/03 23:49:51Z  cf10242
  * add a setRegion to cguiText to invalidate region even if region size did not change
  * Revision 1.7  2004/11/18 22:31:41Z  rm10919
@@ -235,7 +237,7 @@ protected:
                                     // the ofsset for RIGHTTOLEFT text string may have a negative offset.
    };
 
-   CGUITextItem   _textItem;        // This is the string id or the key to the string id
+   CGUITextItem   *_textItem;       // This is the string id or the key to the string id
    StylingRecord  _stylingRecord;   // holds the styling record for an object
 
    list<LineData> _lineData;        // list of text lines for object
@@ -258,5 +260,11 @@ private:
 
    CGUIRegion     _requestedRegion; // used to determine area for LineData
    LanguageId     _configLanguage;  // language of text string, need to know where to look for string. Not sure if this is need _textItem.languageId may be used.
+private:
+	CGUIText();
+	CGUIText (CGUIText & copy);
+	CGUIText operator=(CGUIText &obj);
+
+
 };
 #endif /* #ifndef _CGUI_TEXT_INCLUDE */

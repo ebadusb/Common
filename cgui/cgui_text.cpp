@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.11  2005/02/07 18:53:55Z  rm10919
+ * Fix screen size references to be generic.
  * Revision 1.10  2005/01/17 17:58:59Z  cf10242
  * Clean up some pointer references where the pointer existence is not checked before reference
  * Revision 1.9  2005/01/03 23:49:50Z  cf10242
@@ -66,20 +68,21 @@ CGUIText::~CGUIText()
    if (_textString)
    {
       delete[] _textString;
+		_textString = NULL;
    }
 }
 
 
 void CGUIText::initializeData(CGUIWindow * parent, CGUITextItem * textItem, StylingRecord * stylingRecord)
 {
-   _textItem =  * textItem;
+   _textItem =  textItem;
    _stylingRecord = * stylingRecord;
-   if (textItem)
+   if (_textItem)
    {
 
-      if (_textItem.isInitialized())
+      if (_textItem->isInitialized())
       {
-         const StringChar * string = _textItem.getText(_textItem.getLanguageId());
+         const StringChar * string = _textItem->getText(_textItem->getLanguageId());
 
          if (string)
          {
@@ -150,7 +153,7 @@ void CGUIText::setLanguage(LanguageId configLanguage)
    // language module is developed.
    //
    _configLanguage = configLanguage;
-   _textItem.setLanguageId(configLanguage);
+   _textItem->setLanguageId(configLanguage);
    _languageSetByApp = true;
 }
 
@@ -167,22 +170,26 @@ void CGUIText::setStylingRecord (StylingRecord * stylingRecord)
 
 void CGUIText::setText(CGUITextItem * textItem)
 {
-   _textItem =  * textItem;
 
-   if (_textItem.isInitialized())
-   {
-      const StringChar * string = _textItem.getText(_textItem.getLanguageId());
+	if(textItem)
+	{
+		_textItem =  textItem;
 
-      if (string)
-      {
-         setText(string);
-      }
-      else
-      {
-         _textString = new StringChar[1];
-         *_textString =  null_char;
-      }
-   }
+		if (_textItem->isInitialized())
+		{
+			const StringChar * string = _textItem->getText(_textItem->getLanguageId());
+
+			if (string)
+			{
+				setText(string);
+			}
+			else
+			{
+				_textString = new StringChar[1];
+				*_textString =  null_char;
+			}
+		}
+	}
 }
 
 void CGUIText::setText(const StringChar * string)
@@ -260,7 +267,7 @@ void CGUIText::getText(char &bufferPtr)
    // text string in the string database.        
    const StringChar * string;
 
-   string = _textItem.getText(_configLanguage);
+   string = _textItem->getText(_configLanguage);
 }
 
 
@@ -705,6 +712,7 @@ void CGUIText::handleVariableSubstitution(void)
 
             varName[subEndIdx-subStartIdx] = '\0';
             unsigned char * varValue = '\0'; //= (unsigned char *)trimaSysGetGUISetting(varName);
+				delete[] varName;
             if (varValue)
             {
                // Value is present, copy to the string and setup to continue with
@@ -734,4 +742,5 @@ void CGUIText::handleVariableSubstitution(void)
    _stringLength = new_stringLength;
 
    free(new_textString);
+	new_textString = NULL;
 }

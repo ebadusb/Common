@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.10  2005/01/28 23:52:17Z  rm10919
+ *  CGUITextItem class changed and put into own file.
  *  Revision 1.9  2005/01/18 18:38:52Z  rm10919
  *  Fix icon placement on button.
  *  Revision 1.8  2005/01/03 20:41:24Z  cf10242
@@ -174,12 +176,10 @@ CGUIButton::~CGUIButton ()
    if (_disabledBitmap) delete _disabledBitmap;
    if (_pressedBitmap) delete _pressedBitmap;
 
-   if (_buttonMessagePointer) delete _buttonMessagePointer;
-   if (_audioMessagePointer) delete _audioMessagePointer;
-
    if (_iconPointer) delete _iconPointer;
 
-   if (_btnDataLogLevel) delete _btnDataLogLevel;
+   winCbRemove(_id, &CGUIWindow::uglPointerCallback);
+
 }
 
 // ENABLE

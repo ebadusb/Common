@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.12  2005/01/28 23:52:17Z  rm10919
+ *  CGUITextItem class changed and put into own file.
  *  Revision 1.11  2005/01/03 20:41:25Z  cf10242
  *  add an enablePressed method a button can shown as enabled and pressed
  *  Revision 1.10  2004/12/17 15:10:18Z  rm10919
@@ -343,6 +345,12 @@ protected:
 
 private:
    bool _pressed;
+
+private:
+	CGUIButton();
+	CGUIButton (CGUIButton & copy);
+	CGUIButton operator=(CGUIButton &obj);
+
 };
 
 #endif /* #ifndef _CGUI_BUTTON_INCLUDE */

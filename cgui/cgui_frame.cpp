@@ -36,12 +36,6 @@ CGUIFrame::CGUIFrame(CGUIDisplay & display, const CGUIRegion region, CGUIColor c
 
 CGUIFrame::~CGUIFrame()
 {
-   if (_owner)
-   {
-      _owner->deleteObject(this);
-      _owner = NULL;
-   }
-
 }
 
 // setColor - change the colors used in a shaded frame boundary.  If used on a simple frame, no change is made.

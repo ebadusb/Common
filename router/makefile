@@ -1,6 +1,6 @@
 #
 # PURPOSE: makefile for COBE BCT common router
-# $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/MAKEFILE 1.3 1999/05/28 18:46:31 TD10216 Exp TD10216 $
+# $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/MAKEFILE 1.4 1999/06/07 22:25:39 TD10216 Exp TD10216 $
 # NB:Do NOT save & try to run this file with DOS CR/LFs
 # Set MKS option Configuration->Personal->Checkout->UNIX
 # symptom:cant open ../commonrules.mk
@@ -43,7 +43,7 @@ OBJS= ${CPPOBJS} ${COBJS}
 all: $(LIBDIR)/$(ROUTERLIB) $(PROGRAMS)
 
 $(TCP_GATE): tcp_gate.o $(LIBDIR)/$(ROUTERLIB)
-    $(LD) $(LDFLAGS) tcp_gate.o $(ROUTERLIB) -l socket3r -o $@
+	$(LD) $(LDFLAGS) tcp_gate.o $(ROUTERLIB) -l socket3r -o $@
 
 $(GATEWAY): gateway.o $(LIBDIR)/$(ROUTERLIB)
 	$(LD) $(LDFLAGS) gateway.o $(ROUTERLIB) -o $(GATEWAY)
@@ -57,8 +57,8 @@ $(ROUTER): router.o $(LIBDIR)/$(ROUTERLIB)
 $(LIBDIR)/$(ROUTERLIB) : msg.o new.o dispatch.o crc.o sinver.o phdspat.o \
 		spoofdsp.o mq_check.o error.o DebugClass.o debug.o
 		$(LIB_BLD_CMD) $(LIBDIR)/$(ROUTERLIB) +$(MQUEUE_LIB) +msg.o +new.o +dispatch.o +crc.o \
-              +sinver.o +phdspat.o +spoofdsp.o +mq_check.o +error.o \
-              +debug.o +DebugClass.o
+		+sinver.o +phdspat.o +spoofdsp.o +mq_check.o +error.o \
+		+debug.o +DebugClass.o
 
 #
 # setup commonsharedtargets.mk

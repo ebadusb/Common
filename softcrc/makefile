@@ -1,6 +1,6 @@
 #
 # PURPOSE: builds COBE BCT common crc utilities
-# $Header: Q:/home1/COMMON_PROJECT/Source/SOFTCRC/rcs/MAKEFILE 1.2 1999/05/26 15:34:44 TD10216 Exp TD10216 $
+# $Header: Y:/BCT_Development/Common/SOFTCRC/rcs/MAKEFILE 1.3 1999/06/07 22:25:47 TD10216 Exp MS10234 $
 # NB:Do NOT save & try to run this file with DOS CR/LFs
 # Set MKS option Configuration->Personal->Checkout->UNIX
 # symptom:cant open ../commonrules.mk
@@ -42,28 +42,28 @@ $(LIBDIR)/$(CRC_LIB):$(LIBOBJS)
 	$(LIB_BLD_CMD) $(LIBDIR)/$(CRC_LIB) +$(LIBOBJS)
 
 $(SOFTCRC): cobecrc.o $(LIBDIR)/$(CRC_LIB) $(LIBDIR)/routerf.lib
-        $(LD) -o $(SOFTCRC) $(LDFLAGS) cobecrc.o -lcrc.lib -lrouterf.lib
+		$(LD) -o $(SOFTCRC) $(LDFLAGS) cobecrc.o -lcrc.lib -lrouterf.lib
 
 cobecrc.o: softcrc.cpp softcrc.h 
-        $(CPP) $(CFLAGS) -DRESTRICT_TO_COBE softcrc.cpp
-        mv softcrc.o cobecrc.o
+		$(CPP) $(CFLAGS) -DRESTRICT_TO_COBE softcrc.cpp
+		mv softcrc.o cobecrc.o
 
 $(MACHCRC): machcrc.o crcgen.o $(LIBDIR)/routerf.lib
-        $(LD) -o $(MACHCRC) $(LDFLAGS) machcrc.o crcgen.o \
+		$(LD) -o $(MACHCRC) $(LDFLAGS) machcrc.o crcgen.o \
 		-l crc.lib -l routerf.lib
 
 machcrc.o: softcrc.cpp softcrc.h
-        $(CPP) $(CFLAGS) -DRESTRICT_TO_MACHINE softcrc.cpp
-        mv softcrc.o machcrc.o
+		$(CPP) $(CFLAGS) -DRESTRICT_TO_MACHINE softcrc.cpp
+		mv softcrc.o machcrc.o
 
 crcgen.o: crcgen.cpp 
-        $(CPP) $(CFLAGS) crcgen.cpp
+		$(CPP) $(CFLAGS) crcgen.cpp
 
 checkself.o: checkself.cpp checkself.h
-        $(CPP) $(CFLAGS) checkself.cpp
+		$(CPP) $(CFLAGS) checkself.cpp
 
 crcfunctions.o: crcfunctions.cpp
-        $(CPP) $(CFLAGS) ./crcfunctions.cpp
+		$(CPP) $(CFLAGS) ./crcfunctions.cpp
 
 OBJS=$(LIBOBJS) $(FAKEOBJS)
 MISC=$(LIBDIR)/$(CRC_LIB)

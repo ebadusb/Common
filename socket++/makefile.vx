@@ -3,6 +3,8 @@
 # Makefile - makefile for socket++ library
 #
 # $Log: makefile.vx $
+# Revision 1.5  2002/06/18 16:37:54  ms10234
+# Added a connect with timeout function
 # Revision 1.4  2002/05/17 14:45:35  jl11312
 # - moved definition of ADDN_INCDIR to handle changes to makefile templates
 # Revision 1.3  2002/05/01 15:51:45  rm70006
@@ -24,7 +26,7 @@ ADDN_INCDIR=
 
 #
 # MAINDIR should be set to the relative path from this makefile directory
-# to the base trima project directory.  MAINDIR must use \ (DOS/Windows
+# to the base common project directory.  MAINDIR must use \ (DOS/Windows
 # style) directory separators if they are needed.
 #
 MAINDIR = ..
@@ -48,7 +50,7 @@ ARCHIVE_NAME = libcommonsocket.a
 ARCHIVE_DIR = $(MAINDIR)\lib
 
 #
-# This is the standard makefile for Trima libraries
+# This is the standard makefile for common libraries
 #
 include $(MAINDIR)/makefile.lib
 

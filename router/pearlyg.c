@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/pearlyg.c 1.5 2000/12/19 20:01:36 ms10234 Exp jl11312 $
  * $Log: pearlyg.c $
+ * Revision 1.4  2000/07/07 20:53:39  bs04481
+ * Bump priorities up 1
  * Revision 1.3  1999/09/14 16:51:30  TD10216
  * IT4333
  * Revision 1.2  1999/05/31 20:35:10  BS04481
@@ -101,12 +103,12 @@ main()
    struct sched_param param;                 // scheduler parameters
    char eString[256];
 
-// set priority and scheduling method to round robin
+   // set priority and scheduling method to round robin
    setprio( 0, 12);
    sched_getparam( 0, &param);
    sched_setscheduler( 0, SCHED_RR, &param);
 
-// set system flag to inform on task termination
+   // set system flag to inform on task termination
 
    bits = _PPF_INFORM;
    if (qnx_pflags( bits, bits, 0, 0) == QNX_ERROR)
@@ -115,40 +117,40 @@ main()
    }
    sinVerInitialize();                       // init sin ver processing
 
-// loop forever, processing messages
+   // loop forever, processing messages
 
-   while( 1)
+   while ( 1)
    {
-// get messages
+      // get messages
       pid = Receive( 0, msg, sizeof( msg));
       if (pid == QNX_ERROR)
       {
          FATAL_ERROR( (unsigned short)__LINE__, 0, "Receive()");
       }
 
-// check for sin ver message, if not process task termination
+      // get task name
+
+      status = qnx_psinfo( PROC_PID, pid, &psdata, 0, 0);
+      replyMsg.status = EOK;
+
+      // reply to proc
+
+      Reply( pid, &replyMsg, sizeof( replyMsg));
+
+      // check for sin ver message, if not process task termination
 
       if (!sinVerMessage( pid, (SINVERMSG*) &msg[0]))
       {
 
          SYS_MSG* s = (SYS_MSG*) &msg[0];
 
-// check for task messages
+         // check for task messages
 
          if (( s->hdr.type == _SYSMSG) &&
              ( s->hdr.subtype == _SYSMSG_SUBTYPE_DEATH))
          {
 
-// get task name
-
-            status = qnx_psinfo( PROC_PID, pid, &psdata, 0, 0);
-            replyMsg.status = EOK;
-
-// reply to proc
-
-            Reply( pid, &replyMsg, sizeof( replyMsg));
-
-// enter trace data into log if abnormal termination
+            // enter trace data into log if abnormal termination
 
             signal = s->body.signum;
             exitStatus = s->body.xstatus;
@@ -156,16 +158,16 @@ main()
             if ((signal != 0) || (exitStatus != 0))
             {
                if ( (status == QNX_ERROR)
-                  ||(psdata.pid != pid) )         // no name found
+                    ||(psdata.pid != pid) )         // no name found
                {
                   Trace3b( TRACE_PGATE, _TRACE_SEVERE,
-                     pid, signal, exitStatus, 20, "Not in process list");
+                           pid, signal, exitStatus, 20, "Not in process list");
                }
                else                             // name in psdata struct
                {
                   Trace3b( TRACE_PGATE, _TRACE_SEVERE,
-                     pid, signal, exitStatus,
-                     strlen( psdata.un.proc.name) + 1, psdata.un.proc.name);
+                           pid, signal, exitStatus,
+                           strlen( psdata.un.proc.name) + 1, psdata.un.proc.name);
                }  // end of status check
             }  // end of signal test
          }  // end of message type check
@@ -173,8 +175,8 @@ main()
          {
             sprintf(eString,"Type: %d, subtype: %d");
             Trace3b( TRACE_PGATE, _TRACE_SEVERE,
-               pid, 0, 0,
-               strlen( eString) + 1, eString);
+                     pid, 0, 0,
+                     strlen( eString) + 1, eString);
 
          }
       }  // end of sin ver check

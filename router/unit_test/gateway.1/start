@@ -1,5 +1,5 @@
-ld < init.out
-ld < ../../../bin/common.out
-ld < gatewaytest.out
+ld < sysinit.out
+ld < control_common.out
+ld < gateway_test.out
 gatewayTest
 

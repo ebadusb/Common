@@ -1,60 +1,69 @@
-#
-
+ifeq ($(BUILD_TYPE),CLEAN)
 .PHONY: all
-all: check_opt_change apps app
+all : dirs
+else
+.PHONY: all
+all : check_opt_change apps dirs
+endif
 
-ADDN_INCDIR = 
-ADDN_CXXFLAGS = 
-ADDN_LDFLAGS =
-
-
-#
-# MAINDIR should be set to the relative path from this makefile directory
-# to the base trima project directory.  MAINDIR must use \ (DOS/Windows
-# style) directory separators if they are needed.
 #
 MAINDIR = ..\..\..
 COMDIR = $(MAINDIR)
 include $(MAINDIR)/makefile.vxc
 
-#
-# Define location for libraries
-#
-LIBDIR = $(MAINDIR)/lib
+DIR_LIST :=  
 
-.PHONY: apps
-apps:
-	@rm -f $(MAINDIR)/bin/common.out
-	@cd $(MAINDIR) && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
+.PHONY: dirs
+dirs : $(DIR_LIST)
 
-#
-# The following should define all of the source files of each type
-# to be compiled for the executable
-#
-APP_C_FILES   =
-APP_CXX_FILES = gateway_test.cpp
-APP_S_FILES =
+.PHONY: force
+force: ;
 
+$(DIR_LIST) : force
+	@cd $@ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
+	
 #
 # The following should define the location of the resulting application.  Note
 # that APP_DIR is used in DOS shell commands, and must use \ directory
 # separators.
 #
-APP_NAME = gatewaytest.out
-APP_DIR = .
-APP_LIBS =
+APP_NAME := control_common
+control_common_dir = .
+control_common_libs =
+control_common_lib_list = .opt/control_lib_objs
+include $(MAINDIR)/makefile.process_app
 
-app : $(APP_DIR)/$(APP_NAME)
+APP_NAME := gateway_test
+gateway_test_dir = .
+gateway_test_map = gateway_test.map
+gateway_test_cxx_files = gateway_test.cpp
+include $(MAINDIR)/makefile.process_app
 
-.PHONY: clean
-clean:
-	rm -f $(addprefix $(CPU)/, $(notdir $(APP_C_FILES:.cpp=.o))) $(addprefix .dfile/, $(notdir $(APP_C_FILES:.cpp=.d)))
-	rm -f $(addprefix $(CPU)/, $(notdir $(APP_CXX_FILES:.cpp=.o))) $(addprefix .dfile/, $(notdir $(APP_CXX_FILES:.cpp=.d)))
-	rm -f $(addprefix $(APP_DIR)/, $(APP_NAME))
-	@cd $(MAINDIR) && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
+APP_NAME := sysinit
+sysinit_dir = .
+sysinit_map = sysinit.map
+sysinit_c_files =
+sysinit_cxx_files = datalog.cpp error.cpp systemoverrides.cpp
+sysinit_libs =
+sysinit_lib_list =
+include $(MAINDIR)/makefile.process_app
+
+CONTROL_COMMON_LIBS = $(COMDIR)\socket++\lib\libsocket++.a $(COMDIR)\router\lib\librouter.a \
+$(COMDIR)\softcrc\lib\libsoftcrc.a $(COMDIR)\clocks\lib\libclocks.a $(COMDIR)\cds\lib\libcds.a \
+$(COMDIR)\cmdline\lib\libcmdline.a
+
+.opt/control_lib_objs: $(CONTROL_COMMON_LIBS)
+	@if not exist .opt mkdir .opt
+	for %l in ($(CONTROL_COMMON_LIBS)) do $(AR) t %l >> .opt\control_lib_objs_tmp
+	sed "s@^@$(CPU)/@" < .opt\control_lib_objs_tmp > .opt\control_lib_objs
+	rm -f .opt\control_lib_objs_tmp 
+	@if not exist .\$(CPU) mkdir .\$(CPU)
+	cd $(CPU) && for %l in ($(CONTROL_COMMON_LIBS)) do $(AR) x ..\%l 
+
+apps : $(APP_LIST)
 
 #
-# This is the standard makefile for Trima applications
+# This is the standard makefile for applications
 #
-include $(MAINDIR)/makefile.app
+include $(MAINDIR)/makefile.build_apps
 

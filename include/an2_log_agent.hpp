@@ -1,8 +1,10 @@
 /*
 * Copyright (c) 1995, 1996 by Cobe BCT, Inc.    All rights reserved.
 *
-* $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2_LOG_AGENT.HPP 1.1 1999/08/04 22:36:23 TD10216 Exp TD10216 $
+* $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2_LOG_AGENT.HPP 1.2 1999/08/10 21:57:55 TD10216 Exp BS04481 $
 * $Log: AN2_LOG_AGENT.HPP $
+* Revision 1.1  1999/08/04 22:36:23  TD10216
+* Initial revision
 * an2msgs.h
 *
 * Abstract : 12/04/96
@@ -16,8 +18,8 @@
 
 #define AGENT_FILE_PATHS
 #include "ap2agent.h"
-#include "aSectionfile.hpp"
-#include "anAgentMemoryInterface.h"
+#include "msghdr.h"
+#include "error.h"
 #include "an2msgs.h"
 #include "buffmsgs.h"
 
@@ -29,7 +31,6 @@ class an2_log_agent
 		sem_t *LogSem;
 		FILE *fo;
 		ConfigDataMsgStruct LogStruct;
-		aSectionfile *my_sectionfile;
 		char eString[256];
 
 		an2_log_agent(void);

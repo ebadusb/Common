@@ -87,9 +87,12 @@ void sockinetaddr::setaddr(const char *inet_addr)
 
 
 
-void sockinetaddr::setaddr(unsigned long addr)
+void sockinetaddr::setaddr(unsigned long addr, byte_order order)
 {
-   sin_addr.s_addr = htonl(addr);
+   if (order == host)
+      sin_addr.s_addr = htonl(addr);
+   else
+      sin_addr.s_addr = addr;
 }
 
 

@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/filesort.c 1.1 2002/09/19 22:15:43 jl11312 Exp jl11312 $
+ * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/filesort.c 1.3 2003/05/13 15:01:00Z jl11312 Exp jl11312 $
  * $Log: filesort.c $
+ * Revision 1.1  2002/09/19 22:15:43  jl11312
+ * Initial revision
  *
  */
 
@@ -124,6 +126,7 @@ STATUS fileSort(const char * dirName, FileSortType sortType, fileSortCallBack * 
 					 * size according to current file list size.
 					 */
 					size_t	avgFileNameLen = fileNameBufferPos/fileCount + 1;
+
 					fileNameBufferSize = avgFileNameLen*fileListSize + fileNameLen + 1;
 					fileNameBuffer = realloc(fileNameBuffer, fileNameBufferSize*sizeof(char));
 				}
@@ -135,10 +138,10 @@ STATUS fileSort(const char * dirName, FileSortType sortType, fileSortCallBack * 
 				if ( stat(fullPathName, &fileStat) == OK )
 				{
 					strcpy(&fileNameBuffer[fileNameBufferPos], dirEntry->d_name);
-					fileNameBufferPos += fileNameLen+1;
-
 					fileList[fileCount].fileNameIndex = fileNameBufferPos;
 					fileList[fileCount].lastModifyTime = fileStat.st_mtime;
+
+					fileNameBufferPos += fileNameLen+1;
 					fileCount += 1;
 				}
 			}

@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.7  2002/09/04 18:31:28Z  rm70006
+ * HISTORY:    Added accessor function for role.
  * HISTORY:    Revision 1.6  2002/09/03 14:36:33Z  rm70006
  * HISTORY:    Added new single write class.
  * HISTORY:    Revision 1.5  2002/08/23 14:53:21Z  rm70006
@@ -159,8 +161,10 @@ enum BIND_ITEM_TYPE
 {  ITEM_DATA,
    ITEM_SPOOF,
    ITEM_PFR_LIST,
-   ITEM_READ_COUNT_SEMAPHORE,
-   ITEM_WRITE_COUNT_SEMAPHORE,
+   ITEM_MUTEX_SEMAPHORE,
+   ITEM_READ_SEMAPHORE,
+   ITEM_WRITE_SEMAPHORE,
+   ITEM_SIGNAL_READ,
    ITEM_SIGNAL_WRITE,
    ITEM_READ_COUNT,
    ITEM_WRITER_DECLARED
@@ -231,12 +235,14 @@ private:
    // instance vars connected to the global symbol table
 
    // Mutex control flags
-   int *_signalWrite;
+   bool *_signalRead;
+   bool *_signalWrite;
    int *_readCount;
 
    // Mutex semaphores
+   SEM_ID *_readSemaphore;
    SEM_ID *_writeSemaphore;
-   SEM_ID *_readCountSemaphore;
+   SEM_ID *_mutexSemaphore;
 
    // List of PFR elements
    ELEMENT_LISTTYPE *_pfrList;

@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.7  2002/08/30 15:26:30Z  rm70006
+ * HISTORY:    Don't use set in register init routine.  
  * HISTORY:    Revision 1.6  2002/08/30 13:54:06Z  rm70006
  * HISTORY:    Fixed problem with datastore initialization.
  * HISTORY:    Revision 1.5  2002/08/29 18:08:23Z  rm70006
@@ -339,14 +341,16 @@ template <class dataType> bool RangedElement<dataType>::Set(const dataType &data
 const unsigned int SYM_NAME_SIZE = 200;
 
 
-const char DATASTORE_DATA_NAME[]       = "%s_ref_%d";
-const char DATASTORE_SPOOF_NAME[]      = "%s_spoof_%d";
-const char DATASTORE_LIST_NAME[]       = "_DataStore_%s_list";
-const char DATASTORE_READ_SEM[]        = "_DataStore_%s_readsem";
-const char DATASTORE_WRITE_SEM[]       = "_DataStore_%s_writesem";
-const char DATASTORE_SIGNAL_WRITE[]    = "_DataStore_%s_signalwrite";
-const char DATASTORE_READ_COUNT[]      = "_DataStore_%s_readcount";
-const char DATASTORE_WRITER_DECLARED[] = "_DataStore_%s_writer_declared";
+const char DATASTORE_DATA_NAME[]         = "%s_ref_%d";
+const char DATASTORE_SPOOF_NAME[]        = "%s_spoof_%d";
+const char DATASTORE_LIST_NAME[]         = "_DataStore_%s_list";
+const char DATASTORE_MUTEX_SEM[]         = "_DataStore_%s_mutexsem";
+const char DATASTORE_READ_SEM[]          = "_DataStore_%s_readsem";
+const char DATASTORE_WRITE_SEM[]         = "_DataStore_%s_writesem";
+const char DATASTORE_SIGNAL_READ[]       = "_DataStore_%s_signalread";
+const char DATASTORE_SIGNAL_WRITE[]      = "_DataStore_%s_signalwrite";
+const char DATASTORE_READ_COUNT[]        = "_DataStore_%s_readcount";
+const char DATASTORE_WRITER_DECLARED[]   = "_DataStore_%s_writer_declared";
 
 const int DATASTORE_SYMTBL_SIZE = 9;
 

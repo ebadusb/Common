@@ -155,8 +155,10 @@ private:
 };
 
 #ifdef __cplusplus 
+extern "C" void msgsystimerInit();
 extern "C" void msgsystimerDump();
 #else 
+void msgsystimerInit();
 void msgsystimerDump();
 #endif
 

@@ -211,8 +211,10 @@ protected:
 
 
 #ifdef __cplusplus 
+extern "C" void routerInit();
 extern "C" void routerDump();
 #else 
+void routerInit();
 void routerDump();
 #endif
 

@@ -1136,14 +1136,14 @@ bool Router::sendMessageToSpoofer( const MessagePacket &mp, int priority )
          if ( (*mtiter).first == mp.msgData().msgId() )
          {
             map< unsigned long, mqd_t >::iterator tqiter;
-            tqiter = _TaskQueueMap.find( mp.msgData().taskId() );
+            tqiter = _TaskQueueMap.find( (*mtiter).second );
             if ( tqiter == _TaskQueueMap.end() )
             {
                //
                // Error ...
                DataLog_Critical criticalLog;
-               DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() << " - Task Id=" << mp.msgData().taskId() << " not found in task list" << endmsg;
-               _FATAL_ERROR( __FILE__, __LINE__, "Task lookup failed" );
+               DataLog(criticalLog) << "Sending message=" << hex << (*mtiter).first << " - Spoofer Task Id=" << (*mtiter).second << " not found in task list" << endmsg;
+               _FATAL_ERROR( __FILE__, __LINE__, "Spoofer task lookup failed" );
                break;
             }
             

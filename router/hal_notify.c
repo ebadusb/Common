@@ -9,6 +9,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/hal_notify.c 1.1 2001/09/28 14:36:12 jl11312 Exp jl11312 $
  * $Log: hal_notify.c $
+ * Revision 1.1  2001/09/28 14:36:12  jl11312
+ * Initial revision
  *
  */
 
@@ -18,23 +20,23 @@
 #define  NORMAL_NOTIFY_CODE   0xe7a3   // completely arbitrary codes to let HAL know that
 #define  FATAL_NOTIFY_CODE    0x6b5c   //  shutdown data is coming
 
-#define  HAL_IO_PORT          0x3ff    // scratchpad register for COM1
-#define  MAX_DATA_BYTES       16       // maximum storage in HAL for fatal error information
-                                       //  must be at least 4
+#define  HAL_IO_PORT          0x31f    // port to which HAL data should be written
+#define  MAX_DATA_BYTES       11       // maximum storage in HAL for fatal error information
+                                       //  must be at least 6
 
 void hal_notify_shutdown(void)
 {
-   outp(HAL_IO_PORT, NORMAL_NOTIFY_CODE & 0xff);
-   outp(HAL_IO_PORT, (NORMAL_NOTIFY_CODE >> 8) & 0xff);
+   outp(HAL_IO_PORT, (NORMAL_NOTIFY_CODE) & 0xff);
+   outp(HAL_IO_PORT, ((NORMAL_NOTIFY_CODE) >> 8) & 0xff);
 }
 
 void hal_notify_fatal(int line, int code, const char * file)
 {
    const char * ptr = file;
-   int   numBytes = 4;
+   int   numBytes = 6;
 
-   outp(HAL_IO_PORT, FATAL_NOTIFY_CODE & 0xff);
-   outp(HAL_IO_PORT, (FATAL_NOTIFY_CODE >> 8) & 0xff);
+   outp(HAL_IO_PORT, (FATAL_NOTIFY_CODE) & 0xff);
+   outp(HAL_IO_PORT, ((FATAL_NOTIFY_CODE) >> 8) & 0xff);
 
    outp(HAL_IO_PORT, line & 0xff);
    outp(HAL_IO_PORT, (line >> 8) & 0xff);

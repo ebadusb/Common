@@ -3,6 +3,19 @@
  *
  * $Header: //Bctquad3/HOME/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.8 2001/04/05 14:16:14 jl11312 Exp pn02526 $
  * $Log: ostime.cpp $
+ * Revision 1.6  1999/10/28 20:29:16  BS04481
+ * Code review change.  Previous design disabled soft watchdogs
+ * while the clock was being set.  This was unacceptable.  This code
+ * changes the soft watchdogs to run off of an element of the 
+ * kernel's ticks space which is not sensitive to changes in the 
+ * real-time clock.    All code with disables the soft watchdogs is
+ * disabled.  The soft watchdog will go off if not petted within 2
+ * seconds under all conditions.  The machine will also safe-state
+ * if the soft watchdogs ever go backward.   In addition, time set
+ * changes are rejected if received while air-to-donor monitoring is
+ * in effect.  This is done because the time jumps in the real-time
+ * clocks effect the control loops.
+ * 
  * Revision 1.5  1999/10/13 04:14:08  BS04481
  * Correct delta time calculation to avoid overflow.  Overflow 
  * resulted in truncation of left 12 bits of an intermediate result and
@@ -265,10 +278,9 @@ osTime::howLongRaw(rawTick then)
    // this element of the timesel structure is not sensitive 
    // changes to the realtime clock.  This value should increment by
    // 23860 (decimal) each tick which is 1193000 each second.  
-   // The register will wrap in just over 3600 seconds.
+   // The register will wrap in just over 3600 seconds but QNX 
+   // handles the wrap.
    deltaRaw = now.cycle - then.cycle;
-   if (deltaRaw < 0L)
-      deltaRaw += 0x7fffffff;
 
    // convert to msec
    deltaMsec = deltaRaw / MS_EQUIVALENT; 

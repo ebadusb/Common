@@ -12,11 +12,9 @@
 #include "auxclock.h"
 #include "datalog.h"
 #include "error.h"
+#include "messagesystemconstant.h"
 #include "msgsystimer.h"
 
-const unsigned int MsgSysTimer::MAX_NUM_RETRIES=1;
-const struct timespec MsgSysTimer::RETRY_DELAY={ 1 /* seconds */, 0 /*nanoseconds*/ };
-const int MsgSysTimer::DEFAULT_TIMER_MESSAGE_PRIORITY=16;
 
 WIND_TCB    *MsgSysTimer::_TheTimerTid=0;
 MsgSysTimer *MsgSysTimer::_TheTimer=0;
@@ -108,10 +106,10 @@ bool MsgSysTimer::init()
    do
    {
       _TimerMQ = mq_open( "timertask", O_RDONLY | O_CREAT, 0666, &attr);
-      nanosleep( &MsgSysTimer::RETRY_DELAY, 0 );
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    }
    while (    _TimerMQ == (mqd_t)ERROR 
-           && ++retries < MAX_NUM_RETRIES );
+           && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
 
    if ( _TimerMQ == (mqd_t)ERROR )
    {
@@ -130,10 +128,10 @@ bool MsgSysTimer::init()
    do
    {
       _RouterMQ = mq_open( "router", O_WRONLY );
-      nanosleep( &MsgSysTimer::RETRY_DELAY, 0 );
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    } 
    while (    _RouterMQ == (mqd_t)ERROR 
-           && ++retries < MAX_NUM_RETRIES );
+           && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
 
    if ( _RouterMQ == (mqd_t)ERROR )
    {
@@ -168,7 +166,8 @@ void MsgSysTimer::maintainTimers()
       // Read the queue entry ...
       unsigned int retries=0;
       while (    ( size = mq_receive( _TimerMQ, &mp, sizeof( MessagePacket ), 0 ) ) == ERROR 
-              && retries++ < MAX_NUM_RETRIES ) nanosleep( &MsgSysTimer::RETRY_DELAY, 0 );
+              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
+         nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
       if ( size == ERROR )
       {
          //
@@ -303,7 +302,6 @@ void MsgSysTimer::registerTimer( const MessagePacket &mp, const unsigned long in
    // Create a new Map Entry 
    MapEntry *mePtr = new MapEntry;
    MessagePacket *mpPtr = new MessagePacket( mp );
-   mpPtr->msgData().taskId( taskIdSelf() );
    mePtr->_TimerMessage = mpPtr;
    mePtr->_Interval = interval;
 
@@ -404,9 +402,9 @@ void MsgSysTimer::checkTimers()
          // Send the message packet ...
          unsigned int retries=0;
          while (    mq_send( _RouterMQ, mpPtr, sizeof( MessagePacket ), 
-                                           DEFAULT_TIMER_MESSAGE_PRIORITY ) == ERROR
-                 && retries++ < MAX_NUM_RETRIES );
-         if ( retries == MAX_NUM_RETRIES )
+                             MessageSystemConstant::DEFAULT_TIMER_MESSAGE_PRIORITY ) == ERROR
+                 && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
+         if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
          {
             char buffer[256];
             sprintf( buffer,"Check timers - timer Id=%lx, send failed",

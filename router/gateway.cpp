@@ -14,11 +14,9 @@
 
 #include "error.h"
 #include "gateway.h"
+#include "messagesystemconstant.h"
 #include "systemoverrides.h"
 
-const unsigned int Gateway::MAX_NUM_RETRIES=1;
-const struct timespec Gateway::RETRY_DELAY={ 1 /* seconds */, 0 /*nanoseconds*/ };
-const unsigned int Gateway::DEFAULT_Q_SIZE=100;
 
 int Gateway::Gateway_main( short port )
 {
@@ -51,7 +49,8 @@ bool Gateway::init( short port )
    //
    unsigned int retries=0;
    while (    ( _RouterQueue = mq_open( "router", O_WRONLY ) ) == (mqd_t)ERROR 
-           && retries++ < MAX_NUM_RETRIES ) nanosleep( &Gateway::RETRY_DELAY, 0 );
+           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    if ( _RouterQueue == (mqd_t)ERROR )
    {
       //
@@ -77,6 +76,8 @@ bool Gateway::init( short port )
       _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket accept failed" );
       return false;
    }
+   _ClientSocket.keepalive( 1 );
+   _ClientSocket.nodelay( 1 );
 
    return true;
 }
@@ -112,9 +113,9 @@ void Gateway::sendMsgToRouter( const MessagePacket &mp )
    // Send message packet to router ...
    unsigned int retries=0;
    while (    mq_send( _RouterQueue, &mp, sizeof( MessagePacket ), 0 ) == ERROR 
-           && retries++ < Gateway::MAX_NUM_RETRIES )
-      nanosleep( &Gateway::RETRY_DELAY, 0 );
-   if ( retries == Gateway::MAX_NUM_RETRIES )
+           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES )
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
+   if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
    {
       //
       // Error ...

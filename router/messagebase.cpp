@@ -7,8 +7,9 @@
  *              base class for messages
  */
 
-#include "messagesystem.h"
 #include "messagebase.h"
+#include "messagesystem.h"
+#include "messagesystemconstant.h"
 
 MessageBase::MessageBase( ) :
    _VirtualNotify(),
@@ -209,8 +210,8 @@ bool MessageBase::init( )
    //
    struct timespec ts = { 0,0 };
    unsigned long dataSize = sizeOfData();
-   unsigned long leftOver = dataSize % MessageData::MAX_MESSAGE_SIZE;
-   unsigned long numPackets = ( dataSize / MessageData::MAX_MESSAGE_SIZE ) + ( leftOver > 0 ? 1 : 0 );
+   unsigned long leftOver = dataSize % MessageSystemConstant::MAX_MESSAGE_SIZE;
+   unsigned long numPackets = ( dataSize / MessageSystemConstant::MAX_MESSAGE_SIZE ) + ( leftOver > 0 ? 1 : 0 );
 
    for ( unsigned long i=0 ; i<numPackets ; i++ )
    {
@@ -230,8 +231,8 @@ bool MessageBase::init( )
       mp->msgData().sendTime( ts );
       mp->msgData().seqNum( i+1 );
       mp->msgData().totalNum( numPackets );
-      mp->msgData().packetLength( ( i+1<numPackets ? MessageData::MAX_MESSAGE_SIZE : 
-                                                     ( leftOver > 0 ? leftOver : MessageData::MAX_MESSAGE_SIZE ) ) );
+      mp->msgData().packetLength( ( i+1<numPackets ? MessageSystemConstant::MAX_MESSAGE_SIZE : 
+                                    ( leftOver > 0 ? leftOver : MessageSystemConstant::MAX_MESSAGE_SIZE ) ) );
       _PacketList.push_back( mp );
    }
 

@@ -7,11 +7,8 @@
 
 #include "error.h"
 #include "dispatcher.h"
+#include "messagesystemconstant.h"
 
-const unsigned int Dispatcher::MAX_NUM_RETRIES=1;
-const struct timespec Dispatcher::RETRY_DELAY={ 1 /* seconds */, 0 /*nanoseconds*/ };
-const unsigned int Dispatcher::MAX_MESSAGE_QUEUE_SIZE=400;
-const int Dispatcher::DEFAULT_MESSAGE_PRIORITY=15;
 
 Dispatcher :: Dispatcher( ) :
 _Blocking( true ),
@@ -38,14 +35,14 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
    struct timespec ts;
    clock_gettime( CLOCK_REALTIME, &ts );
 
-   struct mq_attr attr;                                      // message queue attributes 
-   attr.mq_maxmsg =  ( maxMessages>MAX_MESSAGE_QUEUE_SIZE ?  // set max number of messages 
-                                MAX_MESSAGE_QUEUE_SIZE :     //            ... maximum queue size
-                                ( maxMessages==0 ? 1 : maxMessages ) ); // ... minimun queue size = 1              
-   attr.mq_msgsize = sizeof( MessagePacket );                // set message size 
+   struct mq_attr attr;                                                             // message queue attributes 
+   attr.mq_maxmsg =  ( maxMessages>MessageSystemConstant::MAX_MESSAGE_QUEUE_SIZE ?  // set max number of messages 
+                                MessageSystemConstant::MAX_MESSAGE_QUEUE_SIZE :     //            ... maximum queue size
+                                ( maxMessages==0 ? 1 : maxMessages ) );             // ... minimun queue size = 1              
+   attr.mq_msgsize = sizeof( MessagePacket );     // set message size 
    if ( block == false )
    {
-      attr.mq_flags = O_NONBLOCK;                            // set non-block 
+      attr.mq_flags = O_NONBLOCK;                 // set non-block 
       _Blocking = false;
       _StopLoop = true;
    }
@@ -56,10 +53,10 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
    do
    {
       _MyQueue = mq_open( qname, O_RDONLY | O_CREAT, 0666, &attr);
-      nanosleep( &Dispatcher::RETRY_DELAY, 0 );
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    }
    while (    _MyQueue == (mqd_t)ERROR 
-           && retries++ < MAX_NUM_RETRIES );
+           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
 
    if ( _MyQueue == (mqd_t)ERROR )
    {
@@ -75,10 +72,10 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
    do
    {
       _RQueue = mq_open( "router", O_WRONLY );
-      nanosleep( &Dispatcher::RETRY_DELAY, 0 );
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    } 
    while (    _RQueue == (mqd_t)ERROR 
-           && retries++ < MAX_NUM_RETRIES );
+           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
 
    if ( _RQueue == (mqd_t)ERROR )
    {
@@ -94,10 +91,10 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
    do
    {
       _TimerQueue = mq_open( "timertask", O_WRONLY );
-      nanosleep( &Dispatcher::RETRY_DELAY, 0 );
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    } 
    while (    _TimerQueue == (mqd_t)ERROR 
-           && retries++ < MAX_NUM_RETRIES );
+           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
 
    if ( _TimerQueue == (mqd_t)ERROR )
    {
@@ -135,10 +132,11 @@ void Dispatcher :: send( const MessagePacket &mp )
    //
    // Send message packet to router ...
    unsigned int retries=0;
-   while (    mq_send( _RQueue, &mp, sizeof( MessagePacket ), DEFAULT_MESSAGE_PRIORITY ) == ERROR 
-           && retries++ < MAX_NUM_RETRIES )
-      nanosleep( &Dispatcher::RETRY_DELAY, 0 );
-   if ( retries == MAX_NUM_RETRIES )
+   while (    mq_send( _RQueue, &mp, sizeof( MessagePacket ), 
+                       MessageSystemConstant::DEFAULT_MESSAGE_PRIORITY ) == ERROR 
+           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES )
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
+   if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
    {
       //
       // Error ...
@@ -153,10 +151,11 @@ void Dispatcher :: sendTimerMessage( const MessagePacket &mp )
    //
    // Send message packet to timer task ...
    unsigned int retries=0;
-   while (    mq_send( _TimerQueue, &mp, sizeof( MessagePacket ), DEFAULT_MESSAGE_PRIORITY ) == ERROR 
-           && retries++ < MAX_NUM_RETRIES )
-      nanosleep( &Dispatcher::RETRY_DELAY, 0 );
-   if ( retries == MAX_NUM_RETRIES )
+   while (    mq_send( _TimerQueue, &mp, sizeof( MessagePacket ), 
+                       MessageSystemConstant::DEFAULT_MESSAGE_PRIORITY ) == ERROR 
+           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES )
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
+   if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
    {
       //
       // Error ...
@@ -177,7 +176,7 @@ int Dispatcher :: dispatchMessages()
       MessagePacket mp;
       unsigned int retries=0;
       while (    ( size = mq_receive( _MyQueue, &mp, sizeof( MessagePacket ), 0 ) ) == ERROR 
-              && retries++ < MAX_NUM_RETRIES );
+              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
       if ( size != ERROR )
       {
          processMessage( mp );

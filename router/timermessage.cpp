@@ -5,7 +5,9 @@
  *
  */
 
+#include "error.h"
 #include "timermessage.h"
+#include "messagepacket.h"
 #include "messagesystem.h"
 
 TimerMessage :: TimerMessage()
@@ -51,7 +53,13 @@ void TimerMessage :: armTimer( TimerState arm )
    //
    // Notify the timer task ...
    //  ( send the timer the new interval )
-   MessagePacket mp = *( _PacketList.front() );
+   if ( _PacketList.front() == 0 || _PacketList.empty() )
+   {
+      _FATAL_ERROR( __FILE__, __LINE__, "Initialization failed : packet list is empty" );
+      return;
+   }
+
+   MessagePacket mp( *( _PacketList.front() ) );
    mp.msgData().msg( (const unsigned char*) &intrvl, sizeof( unsigned long ) );
    clock_gettime( CLOCK_REALTIME, &_SentTime );
    mp.msgData().sendTime( _SentTime );

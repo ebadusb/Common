@@ -12,15 +12,12 @@
 #include "error.h"
 #include "gateway.h"
 #include "messagesystem.h"
+#include "messagesystemconstant.h"
 #include "router.h"
 #include "systemoverrides.h"
 #include "tcpconnect.h"
 
 
-const unsigned int Router::MAX_NUM_RETRIES=1;
-const struct timespec Router::RETRY_DELAY={ 1 /* seconds */, 0 /*nanoseconds*/ };
-const unsigned int Router::DEFAULT_Q_SIZE=100;
-const unsigned int Router::CONNECT_DELAY=500; // milliseconds
 WIND_TCB *Router::_TheRouterTid=0;
 Router *Router::_TheRouter=0;
 
@@ -99,9 +96,9 @@ bool Router::init()
    taskCreateHookAdd( (FUNCPTR) &Router::taskCreateHook );
    taskDeleteHookAdd( (FUNCPTR) &Router::taskDeleteHook );
 
-   struct mq_attr attr;                        // message queue attributes 
-   attr.mq_maxmsg =  DEFAULT_Q_SIZE;           // set max number of messages 
-   attr.mq_msgsize = sizeof( MessagePacket );  // set message size 
+   struct mq_attr attr;                                    // message queue attributes 
+   attr.mq_maxmsg =  MessageSystemConstant::DEFAULT_ROUTER_Q_SIZE; // set max number of messages 
+   attr.mq_msgsize = sizeof( MessagePacket );              // set message size 
    attr.mq_flags = 0;
 
    //
@@ -109,7 +106,8 @@ bool Router::init()
    //
    unsigned int retries=0;
    while (    ( _RouterQueue = mq_open( "router", O_RDWR | O_CREAT , 0666, &attr) ) == (mqd_t)ERROR 
-           && retries++ < MAX_NUM_RETRIES ) nanosleep( &Router::RETRY_DELAY, 0 );
+           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    if ( _RouterQueue == (mqd_t)ERROR )
    {
       //
@@ -147,7 +145,8 @@ void Router::dispatchMessages()
       // Read the queue entry ...
       unsigned int retries=0;
       while (    ( size = mq_receive( _RouterQueue, &buffer, sizeof( MessagePacket ), &priority ) ) == ERROR 
-              && retries++ < MAX_NUM_RETRIES ) nanosleep( &Router::RETRY_DELAY, 0 );
+              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
+         nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
       if ( size == ERROR )
       {
          //
@@ -282,12 +281,7 @@ bool Router::initGateways()
       {
          remoteport = (*paiter).first;
          sprintf( gateName, "tGateway%lx", netAddress );
-         if (    taskNameToId( gateName ) != ERROR
-              || (    taskNameToId( gateName ) == ERROR
-                   && taskSpawn ( gateName , 4, 0, 20000,
-                             (FUNCPTR) Gateway::Gateway_main , remoteport,0,0,0,0,0,0,0,0,0) == ERROR 
-                 )
-            )
+         if ( spawnGateway( gateName, (FUNCPTR)Gateway::Gateway_main, remoteport ) == ERROR )
          {
             //
             // Error ...
@@ -398,7 +392,7 @@ void Router::connectWithGateway( const MessagePacket &mp )
    
       struct timeval tv;
       tv.tv_sec = 0;
-      tv.tv_usec = CONNECT_DELAY * 1000;
+      tv.tv_usec = MessageSystemConstant::CONNECT_DELAY * 1000;
       short port;
       memmove( &port, mp.msgData().msg(), sizeof( short ) );
       int status = socketbuffer->connectWithTimeout( ntohl( mp.msgData().nodeId() ), port/*port*/, &tv );
@@ -407,6 +401,8 @@ void Router::connectWithGateway( const MessagePacket &mp )
       // If connected, add to list ...
       if ( status == 0 )
       {
+         socketbuffer->keepalive( 1 );
+         socketbuffer->nodelay( 1 );
          _InetGatewayMap[ mp.msgData().nodeId() ] = socketbuffer;
 
          //
@@ -471,7 +467,7 @@ void Router::registerTask( unsigned long tId, const char *qName )
       mqd_t tQueue = (mqd_t)ERROR;
       unsigned int retries=0;
       while ( ( tQueue = mq_open( qName, O_WRONLY ) ) == (mqd_t)ERROR 
-              && retries++ < MAX_NUM_RETRIES ) nanosleep( &Router::RETRY_DELAY, 0 );
+              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
 
       //
       // If opened ...
@@ -853,8 +849,9 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
    // Send message to the task ...
    unsigned int retries=0;
    while (    mq_send( mqueue , &mp, sizeof( MessagePacket ), priority ) == ERROR 
-           && retries++ < MAX_NUM_RETRIES ) nanosleep( &Router::RETRY_DELAY, 0 );
-   if ( retries == MAX_NUM_RETRIES )
+           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
+   if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
    {
       //
       // Error ...
@@ -935,8 +932,9 @@ void Router::sendMessageToGateway( sockinetbuf *sockbuffer, const MessagePacket 
 
    unsigned int retries=0;
    while (    sockbuffer->send( &mp, sizeof( MessagePacket ), 0) == ERROR 
-           && retries++ < MAX_NUM_RETRIES ) nanosleep( &Router::RETRY_DELAY, 0 );
-   if ( retries == MAX_NUM_RETRIES )
+           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
+   if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
    {
       //
       // Error ...

@@ -1045,11 +1045,6 @@ void Router::deregisterSpooferMessage( unsigned long msgId)
 
 void Router::sendMessage( const MessagePacket &mp, int priority )
 {
-	//
-	// Send message info to debug handler
-	//
-	DBG_LogSentMessage(taskIdSelf(), (int)mp.msgData().osCode(), mp.msgData().msgId());
-
    //
    // Check for spoofer ...
    if ( sendMessageToSpoofer( mp, priority ) == true )
@@ -1180,6 +1175,12 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
                            << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "mq_send failed" );
    }
+
+	//
+	// Send message info to debug handler
+	//
+	DBG_LogSentMessage(taskIdSelf(), (int)mp.msgData().osCode(), mp.msgData().msgId());
+
 }
 
 void Router::sendMessageToGateways( const MessagePacket &mpConst )
@@ -1326,6 +1327,12 @@ void Router::sendMessageToGateway( unsigned long nodeId, const MessagePacket &mp
          len -= wval;
          wlen += wval;
       }
+
+	   //
+	   // Send message info to debug handler
+	   //
+	   DBG_LogSentNetworkMessage(taskIdSelf(), (int)nodeId, mp.msgData().msgId());
+
    }
    else
    {

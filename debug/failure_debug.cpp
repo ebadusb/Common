@@ -3,8 +3,10 @@
  *
  *	vxWorks utilities for logging debug information after a system failure is detected
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/debug/rcs/failure_debug.cpp 1.11 2004/02/24 22:31:40Z jl11312 Exp ms10234 $
+ * $Header: K:/BCT_Development/vxWorks/Common/debug/rcs/failure_debug.cpp 1.12 2004/03/24 19:47:47Z ms10234 Exp jl11312 $
  * $Log: failure_debug.cpp $
+ * Revision 1.11  2004/02/24 22:31:40Z  jl11312
+ * - more debug logging (see IT 6880)
  * Revision 1.10  2003/12/16 21:57:10Z  jl11312
  * - replaced binary semaphore with mutex semaphore to avoid potential priority inversion
  * Revision 1.9  2003/10/03 14:31:05Z  jl11312
@@ -105,6 +107,23 @@ void DBG_LogSentMessage(int taskID, int op, unsigned long msgID)
 		DBG_MessageRecord * recordPtr = &messageInfo.record[messageInfo.recordIndex];
 		recordPtr->sendTID = taskID;
 		recordPtr->receiveTID = 0xf0000000 | op;
+		recordPtr->msgID = msgID;
+		datalog_GetTimeStamp(&recordPtr->timeStamp);
+		messageInfo.recordIndex = (messageInfo.recordIndex+1) % messageInfo.recordCount;
+
+		semGive(messageInfo.updateLock);
+	}
+}
+
+void DBG_LogSentNetworkMessage(int taskID, int netaddr, unsigned long msgID)
+{
+	if ( messageInfo.record )
+	{
+		semTake(messageInfo.updateLock, WAIT_FOREVER);
+
+		DBG_MessageRecord * recordPtr = &messageInfo.record[messageInfo.recordIndex];
+		recordPtr->sendTID = taskID;
+		recordPtr->receiveTID = netaddr;
 		recordPtr->msgID = msgID;
 		datalog_GetTimeStamp(&recordPtr->timeStamp);
 		messageInfo.recordIndex = (messageInfo.recordIndex+1) % messageInfo.recordCount;

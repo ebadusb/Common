@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.27  2003/08/29 21:10:20Z  ms10234
+ * HISTORY:    semaphore protected the element register code
  * HISTORY:    Revision 1.26  2003/06/19 18:38:34Z  ms10234
  * HISTORY:    5829 - Changes for PFR
  * HISTORY:    Revision 1.25  2003/05/19 17:11:10Z  ms10234
@@ -311,6 +313,8 @@ template <class dataType> dataType BaseElement<dataType>::Get() const
    }
 }
 
+
+
 //
 // Set method
 //
@@ -340,6 +344,25 @@ template <class dataType> bool BaseElement<dataType>::Set(const dataType &data)
 }
 
 
+
+//
+// isWritable method
+//
+template <class dataType> bool BaseElement<dataType>::isWritable() const
+{
+   if (_ds == 0)
+   {
+      _FATAL_ERROR(__FILE__, __LINE__, "Element failed to register");
+   }
+
+   return (_ds->GetRole() == ROLE_RW);
+}
+
+
+
+//
+// Restore
+//
 template <class dataType> unsigned int BaseElementSymbolContainer<dataType>::Restore ( unsigned char *from )
 {
    //

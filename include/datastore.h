@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.27  2003/11/13 14:47:46Z  rm70006
+ * HISTORY:    IT 6507.  Change Lock/Unlock scheme to try to get rid of deadlock problem.
  * HISTORY:    Revision 1.26  2003/07/22 14:51:29Z  rm70006
  * HISTORY:    IT 6222.  Suspected bug in get and equal operator.
  * HISTORY:    Revision 1.25  2003/07/08 22:15:39Z  ms10234
@@ -187,6 +189,8 @@ public:
    // these two functions for use by spoofer to avoid unnecessary data copies
    inline void setSpooferCacheValid() { _handle->_spooferCacheIsValid = true; };
    inline bool isSpooferCacheValid() { return _handle->_spooferCacheIsValid; };
+
+   virtual bool isWritable() const;
 
 // Class Methods
 protected:

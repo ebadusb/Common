@@ -1,8 +1,10 @@
-# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.flags 1.7 2002/08/15 20:23:17 jl11312 Exp jl11312 $
+# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.flags 1.8 2002/11/27 15:00:35 jl11312 Exp jl11312 $
 #
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags $
+# Revision 1.7  2002/08/15 20:23:17  jl11312
+# - added check for valid CPU and BUILD_TYPE
 # Revision 1.6  2002/05/16 17:38:39  jl11312
 # - allowed for overrides of various flag settings
 # - corrected flag settings for assembly language source
@@ -167,7 +169,7 @@ DBGFLAGS := -DPRODUCTION_BUILD
 endif
 
 ifndef OPTFLAGS
-OPTFLAGS := -O2 -Wuninitialized
+OPTFLAGS := -O1 -Wuninitialized
 endif
 
 else

@@ -130,15 +130,13 @@ protected:
    unsigned long   _MsgId __attribute__ ((packed));         // hashed message id
    unsigned long   _NodeId __attribute__ ((packed));        // node ID number
    unsigned long   _TaskId __attribute__ ((packed));        // task PID number
-   struct timespec _SendTime __attribute__ ((packed));      // time message sent
+   struct timespec _SendTime;									      // time message sent
    OperationType   _OSCode __attribute__ ((packed));        // os message code
    unsigned short  _SeqNum __attribute__ ((packed));        // For big messages, sequence of total parts of the message
    unsigned short  _TotNum __attribute__ ((packed));        //   ... Total number of parts to the message
    unsigned short  _PacketLength __attribute__ ((packed));  // total length of data in this packet
    unsigned short  _Length __attribute__ ((packed));        // total message data length, bytes
-   unsigned char   _Msg[MessageSystemConstant::MAX_MESSAGE_SIZE+1]  // Message data 
-                                  __attribute__ ((packed));
-
+   unsigned char   _Msg[MessageSystemConstant::MAX_MESSAGE_SIZE+1];  // Message data 
 };
 
 

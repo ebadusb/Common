@@ -53,7 +53,9 @@ public:
    CallbackBase( const CallbackBase &cb ) :
       _Ptr(cb._Ptr),
       _FncPtrVoid(cb._FncPtrVoid),
+      _MemFncPtrVoid(cb._MemFncPtrVoid),
       _FncPtrData(cb._FncPtrData),
+      _MemFncPtrData(cb._MemFncPtrData),
       _Data(cb._Data)
    {
    };
@@ -63,7 +65,9 @@ public:
    {
       _Ptr = cb._Ptr;
       _FncPtrVoid = cb._FncPtrVoid;
+      _MemFncPtrVoid = cb._MemFncPtrVoid;
       _FncPtrData = cb._FncPtrData;
+      _MemFncPtrData = cb._MemFncPtrData;
       _Data = cb._Data;
    
       return *this;

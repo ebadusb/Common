@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <net/uio.h>
 #include <sys/socket.h>
+#include <sys/times.h>
 
 #ifndef _G_config_h
 // non libg++ or g++ compilation
@@ -228,6 +229,7 @@ public:
 
    virtual int      bind  (sockAddr&);
    virtual int      connect  (sockAddr&);
+   virtual int      connectWithTimeout(sockAddr&, timeval*);
 
    void    listen   (int num=somaxconn);
    virtual sockbuf  accept   ();

@@ -12,6 +12,7 @@
 #define	_SOCKINET_H
 
 #include "sockstream.h"
+#include <sys/times.h>
 
 
 #include <netinet/in.h>
@@ -87,8 +88,11 @@ public:
 */
 
    virtual int	connect (sockAddr& sa);
-   int			connect (unsigned long addr, int port_no=0);
-   int			connect (const char* host_name, int port_no=0);
+   int			connect (unsigned long addr, int port_no);
+   int			connect (const char* host_name, int port_no);
+   virtual int	connectWithTimeout (sockAddr& sa, timeval *tv);
+   int			connectWithTimeout (unsigned long addr, int port_no, timeval *tv);
+   int			connectWithTimeout (const char* host_name, int port_no, timeval *tv);
 
    
 /* NOT SUPPORTED BY VXWORKS

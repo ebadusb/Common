@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "messagebase.h"
+#include "timermessage.h"
 
 class Dispatcher
 {
@@ -48,6 +49,7 @@ public:
    //
    // Send a packet to the router ...
    void send( const MessagePacket &mp );
+   void sendTimerMessage( const MessagePacket &mp );
 
    //
    // receive messages from the router
@@ -89,6 +91,8 @@ protected:
    // Message Queues
    mqd_t _MyQueue;
    mqd_t _RQueue;
+   mqd_t _TimerQueue;
+
    //
    // List of messages and timers used by this application...
    map< unsigned long, set< MessageBase* > >  _MessageMap;

@@ -12,6 +12,7 @@
 #define _ROUTER_H_
 
 #include <map>
+#include <set>
 #include <stdio.h>
 #include <fcntl.h>
 #include <mqueue.h>
@@ -45,15 +46,20 @@ public:
 
    //
    // Function to get the global router ...
+   static WIND_TCB *globalRouterTid();
    static Router *globalRouter();
 
+   //
+   // Function called whenever any task gets created ...
+   static int taskCreateHook( WIND_TCB *pTcb );
    //
    // Function called whenever any task gets deleted ...
    static int taskDeleteHook( WIND_TCB *pTcb );
 
 private:
 
-   static Router *_TheRouter;
+   static WIND_TCB *_TheRouterTid;
+   static Router   *_TheRouter;
 
 public:
 
@@ -76,7 +82,7 @@ public:
 
    //
    // Dump the contents of this class
-   void dump();
+   void dump( ostream &outs );
 
 protected:
 
@@ -99,7 +105,7 @@ protected:
    // This function is called given an address of a gateway to connect with.  This
    //  function will try to connect for a specified timeout to ensure the function doesn't
    //  block too long.
-   void connectWithGateway( unsigned long address );
+   void connectWithGateway( const MessagePacket &mp );
 
    //
    // This function will shutdown the socket connection for the specified gateway.
@@ -118,15 +124,25 @@ protected:
    // This function will register a message for the calling task.  The task must already
    //  be registered in the task map before it can register messages.   
    void registerMessage( unsigned long msgId, unsigned long tId );
+   void registerSpooferMessage( unsigned long msgId, unsigned long tId );
    //
    // This function will remove one registration of the message from the calling task's 
    //  entry in the message map.  When the number of registrations by the task is at 0, the
    //  task's entry will be removed from the given message Id's list.
    void deregisterMessage( unsigned long msgId, unsigned long tId );
+   void deregisterSpooferMessage( unsigned long msgId);
 
    //
    // This function sends the message packet to registered tasks.
-   void sendMessage( MessagePacket &mp );
+   void sendMessage( const MessagePacket &mp );
+   void sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned long tId );
+
+   //
+   // This function sends the message packet to the registered gateways.
+   void sendMessageToGateways( const MessagePacket &mp );
+   //
+   // This function sends the message packet to the Spoofer task.
+   void sendMessageToSpoofer( const MessagePacket &mp );
 
    //
    // This function will close the router's message queues and socket connections.
@@ -146,7 +162,7 @@ protected:
    //  duplicate ids get passed around in the system.  The message's hashed Id will be mapped
    //  together with the message name.  This imposes an implicite length restriction on 
    //  message names of MAX_MESSAGE_SIZE.
-   map< unsigned long, string >  _MsgIntegrityMap;
+   map< unsigned long, string >                                 _MsgIntegrityMap;
    //
    // This structure will be used to map the message Ids with the tasks that have registered
    //  to receive them.  The map will be indexed on message Id.  The second item in the map 
@@ -165,6 +181,11 @@ protected:
    //  will be indexed on gateway inet address.  The second entry in the map will contain
    //  the socket connection to the gateway.
    map< unsigned long, sockinetbuf* >                           _InetGatewayMap;
+
+   //
+   // This structure will hold the message Ids of the messages the spoofer wants.  The map
+   //  will be indexed the message Ids to the task Id of the associated spoofer task.
+   map< unsigned long, unsigned long >                          _SpooferMsgMap;
 
    //
    // This flag, when set to true, will drop the router out of its message loop.

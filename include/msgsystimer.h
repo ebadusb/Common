@@ -55,6 +55,8 @@ private:
    static WIND_TCB    *_TheTimerTid;
    static MsgSysTimer *_TheTimer;
 
+   static int _ReadyToReceiveTickMsg;
+
 public:
 
    MsgSysTimer();

@@ -22,14 +22,21 @@ public:
 
 public:
    //
-   // Static method to gain access to the message system
+   // Static method to gain access to the message system pointer
+   static void MsgSystem( MessageSystem *msgSys ) { _TheMessageSystem = msgSys; }
    static MessageSystem *MsgSystem() { return _TheMessageSystem; }
+
+   static void taskCleanup( unsigned long tId );
 
 private:
 
    //
    // Task wide message system pointer ...
    static MessageSystem *_TheMessageSystem;
+   
+   //
+   // System wide task id to message system map
+   static map< unsigned long, unsigned long > _TheMessageSystemTaskMap;
 
 public:
 

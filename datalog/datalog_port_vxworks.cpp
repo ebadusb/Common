@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.12 2003/12/16 21:56:59Z jl11312 Exp rm70006 $
  * $Log: datalog_port_vxworks.cpp $
+ * Revision 1.10  2003/11/10 17:46:24Z  jl11312
+ * - corrections from data log unit tests (see IT 6598)
  * Revision 1.9  2003/10/16 14:57:40Z  jl11312
  * - corrected time stamp problem when Trima time/date changes (IT 6516)
  * Revision 1.8  2003/10/03 12:35:13Z  jl11312
@@ -259,6 +261,7 @@ static long			nanoSecPerTimestampTick;
 
 static unsigned long	tickStart;
 static unsigned long tickRate = sysClkRateGet();
+static long 			nanoSecPerTick = 1000000000/sysClkRateGet();
 static time_t			timeStart = markTimeStampStart();
 
 static time_t markTimeStampStart(void)
@@ -323,17 +326,11 @@ void datalog_GetTimeStamp(DataLog_TimeStamp * stamp)
 #endif /* if (CPU != SIMNT) */
 
 	long		seconds = (tickCurrent - tickStart)/tickRate;
-	long		nanoseconds = (((tickCurrent - tickStart) % tickRate) * 1000000000) / tickRate;
+	long		nanoseconds = ((tickCurrent - tickStart) % tickRate) * nanoSecPerTick;
 
 #if (CPU != SIMNT)
 	nanoseconds += timestampCurrent * nanoSecPerTimestampTick;
 #endif /* if (CPU != SIMNT) */
-
-	if ( nanoseconds < 0 )
-	{
-		nanoseconds += 1000000000;
-		seconds -= 1;
-	}
 
 	stamp->_seconds = (DataLog_UINT32)seconds;
 	stamp->_nanoseconds = (DataLog_UINT32)nanoseconds;
@@ -472,7 +469,7 @@ DataLog_BufferPtr DataLog_BufferManager::getFreeBuffer(unsigned long reserveBuff
 	return result;
 }
 
-bool DataLog_BufferManager::getNextChain(DataLog_BufferChain & chain)
+bool DataLog_BufferManager::getNextChain(DataLog_BufferChain & chain, bool * isCritical)
 {
 	int level = intLock();
 
@@ -500,6 +497,12 @@ bool DataLog_BufferManager::getNextChain(DataLog_BufferChain & chain)
    }
 
 	intUnlock(level);
+
+	if ( isCritical )
+	{
+		*isCritical = (list == &criticalList);
+	}
+
 	return (chain._head != NULL);
 }
 

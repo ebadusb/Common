@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.13 2003/12/09 14:14:34Z jl11312 Exp rm70006 $
  * $Log: datalog_output.cpp $
+ * Revision 1.12  2003/11/10 17:46:20Z  jl11312
+ * - corrections from data log unit tests (see IT 6598)
  * Revision 1.11  2003/10/03 12:35:06Z  jl11312
  * - improved DataLog_Handle lookup time
  * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
@@ -119,8 +121,9 @@ void DataLog_OutputTask::main(void)
 		}
 
 		DataLog_BufferChain data;
+		bool isCritical;
 		while ( _state != ExitImmediately &&
-				  DataLog_BufferManager::getNextChain(data) )
+				  DataLog_BufferManager::getNextChain(data, &isCritical) )
 		{
 			if ( !timeStampWritten )
 			{
@@ -128,7 +131,7 @@ void DataLog_OutputTask::main(void)
 				timeStampWritten = true;
 			}
 
-			startOutputRecord();
+			startOutputRecord(isCritical);
 
 			DataLog_BufferPtr ptr = data._head;
 			size_t length = data._head->_length;
@@ -154,7 +157,7 @@ void DataLog_OutputTask::writeMissedLogDataRecord(void)
 {
 	DataLog_UINT16	missedDataValue = 0x55ff;
 
-	startOutputRecord();
+	startOutputRecord(true);
 	writeOutputRecord((DataLog_BufferData *)&missedDataValue, sizeof(missedDataValue));
 	endOutputRecord();
 }
@@ -166,7 +169,7 @@ void DataLog_OutputTask::writeTimeStampRecord(void)
 	writeTimeRecord._recordType = DataLog_WriteTimeRecordID;
 	datalog_GetTimeStamp(&writeTimeRecord._timeStamp);
 
-	startOutputRecord();	
+	startOutputRecord(false);
 	writeOutputRecord((DataLog_BufferData *)&writeTimeRecord, sizeof(writeTimeRecord));
 	endOutputRecord();	
 }
@@ -193,7 +196,7 @@ void DataLog_OutputTask::writeSystemLevelRecord(void)
 	memcpy(buffer, &systemLevelRecord, sizeof(systemLevelRecord));
 	memcpy(&buffer[sizeof(systemLevelRecord)], DATALOG_SYSTEM_LEVEL_NAME, systemLevelRecord._nameLen * sizeof(char));
 
-	startOutputRecord();	
+	startOutputRecord(false);
 	writeOutputRecord(buffer, bufferSize);
 	endOutputRecord();
 
@@ -223,7 +226,7 @@ DataLog_LocalOutputTask::DataLog_LocalOutputTask(const char * platformName, cons
 	}
 }
 
-void DataLog_LocalOutputTask::startOutputRecord(void)
+void DataLog_LocalOutputTask::startOutputRecord(bool isCritical)
 {
 }
 
@@ -353,7 +356,7 @@ void DataLog_LocalOutputTask::writeFileCloseRecord(void)
 	fileCloseRecord._recordType = DataLog_FileCloseRecordID;
 	datalog_GetTimeStamp(&fileCloseRecord._timeStamp);
 
-	startOutputRecord();
+	startOutputRecord(true);
 	writeOutputRecord((DataLog_BufferData *)&fileCloseRecord, sizeof(fileCloseRecord));
 	endOutputRecord();
 }
@@ -399,12 +402,12 @@ void DataLog_NetworkOutputTask::writeLogFileNetworkHeader(const char * nodeName)
 	networkHeader->_nodeNameLen = strlen(nodeName);
 	memcpy(&buffer[sizeof(DataLog_NetworkHeaderRecord)], nodeName, sizeof(char)*networkHeader->_nodeNameLen);
 
-	startOutputRecord();
+	startOutputRecord(true);
 	writeOutputRecord(buffer, bufferSize);
 	endOutputRecord();
 }
 
-void DataLog_NetworkOutputTask::startOutputRecord(void)
+void DataLog_NetworkOutputTask::startOutputRecord(bool isCritical)
 {
 	DataLog_NetworkPacket	packet;
 	int	dataIndex = 0;
@@ -412,7 +415,7 @@ void DataLog_NetworkOutputTask::startOutputRecord(void)
 	//
 	// Notify network client of start of output record data
 	//
-	packet._type = DataLog_StartOutputRecord;
+	packet._type = (isCritical) ? DataLog_StartCriticalOutputRecord : DataLog_StartTraceOutputRecord;
 	packet._length = 0;
 	write(_outputFD, (char *)&packet, sizeof(packet));
 }

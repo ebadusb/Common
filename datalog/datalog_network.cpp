@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_network.cpp 1.5 2003/12/09 14:14:28Z jl11312 Exp rm70006 $
  * $Log: datalog_network.cpp $
+ * Revision 1.4  2003/03/27 16:27:02Z  jl11312
+ * - added support for new datalog levels
  * Revision 1.3  2003/02/25 16:10:21Z  jl11312
  * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.2  2002/09/23 15:35:36  jl11312
@@ -27,17 +29,9 @@
 DataLog_NetworkTask::DataLog_NetworkTask(int port)
 {
 	_port = port;
-	_isExiting = false;
-	_exitCode = 0;
 }
 
-void DataLog_NetworkTask::exit(int code)
-{
-	_exitCode = code;
-	_isExiting = true; 
-}
-
-int DataLog_NetworkTask::main(void)
+void DataLog_NetworkTask::main(void)
 {
 	int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
    sockaddr_in	addr;
@@ -83,9 +77,5 @@ int DataLog_NetworkTask::main(void)
 			taskDelay(10*sysClkRateGet());
 		}
 	}
-
-	shutdown(serverSocket, 2);
-	close(serverSocket);
-	return _exitCode;
 }
 

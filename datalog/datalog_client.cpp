@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_client.cpp 1.5 2003/12/09 14:14:16Z jl11312 Exp rm70006 $
  * $Log: datalog_client.cpp $
+ * Revision 1.4  2003/03/27 16:26:57Z  jl11312
+ * - added support for new datalog levels
  * Revision 1.3  2003/02/25 16:10:09Z  jl11312
  * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.2  2003/01/31 19:52:50  jl11312
@@ -30,16 +32,10 @@ DataLog_NetworkClientTask::DataLog_NetworkClientTask(int clientSocket, struct so
 
 	_tempBuffer = new DataLog_BufferData[DataLog_BufferSize];
 	_isExiting = false;
-	_exitCode = 0;
+	_criticalOutput = false;
 }
 
-void DataLog_NetworkClientTask::exit(int code)
-{
-	_exitCode = code;
-	_isExiting = true; 
-}
-
-int DataLog_NetworkClientTask::main(void)
+void DataLog_NetworkClientTask::main(void)
 {
 	_state = WaitStart;
 
@@ -51,8 +47,6 @@ int DataLog_NetworkClientTask::main(void)
 			handlePacket(packet);
 		}
 	}
-
-	return _exitCode;
 }
 
 void DataLog_NetworkClientTask::handlePacket(const DataLog_NetworkPacket & packet)
@@ -62,9 +56,11 @@ void DataLog_NetworkClientTask::handlePacket(const DataLog_NetworkPacket & packe
 	case WaitStart:
 		switch ( packet._type )
 		{
-		case DataLog_StartOutputRecord:
+		case DataLog_StartTraceOutputRecord:
+		case DataLog_StartCriticalOutputRecord:
 			DataLog_BufferManager::createChain(_dataChain);
 			_state = WaitEnd;
+			_criticalOutput = ( packet._type == DataLog_StartCriticalOutputRecord);
 			break;
 
 		case DataLog_EndConnection:
@@ -101,7 +97,7 @@ void DataLog_NetworkClientTask::handlePacket(const DataLog_NetworkPacket & packe
 			break;
 
 		case DataLog_EndOutputRecord:
-			DataLog_BufferManager::addChainToList(DataLog_BufferManager::TraceList, _dataChain);
+			DataLog_BufferManager::addChainToList( (_criticalOutput) ? DataLog_BufferManager::CriticalList : DataLog_BufferManager::TraceList, _dataChain);
 			_dataChain._head = DATALOG_NULL_SHARED_PTR;
 			_state = WaitStart;
 			break;

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.28 2003/12/09 14:15:02Z jl11312 Exp rm70006 $
  * $Log: datalog.h $
+ * Revision 1.27  2003/11/25 16:10:17Z  jl11312
+ * - corrected output of unsigned char data
  * Revision 1.26  2003/11/24 23:05:41Z  jl11312
  * - added missing API declaration
  * Revision 1.25  2003/10/03 12:32:41Z  jl11312
@@ -419,7 +421,7 @@ public:
 	void exitImmediately(void);	// exit after writing current record (if any)
 
 protected:
-	virtual void startOutputRecord(void) = 0;
+	virtual void startOutputRecord(bool isCritical) = 0;
 	virtual void writeOutputRecord(DataLog_BufferData * buffer, size_t size) = 0;
 	virtual void endOutputRecord(void) = 0;
 
@@ -453,7 +455,7 @@ public:
 	virtual ~DataLog_LocalOutputTask() {}
 
 protected:
-	virtual void startOutputRecord(void);
+	virtual void startOutputRecord(bool isCritical);
 	virtual void writeOutputRecord(DataLog_BufferData * buffer, size_t size);
 	virtual void endOutputRecord(void);
 	virtual void shutdown(void);
@@ -473,7 +475,7 @@ public:
 	virtual ~DataLog_NetworkOutputTask() {}
 
 protected:
-	virtual void startOutputRecord(void);
+	virtual void startOutputRecord(bool isCritical);
 	virtual void writeOutputRecord(DataLog_BufferData * buffer, size_t size);
 	virtual void endOutputRecord(void);
 	virtual void shutdown(void);
@@ -490,15 +492,9 @@ public:
 	virtual ~DataLog_PeriodicTask() {}
 
 	int main(void);
-	void pause(void) { _isRunning = false; }
-	void resume(void) { _isRunning = true; }
-	void exit(int code);
+   void exit(int code);
 
 private:
-	void shutdown(void);
-
-private:
-	bool _isRunning;
 	bool _isExiting;
 	int  _exitCode;
 
@@ -512,15 +508,9 @@ public:
 	DataLog_NetworkTask(int port);
 	virtual ~DataLog_NetworkTask() {}
 
-	int main(void);
-	void exit(int code);
+	void main(void);
 
 private:
-	void createClientTask(int clientSocket, struct sockaddr_in * clientAddr);
-
-	DataLog_List<DataLog_NetworkClientTask *> _clientTaskList;
-	bool _isExiting;
-	int  _exitCode;
 	int  _port; 
 };
 
@@ -531,27 +521,24 @@ public:
 	DataLog_NetworkClientTask(int clientSocket, struct sockaddr_in * clientAddr);
 	virtual ~DataLog_NetworkClientTask() {}
 
-	int main(void);
-	void exit(int code);
+	void main(void);
 
 private:
 	void handlePacket(const DataLog_NetworkPacket & packet);
-	void processBufferSizeRecord(DataLog_UINT16 packetLength);
 	void processInvalidPacket(const DataLog_NetworkPacket & packet);
 	bool readData(DataLog_BufferData * buffer, size_t size);
 
 private:
 	int _clientSocket;
+	bool _isExiting;
 	char	_asciiAddr[INET_ADDR_LEN];
 
+	bool _criticalOutput;
 	DataLog_BufferChain _dataChain;
 	DataLog_BufferData * _tempBuffer;
 
 	enum State { WaitStart, WaitEnd };
 	State	_state;
-
-	bool _isExiting;
-	int  _exitCode;
 };
 
 #endif /* ifdef __cplusplus */

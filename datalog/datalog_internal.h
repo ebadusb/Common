@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.12 2003/12/09 14:14:23Z jl11312 Exp rm70006 $
  * $Log: datalog_internal.h $
+ * Revision 1.11  2003/11/10 17:46:12Z  jl11312
+ * - corrections from data log unit tests (see IT 6598)
  * Revision 1.10  2003/10/03 12:35:02Z  jl11312
  * - improved DataLog_Handle lookup time
  * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
@@ -67,7 +69,7 @@ public:
 	static void initialize(size_t bufferSizeKBytes);
 
 	static DataLog_BufferPtr getFreeBuffer(unsigned long reserveBuffers);
-	static bool getNextChain(DataLog_BufferChain & chain);
+	static bool getNextChain(DataLog_BufferChain & chain, bool * isCritical = NULL);
 
 	enum BufferList { TraceList, CriticalList, FreeList };
 	static void addChainToList(BufferList list, const DataLog_BufferChain & chain);
@@ -201,9 +203,6 @@ public:
 
 	static DataLog_InternalID getNextInternalID(void);
 
-	static DataLog_InternalID lookupLevelID(const char * levelName);
-	static void registerLevelID(const char * levelName, DataLog_InternalID id);
-
 private:
 	struct CommonData
 	{
@@ -233,15 +232,12 @@ private:
 private:
 	static DataLog_Map<DataLog_TaskID, DataLog_TaskInfo *> _tasks;
 	static DataLog_Lock _tasksLock;
-
-	static DataLog_Map<DataLog_InternalID, DataLog_Handle> _handles;
-	static DataLog_Lock _handlesLock;
 };
 
 enum DataLog_NetworkPacketType
 {
-	DataLog_NotifyBufferSize,
-	DataLog_StartOutputRecord,
+	DataLog_StartTraceOutputRecord,
+	DataLog_StartCriticalOutputRecord,
 	DataLog_OutputRecordData,
 	DataLog_EndOutputRecord,
 	DataLog_EndConnection

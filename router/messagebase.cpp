@@ -214,7 +214,7 @@ struct timespec MessageBase::sentTime() const
    return _SentTime;
 }
 
-unsigned long MessageBase::latency() const
+long MessageBase::latency() const
 {
    long msecs;
    //
@@ -255,7 +255,7 @@ unsigned long MessageBase::latency() const
    msecs = diffTime.tv_sec*1000;
    msecs += diffTime.tv_nsec/1000000; 
    
-   return ( msecs < 0 ? 0 : msecs );
+   return msecs;
 }
 
 void MessageBase::dump( DataLog_Stream &outs ) 
@@ -360,10 +360,21 @@ bool MessageBase::notify( const MessagePacket &mp, const CallbackBase &cb )
          pckt != _PacketList.end() ;
          pckt++ ) 
    {
-      if (    (*pckt)->unopened() == false  // message packet has not came in yet 
-           || !(    (*pckt)->msgData().taskId() == mp.msgData().taskId()     // or, the message packet
-                 && (*pckt)->msgData().nodeId() == mp.msgData().nodeId() ) ) // wasn't from the same sender
+      if ( (*pckt)->unopened() == false ) // message packet has not came in yet 
+      {
          allMsgsIn = false;
+      }
+      else
+      {
+          if ( !(    (*pckt)->msgData().taskId() == mp.msgData().taskId()     // or, the message packet
+                  && (*pckt)->msgData().nodeId() == mp.msgData().nodeId() ) ) // wasn't from the same sender
+          {
+             allMsgsIn = false;
+             DataLog(log_level_message_system_error) << "Message clash for Id=" << hex << (*pckt)->msgData().msgId()
+                                    << ", sender1=" << (*pckt)->msgData().taskId() << " node1=" << mp.msgData().nodeId() 
+                                    << " and sender2=" <<  mp.msgData().taskId() << " node2=" << mp.msgData().nodeId() << endmsg;
+          }
+      }
    }
 
    //

@@ -80,7 +80,7 @@ public:
    struct timespec sentTime( ) const;
    //
    // Return the latency between sentTime and currentTime in milliseconds
-   unsigned long latency() const;
+   long latency() const;
 
    //
    // Dump the contents of the class ...

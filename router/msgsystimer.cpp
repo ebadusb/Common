@@ -579,7 +579,7 @@ void MsgSysTimer::checkTimers()
             while (    mq_send( (*tqiter).second, mpPtr, sizeof( MessagePacket ), 
                                 MessageSystemConstant::DEFAULT_TIMER_MESSAGE_PRIORITY ) == ERROR
                     && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
-            if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
+            if ( retries >= MessageSystemConstant::MAX_NUM_RETRIES )
             {
                DataLog( log_level_critical ) << "Check timers - timer Id=" << hex << mpPtr->msgData().msgId() 
                                     << ", send failed for error-" << errnoMsg << endmsg;

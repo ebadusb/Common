@@ -270,7 +270,7 @@ void Gateway::sendMsgToRouter( const MessagePacket &mp )
    while (    mq_send( _RouterQueue, &mp, sizeof( MessagePacket ), MessageSystemConstant::GATEWAY_MESSAGE_PRIORITY ) == ERROR 
            && ++retries < MessageSystemConstant::MAX_NUM_RETRIES )
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
-   if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
+   if ( retries >= MessageSystemConstant::MAX_NUM_RETRIES )
    {
       //
       // Error ...

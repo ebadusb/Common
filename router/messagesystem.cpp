@@ -51,6 +51,11 @@ MessageSystem::~MessageSystem()
    if ( _TheMessageSystem == this )
    {
       _TheMessageSystem = 0;
+      if ( _Dispatcher )
+      {
+         delete _Dispatcher;
+         _Dispatcher = 0;
+      }
 
       //
       // Remove the task variable

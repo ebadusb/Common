@@ -127,7 +127,7 @@ int Connector_main( unsigned long netAddress, int sock )
       DataLog( log_level_router_info ) << "Connector : retrying mqueue send" << endmsg;
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    }
-   if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
+   if ( retries >= MessageSystemConstant::MAX_NUM_RETRIES )
    {
       //
       // Error ...

@@ -1187,7 +1187,7 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
    while (    mq_send( mqueue , &mp, sizeof( MessagePacket ), priority ) == ERROR 
            && ++retries < MessageSystemConstant::MAX_NUM_RETRIES ) 
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
-   if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
+   if ( retries >= MessageSystemConstant::MAX_NUM_RETRIES )
    {
       //
       // Error ...

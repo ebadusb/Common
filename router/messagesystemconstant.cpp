@@ -18,8 +18,8 @@ const struct timespec MessageSystemConstant::RETRY_DELAY={ 1 /* seconds */, 0 /*
 const int MessageSystemConstant::DEFAULT_REGISTER_PRIORITY=17;
 const int MessageSystemConstant::DEFAULT_MESSAGE_PRIORITY=15;
 const int MessageSystemConstant::DEFAULT_TIMER_MESSAGE_PRIORITY=16;
-const int MessageSystemConstant::GATEWAY_CONNECT_PRIORITY=1;
-const int MessageSystemConstant::GATEWAY_MESSAGE_PRIORITY=3;
+const int MessageSystemConstant::GATEWAY_CONNECT_PRIORITY=17;
+const int MessageSystemConstant::GATEWAY_MESSAGE_PRIORITY=15;
 const int MessageSystemConstant::REMOTE_NODE_SYNCH_PRIORITY=2;
 const int MessageSystemConstant::MESSAGES_BETWEEN_LOG=100;
 

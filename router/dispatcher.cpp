@@ -467,7 +467,7 @@ void Dispatcher :: send( mqd_t mqueue,  const MessagePacket &mp, const int prior
    while (    mq_send( mqueue, &mp, sizeof( MessagePacket ), priority ) == ERROR 
            && ++retries < MessageSystemConstant::MAX_NUM_RETRIES )
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
-   if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
+   if ( retries >= MessageSystemConstant::MAX_NUM_RETRIES )
    {
       //
       // Error ...

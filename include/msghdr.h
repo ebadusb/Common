@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/HOME/BCT_Development/Common/include/rcs/msghdr.h 1.9 2001/09/21 17:35:18 ms10234 Exp ms10234 $
  * $Log: msghdr.h $
+ * Revision 1.5  1999/09/24 19:33:21  TD10216
+ * IT4371
  * Revision 1.4  1999/09/14 16:51:26  TD10216
  * IT4333
  * Revision 1.3  1999/07/13 18:16:10  TD10216
@@ -76,7 +78,7 @@ typedef long         nid_t;            /* Used for network IDs         */
 
 
 #define MAX_MESSAGES   1024            // max number of messages
-#define BSIZE          304             // max message size
+#define BSIZE          400             // max message size
 
 enum BOUNCE_FLAG
 {

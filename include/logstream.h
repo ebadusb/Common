@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/logstream.h 1.2 2002/03/20 16:37:53 jl11312 Exp jl11312 $
  * $Log: logstream.h $
+ * Revision 1.1  2002/03/19 16:11:34  jl11312
+ * Initial revision
  *
  *	LogStream interface - a stream-based interface for logging functions.
  *
@@ -44,7 +46,7 @@ public:
 	ologstream(void);
 };
 
-ologstream& endmsg(ologstream & os)
+inline ologstream& endmsg(ologstream & os)
 {
 	return os;
 }

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/HOME/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.11 2002/09/25 11:11:36 jl11312 Exp pn02526 $
  * $Log: ostime.cpp $
+ * Revision 1.10  2002/07/30 16:54:50  pn02526
+ * Perform deltaMSec calculation in the order least prone to divide truncation.
  * Revision 1.9  2002/06/19 16:56:44  pn02526
  * Updates for VxWorks: remove/replace system level includes; remove the sensitivity to time-of-day changes; modify to use auxClock as a time base.
  * Revision 1.8  2001/04/05 14:16:14  jl11312
@@ -109,7 +111,7 @@ osTime::howLongAndUpdate(timeFromTick* then)
    snapshotTime(&now);
    
    delta = ( (now.sec - then->sec) * 1000)
-         + ( (now.nanosec - then->nanosec) / 1000000);
+         + ( ((long)now.nanosec - (long)then->nanosec) / 1000000);
 
    then->sec = now.sec;
    then->nanosec = now.nanosec;

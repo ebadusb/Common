@@ -3,6 +3,9 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.12 2003/12/16 21:56:59Z jl11312 Exp rm70006 $
  * $Log: datalog_port_vxworks.cpp $
+ * Revision 1.11  2003/12/09 14:14:40Z  jl11312
+ * - corrected time stamp problem (IT 6668)
+ * - removed obsolete code/data types (IT 6664)
  * Revision 1.10  2003/11/10 17:46:24Z  jl11312
  * - corrections from data log unit tests (see IT 6598)
  * Revision 1.9  2003/10/16 14:57:40Z  jl11312
@@ -52,7 +55,7 @@ static time_t markTimeStampStart(void);
 //
 // Initialization related functions
 //
-static SEM_ID	initializationDataLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+static SEM_ID	initializationDataLock = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
 static bool initializationStarted;
 
 bool DataLog_CommonData::startInitialization(void)
@@ -82,7 +85,7 @@ bool DataLog_CommonData::isInitialized(void)
 //
 // Internal ID related functions
 //
-static SEM_ID	internalIDLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+static SEM_ID	internalIDLock = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
 
 DataLog_InternalID DataLog_CommonData::getNextInternalID(void)
 {
@@ -100,7 +103,7 @@ DataLog_InternalID DataLog_CommonData::getNextInternalID(void)
 //
 // DataLog_Handle related functions
 //
-static SEM_ID	handleLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+static SEM_ID	handleLock = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
 static map<string, DataLog_Handle>	handleMap;
 
 DataLog_Handle DataLog_CommonData::findHandle(const char * handleName)
@@ -140,7 +143,7 @@ void DataLog_CommonData::addHandle(const char * handleName, DataLog_Handle handl
 //
 // Common data area related functions
 //
-static SEM_ID	commonDataLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+static SEM_ID	commonDataLock = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
 
 void DataLog_CommonData::setCommonDataPtr(void)
 {
@@ -180,7 +183,7 @@ struct DataLog_SignalInfo
 	timer_t 	_timerID;
 };
 
-static SEM_ID	signalDataLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+static SEM_ID	signalDataLock = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
 static map<string, DataLog_SignalInfo *>	signalMap;
 
 static void timerNotify(timer_t timerID, DataLog_SignalInfo * signalInfo)
@@ -253,7 +256,7 @@ void datalog_SetupPeriodicSignal(DataLog_SignalInfo * signalInfo, long milliSeco
 //
 // Time stamp related functions
 //
-static SEM_ID 	timeDataLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+static SEM_ID 	timeDataLock = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
 
 #if (CPU != SIMNT)
 static long			nanoSecPerTimestampTick;
@@ -375,7 +378,7 @@ void datalog_FreeSharedMem(DataLog_SharedPtr(void) ptr)
 
 DataLog_Lock datalog_CreateLock(void)
 {
-	return semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+	return semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
 }
 
 void datalog_DeleteLock(DataLog_Lock lock)

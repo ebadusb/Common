@@ -1,4 +1,21 @@
+/*******************************************************************************
+ *
+ * Copyright (c) 2002 by Gambro BCT, Inc.  All rights reserved.
+ *
+ * TITLE:      carray.h
+ *             Template for generic type array.
+ *
+ * AUTHOR:     Regis McGarry
+ *
+ * ABSTRACT:   This file defines the template class for a generic array that
+ *             provides iterator support and all expected operators.  Safe for
+ *             usage in a datastore.
+ *
+ * HISTORY:    $Log: carray.h $
+*******************************************************************************/
+
 #include <cstddef>
+
 
 template < class T, std::size_t thesize>
 class carray 

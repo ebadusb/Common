@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.23  2003/04/11 22:15:48Z  td07711
+ * HISTORY:    log SetSpoof and ClearSpoof
  * HISTORY:    Revision 1.22  2003/04/07 14:47:03Z  rm70006
  * HISTORY:    IT 5818.
  * HISTORY:    
@@ -242,16 +244,16 @@ template <class dataType> void BaseElement<dataType>::Get(dataType *item) const
    // If calling instance is spoofer or no spoof has been registered, return real value
    if( *_handle->_fp == NULL || _ds->GetRole() == ROLE_SPOOFER )
    {
-       AccessOp(LockAccess);
+       Access(LockAccess);
        *item = *_handle->_data;
-       AccessOp(UnlockAccess);
+       Access(UnlockAccess);
    }
    else // spoofer callback returns spoofed value
    {
-       AccessOp(LockAccess);
+       Access(LockAccess);
        pair< dataType*, const dataType* > toFrom( item, _handle->_data );
        (*(*_handle->_fp))( &toFrom );  // runs spoofer callback
-       AccessOp(UnlockAccess);
+       Access(UnlockAccess);
    }
 }
 
@@ -270,9 +272,9 @@ template <class dataType> dataType BaseElement<dataType>::Get() const
    // If calling instance is spoofer or no spoof has been registered, return real value
    if ( *_handle->_fp == NULL || _ds->GetRole() == ROLE_SPOOFER ) 
    {
-      AccessOp(LockAccess);
+      Access(LockAccess);
       dataType temp = *_handle->_data;
-      AccessOp(UnlockAccess);
+      Access(UnlockAccess);
       return temp;
    }
    else // spoofer callback returns spoofed value
@@ -280,11 +282,9 @@ template <class dataType> dataType BaseElement<dataType>::Get() const
       dataType temp;
       pair< dataType*, const dataType* > toFrom( &temp, _handle->_data );
 
-      AccessOp(LockAccess);
- 
+      Access(LockAccess);
       (*(*_handle->_fp))( &toFrom );  // runs spoofer callback
- 
-      AccessOp(UnlockAccess);
+      Access(UnlockAccess);
       return temp;
    }
 }
@@ -301,10 +301,10 @@ template <class dataType> bool BaseElement<dataType>::Set(const dataType &data)
 
    if (_ds->GetRole() != ROLE_RO)
    {
-      AccessOp(LockAccess);
+      Access(LockAccess);
       _handle->_spooferCacheIsValid = false;
       *_handle->_data = data;
-      AccessOp(UnlockAccess);
+      Access(UnlockAccess);
    }
    else
    {

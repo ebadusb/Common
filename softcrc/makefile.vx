@@ -3,6 +3,8 @@
 # Makefile - makefile for softcrc library
 #
 # $Log: makefile.vx $
+# Revision 1.9  2003/06/26 22:33:37Z  jl11312
+# - moved base crc generation function into OS image
 # Revision 1.8  2003/05/13 15:03:56Z  jl11312
 # - completed vxWorks port
 # - modified to allow compiling as both a vxWorks and a Win32 program
@@ -48,7 +50,7 @@ include $(MAINDIR)/makefile.vxc
 # to be compiled for the library
 #
 LIB_C_FILES   = 
-LIB_CXX_FILES = checkself.cpp crcgen_file.cpp msgcrc.cpp softcrc.cpp
+LIB_CXX_FILES = crcgen_file.cpp msgcrc.cpp softcrc.cpp
 LIB_S_FILES =
 
 #

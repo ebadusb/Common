@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.9 2005/03/02 01:37:51Z cf10242 Exp psanusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.4  2004/12/09 00:19:37Z  cf10242
+ * GUI crash test
  * Revision 1.3  2004/11/04 20:19:09Z  rm10919
  * Common updates and changes.
  * Revision 1.2  2004/09/30 17:00:52Z  cf10242
@@ -197,11 +199,6 @@ void CGUIWindow::detach(void)
       {
          winDetach(_id);
       }
-
-		WIN_MGR_ID winMgr = winMgrGet(_id);
-      WIN_ID grabber = winPointerGrabGet (winMgr);
-		if(grabber == _id)
-			winPointerUngrab(_id);
 
       winDestroy(_id);
       _id = UGL_NULL_ID;
@@ -421,14 +418,12 @@ UGL_STATUS CGUIWindow::uglPointerCallback (WIN_ID id, WIN_MSG * pMsg, void * pDa
       {
          // Left button is pressed.  Grab the pointer to insure
          // we get the release event as well.
-		//	_winGrabbed = true;
          winPointerGrab (windowId);
          ptEvent.eventType = CGUIWindow::PointerEvent::ButtonPress;
       }
       else
       {
          winPointerUngrab (windowId);
-	//		_winGrabbed = false;
          ptEvent.eventType = CGUIWindow::PointerEvent::ButtonRelease;  
       }
 

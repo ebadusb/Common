@@ -85,7 +85,7 @@ protected:
    
    //
    // Function to update the current tick count
-   void updateTime( const unsigned long long tickCount );
+   void updateTime( const long long tickCount );
 
    //
    // Function to register a new timer
@@ -110,7 +110,7 @@ protected:
 
 private:
 
-   unsigned long long _TickCount;
+   long long _TickCount;
 
    struct MapEntry;
    class QueueEntry
@@ -124,17 +124,17 @@ private:
       QueueEntry &operator=( const QueueEntry &qe );
 
       int operator==( const QueueEntry &qe ) const;
-      int operator==( const unsigned long long l ) const;
+      int operator==( const long long l ) const;
       int operator<( const QueueEntry &qe ) const;
-      int operator<( const unsigned long long l ) const;
-      int operator<=( const unsigned long long l ) const;
+      int operator<( const long long l ) const;
+      int operator<=( const long long l ) const;
       int operator>( const QueueEntry &qe ) const;
-      int operator>( const unsigned long long l ) const;
-      int operator>=( const unsigned long long l ) const;
+      int operator>( const long long l ) const;
+      int operator>=( const long long l ) const;
 
    public:
 
-      unsigned long long _ExpirationTickCount;
+      long long _ExpirationTickCount;
       MapEntry           *_MapEntryPtr;
 
    };

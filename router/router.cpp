@@ -423,6 +423,10 @@ void Router::processMessage( MessagePacket &mp, int priority )
    case MessageData::GATEWAY_DISCONNECT:
       disconnectWithGateway( mp.msgData().nodeId() );
       break;
+   case MessageData::GATEWAY_MESSAGE_SYNCH:
+      checkMessageId( mp.msgData().msgId() );
+      synchUpRemoteNode( mp );
+      break;
    case MessageData::SPOOF_MSG_REGISTER:
       checkMessageId( mp.msgData().msgId(), (const char *)( mp.msgData().msg() ) );
       registerSpooferMessage( mp.msgData().msgId(), mp.msgData().taskId() );
@@ -481,16 +485,26 @@ void Router::connectWithGateway( const MessagePacket &mp )
          _InetGatewayMap[ mp.msgData().nodeId() ] = socketbuffer;
 
          //
-         // Synch up the remote node's message list ...
-         synchUpRemoteNode( socketbuffer );
-
-         //
          // Stop my notification timer ...
          unsigned long interval=0;
          MessagePacket newMP( mp );
          newMP.msgData().msg( (unsigned char*)&interval, sizeof( unsigned long ) ); 
          newMP.updateCRC();
          sendMessage( newMP, _TimerQueue, taskIdSelf(), 0 );
+
+         //
+         // Synch up the remote node's message list ...
+         //  ( Start with the first message in the list )
+         map< unsigned long, string >::iterator miter;
+         miter = _MsgIntegrityMap.begin();
+
+         //
+         // If any message found ...
+         if ( miter != _MsgIntegrityMap.end() )
+         {
+            newMP.msgData().msgId( (*miter).first );
+            synchUpRemoteNode( newMP );
+         }
       }
       else 
       {
@@ -1172,41 +1186,72 @@ bool Router::sendMessageToSpoofer( const MessagePacket &mp, int priority )
    return false;
 }
 
-void Router::synchUpRemoteNode( sockinetbuf *sockbuffer )
+void Router::synchUpRemoteNode( const MessagePacket &mpConst )
+{
+   MessagePacket mp( mpConst );
+   sockinetbuf *sock = _InetGatewayMap[ mp.msgData().nodeId() ];
+   if ( sock )
+   {
+      synchUpRemoteNode( sock, mp.msgData().msgId() );
+
+      //
+      // Send myself an mqueue message to continue to synch 
+      //  with the next message in the list ...
+      map< unsigned long, string >::iterator miter;
+      miter = _MsgIntegrityMap.find( mp.msgData().msgId() );
+      miter++;
+      if ( miter != _MsgIntegrityMap.end() )
+      {
+         mp.msgData().osCode( MessageData::GATEWAY_MESSAGE_SYNCH );
+         mp.msgData().msgId( (*miter).first );
+         mp.updateCRC();
+
+         sendMessage( mp, _RouterQueue, taskIdSelf(), 1 );
+      }
+   }
+   else
+   {
+      //
+      // Error ...                                                               
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "Error synching gateway=" << hex << mp.msgData().nodeId() 
+                           << ", TCP socket not found." << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "Gateway synch failed" );
+   }
+}
+
+void Router::synchUpRemoteNode( sockinetbuf *sockbuffer, unsigned long msgId )
 {
    //
-   // Send all my known messages to the remote node ...
+   // Send given msgId message to the remote node ...
    //
-
    map< unsigned long, map< unsigned long, unsigned char > >::iterator mtiter;
    map< unsigned long, string >::iterator miter;
-   MessagePacket mp;
 
    //
-   // Iterate through the message Ids in the list ...
-   for ( miter=_MsgIntegrityMap.begin() ;
-         miter!=_MsgIntegrityMap.end() ;
-         miter++ )
+   // Find the message Id in the list ...
+   miter = _MsgIntegrityMap.find( msgId );
+   if ( miter != _MsgIntegrityMap.end() )
    {
+      MessagePacket mp;
       mp.msgData().msgId( (*miter).first );
       mp.msgData().msg( (unsigned char*)((*miter).second.c_str()), (int)((*miter).second.length()) );
-
+   
       //
       // Try to find the message Id in the message/task map ...
       mtiter = _MessageTaskMap.find( (*miter).first );
-
+      
       //
       // If message found ...
       if ( mtiter != _MessageTaskMap.end() )
          mp.msgData().osCode( MessageData::MESSAGE_REGISTER );
       else
          mp.msgData().osCode( MessageData::MESSAGE_NAME_REGISTER );
-
+   
       //
       // Send the packet to the remote gateway ...
       sendMessageToGateway( sockbuffer, mp );
    }
-
 }
 
 short Router::getGatewayPort()

@@ -149,7 +149,8 @@ protected:
 
    //
    // This function will synchronize the remote node's registered messages with my list
-   void synchUpRemoteNode( sockinetbuf *sockbuffer );
+   void synchUpRemoteNode( const MessagePacket &mp );
+   void synchUpRemoteNode( sockinetbuf *sockbuffer, unsigned long msgId );
 
    //
    // This function will return the TCP port to which all requests to remote

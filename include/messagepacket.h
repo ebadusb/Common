@@ -33,6 +33,7 @@ public:
       MESSAGE_DEREGISTER,                       // deregister message with router
       GATEWAY_CONNECT,                          // register a gateway task
       GATEWAY_DISCONNECT,                       // deregister a gateway task
+      GATEWAY_MESSAGE_SYNCH,                    // synchronize messages with a gateway task
       SPOOF_MSG_REGISTER,                       // register the spoofer task
       SPOOF_MSG_DEREGISTER,                     // deregister the spoofer task
 
@@ -147,15 +148,15 @@ public:
    // Dump the contents of the class ...
    void dump( ostream &outs )
    {
-      outs << "######################### Message Data ############################" << endmsg;
       outs << "OSCode: " << _OSCode << " MsgId: " << hex << _MsgId << dec << " ";
       outs << "Length: " << _Length << " Node: " << hex << _NodeId << " ";
       outs << "Tid: " << hex << _TaskId << " Time: " << dec << _SendTime.tv_sec << " " << _SendTime.tv_nsec << " ";
       outs << "Seq: " << _SeqNum << " Tot: " << _TotNum << " ";
-      outs << "PcktLngth: " << _PacketLength << " Msg: " << _Msg << endmsg;
-      outs << "Msg: "; for (int i=0;i<MessageSystemConstant::MAX_MESSAGE_SIZE+1;i++) 
-                          outs << hex << (int)((unsigned char)(*(_Msg+i))) << " "; outs << endmsg;
-      outs << "###################################################################" << endmsg;
+      outs << "PcktLngth: " << _PacketLength << endmsg;
+      outs << " MsgId: " << hex << _MsgId << dec << " (cont.) Msg: " << _Msg << endmsg;
+      outs << " MsgId: " << hex << _MsgId << dec << " (cont.) Msg: "; 
+      for (int i=0;i<MessageSystemConstant::MAX_MESSAGE_SIZE+1;i++) 
+         outs << hex << (int)((unsigned char)(*(_Msg+i))) << " "; outs << endmsg;
    }
 
 protected:
@@ -240,10 +241,8 @@ public:
    // Dump the contents of the class ...
    void dump( ostream &outs )
    {
-      outs << "^^^^^^^^^^^^^^^^^^^^^^^^ Message Packet ^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endmsg;
       _MessageData.dump( outs );
-      outs << "CRC: " << hex << _CRC << dec << " Unopened: " << _Unopened << endmsg;
-      outs << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endmsg;
+      outs << "MessagePacket:: CRC: " << hex << _CRC << dec << " Unopened: " << _Unopened << endmsg;
    }
 
 protected:

@@ -5,6 +5,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/debug/rcs/failure_debug.cpp 1.11 2004/02/24 22:31:40Z jl11312 Exp ms10234 $
  * $Log: failure_debug.cpp $
+ * Revision 1.8  2003/10/03 12:37:20Z  jl11312
+ * - increased maximum stack levels displayed for debugging
  * Revision 1.7  2003/06/25 17:10:09Z  jl11312
  * - added logging for safety side CPU idle time and memory availability
  * Revision 1.6  2003/05/29 16:26:11Z  jl11312
@@ -132,7 +134,7 @@ void DBG_DumpData(void)
 			stackCount += 1;
 	   }
 	}
-	outStream << endmsg;
+	outStream << dec << endmsg;
 
 	if ( taskSwitchInfo.record )
 	{

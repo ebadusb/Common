@@ -3,6 +3,8 @@
  * PURPOSE: option parsing class
  * CHANGELOG:
  *   $Log: optionparser.cpp $
+ *   Revision 1.1  2002/09/18 23:33:07  td07711
+ *   Initial revision
  *   Revision 6.2  2002/05/01 18:04:54  td07711
  *   vxworks port
  *   05/01/2002 - dyes - update vxworks constructor
@@ -25,7 +27,6 @@
 #include <stdlib.h>
 
 #include "optionparser.h"
-#include "usage.h"
 
 #include "stdio.h"
 #include "assert.h"
@@ -34,33 +35,47 @@
 #define ASSERT assert
 
 
-// FUNCTION: OptionParser
-// PURPOSE: constructs a OptionParser instance.
-// 1. makes local copies of argc and argv
-OptionParser::OptionParser(int argc, char** argv, Usage& usage)
-: _argc(argc), _usage(usage), _options(0)
+
+OptionParser::OptionParser(const char* programName, const char* comment)
+: _usage(programName, comment), 
+  _argc(1), _argv(0), _options(0)
 {
+}
+
+
+OptionParser::~OptionParser()
+{
+    delete [] _argv;
+    delete [] _options;
+    _argv = 0;
+    _options = 0;
+}
+
+
+void OptionParser::init(int argc, const char** argv)
+{
+    // PURPOSE: takes unix/nt style argc argv command line arguments
+
     ASSERT(argc);
     ASSERT(argv);
 
     // copy argc and argv
-    _argv = new char*[argc+1]; // BOGOSITY - +1 needed by vc++ 
+    _argv = new const char*[argc+1]; // BOGOSITY - +1 needed by vc++ 
     ASSERT(_argv);
-    for(int i=0; i<argc; i++)
+
+    for(int i = 0; i < argc; i++)
         _argv[i] = argv[i];
 
-
-//    LOG_DEBUG("OptionParser constructed, argc=%d", argc);
+    // null terminate argv since we have an unecessary but undefined ptr at the end
+    _argv[argc] = 0;
 }
 
 
-// FUNCTION: OptionParser
-// PURPOSE: constructs a OptionParser instance.
-// 1. creates argc and argv from options string
-// 2. allocates storage for argv strings
-OptionParser::OptionParser(const char* options, Usage& usage)
-: _usage(usage), _options(0), _argc(1)
+void OptionParser::init(const char* options)
 {
+    // PURPOSE: take single string containing space delimited words and 
+    // put them into argv[] and argc, accessible via getArgv() and getArgc()
+
     ASSERT(options);
 
     // 
@@ -88,12 +103,10 @@ OptionParser::OptionParser(const char* options, Usage& usage)
             }
         }
     }
-    _argv = new char*[_argc+1];
+    _argv = new const char*[_argc+1];
     ASSERT(_argv);
-//    LOG_DEBUG("argc=%d", _argc);
 
-    _argv[0] = "dummy"; // dummy task/process name
-
+    _argv[0] = _usage.getProgramName(); // dummy task/process name
 
 
     // make copy of options that strtok_r can modify
@@ -119,31 +132,27 @@ OptionParser::OptionParser(const char* options, Usage& usage)
 }
 
 
-OptionParser::~OptionParser()
-{
-    delete [] _argv;
-    delete [] _options;
-}
-
-
-// FUNCTION: done
-// PURPOSE: error exit if any unparsed items remain
 void OptionParser::done()
 {
+    // PURPOSE: error exit if any unparsed items remain
+
     if (_argc > 1)
     {
-        for(int i=1; i < _argc; i++)
+        for(int i = 1; i < _argc; i++)
+        {  
             fprintf(stderr, "unparsed token %s", _argv[i]);
-        printf("%s", _usage.get_usage() );
+        }
+
+        fprintf(stderr, "%s", _usage.get_usage() );
         exit(1);
     }
 }
 
 
-// FUNCTION: parse
-// PURPOSE: parses keyword flag
-void OptionParser::parse(char* keyword, char* usage, bool* pStorage)
+void OptionParser::parse(const char* keyword, const char* usage, bool* pStorage)
 {
+    // PURPOSE: parses boolean keyword flag
+
     ASSERT(keyword);
     ASSERT(pStorage);
     ASSERT(usage);
@@ -159,22 +168,19 @@ void OptionParser::parse(char* keyword, char* usage, bool* pStorage)
     {
         if(strcmp(keyword, _argv[i]) == 0)
         {
-//            LOG_DEBUG("keyword=%s flag=true", keyword);
             *pStorage = true;
             remove_token(i);
             return;
         }
     }
-//    LOG_DEBUG("keyword=%s not found", keyword);
 }
 
 
-
-// FUNCTION: parse
-// PURPOSE: parses keyword value, int data
-void OptionParser::parse(char* keyword, char* usage, 
-                         int* pStorage, int def, int min, int max)
+void OptionParser::parse(const char* keyword, const char* usage, int* pStorage, 
+                         int def, int min, int max)
 {
+    // PURPOSE: parses keyword value, int data
+
     ASSERT(keyword);
     ASSERT(pStorage);
     ASSERT(usage);
@@ -205,22 +211,19 @@ void OptionParser::parse(char* keyword, char* usage,
                 LOG_FATAL("range check failed keyword=%s value=%i>%i",
                           keyword, *pStorage, max);
 
-//            LOG_DEBUG("keyword=%s value=%i", keyword, *pStorage);
             remove_token(i+1);
             remove_token(i);
             return;
         }
     }
-//    LOG_DEBUG("keyword=%s not found", keyword);
 }
 
 
-
-// FUNCTION: parse
-// PURPOSE: parses positional int data
-void OptionParser::parse(char* usage, 
-                         int* pStorage, int def, int min, int max)
+void OptionParser::parse(const char* usage, int* pStorage, 
+                         int def, int min, int max)
 {
+    // PURPOSE: parses positional int data
+
     ASSERT(pStorage);
     ASSERT(usage);
 
@@ -233,7 +236,6 @@ void OptionParser::parse(char* usage,
 
     if(_argc <= 1)
     {
-//        LOG_DEBUG("no value for usage=%s", usage);
         return;
     }
 
@@ -249,17 +251,15 @@ void OptionParser::parse(char* usage,
         LOG_FATAL("range check failed usage=%s value=%i>%i",
                   usage, *pStorage, max);
 
-//    LOG_DEBUG("usage=%s value=%i", usage, *pStorage);
     remove_token(1);
 }
 
 
-
-// FUNCTION: parse
-// PURPOSE: parses keyword value, float data
-void OptionParser::parse(char* keyword, char* usage,
-                         float* pStorage, float def, float min, float max)
+void OptionParser::parse(const char* keyword, const char* usage, float* pStorage, 
+                         float def, float min, float max)
 {
+    // PURPOSE: parses keyword value, float data
+
     ASSERT(keyword);
     ASSERT(pStorage);
     ASSERT(usage);
@@ -291,21 +291,19 @@ void OptionParser::parse(char* keyword, char* usage,
                 LOG_FATAL("range check failed keyword=%s value=%f>%f",
                           keyword, *pStorage, max);
 
-//            LOG_DEBUG("keyword=%s value=%f", keyword, *pStorage);
             remove_token(i+1);
             remove_token(i);
             return;
         }
     }
-//    LOG_DEBUG("keyword=%s not found", keyword);
 }
 
 
-// FUNCTION: parse
-// PURPOSE: parses positional float data
-void OptionParser::parse(char* usage,
-                         float* pStorage, float def, float min, float max)
+void OptionParser::parse(const char* usage, float* pStorage, 
+                         float def, float min, float max)
 {
+    // PURPOSE: parses positional (no keyword) float data
+
     ASSERT(pStorage);
     ASSERT(usage);
 
@@ -318,7 +316,6 @@ void OptionParser::parse(char* usage,
 
     if(_argc <= 1)
     {
-//        LOG_DEBUG("no value for usage=%s", usage);
         return;
     }
 
@@ -334,16 +331,15 @@ void OptionParser::parse(char* usage,
         LOG_FATAL("range check failed usage=%s value=%f>%f",
                   usage, *pStorage, max);
 
-//    LOG_DEBUG("usage=%s value=%f", usage, *pStorage);
     remove_token(1);
 }
 
 
-// FUNCTION: parse
-// PURPOSE: parses keyword value, double data
-void OptionParser::parse(char* keyword, char* usage,
-                         double* pStorage, double def, double min, double max)
+void OptionParser::parse(const char* keyword, const char* usage, double* pStorage, 
+                         double def, double min, double max)
 {
+    // PURPOSE: parses keyword value, double data
+
     ASSERT(keyword);
     ASSERT(pStorage);
     ASSERT(usage);
@@ -374,21 +370,19 @@ void OptionParser::parse(char* keyword, char* usage,
                 LOG_FATAL("range check failed keyword=%s value=%f>%f",
                           keyword, *pStorage, max);
 
-//            LOG_DEBUG("keyword=%s value=%lf", keyword, *pStorage);
             remove_token(i+1);
             remove_token(i);
             return;
         }
     }
-//    LOG_DEBUG("OptionParser::parse: keyword=%s not found", keyword);
 }
 
 
-// FUNCTION: parse
-// PURPOSE: parses positional double data
-void OptionParser::parse(char* usage,
-                         double* pStorage, double def, double min, double max)
+void OptionParser::parse(const char* usage, double* pStorage, 
+                         double def, double min, double max)
 {
+    // PURPOSE: parses positional (i.e. no keyword) double data
+
     ASSERT(pStorage);
     ASSERT(usage);
 
@@ -401,7 +395,6 @@ void OptionParser::parse(char* usage,
     
     if(_argc <= 1)
     {
-//        LOG_DEBUG("no value for usage=%s", usage);
         return;
     }
 
@@ -417,15 +410,15 @@ void OptionParser::parse(char* usage,
         LOG_FATAL("range check failed usage=%s value=%f>%f",
                   usage, *pStorage, max);
 
-//    LOG_DEBUG("usage=%s value=%lf", usage, *pStorage);
     remove_token(1);
 }
 
 
-// FUNCTION: parse
-// PURPOSE: parses keyword value, string data
-void OptionParser::parse(char* keyword, char* usage, char** pStorage, char* def)
+void OptionParser::parse(const char* keyword, const char* usage, 
+                         const char** pStorage, const char* def)
 {
+    // PURPOSE: parses keyword value, string data
+
     ASSERT(keyword);
     ASSERT(pStorage);
     ASSERT(usage);
@@ -454,20 +447,18 @@ void OptionParser::parse(char* keyword, char* usage, char** pStorage, char* def)
 
             *pStorage = _argv[i+1];
 
-//            LOG_DEBUG("keyword=%s value=%s", keyword, *pStorage);
             remove_token(i+1);
             remove_token(i);
             return;
         }
     }
-//    LOG_DEBUG("keyword=%s not found", keyword);
 }
 
 
-// FUNCTION: parse
-// PURPOSE: parses positional string data
-void OptionParser::parse(char* usage, char** pStorage, char* def)
+void OptionParser::parse(const char* usage, const char** pStorage, const char* def)
 {
+    // PURPOSE: parses positional (i.e. no keyword) string data
+
     ASSERT(pStorage);
     ASSERT(usage);
 
@@ -488,21 +479,19 @@ void OptionParser::parse(char* usage, char** pStorage, char* def)
 
     if(_argc <= 1)
     {
-//        LOG_DEBUG("no value for usage=%s", usage);
         return;
     }
 
     *pStorage = _argv[1];
 
-//    LOG_DEBUG("usage=%s value=%s", usage, *pStorage);
     remove_token(1);
 }
 
 
-// FUNCTION: remove_token
-// PURPOSE: removes parsed token from the command line
 void OptionParser::remove_token(int i)
 {
+    // PURPOSE: removes parsed token from the command line
+
     ASSERT(i > 0);
     ASSERT(i <= _argc);
     

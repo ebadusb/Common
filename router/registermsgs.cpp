@@ -5,6 +5,8 @@
  * CHANGELOG:
  * $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/DEBUG.HPP 1.1 1999/05/24 2
  * $Log: RegisterMsgs.cpp $
+ * Revision 1.1  1999/07/24 20:51:35  TD10216
+ * Initial revision
  *******************************************************************/
 
 #include <stdio.h>
@@ -56,8 +58,6 @@ void RegisterMsgs::RegisterMessages(TCPGate_Reg_ReqMsg *msg, int Reply)
 	// otherwise, step through the array
 	for(i = 0; i < Reg_Struct->count; ++i)
 	{
-		_LOG_ERROR( __FILE__,__LINE__, TRACE_GATEWAY, 
-			Reg_Struct->MsgIds[i], "Registering message" );
 		if(abs(Reg_Struct->MsgIds[i]) >= LAST_INT32_MESSAGE 
 		|| abs(Reg_Struct->MsgIds[i]) <= FIRST_BUFFER_MESSAGE)
 			_LOG_ERROR( __FILE__,__LINE__, TRACE_GATEWAY, 

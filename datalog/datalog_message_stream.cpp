@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.12 2003/11/25 16:10:03Z jl11312 Exp rm70006 $
  * $Log: datalog_message_stream.cpp $
+ * Revision 1.10  2003/11/10 17:46:16Z  jl11312
+ * - corrections from data log unit tests (see IT 6598)
  * Revision 1.9  2003/04/29 17:07:54Z  jl11312
  * - direct console output directly to console instead of stdout
  * Revision 1.8  2003/02/25 16:10:19Z  jl11312
@@ -212,38 +214,40 @@ DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber
 	switch ( handleType )
 	{
 	case DataLog_HandleInfo::TraceHandle:
-		{
-			streamOutputRecord._levelID = _handle->_id;
-			streamOutputRecord._taskID = datalog_CurrentTask();
+		streamOutputRecord._levelID = _handle->_id;
+		streamOutputRecord._taskID = datalog_CurrentTask();
 
-			logOutput = _handle->_logOutput;
-			consoleOutput = _handle->_consoleOutput;
+		logOutput = _handle->_logOutput;
+		consoleOutput = _handle->_consoleOutput;
 
-			logOutput = ( logOutput == DataLog_LogEnabled ) ? DataLog_LogEnabled : taskInfo->_logOutput;
-			consoleOutput = ( consoleOutput == DataLog_ConsoleEnabled ) ? DataLog_ConsoleEnabled : taskInfo->_consoleOutput;
-		}
+		logOutput = ( logOutput == DataLog_LogEnabled ) ? DataLog_LogEnabled : taskInfo->_logOutput;
+		consoleOutput = ( consoleOutput == DataLog_ConsoleEnabled ) ? DataLog_ConsoleEnabled : taskInfo->_consoleOutput;
+		break;
+
+	case DataLog_HandleInfo::IntHandle:
+		streamOutputRecord._levelID = 0;
+		streamOutputRecord._taskID = DATALOG_CURRENT_TASK;
+
+		logOutput = DataLog_LogDisabled;
+		consoleOutput = DataLog_ConsoleDisabled;
 		break;
 
 	case DataLog_HandleInfo::CriticalHandle:
-		{
-			streamOutputRecord._levelID = 0;
-			streamOutputRecord._taskID = datalog_CurrentTask();
+		streamOutputRecord._levelID = 0;
+		streamOutputRecord._taskID = datalog_CurrentTask();
 
-			consoleOutput = DataLog_ConsoleEnabled;
-	   }
+		consoleOutput = DataLog_ConsoleEnabled;
 		break;
 
 	default:
-		{
-			/*
-			 *	Invalid handle type for stream.  Report the error and choose reasonable
-			 * defaults if continuing.
-			 */
-			common.setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
+		/*
+		 *	Invalid handle type for stream.  Report the error and choose reasonable
+		 * defaults if continuing.
+		 */
+		common.setTaskError(DataLog_InvalidHandle, __FILE__, __LINE__);
 
-			streamOutputRecord._levelID = 0;
-			streamOutputRecord._taskID = DATALOG_CURRENT_TASK;
-		}
+		streamOutputRecord._levelID = 0;
+		streamOutputRecord._taskID = DATALOG_CURRENT_TASK;
 		break;
 	}
 

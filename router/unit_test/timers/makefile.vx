@@ -12,7 +12,7 @@ ADDN_LDFLAGS =
 
 ifeq ($(BUILD_TYPE),CLEAN)
 .PHONY: all
-all: local_libs clean
+all: clean
 else
 .PHONY: all
 all: check_opt_change libs apps

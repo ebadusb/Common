@@ -1,8 +1,10 @@
 /* FILENAME: OptionParser.cpp
- * $Header: K:/BCT_Development/vxWorks/Common/cmdline/rcs/optionparser.cpp 1.6 2002/12/20 23:28:19Z td07711 Exp jl11312 $
+ * $Header: K:/BCT_Development/vxWorks/Common/cmdline/rcs/optionparser.cpp 1.6 2002/12/20 23:28:19Z td07711 Exp $
  * PURPOSE: option parsing class
  * CHANGELOG:
  *   $Log: optionparser.cpp $
+ *   Revision 1.6  2002/12/20 23:28:19Z  td07711
+ *   modified to not exit on parsing errors, instead user can call anyErrors() to check and take appropriate action
  *   Revision 1.5  2002/12/20 21:29:08Z  ms10234
  *   Added support for sysinit programs and environ vars
  *   Revision 1.4  2002/09/20 21:35:48  td07711
@@ -123,7 +125,7 @@ void OptionParser::init(const char* options)
     if ( _usage.getProgramName() )
        argcount++;
 
-    _argv = new const char*[argcount];
+    _argv = new const char*[argcount+1];
     ASSERT(_argv);
 
     int argcountInit=0;

@@ -3,6 +3,10 @@
  *
  * $Header: //bctquad3/HOME/BCT_Development/Common/include/rcs/msghdr.h 1.9 2001/09/21 17:35:18 ms10234 Exp ms10234 $
  * $Log: msghdr.h $
+ * Revision 1.7  2000/12/14 23:53:54  ms10234
+ * IT4618,4685 -  Changes were made to the message types to allow for 
+ * messages to be sent, but not received, and for messages to remain local
+ * to the current node.
  * Revision 1.6  2000/03/07 00:30:35  BD10648
  * Increased message maximum size to 400
  * Revision 1.5  1999/09/24 19:33:21  TD10216
@@ -80,7 +84,7 @@ typedef long         nid_t;            /* Used for network IDs         */
 
 
 #define MAX_MESSAGES   1024            // max number of messages
-#define BSIZE          400             // max message size
+#define BSIZE          420             // max message size
 
 enum BOUNCE_FLAG
 {

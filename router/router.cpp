@@ -13,6 +13,7 @@
 #include <netinet/tcp.h>
 
 #include "common_datalog.h"
+#include "connector.h"
 #include "failure_debug.h"
 #include "gateway.h"
 #include "messagesystem.h"

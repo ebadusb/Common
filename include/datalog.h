@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.6  2002/05/17 17:15:59  jl11312
+ * - temporary change of operator() return type
  * Revision 1.5  2002/04/29 21:48:42  jl11312
  * - updated to reflect API changes
  * Revision 1.4  2002/03/27 16:43:25  jl11312
@@ -124,7 +126,8 @@ DataLog_Result datalog_GetBytesMissed(size_t * byteCount);
  */
 #ifdef __cplusplus
 
-#include "logstream.h"
+// #include "logstream.h"
+#include <iostream.h>
 
 class DataLog_Level
 {
@@ -150,6 +153,8 @@ public:
 
    ostream & operator()(const char * fileName, int lineNumber);
 };
+
+#define endmsg endl
 
 class DataLog_Critical : public DataLog_Level
 {

@@ -86,6 +86,10 @@ int tarExtract ( const char *file     /* archive file name */,
 };
 #endif
 
+//
+// file pointer for console output 
+extern int consoleFd;
+
 typedef union hblock
 {
    char dummy[TBLOCK];
@@ -149,8 +153,7 @@ int mtChecksum ( void *  pBuf, unsigned   size )
 
 int tarRdBlks ( MT_TAR_SOFT *pCtrl,    /* control structure */ 
                 MT_HBLOCK **ppBlk,     /* where to return buffer address */ 
-                unsigned int nBlocks,  /* how many blocks to get */ 
-                const bool datalogRunning
+                unsigned int nBlocks   /* how many blocks to get */ 
               )
 {
    register int rc ;
@@ -168,7 +171,6 @@ int tarRdBlks ( MT_TAR_SOFT *pCtrl,    /* control structure */
       else if ( (rc % TBLOCK) != 0 )
       {
          fprintf( stdout, "tarRdBlks: file block not multiple of %d\n", TBLOCK);
-         if ( datalogRunning ) fprintf( stderr, "tarRdBlks: file block not multiple of %d\n", TBLOCK);
          return ERROR;
       }
 
@@ -192,7 +194,7 @@ int tarRdBlks ( MT_TAR_SOFT *pCtrl,    /* control structure */
 * RETURNS: OK or ERROR
 */
 
-int mtAccess ( const char *name, const bool datalogRunning  )
+int mtAccess ( const char *name )
 {
    char tmpName [ NAMSIZ ] ;
    struct stat st ;
@@ -215,7 +217,6 @@ int mtAccess ( const char *name, const bool datalogRunning  )
          if ( S_ISDIR(st.st_mode ) == 0 )
          {
             fprintf( stdout, "Path %s is not a directory\n", tmpName);
-            if ( datalogRunning ) fprintf( stderr, "Path %s is not a directory\n", tmpName);
             return ERROR;
          }
       }
@@ -228,7 +229,6 @@ int mtAccess ( const char *name, const bool datalogRunning  )
       pSlash++;
    }
    fprintf( stdout, "Path too long %s\n", name );
-   if ( datalogRunning ) fprintf( stderr, "Path too long %s\n", name );
    return ERROR;
 }
 
@@ -243,8 +243,7 @@ int mtAccess ( const char *name, const bool datalogRunning  )
 
 int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */ 
                      MT_HBLOCK     *pBlk,      /* header block */ 
-                     const char    *location,
-                     const bool    datalogRunning 
+                     const char    *location
                    )
 {
    register int   rc;
@@ -273,7 +272,6 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
    if ( mtChecksum( pBlk->dummy, TBLOCK ) != sum )
    {
       fprintf( stdout, "bad checksum %d != %d\n", mtChecksum( pBlk->dummy, TBLOCK), sum );
-      if ( datalogRunning ) fprintf( stderr, "bad checksum %d != %d\n", mtChecksum( pBlk->dummy, TBLOCK), sum );
       return ERROR;
    }
 
@@ -292,7 +290,7 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
          fn[ strlen(fn) - 1 ] = '\0' ;
 
       /* Must make sure that parent exists for this new directory */
-      if ( mtAccess(fn, datalogRunning ) == ERROR )
+      if ( mtAccess(fn) == ERROR )
       {
          return ERROR;
       }
@@ -300,11 +298,13 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
       if ( mkdir( fn ) == ERROR )
       {
          fprintf( stdout, "failed to create directory %s, %s\n", fn, strerror(errno));
-         if ( datalogRunning ) fprintf( stderr, "failed to create directory %s, %s\n", fn, strerror(errno));
          return ERROR;
       }
 
-      fprintf( stdout, "created directory %s.\n", fn );
+      FILE *con = fdopen( consoleFd, "w" );
+      fprintf( con, "created directory %s.\n", fn );
+      fflush( con );
+
       return OK;
    }
 
@@ -319,7 +319,6 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
         (pBlk->dbuf.linkflag != ' ') )
    {
       fprintf( stdout, "we do not support links, %s\n", fn );
-      if ( datalogRunning ) fprintf( stderr, "we do not support links, %s\n", fn );
       return OK;
    }
 
@@ -328,7 +327,7 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
       nblks = ( size / TBLOCK ) +  ((size % TBLOCK)? 1 : 0 ) ;
 
    /* Must make sure that directory exists for this new file */
-   if ( mtAccess(fn, datalogRunning ) == ERROR )
+   if ( mtAccess(fn) == ERROR )
    {
       return ERROR;
    }
@@ -338,14 +337,15 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
    if ( fd < 0 )
    {
       fprintf( stdout, "failed to create file %s, %s -- exiting!\n", fn, strerror(errno));
-      if ( datalogRunning ) fprintf( stderr, "failed to create file %s, %s -- exiting!\n", fn, strerror(errno));
       return ERROR;
    }
    /* Make files contiguous for faster loading */
    ioctl( fd, FIOCONTIG, size );
 
    fprintf( stdout, "extracting file %s, size %d bytes, %d blocks\n", fn, size, nblks );
-   if ( datalogRunning ) fprintf( stderr, "extracting file %s, size %d bytes, %d blocks\n", fn, size, nblks );
+   fflush( stdout );
+
+   FILE *con = fdopen( consoleFd, "w" );
 
    /* Loop until entire file extracted */
    while ( size > 0 )
@@ -353,13 +353,13 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
       MT_HBLOCK *pBuf;
       register int wc ;
 
-      rc = tarRdBlks( pCtrl, &pBuf, nblks, datalogRunning ) ;
-      fprintf( stdout, "\ttarExtract: bytes remaining->%d         \r", size);
+      rc = tarRdBlks( pCtrl, &pBuf, nblks ) ;
+      fprintf( con, "\ttarExtract: bytes remaining->%d         \r", size);
+      fflush( con );
 
       if ( rc < 0 )
       {
          fprintf( stdout, "error reading archive file\n");
-         if ( datalogRunning ) fprintf( stderr, "error reading archive file\n");
          close(fd);
          return ERROR;
       }
@@ -369,15 +369,14 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
       if ( wc == ERROR )
       {
          fprintf( stdout, "error writing file\n");
-         if ( datalogRunning ) fprintf( stderr, "error writing file\n");
          break;
       }
 
       size -= rc*TBLOCK ;
       nblks -= rc ;
    }
-   fprintf( stdout, "                                                                      \r");
-
+   fprintf( con, "                                                                      \r");
+   fflush( con );
 
    /* Close the newly created file */
    return( close(fd) ) ;
@@ -416,11 +415,7 @@ int tarExtract ( const char *file     /* archive file name */,
    int  retval = 0;
    int bfactor = 20 ;
 
-   bool datalogRunning = false;
-   if ( taskNameToId( "dlog_out" ) != ERROR ) {  datalogRunning = true; }
-
    fprintf( stdout, "Extracting from file %s\n", file );
-   if ( datalogRunning ) fprintf( stderr, "Extracting from file %s\n", file );
 
    memset( &ctrl, 0, sizeof(ctrl) );
    memset( bZero, 0, sizeof(bZero) );
@@ -431,7 +426,6 @@ int tarExtract ( const char *file     /* archive file name */,
    if ( ctrl.fd < 0 )
    {
       fprintf( stdout, "Failed to open file: %s\n", strerror(errno) );
-      if ( datalogRunning ) fprintf( stderr, "Failed to open file: %s\n", strerror(errno) );
       return ERROR;
    }
 
@@ -440,7 +434,6 @@ int tarExtract ( const char *file     /* archive file name */,
    if ( ctrl.pBuf == NULL )
    {
       fprintf( stdout, "Not enough memory, exiting.\n" );
-      if ( datalogRunning ) fprintf( stderr, "Not enough memory, exiting.\n" );
       gzclose( ctrl.fd );
       return ERROR ;
    }
@@ -455,20 +448,17 @@ int tarExtract ( const char *file     /* archive file name */,
    if ( rc == ERROR )
    {
       fprintf( stdout, "read error at the beginning of file, exiting.\n" );
-      if ( datalogRunning ) fprintf( stderr, "read error at the beginning of file, exiting.\n" );
       retval = ERROR ;
       goto finish;
    }
    else if ( rc == 0 )
    {
       fprintf( stdout, "empty file, exiting.\n" );
-      if ( datalogRunning ) fprintf( stderr, "empty file, exiting.\n" );
       goto finish;
    }
    else if ( (rc % TBLOCK) != 0 )
    {
       fprintf( stdout, "file block not multiple of %d, exiting.\n", TBLOCK);
-      if ( datalogRunning ) fprintf( stderr, "file block not multiple of %d, exiting.\n", TBLOCK);
       retval = ERROR ;
       goto finish;
    }
@@ -478,7 +468,6 @@ int tarExtract ( const char *file     /* archive file name */,
    if ( ctrl.bFactor != ctrl.bValid )
    {
       fprintf( stdout, "adjusting blocking factor to %d\n", ctrl.bValid );
-      if ( datalogRunning ) fprintf( stderr, "adjusting blocking factor to %d\n", ctrl.bValid );
       ctrl.bFactor = ctrl.bValid ;
    }
 
@@ -488,7 +477,7 @@ int tarExtract ( const char *file     /* archive file name */,
    {
       MT_HBLOCK * pBlk ;
 
-      if ( tarRdBlks( &ctrl, &pBlk, 1, datalogRunning ) != 1 )
+      if ( tarRdBlks( &ctrl, &pBlk, 1 ) != 1 )
       {
          retval = ERROR ;
          goto finish;
@@ -496,16 +485,15 @@ int tarExtract ( const char *file     /* archive file name */,
 
       if ( bcmp( pBlk->dummy, bZero, TBLOCK) == 0 )
       {
-         fprintf( stdout, "end of file encountered, read until eof...                                \n");
-         if ( datalogRunning ) fprintf( stderr, "end of file encountered, read until eof...\n");
-         while ( tarRdBlks( &ctrl, &pBlk, 1, datalogRunning ) > 0 ) ;
+         fprintf( stdout, "end of file encountered, read until eof...\n");
+         while ( tarRdBlks( &ctrl, &pBlk, 1 ) > 0 ) ;
          fprintf( stdout, "done.                                                                     \n");
-         if ( datalogRunning ) fprintf( stderr, "done.\n");
+         fflush( stdout );
          retval = 0 ;
          goto finish;
       }
 
-      if ( tarExtractFile( &ctrl, pBlk, location, datalogRunning ) == ERROR )
+      if ( tarExtractFile( &ctrl, pBlk, location ) == ERROR )
       {
          retval = ERROR;
          goto finish;

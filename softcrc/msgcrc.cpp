@@ -1,26 +1,15 @@
 /*
- * copyright 1995, 1996 Cobe BCT Lakewood, Colorado
+ * Copyright 2002 GambroBCT Lakewood, Colorado
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/msgcrc.cpp 1.2 2002/07/17 18:54:38 ms10234 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/msgcrc.cpp 1.2 2002/07/17 18:54:38 ms10234 Exp $
  * $Log: msgcrc.cpp $
- * Revision 1.3  2002/07/17 18:43:55  ms10234
- * Added vxWorks.h as the first include file
- * Revision 1.2  2002/07/03 20:10:36  ms10234
- * Completed some code cleanup and minor fixes.
+ * Revision 1.2  2002/07/17 18:54:38  ms10234
+ * Added msgcrc.cpp and made vxWorks.h the first include file
  * Revision 1.1  1999/05/24 23:30:00  TD10216
  * Initial revision
- * Revision 1.2  1996/07/24 19:49:20  SS03309
- * fix MKS 
- * Revision 1.2  1996/07/22 14:42:47  SS03309
- * Revision 1.4  1996/07/19 13:53:27  SS03309
- * lint
  *
  * Compute 32 bit CRCs on buffers and focus messages
  *
- * DOCUMENTS
- * Requirements:     I:\ieee1498\SSS2.DOC
- * Select OMT:       I:\router
- * Test:             I:\ieee1498\STP2.DOC
  */
 
 #include <vxWorks.h>

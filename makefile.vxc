@@ -3,13 +3,15 @@
 # Makefile.vxc - common makefile for common/vxWorks
 #
 # $Log: makefile.vxc $
+# Revision 1.2  2002/05/16 17:39:25  jl11312
+# - allow for overrides of INCDIR variable
 # Revision 1.1  2002/04/18 14:27:46  jl11312
 # Initial revision
 #
 
 #
 # Get compile commands and flags which must be shared between the common
-# project and Trima.
+# project and the application build.
 #
 include $(MAINDIR)/makefile.flags
 

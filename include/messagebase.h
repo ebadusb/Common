@@ -84,7 +84,7 @@ public:
 
    //
    // Dump the contents of the class ...
-   void dump( ostream &outs );
+   void dump( DataLog_Stream &outs );
 
 protected:
 

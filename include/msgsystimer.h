@@ -74,7 +74,7 @@ public:
   
    //
    // Dump the contents of this class
-   void dump( ostream &outs );
+   void dump( DataLog_Stream &outs );
 
 protected:
 

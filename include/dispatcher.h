@@ -57,7 +57,7 @@ public:
    virtual void deregisterMessage( const MessageBase &mb, MessagePacket &mp );
            void deregisterMessage( const unsigned long messageId, const MessageBase &mb );
 
-   void dump( ostream &outs );
+   void dump( DataLog_Stream &outs );
 
 protected:
 

@@ -69,7 +69,7 @@ bool Router::init()
    //
    // Add the task delete hook to catch all task deletion and
    //  keep the task lists up to date ...
-   taskDeleteHookAdd( &Router::taskDeleteHook );
+   taskDeleteHookAdd( (FUNCPTR) &Router::taskDeleteHook );
 
    struct mq_attr attr;                        // message queue attributes 
    attr.mq_maxmsg =  DEFAULT_Q_SIZE;           // set max number of messages 
@@ -559,7 +559,7 @@ void Router::cleanup()
 {
    //
    // Remove the delete hook ...
-   taskDeleteHookDelete( &Router::taskDeleteHook );
+   taskDeleteHookDelete( (FUNCPTR) &Router::taskDeleteHook );
 
    //
    // Cleanup the map ...

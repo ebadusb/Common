@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.16  2002/09/25 16:05:00Z  rm70006
+ * HISTORY:    Fixed bug in fatal logging.
  * HISTORY:    Revision 1.15  2002/09/24 16:48:39Z  rm70006
  * HISTORY:    Add extra debugging ability
  * HISTORY:    Revision 1.14  2002/09/19 21:46:07Z  jl11312
@@ -71,7 +73,6 @@
 ElementType::ElementType()
 {
    _ds      = NULL;
-   _role    = Role(-1);
    _pfrType = PfrType(-1);
 }
 
@@ -89,10 +90,9 @@ ElementType::~ElementType()
 //
 // Register
 //
-void ElementType::Register(DataStore *ds, Role role, PfrType pfr)
+void ElementType::Register(DataStore *ds, PfrType pfr)
 {
    _ds      = ds;
-   _role    = role;
    _pfrType = pfr;
 }
 
@@ -825,7 +825,7 @@ void DataStore::GetSymbolName(string &s, const BIND_ITEM_TYPE item)
 
 
 //
-// SingleWriteDataStrore
+// SingleWriteDataStore
 //
 
 
@@ -903,6 +903,58 @@ MultWriteDataStore::~MultWriteDataStore()
 {
 }
 
+
+
+//
+// DynamicSingleWriteDataStrore
+//
+
+
+
+//
+// Base Constructor
+// 
+DynamicSingleWriteDataStore::DynamicSingleWriteDataStore(char * name, Role role) :
+   SingleWriteDataStore (name, role)
+{
+}
+
+
+
+//
+// Class Destructor
+// 
+DynamicSingleWriteDataStore::~DynamicSingleWriteDataStore()
+{
+}
+
+
+
+//
+// SetRead
+//
+void DynamicSingleWriteDataStore::SetRead()
+{
+   // If you are currently the writer, then unset the _writerDeclared flag
+   if (_role == ROLE_RW)
+   {
+      *_writerDeclared = false;
+   }
+
+   _role = ROLE_RO;
+}
+
+
+
+//
+// SetWrite
+//
+void DynamicSingleWriteDataStore::SetWrite()
+{
+   _role = ROLE_RW;
+
+   CheckForMultipleWriters();
+}
 
 
 

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/ostime.hpp 1.7 2002/11/22 21:07:37 pn02526 Exp jl11312 $
  * $Log: ostime.hpp $
+ * Revision 1.6  2002/06/19 17:01:09  pn02526
+ * Updates for VxWorks: remove/replace system level includes; remove the sensitivity to time-of-day changes; modify to use auxClock as a time base.
  * Revision 1.5  1999/10/28 14:29:19  BS04481
  * Code review change.  Previous design disabled soft watchdogs
  * while the clock was being set.  This was unacceptable.  This code
@@ -53,7 +55,7 @@
 typedef struct
 {
    time_t   sec;
-   time_t   nanosec;
+   long     nanosec;
 }timeFromTick;
 
 class osTime
@@ -70,7 +72,7 @@ class osTime
       {
           rawTick rtSec = (rt) / (rawTick)_TicksPerSecond;
           tftptr->sec  = (time_t) rtSec;
-      	tftptr->nanosec = (time_t) ( (rt - rtSec*(rawTick)_TicksPerSecond ) *  (rawTick)_NanoSecondsPerTick );
+      	  tftptr->nanosec = (long) ( (rt - rtSec*(rawTick)_TicksPerSecond ) *  (rawTick)_NanoSecondsPerTick );
           return;
       }
       
@@ -101,8 +103,9 @@ class osTime
       int howLongMicroAndUpdate(timeFromTick* then); // update then with time from object and return delta in usec
       int howLongRaw(rawTick then);                // return delta between now and then based on raw clock ticks
       void delayTime(int deltaTime);               // holds in a tight loop for specified time
+      static const char compileDateTime[];
    private:
-     int _TicksPerSecond, _NanoSecondsPerTick;
+      int _TicksPerSecond, _NanoSecondsPerTick;
 };
 
 #endif

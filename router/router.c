@@ -1,8 +1,11 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/ROUTER.C 1.3 1999/07/14 22:44:21 BS04481 Exp TD10216 $
+ * $Header: K:/BCT_Development/Common/router/rcs/router.c 1.11 2001/05/11 19:57:01 jl11312 Exp jl11312 $
  * $Log: router.c $
+ * Revision 1.3  1999/07/14 22:44:21  BS04481
+ * Arg!  No memory was allocated for name while searching the 
+ * ps_info data.  Found by inspection.
  * Revision 1.2  1999/05/31 20:35:12  BS04481
  * Remove unused MSGHEADER structure from messages. 
  * Decrease maximum message size.  Add new version of 
@@ -179,16 +182,12 @@ typedef struct
    int            signal;                    // signal to use on kill
 } TASKKILL;
 
-#define TASK_KILL_COUNT 9
-#define TRACELOG  0
-#define SAFEDRV   1
-#define CTLDRV    2
-#define PFSAVE    3
-#define SAFEXEC   4
-#define DATALOG   5
-#define METER     6
-#define GUI       7
-#define PHOTON    8
+enum KILLEDPROCS { 
+	TRACELOG, SAFEDRV, CTLDRV, PFSAVE, SAFEXEC, DATALOG, METER, GUI, 
+	PHOTON,EVERESTLOG,
+	// leave this be the last entry - used to loop the list
+	TASK_KILL_COUNT
+};
 
 
 // local routines
@@ -244,7 +243,7 @@ void signalHandler( int signum)
 static
 void fatalError( int line, int code, char* err)
 {
-   static char rev[] = "$ProjectRevision: 1.10 $";     // rev code
+   static char rev[] = "$ProjectRevision: 1.21 $";     // rev code
    
    _LOG_ERROR( __FILE__, line, TRACE_ROUTER, code, err);
    printf("\nBuild %s. \nAn internal software error has occured.\n\n", rev);
@@ -322,6 +321,8 @@ main(int argc, char** argv, char** arge)
    taskKillTable[GUI].signal = SIGHUP;
    strcpy(taskKillTable[PHOTON].name,"Photon");
    taskKillTable[PHOTON].signal = SIGHUP;
+   strcpy(taskKillTable[EVERESTLOG].name,"everest_logger");
+   taskKillTable[EVERESTLOG].signal = SIGHUP;
 
    // spawn gateway and open gateway queue
    if( getnid() != atoi( argv[2]))           // local node not remote node
@@ -968,6 +969,7 @@ static void gatewayRegister( char* msg)
    GATEWAYLIST *newEntry = malloc( sizeof(GATEWAYLIST));
    struct _psinfo    psdata;                 // process data
    pid_t pid;
+	int i;
 
    if(newEntry == NULL)
    {
@@ -1003,6 +1005,18 @@ static void gatewayRegister( char* msg)
       char buffer[80];
       sprintf( buffer, "mq_open(%s)", msg);
       fatalError( __LINE__, 0, buffer);
+   }
+
+   // if this task is one of the essential shutdown tasks, we need
+   // to capture the PID and mq
+   for(i=0;i<TASK_KILL_COUNT;i++)
+   {
+      if (strcmp(taskKillTable[i].name,basename(psdata.un.proc.name)) == 0)
+      {
+         taskKillTable[i].pid = pid;
+         taskKillTable[i].mq = newEntry->mq;
+         break;
+      }
    }
 
    // update CRC and add to list

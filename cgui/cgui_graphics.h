@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.13 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.h $
+ * Revision 1.2  2004/09/30 17:00:52Z  cf10242
+ * Correct for initial make to work
  * Revision 1.1  2004/09/20 18:18:06Z  rm10919
  * Initial revision
  *
@@ -165,13 +167,6 @@ public:
    //
    CGUIFontId createFont(const char * familyName, unsigned char pixelSize);
    void deleteFont(CGUIFontId font);
-
-   //
-   // Bitmap management
-   //
-   CGUIBitmapId loadBitmap(BITMAP_ID guiId);
-   void unloadBitmap(BITMAP_ID guiId);
-
    //
    // The top left of the display is fixed at 0,0.  The following
    // functions report the width and height of the display (in pixels).
@@ -206,8 +201,6 @@ public:
 private:
    void cursorInit(void);
    void drawRootWindow(void);
-   void loadBitmapFromCompressedData(BITMAP_ID guiId);
-   void loadBitmapFromFile(BITMAP_ID guiId);
 
 private:
    UGL_DEVICE_ID        _uglDisplay;

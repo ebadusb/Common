@@ -3,6 +3,8 @@
  *
  * $Header: L:/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.8 2004/10/29 15:11:14Z rm10919 Exp cf10242 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.4  2004/09/30 19:47:27Z  jl11312
+ * - temporary add of bitmap data array
  * Revision 1.3  2004/09/30 17:00:53Z  cf10242
  * Correct for initial make to work
  * Revision 1.2  2004/09/28 19:47:27Z  rm10919
@@ -16,7 +18,6 @@
 #include <ugl/uglInput.h>
 #include "zlib.h"
 
-#include "bitmap_info.h"
 #include "cgui_graphics.h"
 #include "cgui_window.h"
 //#include "datalogger.h"
@@ -117,70 +118,6 @@ void CGUIDisplay::deleteFont(CGUIFontId font)
    uglFontDestroy(font);
 }
 
-
-CGUIBitmapId CGUIDisplay::loadBitmap(BITMAP_ID guiId)
-{
-   CGUIBitmapId  result = UGL_NULL_ID;
-
-   if (guiId <= BITMAP_NULL || guiId >= BITMAP_ID_COUNT)
-   {
-      fprintf(stderr, "Invalid bitmap ID %d [%d %d]\n", (int)guiId, (int)BITMAP_NULL, (int)BITMAP_ID_COUNT);
-   }
-   else if (_bitmapStatus[guiId]._loadCount > 0)
-   {
-      // bitmap already loaded
-      result = _bitmapStatus[guiId]._uglId;
-      _bitmapStatus[guiId]._loadCount += 1;
-   }
-   else if (bitmap_data_table[guiId].dataSize > 0)
-   {
-      // compressed image data for bitmap is already in memory
-      loadBitmapFromCompressedData(guiId);
-
-      result = _bitmapStatus[guiId]._uglId;
-      _bitmapStatus[guiId]._loadCount += 1;
-   }
-   else
-   {
-      // dynamic file must be loaded at runtime
-      loadBitmapFromFile(guiId);
-
-      result = _bitmapStatus[guiId]._uglId;
-      _bitmapStatus[guiId]._loadCount += 1;
-   }
-
-   if (result == UGL_NULL_ID)
-   {
-      fprintf(stderr, "Bitmap load failure %d\n", (int)guiId);
-   }
-
-   return result;
-}
-
-
-void CGUIDisplay::unloadBitmap(BITMAP_ID guiId)
-{
-   if (guiId <= BITMAP_NULL || guiId >= BITMAP_ID_COUNT)
-   {
-      // requested bitmap does not exist
-      fprintf(stderr, "Invalid bitmap ID %d [%d %d]\n", (int)guiId, (int)BITMAP_NULL, (int)BITMAP_ID_COUNT);
-   }
-   else
-   {
-      if (_bitmapStatus[guiId]._loadCount > 0)
-      {
-         _bitmapStatus[guiId]._loadCount -= 1;
-      }
-
-      if (_bitmapStatus[guiId]._loadCount == 0 && _bitmapStatus[guiId]._uglId != UGL_NULL_ID)
-      {
-         uglBitmapDestroy(_uglDisplay, _bitmapStatus[guiId]._uglId);
-         _bitmapStatus[guiId]._uglId = UGL_NULL_ID;
-      }
-   }
-}
-
-
 void CGUIDisplay::cursorInit(void)
 {
    uglCursorInit(_uglDisplay, 20, 20, _width/2, _height/2);
@@ -256,137 +193,6 @@ void CGUIDisplay::drawRootWindow(void)
       winDrawEnd(_uglRootWindow, _uglGc, true);
    }
 }
-
-
-void CGUIDisplay::loadBitmapFromCompressedData(BITMAP_ID guiId)
-{
-   unsigned long   bmpSize = bitmap_data_table[guiId].height * bitmap_data_table[guiId].width * sizeof(CGUIColor);
-   unsigned char * bmpImage = new unsigned char[bmpSize];
-
-   uncompress(bmpImage, &bmpSize, bitmap_data_table[guiId].data, bitmap_data_table[guiId].dataSize);
-
-   UGL_DIB dib;
-   dib.height = bitmap_data_table[guiId].height;
-   dib.width = bitmap_data_table[guiId].width;
-   dib.stride = bitmap_data_table[guiId].width;
-   dib.pImage = (void *)bmpImage;
-
-#if CPU==SIMNT
-
-   dib.clutSize = 0;
-   dib.pClut = NULL;
-
-   dib.colorFormat = UGL_DEVICE_COLOR;
-   dib.imageFormat = UGL_DIRECT;
-
-#else /* if CPU==SIMNT */
-
-   dib.clutSize = 0;
-   dib.pClut = NULL;
-
-   dib.colorFormat = UGL_DEVICE_COLOR;
-   dib.imageFormat = UGL_DIRECT;
-
-#endif /* if CPU==SIMNT */
-
-   _bitmapStatus[guiId]._uglId = uglBitmapCreate(_uglDisplay, &dib, UGL_DIB_INIT_DATA, 0, UGL_DEFAULT_MEM);
-   delete[] bmpImage;
-}
-
-
-void CGUIDisplay::loadBitmapFromFile(BITMAP_ID guiId)
-{
-   typedef unsigned char    BMP_BYTE;
-   typedef unsigned short   BMP_WORD;
-   typedef unsigned long    BMP_DWORD;
-
-   struct BITMAPFILEHEADER
-   {
-      BMP_WORD    bfType;
-      BMP_DWORD   bfSize;
-      BMP_WORD    bfReserved1;
-      BMP_WORD    bfReserved2;
-      BMP_DWORD   bfOffBits;
-   } __attribute__((packed));
-
-   struct BITMAPINFOHEADER
-   {
-      BMP_DWORD   biSize;
-      BMP_WORD    biWidth;
-      BMP_WORD    biHeight;
-      BMP_WORD    biPlanes;
-      BMP_WORD    biBitCount;
-   } __attribute__((packed));
-
-   BITMAPFILEHEADER bmpFileHeader;
-   BITMAPINFOHEADER bmpInfoHeader;
-
-   /* Open the bmp file. */
-   FILE * bmpFile = fopen((char *)bitmap_data_table[guiId].data, "rb");
-   if (!bmpFile) return;
-
-   int readSize = fread((void *)&bmpFileHeader, sizeof(bmpFileHeader), 1, bmpFile);
-   if (readSize != 1 ||
-       bmpFileHeader.bfType != 0x4d42)
-   {
-      fclose(bmpFile);
-      return;
-   }
-
-   fread((void *)&bmpInfoHeader, sizeof(bmpInfoHeader), 1, bmpFile);
-   if (bmpInfoHeader.biBitCount != 8)
-   {
-      fclose(bmpFile);
-      return;
-   }
-
-   size_t   bmpSize = 2*bmpInfoHeader.biWidth * bmpInfoHeader.biHeight;
-   UGL_DIB *pDib = (UGL_DIB *)UGL_MALLOC(sizeof(UGL_DIB)+bmpSize);
-   pDib->width = bmpInfoHeader.biWidth;
-   pDib->height = bmpInfoHeader.biHeight;
-   pDib->stride = bmpInfoHeader.biWidth;
-
-   pDib->colorFormat = UGL_DEVICE_COLOR;
-   pDib->imageFormat = UGL_DIRECT;
-   pDib->clutSize = 0;
-   pDib->pClut = NULL;
-   pDib->pImage = (UGL_UINT8 *)pDib + sizeof(UGL_DIB);
-
-   //
-   // BMP data is aligned on 32-bit words and is upside down
-   // compared to WindMl data
-   //
-   unsigned int stride = (bmpInfoHeader.biWidth + 3) / 4 * 4;
-   BMP_WORD * pPix = (BMP_WORD *)pDib->pImage;
-   pPix += bmpInfoHeader.biWidth * (bmpInfoHeader.biHeight - 1);
-
-   fseek(bmpFile, bmpFileHeader.bfOffBits, SEEK_SET);
-   for (unsigned int y = 1; y <= bmpInfoHeader.biHeight; y++)
-   {
-      unsigned char  rgbData[3];
-      for (unsigned int x = 0; x < bmpInfoHeader.biWidth; x++)
-      {
-         /* read RGB data (1 byte for each color) and convert to RGB565 format */
-         fread((void *)rgbData, 3, 1, bmpFile);
-         pPix[x] = (rgbData[2] & 0xf8) << 8;
-         pPix[x] |= (rgbData[1] & 0xfc) << 3;
-         pPix[x] |= (rgbData[0] & 0xf8) >> 3;
-      }
-
-      if (stride > bmpInfoHeader.biWidth)
-      {
-         fseek(bmpFile, stride-bmpInfoHeader.biWidth, SEEK_CUR);
-      }
-
-      pPix -= bmpInfoHeader.biWidth;
-   }
-
-   fclose(bmpFile);
-
-   _bitmapStatus[guiId]._uglId = uglBitmapCreate(_uglDisplay, pDib, UGL_DIB_INIT_DATA, 0, UGL_DEFAULT_MEM);
-   UGL_FREE(pDib);
-}
-
 
 void CGUIDisplay::setCursorPos(int x, int y)
 {

@@ -3,6 +3,8 @@
  * PURPOSE: option parsing class
  * CHANGELOG:
  *   $Log: optionparser.cpp $
+ *   Revision 1.5  2002/12/20 21:29:08Z  ms10234
+ *   Added support for sysinit programs and environ vars
  *   Revision 1.4  2002/09/20 21:35:48  td07711
  *   replaced LOG_FATAL with fprintf and exit
  *   Revision 1.3  2002/09/19 21:06:02  td07711
@@ -41,13 +43,14 @@
 
 
 
-OptionParser::OptionParser() : _usage(), _argc( 0 ), _argv( 0 ), _options( 0 )
+OptionParser::OptionParser() 
+: _usage(), _argc( 0 ), _argv( 0 ), _options( 0 ), _error( false )
 {
 }
 
 OptionParser::OptionParser(const char* programName, const char* comment)
 : _usage(programName, comment), 
-  _argc(1), _argv(0), _options(0)
+  _argc(1), _argv(0), _options(0), _error( false )
 {
 }
 
@@ -160,17 +163,17 @@ void OptionParser::init(const char* options)
 
 void OptionParser::done()
 {
-    // PURPOSE: error exit if any unparsed items remain
+    // PURPOSE: error if any unparsed items remain
 
     if (_argc > 1)
     {
         for(int i = 1; i < _argc; i++)
         {  
-            fprintf(stderr, "OptionParser: unparsed token %s\n", _argv[i]);
+            fprintf(stdout, "OptionParser: unparsed token %s\n", _argv[i]);
         }
 
-        fprintf(stderr, "%s", _usage.get_usage() );
-        exit(1);
+        fprintf(stdout, "%s", _usage.get_usage() );
+        _error = true;
     }
 }
 
@@ -224,29 +227,31 @@ void OptionParser::parse(const char* keyword, const char* usage, int* pStorage,
         {
             if((i+1) >= _argc)
             {
-                fprintf(stderr, "no value for keyword=%s", keyword);
-                exit(1);
+                fprintf(stdout, "no value for keyword=%s", keyword);
+		_error = true;
+		remove_token(i);
+                return;
             }
 
             if(sscanf(_argv[i+1], "%i", pStorage) != 1)
             {
-                fprintf(stderr, "scanf %%i failed, keyword=%s value=%s",
+                fprintf(stdout, "scanf %%i failed, keyword=%s value=%s",
                           keyword, _argv[i+1]);
-                exit(1);
+                _error = true;
             }
 
             if(*pStorage < min)
             {
-                fprintf(stderr, "range check failed keyword=%s value=%i<%i",
+                fprintf(stdout, "range check failed keyword=%s value=%i<%i",
                           keyword, *pStorage, min);
-                exit(1);
+                _error = true;
             }
 
             if(*pStorage > max)
             {
-                fprintf(stderr, "range check failed keyword=%s value=%i>%i",
+                fprintf(stdout, "range check failed keyword=%s value=%i>%i",
                           keyword, *pStorage, max);
-                exit(1);
+                _error = true;
             }
 
             remove_token(i+1);
@@ -279,23 +284,23 @@ void OptionParser::parse(const char* usage, int* pStorage,
 
     if(sscanf(_argv[1], "%i", pStorage) != 1)
     {
-        fprintf(stderr, "scanf %%i failed, usage=%s value=%s",
+        fprintf(stdout, "scanf %%i failed, usage=%s value=%s",
                   usage, _argv[1]);
-        exit(1);
+        _error = true;
     }
 
     if(*pStorage < min)
     {
-        fprintf(stderr, "range check failed usage=%s value=%i<%i",
+        fprintf(stdout, "range check failed usage=%s value=%i<%i",
                   usage, *pStorage, min);
-        exit(1);
+        _error = true;
     }
 
     if(*pStorage > max)
     {
-        fprintf(stderr, "range check failed usage=%s value=%i>%i",
+        fprintf(stdout, "range check failed usage=%s value=%i>%i",
                   usage, *pStorage, max);
-        exit(1);
+        _error = true;
     }
 
     remove_token(1);
@@ -325,29 +330,31 @@ void OptionParser::parse(const char* keyword, const char* usage, float* pStorage
         {
             if((i+1) >= _argc)
             {
-                fprintf(stderr, "no value for keyword=%s", keyword);
-                exit(1);
+                fprintf(stdout, "no value for keyword=%s", keyword);
+                _error = true;
+		remove_token(i);
+		return;
             }
 
             if(sscanf(_argv[i+1], "%f", pStorage) != 1)
             {
-                fprintf(stderr, "scanf %%f failed, keyword=%s value=%s",
+                fprintf(stdout, "scanf %%f failed, keyword=%s value=%s",
                           keyword, _argv[i+1]);
-                exit(1);
+                _error = true;
             }
 
             if(*pStorage < min)
             {
-                fprintf(stderr, "range check failed keyword=%s value=%f<%f",
+                fprintf(stdout, "range check failed keyword=%s value=%f<%f",
                           keyword, *pStorage, min);
-                exit(1);
+                _error = true;
             }
 
             if(*pStorage > max)
             {
-                fprintf(stderr, "range check failed keyword=%s value=%f>%f",
+                fprintf(stdout, "range check failed keyword=%s value=%f>%f",
                           keyword, *pStorage, max);
-                exit(1);
+                _error = true;
             }
 
             remove_token(i+1);
@@ -380,23 +387,23 @@ void OptionParser::parse(const char* usage, float* pStorage,
 
     if(sscanf(_argv[1], "%f", pStorage) != 1)
     {
-        fprintf(stderr, "scanf %%f failed, usage=%s value=%s",
+        fprintf(stdout, "scanf %%f failed, usage=%s value=%s",
                   usage, _argv[1]);
-        exit(1);
+        _error = true;
     }
 
     if(*pStorage < min)
     {
-        fprintf(stderr, "range check failed usage=%s value=%f<%f",
+        fprintf(stdout, "range check failed usage=%s value=%f<%f",
                   usage, *pStorage, min);
-        exit(1);
+        _error = true;
     }
 
     if(*pStorage > max)
     {
-        fprintf(stderr, "range check failed usage=%s value=%f>%f",
+        fprintf(stdout, "range check failed usage=%s value=%f>%f",
                   usage, *pStorage, max);
-        exit(1);
+        _error = true;
     }
 
     remove_token(1);
@@ -425,29 +432,31 @@ void OptionParser::parse(const char* keyword, const char* usage, double* pStorag
         {
             if((i+1) >= _argc)
             {
-                fprintf(stderr, "no value for keyword=%s", keyword);
-                exit(1);
+                fprintf(stdout, "no value for keyword=%s", keyword);
+                _error = true;
+		remove_token(i);
+		return;
             }
 
             if(sscanf(_argv[i+1], "%lf", pStorage) != 1)
             {
-                fprintf(stderr, "scanf %%lf failed, keyword=%s value=%s",
+                fprintf(stdout, "scanf %%lf failed, keyword=%s value=%s",
                           keyword, _argv[i+1]);
-                exit(1);
+                _error = true;
             }
 
             if(*pStorage < min)
             {
-                fprintf(stderr, "range check failed keyword=%s value=%f<%f",
+                fprintf(stdout, "range check failed keyword=%s value=%f<%f",
                           keyword, *pStorage, min);
-                exit(1);
+                _error = true;
             }
 
             if(*pStorage > max)
             {
-                fprintf(stderr, "range check failed keyword=%s value=%f>%f",
+                fprintf(stdout, "range check failed keyword=%s value=%f>%f",
                           keyword, *pStorage, max);
-                exit(1);
+                _error = true;
             }
 
             remove_token(i+1);
@@ -480,23 +489,23 @@ void OptionParser::parse(const char* usage, double* pStorage,
 
     if(sscanf(_argv[1], "%lf", pStorage) != 1)
     {
-        fprintf(stderr, "scanf %%lf failed, usage=%s value=%s",
+        fprintf(stdout, "scanf %%lf failed, usage=%s value=%s",
                   usage, _argv[1]);
-        exit(1);
+        _error = true;
     }
 
     if(*pStorage < min)
     {
-        fprintf(stderr, "range check failed usage=%s value=%f<%f",
+        fprintf(stdout, "range check failed usage=%s value=%f<%f",
                   usage, *pStorage, min);
-        exit(1);
+        _error = true;
     }
 
     if(*pStorage > max)
     {
-        fprintf(stderr, "range check failed usage=%s value=%f>%f",
+        fprintf(stdout, "range check failed usage=%s value=%f>%f",
                   usage, *pStorage, max);
-        exit(1);
+        _error = true;
     }
 
     remove_token(1);
@@ -533,8 +542,10 @@ void OptionParser::parse(const char* keyword, const char* usage,
         {
             if((i+1) >= _argc)
             {
-                fprintf(stderr, "no value for keyword=%s", keyword);
-                exit(1);
+                fprintf(stdout, "no value for keyword=%s", keyword);
+                _error = true;
+		remove_token(i);
+		return;
             }
 
             *pStorage = _argv[i+1];

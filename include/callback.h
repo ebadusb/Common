@@ -10,6 +10,7 @@
 #ifndef __CALLBACK_H__
 #define __CALLBACK_H__
 
+template < class T >
 class Message;
 
 class CallbackBase
@@ -18,12 +19,12 @@ public:
    // pointer to a member function of CallbackBase class
    // that takes no arguments
    typedef void (CallbackBase::*MemFncPtrVoid)();
-   typedef void (CallbackBase::*MemFncPtrMsg)( Message& );
+   typedef void (CallbackBase::*MemFncPtrMsg)( Message< class T >& );
 
    // pointer to a non-member function that takes no
    // arguments
    typedef void (*FncPtrVoid)();
-   typedef void (*FncPtrMsg)( Message& );
+   typedef void (*FncPtrMsg)( Message< class T >& );
 
    // constructor that takes a pointer to a non member
    // void function
@@ -89,7 +90,7 @@ public:
       // If nothing has been set, then do nothing ...
       //
    };
-   void operator()( Message& msg)
+   void operator()( Message< class T >& msg)
    {
       //
       // If the object pointer variable is set ...
@@ -128,7 +129,7 @@ private:
 };
 
 
-template < class CallbackClass > class Callback : public CallbackBase
+template < class CallbackClass, class T > class Callback : public CallbackBase
 {
 private:
 
@@ -140,7 +141,7 @@ public:
    // pointer to a member function of Callback class
    // that takes no arguments
    typedef void (CallbackClass::*TMemFncPtrVoid)();
-   typedef void (CallbackClass::*TMemFncPtrMsg)( Message& );
+   typedef void (CallbackClass::*TMemFncPtrMsg)( Message< class T >& );
 
    // constructor that takes a pointer to member function
    Callback(CallbackClass *pp, TMemFncPtrVoid ptr) : CallbackBase( (CallbackBase*)pp, (MemFncPtrVoid)ptr ){ };

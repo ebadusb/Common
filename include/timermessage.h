@@ -17,6 +17,13 @@
 class TimerMessage : public Message< unsigned long >
 {
 public:
+   enum TimerState
+   {
+      ARMED,
+      DISARMED
+   };
+
+public:
 
    //
    // Default constructor
@@ -30,7 +37,7 @@ public:
    //  armTimer - the timer is created disarmed by default
    //           - to create the timer armed, set this flag
    //
-   TimerMessage( unsigned long interval, const CallbackBase &cb, bool armTimer=true );
+   TimerMessage( unsigned long interval, const CallbackBase &cb, TimerState armTimer=ARMED );
 
    //
    // Destructor
@@ -44,17 +51,17 @@ public:
    //  armTimer - the timer is created disarmed by default
    //           - to create the timer armed, set this flag
    //
-   bool init( unsigned long interval, const CallbackBase &cb, bool armTimer=true );
+   bool init( unsigned long interval, const CallbackBase &cb, TimerState armTimer=ARMED );
 
    //
    // Call this function to start the timer if the interval
    //  has already been given.  This function will also stop 
    //  the timer without changing the interval
-   void armTimer( bool arm=true );
+   void armTimer( TimerState arm=ARMED );
 
    //
    // Function to return the current 'armed' status of the timer
-   bool timerArmed() { return _TimerArmed; }
+   TimerState timerArmed() { return _TimerArmed; }
 
    //
    // Function to set the timer interval.  This function will
@@ -72,7 +79,7 @@ protected:
    //
    // Get the message name ...
    //  (used for creating message Ids )
-   virtual const char *genMessageName();
+   virtual const char *genMsgName();
 
 private:
 
@@ -96,7 +103,7 @@ protected:
 
    //
    // Flag to signify whether or not the timer is active ...
-   bool _TimerArmed;
+   TimerState _TimerArmed;
 };
 
 #endif

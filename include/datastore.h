@@ -11,6 +11,10 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.19  2002/11/06 15:42:47  rm70006
+ * HISTORY:    Removed unnecessary new's.
+ * HISTORY:    Removed some inline functions to relieve compiler problems.
+ * HISTORY:    fixed bug in register call.
  * HISTORY:    Revision 1.18  2002/10/31 19:25:58Z  rm70006
  * HISTORY:    Changed internal stucture to use less symbols which improved datastore creation speed.
  * HISTORY:    Revision 1.17  2002/10/25 20:45:21Z  td07711
@@ -130,6 +134,10 @@ public:
 
    virtual void Register (DataStore *ds, PfrType pfr);
    virtual void Register (DataStore *ds, PfrType pfr, const dataType &initValue);
+
+   // these two functions for use by spoofer to avoid unnecessary data copies
+   void setSpooferCacheValid() { _handle->_spooferCacheIsValid = true; };
+   bool isSpooferCacheValid() { return _handle->_spooferCacheIsValid; };
 
 // Class Methods
 protected:

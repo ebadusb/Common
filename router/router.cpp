@@ -186,7 +186,7 @@ void Router::dispatchMessages()
       {
          //
          // Error ...
-         int errorNo = errnoGet();
+         int errorNo = errno;
          DataLog_Critical criticalLog;
          DataLog(criticalLog) << "Dispatching message - mq_receive return size=" << size
                               << " and (" << strerror( errorNo ) << ")" << endmsg;
@@ -206,7 +206,9 @@ void Router::dispatchMessages()
          unsigned long crc = mp.crc();
          mp.updateCRC();
          DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Dispatching message - message CRC validation failed for MsgId=" << hex << mp.msgData().msgId() 
+         DataLog(criticalLog) << "Dispatching message - message CRC validation failed for MsgId=" 
+                              << hex << mp.msgData().msgId() 
+                              << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ")" 
                               << ", CRC=" << crc << " and should be " << mp.crc() << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "CRC check failed" );
       }  
@@ -346,7 +348,7 @@ bool Router::initGateways()
          {
             //
             // Error ...
-            int errorNo = errnoGet();
+            int errorNo = errno;
             DataLog_Critical criticalLog;
             DataLog(criticalLog) << "Router init - could not spawn gateway for address -> " << hex << netAddress 
                                  << ", (" << strerror( errorNo ) << ")"
@@ -580,7 +582,7 @@ void Router::registerTask( unsigned long tId, const char *qName )
          //
          // Error ...
          DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Register task=" << hex << tId << " - message queue open failed" 
+         DataLog(criticalLog) << "Register task=" << hex << tId << "(" << taskName( tId ) << ") - message queue open failed" 
                               << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "mq_open failed" );
       }
@@ -960,7 +962,9 @@ void Router::sendMessage( const MessagePacket &mp, int priority )
             DataLog_Critical criticalLog;
             DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
                                  << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
-                                 << "- Task Id=" << (*titer).first << " not found in task list" << endmsg;
+                                 << "- Task Id=" << (*titer).first 
+                                 << "(" << taskName( (*titer).first ) << ")"
+                                 << " not found in task list" << endmsg;
             _FATAL_ERROR( __FILE__, __LINE__, "Task lookup failed" );
          }
          //
@@ -992,11 +996,12 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
       // The task's queue is full!
       //
       // Error ...
-      int errorNo = errnoGet();
+      int errorNo = errno;
       DataLog_Critical criticalLog;
       DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
                            << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
                            << " - Task Id=" << tId 
+                           << "(" << taskName( tId ) << ")"
                            << " queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
                            << ", (" << strerror( errorNo ) << ")"
                            << endmsg;
@@ -1019,11 +1024,13 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
    {
       //
       // Error ...
-      int errorNo = errnoGet();
+      int errorNo = errno;
       DataLog_Critical criticalLog;
       DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
                            << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
-                           << " - Task Id=" << tId << " send failed" 
+                           << " - Task Id=" << tId 
+                           << "(" << taskName( tId ) << ")"
+                           << " send failed" 
                            << ", (" << strerror( errorNo ) << ")"
                            << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "mq_send failed" );
@@ -1111,7 +1118,7 @@ void Router::sendMessageToGateway( sockinetbuf *sockbuffer, const MessagePacket 
    {
       //
       // Error ...
-      int errorNo = errnoGet();
+      int errorNo = errno;
       DataLog_Critical criticalLog;
       DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
                            << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
@@ -1147,7 +1154,9 @@ bool Router::sendMessageToSpoofer( const MessagePacket &mp, int priority )
                DataLog_Critical criticalLog;
                DataLog(criticalLog) << "Sending message=" << hex << (*mtiter).first 
                                     << "(" << _MsgIntegrityMap[ (*mtiter).first ].c_str() << ") " 
-                                    << " - Spoofer Task Id=" << (*mtiter).second << " not found in task list" << endmsg;
+                                    << " - Spoofer Task Id=" << (*mtiter).second 
+                                    << "(" << taskName( (*mtiter).second ) << ")"
+                                    << " not found in task list" << endmsg;
                _FATAL_ERROR( __FILE__, __LINE__, "Spoofer task lookup failed" );
                break;
             }

@@ -3,6 +3,9 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/sinver.c 1.2 1999/08/13 23:00:55 BS04481 Exp jl11312 $
  * $Log: sinver.c $
+ * Revision 1.2  1999/08/13 23:00:55  BS04481
+ * In the sin ver reponse, do not reply to a sysmsg if the subtype 
+ * is death.
  * Revision 1.1  1999/05/24 23:29:54  TD10216
  * Initial revision
  * Revision 1.2  1996/07/24 19:50:10  SS03309
@@ -33,16 +36,10 @@
 
 #include "sinver.h"
 
-// defines
+// default version data
 
-#define VER_LEN 4       // QNX revision string length
-#define MKS_MAJOR 18    // MKS rev number
-#define MKS_MINOR1 20
-#define MKS_MINOR2 21
-
-#define QNX_MAJOR  0    // QNX rev number
-#define QNX_MINOR1 1
-#define QNX_MINOR2 2
+#define  MAX_REV_DATA_SIZE 64
+static char revData[MAX_REV_DATA_SIZE] = "$ProjectRevision: 5.20 $";     // common project rev code
 
 typedef struct
 {
@@ -73,24 +70,14 @@ void sinVerInitialize()
    struct _psinfo psdata;                    // process data
    struct stat   statBuffer;                 // file status
    struct tm tmbuf;                          // time info
-   long bits;                               // process flags
-static char rev[] = "$ProjectRevision: 5.20 $";     // rev code
+   long bits;                                // process flags
+   char * decimalPosition = NULL;
 
-   char vString[VER_LEN];                    // short version string
-
-// fix 1.1 to be 1.01, leaving 1.10 = 1.10
-
-   vString[VER_LEN-1] = 0;
-   vString[QNX_MAJOR] = rev[MKS_MAJOR];
-   if (rev[MKS_MINOR2] == ' ')
+   const char * appRevData = getAppRevisionData();
+   if (appRevData)
    {
-      vString[QNX_MINOR1] = '0';
-      vString[QNX_MINOR2] = rev[MKS_MINOR1];
-   }
-   else
-   {
-      vString[QNX_MINOR1] = rev[MKS_MINOR1];
-      vString[QNX_MINOR2] = rev[MKS_MINOR2];
+      strncpy(revData, appRevData, MAX_REV_DATA_SIZE);
+      revData[MAX_REV_DATA_SIZE-1] = '\0';
    }
 
 // default struct
@@ -101,11 +88,46 @@ static char rev[] = "$ProjectRevision: 5.20 $";     // rev code
    strcpy( reply.reply.date, "");
 
 
-   reply.reply.version = atoi( vString);     // display project number
-   reply.reply.letter = ' ';
    reply.reply.more = 0;
 
-// get name
+// fill in version information
+
+   decimalPosition = strchr(revData, '.');
+   if (!decimalPosition)
+   {
+      reply.reply.version = 0;
+      reply.reply.letter = ' ';
+   }
+   else
+   {
+      int   major = 0;
+      int   majorMult = 100;
+      int   majorPos = -1;
+      int   minorPos = 1;
+      int   minor = 0;
+
+      while ( majorMult <= 1000 &&
+              decimalPosition[majorPos] >= '0' &&
+              decimalPosition[majorPos] <= '9' )
+      {
+         major += majorMult * (decimalPosition[majorPos]-'0');
+         majorPos -= 1;
+         majorMult *= 10;
+      }
+
+      while ( minorPos <= 3 &&
+              decimalPosition[minorPos] >= '0' &&
+              decimalPosition[minorPos] <= '9' )
+      {
+         minor = (minor*10) + decimalPosition[minorPos]-'0';
+         minorPos += 1;
+      }
+
+      reply.reply.version = major + minor/10;
+      reply.reply.letter = minor%10 + '0';
+   }
+
+// fill in process name and date
 
    if (qnx_psinfo( PROC_PID, getpid(), &psdata, 0, 0) != -1)
    {
@@ -120,6 +142,9 @@ static char rev[] = "$ProjectRevision: 5.20 $";     // rev code
             tmbuf.tm_hour, tmbuf.tm_min);
       }
    }
+
+// set bit to notify QNX that we will respond to a version message
+
    bits = _PPF_SERVER;
    qnx_pflags( bits, bits, 0, 0);
 }

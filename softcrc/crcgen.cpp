@@ -112,7 +112,7 @@ unsigned long  crctable[TABLE_SIZE] =
 //   compute 32 bit CRC over a data buffer.
 //   overwrites initial crc with the new crc.
 // ERROR HANDLING:  returns -1 if arg error, else returns 0
-int crcgen32(unsigned long* pcrc, char* pdata, long length)
+int crcgen32(unsigned long* pcrc, const char* pdata, long length)
 {
    // check args
    if (length < 0)
@@ -176,7 +176,7 @@ int file_crcgen32 (const char *filename, unsigned long *pcrc)
          return -1;
       }
       
-      int status = crcgen32 (pcrc, buffer, count);
+      crcgen32 (pcrc, buffer, count);
    
    } while ( count == MAXBUFFERLENGTH );
 

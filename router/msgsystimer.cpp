@@ -227,7 +227,7 @@ void MsgSysTimer::maintainTimers()
          }
       }
 
-      _NumMessages++;
+      ++_NumMessages;
 
    } while ( _StopLoop == false );
 
@@ -248,7 +248,7 @@ void MsgSysTimer::dump( DataLog_Stream &outs )
    map< unsigned long, mqd_t >::iterator tqiter;                                  // _TaskQueueMap;
    for ( tqiter  = _TaskQueueMap.begin() ;
          tqiter != _TaskQueueMap.end() ;
-         tqiter++ )
+         ++tqiter )
    {
       // if ( (*tqiter).second != (mqd_t)0 ) mq_getattr( (*tqiter).second, &qattributes );
       outs << "    Tid " << hex << (*tqiter).first << " " << hex << (long)(*tqiter).second << " " << (bool)_TaskQueueActiveMap[ (*tqiter).first ]
@@ -265,7 +265,7 @@ void MsgSysTimer::dump( DataLog_Stream &outs )
    map< unsigned long, MapEntry* >::iterator miter;
    for ( miter  = _TimerMsgMap.begin() ;
          miter != _TimerMsgMap.end() ;
-         miter++ )
+         ++miter )
    {
       outs << "  Mid " << hex << (*miter).first << " interval: " << dec << ((*miter).second)->_Interval << "msecs" 
                        << hex << " message_pckt: " << ((*miter).second)->_TimerMessage << dec << endmsg;
@@ -483,7 +483,7 @@ void MsgSysTimer::deregisterTimersOfTask( const unsigned long tId )
    map< unsigned long, MapEntry* >::iterator miter;
    for ( miter = _TimerMsgMap.begin() ; 
          miter != _TimerMsgMap.end() ; 
-         miter++ )
+         ++miter )
    {
       mePtr = (*miter).second;
       if (    mePtr->_TimerMessage 
@@ -572,6 +572,15 @@ void MsgSysTimer::checkTimers()
                return;
 
             }
+            else if ( qattributes.mq_curmsgs >= qattributes.mq_maxmsg/10 )
+            {
+               DataLog( log_level_message_system_timer_info ) << "Sending message=" << hex << mpPtr->msgData().msgId() 
+                                    << "- Task Id=" << mpPtr->msgData().taskId() 
+                                    << "(" << taskName( mpPtr->msgData().taskId() ) << ")"
+                                    << " contains " << dec << qattributes.mq_curmsgs << " messages" 
+                                    << endmsg;
+            }
+
 
             //
             // Send the message packet ...
@@ -626,7 +635,7 @@ void MsgSysTimer::dumpQueue( mqd_t mqueue, DataLog_Stream &out )
                                                                       << " p# "    << hex << mp.msgData().seqNum()
                                                                       << " tot# "  << hex << mp.msgData().totalNum()  
                                                                       << " msg -> ";
-      for (int i=0;i<30;i++) 
+      for (int i=0;i<30;++i)
       {
          out << hex << (int)(unsigned char)buffer[i] << " "; 
       }
@@ -652,7 +661,7 @@ void MsgSysTimer::shutdown()
    map< unsigned long, mqd_t >::iterator qiter;
    for ( qiter = _TaskQueueMap.begin() ;
          qiter != _TaskQueueMap.end() ;
-         qiter++ )
+         ++qiter )
    {
       mq_close( (*qiter).second );
       (*qiter).second = (mqd_t)0;

@@ -238,7 +238,7 @@ void Router::dispatchMessages()
          }
       }
 
-      _NumMessages++;
+      ++_NumMessages;
 
    } while ( _StopLoop == false );
 
@@ -266,7 +266,7 @@ void Router::dump( DataLog_Stream &outs )
    map< unsigned long, string >::iterator miiter;                                 // _MsgIntegrityMap;
    for ( miiter  = _MsgIntegrityMap.begin() ;
          miiter != _MsgIntegrityMap.end() ;
-         miiter++ )
+         ++miiter )
    {
       outs << "  Mid " << hex << (*miiter).first << " " << (*miiter).second;
    }
@@ -276,13 +276,13 @@ void Router::dump( DataLog_Stream &outs )
    map< unsigned long, set< unsigned long > >::iterator mtogiter;                                 // _MsgToGatewaySynchMap;
    for ( mtogiter  = _MsgToGatewaySynchMap.begin() ;
          mtogiter != _MsgToGatewaySynchMap.end() ;
-         mtogiter++ )
+         ++mtogiter )
    {
       outs << "  Mid " << hex << (*mtogiter).first;
       set< unsigned long >::iterator gateiter;
       for ( gateiter  = ((*mtogiter).second).begin() ;
             gateiter != ((*mtogiter).second).end() ;
-            gateiter++ )
+            ++gateiter )
          outs << " " << (*gateiter);
       outs << endmsg;
    }
@@ -292,12 +292,12 @@ void Router::dump( DataLog_Stream &outs )
    map< unsigned long, unsigned char >::iterator triter;                          
    for ( mtiter  = _MessageTaskMap.begin() ;
          mtiter != _MessageTaskMap.end() ;
-         mtiter++ )
+         ++mtiter )
    {
       outs << "  Mid " << hex << (*mtiter).first;
       for ( triter  = ((*mtiter).second).begin() ;
             triter != ((*mtiter).second).end() ;
-            triter++ )
+            ++triter )
       {
          outs << "    Tid " << hex << (*triter).first << " #regs " << (int)(*triter).second;
       }
@@ -308,7 +308,7 @@ void Router::dump( DataLog_Stream &outs )
    map< unsigned long, mqd_t >::iterator tqiter;                                  // _TaskQueueMap;
    for ( tqiter  = _TaskQueueMap.begin() ;
          tqiter != _TaskQueueMap.end() ;
-         tqiter++ )
+         ++tqiter )
    {
       // if ( (*tqiter).second != (mqd_t)0 ) mq_getattr( (*tqiter).second, &qattributes );
       outs << "  Tid " << hex << (*tqiter).first << " " << hex << (long)(*tqiter).second << " " << (bool)_TaskQueueActiveMap[ (*tqiter).first ] 
@@ -322,13 +322,13 @@ void Router::dump( DataLog_Stream &outs )
    map< unsigned long, set< unsigned long > >::iterator mgiter;                   // _MessageGatewayMap;
    for ( mgiter  = _MessageGatewayMap.begin() ;
          mgiter != _MessageGatewayMap.end() ;
-         mgiter++ )
+         ++mgiter )
    {
       outs << "  Mid " << hex << (*mgiter).first << " Gateway Set: size " << dec << (long)(*mgiter).second.size();
       set< unsigned long >::iterator giter;                                      // GatewaySet;
       for ( giter  = (*mgiter).second.begin() ;
             giter != (*mgiter).second.end() ;
-            giter++ )
+            ++giter )
       {
          outs << "   Gateway address " << hex << (*giter);
       }
@@ -339,7 +339,7 @@ void Router::dump( DataLog_Stream &outs )
    map< unsigned long, int >::iterator igiter;                            // _InetGatewayMap;
    for ( igiter  = _InetGatewayMap.begin() ;
          igiter != _InetGatewayMap.end() ;
-         igiter++ )
+         ++igiter )
    {
       outs << "  Address " << hex << (*igiter).first << " sock " << (*igiter).second << endmsg;
    }
@@ -348,7 +348,7 @@ void Router::dump( DataLog_Stream &outs )
    map< unsigned long, Router::GatewaySynched >::iterator gcaiter;        // _GatewayConnSynchedMap;
    for ( gcaiter  = _GatewayConnSynchedMap.begin() ;
          gcaiter != _GatewayConnSynchedMap.end() ;
-         gcaiter++ )
+         ++gcaiter )
    {
       outs << "  Address " << hex << (*gcaiter).first << " conn attempts: " << (*gcaiter).second << endmsg;
    }
@@ -357,7 +357,7 @@ void Router::dump( DataLog_Stream &outs )
    map< unsigned long, unsigned long >::iterator smiter;                            // _SpooferMsgMap;
    for ( smiter  = _SpooferMsgMap.begin() ;
          smiter != _SpooferMsgMap.end() ;
-         smiter++ )
+         ++smiter )
    {
       outs << "  Mid " << hex << (*smiter).first << " Spoofer Tid " << hex << (*smiter).second << endmsg;
    }
@@ -372,7 +372,7 @@ void Router::msgDump()
    map< unsigned long, string >::iterator miiter;                                 // _MsgIntegrityMap;
    for ( miiter  = _MsgIntegrityMap.begin() ;
          miiter != _MsgIntegrityMap.end() ;
-         miiter++ )
+         ++miiter )
    {
       DataLog( log_level_router_info ) << "  Mid " << hex << (*miiter).first << " " << (*miiter).second;
    }
@@ -387,12 +387,12 @@ void Router::msgTaskDump()
    map< unsigned long, unsigned char >::iterator triter;                          
    for ( mtiter  = _MessageTaskMap.begin() ;
          mtiter != _MessageTaskMap.end() ;
-         mtiter++ )
+         ++mtiter )
    {
       DataLog( log_level_router_info ) << "  Mid " << hex << (*mtiter).first;
       for ( triter  = ((*mtiter).second).begin() ;
             triter != ((*mtiter).second).end() ;
-            triter++ )
+            ++triter )
       {
          DataLog( log_level_router_info ) << "    Tid " << hex << (*triter).first << " #regs " << (int)(*triter).second;
       }
@@ -407,7 +407,7 @@ void Router::gatewayDump()
    map< unsigned long, int >::iterator igiter;                            // _InetGatewayMap;
    for ( igiter  = _InetGatewayMap.begin() ;
          igiter != _InetGatewayMap.end() ;
-         igiter++ )
+         ++igiter )
    {
       DataLog( log_level_router_info ) << "  Address " << hex << (*igiter).first << " sock " << (*igiter).second << endmsg;
    }
@@ -416,7 +416,7 @@ void Router::gatewayDump()
    map< unsigned long, Router::GatewaySynched >::iterator gcaiter;        // _GatewayConnSynchedMap;
    for ( gcaiter  = _GatewayConnSynchedMap.begin() ;
          gcaiter != _GatewayConnSynchedMap.end() ;
-         gcaiter++ )
+         ++gcaiter )
    {
       DataLog( log_level_router_info ) << "  Address " << hex << (*gcaiter).first << " conn attempts: " << (*gcaiter).second << endmsg;
    }
@@ -429,7 +429,7 @@ void Router::remoteMsgDump()
    map< unsigned long, set< unsigned long > >::iterator mtogiter;                                 // _MsgToGatewaySynchMap;
    for ( mtogiter  = _MsgToGatewaySynchMap.begin() ;
          mtogiter != _MsgToGatewaySynchMap.end() ;
-         mtogiter++ )
+         ++mtogiter )
    {
       DataLog( log_level_router_info ) << "  Mid " << hex << (*mtogiter).first;
       set< unsigned long >::iterator gateiter;
@@ -444,7 +444,7 @@ void Router::remoteMsgDump()
    map< unsigned long, set< unsigned long > >::iterator mgiter;                   // _MessageGatewayMap;
    for ( mgiter  = _MessageGatewayMap.begin() ;
          mgiter != _MessageGatewayMap.end() ;
-         mgiter++ )
+         ++mgiter )
    {
       DataLog( log_level_router_info ) << "      Mid " << hex << (*mgiter).first 
                        << "(" << _MsgIntegrityMap[ (*mgiter).first ].c_str() << ") " 
@@ -452,7 +452,7 @@ void Router::remoteMsgDump()
       set< unsigned long >::iterator giter;                                      // GatewaySet;
       for ( giter  = (*mgiter).second.begin() ;
             giter != (*mgiter).second.end() ;
-            giter++ )
+            ++giter )
       {
          DataLog( log_level_router_info ) << "   Gateway address " << hex << (*giter);
       }
@@ -481,7 +481,7 @@ bool Router::initGateways()
    // Connect to the other nodes ...
    for ( paiter = portAddressMap.begin() ;
          paiter != portAddressMap.end() ;
-         paiter++ )
+         ++paiter )
    {
       netAddress = (*paiter).second;
       if ( netAddress != getNetworkAddress() )
@@ -756,7 +756,7 @@ void Router::deregisterTask( unsigned long tId )
       map< unsigned long, map< unsigned long, unsigned char > >::iterator mtiter;
       for ( mtiter = _MessageTaskMap.begin() ; 
             mtiter != _MessageTaskMap.end() ;
-            mtiter++ )
+            ++mtiter )
       {
          //
          //    find the task in the message's task list
@@ -784,7 +784,7 @@ void Router::deregisterTask( unsigned long tId )
       map< unsigned long, unsigned long >::iterator smiter;
       for ( smiter = _SpooferMsgMap.begin() ; 
             smiter != _SpooferMsgMap.end() ;
-            smiter++ )
+            ++smiter )
       {
          //
          // erase the entry if it relates to this task ...
@@ -1094,7 +1094,7 @@ void Router::sendMessage( const MessagePacket &mp, int priority )
       map< unsigned long, mqd_t >::iterator tqiter;
       for ( titer  = (*miter).second.begin() ;
             titer != (*miter).second.end() ;
-            titer++ )
+            ++titer )
       {
          //
          // Get the task out of the registered task/queue map ...
@@ -1165,6 +1165,16 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
 #endif // #if BUILD_TYPE!=DEBUG && CPU!=SIMNT
 
    }
+   else if ( qattributes.mq_curmsgs >= qattributes.mq_maxmsg/10 )
+   {
+      DataLog( log_level_router_info ) << "Sending message=" << hex << mp.msgData().msgId() 
+                           << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
+                           << " - Task Id=" << tId 
+                           << "(" << taskName( tId ) << ")"
+                           << " contains " << dec << qattributes.mq_curmsgs << " messages" 
+                           << endmsg;
+   }
+
 
    //
    // Send message to the task ...
@@ -1214,7 +1224,7 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
             set< unsigned long >::iterator gatewayiter;
             for ( gatewayiter = (*mgiter).second.begin() ;
                   gatewayiter != (*mgiter).second.end() ;
-                  gatewayiter++ )
+                  ++gatewayiter )
             {
                sockiter = _InetGatewayMap.find( (*gatewayiter) );
                if ( sockiter != _InetGatewayMap.end() )
@@ -1232,7 +1242,7 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
       {
          for ( sockiter = _InetGatewayMap.begin() ;
                sockiter != _InetGatewayMap.end() ;
-               sockiter++ )
+               ++sockiter )
          {
             //
             // Check for socket connection status.
@@ -1287,7 +1297,7 @@ void Router::sendMessageToGateway( unsigned long nodeId, const MessagePacket &mp
       MessagePacket mp( mpConst );
       //
       // Assign the message packet this nodes network address
-      mp.msgData().netSequenceNum( _NetSequenceNum++ );
+      mp.msgData().netSequenceNum( ++_NetSequenceNum );
       mp.msgData().nodeId( getNetworkAddress() );
       mp.updateCRC();
                             
@@ -1379,7 +1389,7 @@ void Router::synchUpRemoteNode( unsigned long nodeId )
    map< unsigned long, set< unsigned long > >::iterator mtogiter;
    for ( mtogiter  = _MsgToGatewaySynchMap.begin() ;
          mtogiter != _MsgToGatewaySynchMap.end() ;
-         mtogiter++ )
+         ++mtogiter )
    {
       set< unsigned long >::iterator giter;
       giter = ((*mtogiter).second).find( nodeId );
@@ -1413,6 +1423,7 @@ void Router::synchUpRemoteNode( unsigned long nodeId )
                  << ") synchronization status : " << dec << gatewayConnStatus( nodeId )
                  << endmsg;
 
+   sendMessageToGateway( nodeId, mp );
    sendMessageToGateway( nodeId, mp );
 }
 
@@ -1462,11 +1473,11 @@ const char *Router::gatewayConnStatus( unsigned long nodeId )
       case Router::Inprogress :
          return "Fully connected, synchronization in progress";
       case Router::LocalComplete :
-         return "Local message have been synchronized with the remote node";
+         return "Local messages have been synchronized with the remote node";
       case Router::RemoteComplete :
-         return "Remote node messages have been synchronized";
+         return "Remote messages have been synchronized";
       case Router::Synched :
-         return "Local and Remote node synchronizations complete";
+         return "Local and Remote synchronizations complete";
       default :
          return "Status unknown";
    };
@@ -1500,7 +1511,7 @@ void Router::dumpQueue( unsigned long tId, mqd_t mqueue, DataLog_Stream &out )
                                                                       << " p# "    << hex << mp.msgData().seqNum()
                                                                       << " tot# "  << hex << mp.msgData().totalNum()  
                                                                       << " msg -> ";
-      for (int i=0;i<30;i++) 
+      for (int i=0;i<30;++i) 
       {
          out << hex << (int)(unsigned char)buffer[i] << " "; 
       }
@@ -1531,7 +1542,7 @@ void Router::shutdown()
    map< unsigned long, mqd_t >::iterator qiter;
    for ( qiter = _TaskQueueMap.begin() ;
          qiter != _TaskQueueMap.end() ;
-         qiter++ )
+         ++qiter )
    {
       mq_close( (*qiter).second );
       (*qiter).second = (mqd_t)0;
@@ -1543,7 +1554,7 @@ void Router::shutdown()
    map< unsigned long, int >::iterator sockiter;
    for ( sockiter = _InetGatewayMap.begin() ;
          sockiter != _InetGatewayMap.end() ;
-         sockiter++ )
+         ++sockiter )
    {
       close((*sockiter).second);
       (*sockiter).second = ERROR;

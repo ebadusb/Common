@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.25  2003/07/08 22:15:39Z  ms10234
+ * HISTORY:    5829 - changes for PFR
  * HISTORY:    Revision 1.24  2003/06/19 18:38:29Z  ms10234
  * HISTORY:    5829 - Changes for PFR
  * HISTORY:    Revision 1.23  2003/05/19 17:11:06Z  ms10234
@@ -167,11 +169,11 @@ public:
    virtual dataType Get() const;
    virtual void     Get(dataType *item) const;  // Faster version.  Better for large data items.
 
-   inline operator dataType () const { return Get(); } // Implicit get call.
+   inline operator const dataType () const { return Get(); } // Implicit get call.
 
    virtual bool Set(const dataType &data);
 
-   inline dataType operator = (const dataType &data) { Set(data); return Get();}  // Implicit Set call.
+   inline dataType const operator = (const dataType &data) { Set(data); return Get();}  // Implicit Set call.
 
    void SetSpoof   (const CallbackBase* fp);
    void ClearSpoof ();

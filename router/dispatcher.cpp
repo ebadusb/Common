@@ -328,6 +328,10 @@ void Dispatcher :: registerMessage( const unsigned long mId, const MessageBase &
       _MessageMap[ mId ] = newSet;
    }
 
+   if ( _MessagesToDeregister.find( ((MessageBase*)(&mb)) ) != _MessagesToDeregister.end() )
+   {
+      _MessagesToDeregister.erase( ((MessageBase*)(&mb)) );
+   }
 }
 
 void Dispatcher :: deregisterMessage( const MessageBase &mb, MessagePacket &mp )
@@ -343,30 +347,36 @@ void Dispatcher :: deregisterMessage( const MessageBase &mb, MessagePacket &mp )
 
 void Dispatcher :: deregisterMessage( const unsigned long mId, const MessageBase &mb )
 {
-   //
-   // If we are not currently in a message callback ...
-   //
-   if ( _MessageMapInUse )
-   {
-      _MessagesToDeregister.insert( ((MessageBase*)(&mb)) );
-   }
-   else
-   {
-      map< unsigned long, set< MessageBase* > >::iterator miter;
+   map< unsigned long, set< MessageBase* > >::iterator miter;
 
-      miter = _MessageMap.find( mId ); // find the message in the reg. messages list ...
+   miter = _MessageMap.find( mId ); // find the message in the reg. messages list ...
+
+   //
+   // If anyone registered for this message ...
+   if ( miter != _MessageMap.end() )
+   {
+      //
+      // Remove this message from the set ...
+      set< MessageBase* > &rSet = (*miter).second;
 
       //
-      // If anyone registered for this message ...
-      if ( miter != _MessageMap.end() )
+      // If we are not currently in a message callback ...
+      //
+      if ( _MessageMapInUse )
       {
-         //
-         // Remove this message from the set ...
-         set< MessageBase* > &rSet = (*miter).second;
+         if ( rSet.find( ((MessageBase*)(&mb)) ) != rSet.end() )
+         {
+            _MessagesToDeregister[ ((MessageBase*)(&mb)) ] = mId;
+         }
+      }
+      else
+      {
          rSet.erase( ((MessageBase*)(&mb)) );
-   
+
          if ( rSet.empty() == true )
+         {
             _MessageMap.erase( miter );
+         }
       }
    }
 }
@@ -443,11 +453,12 @@ void Dispatcher :: processMessage( MessagePacket &mp )
       }
       _MessageMapInUse = false;
 
-      for ( siter = _MessagesToDeregister.begin() ; siter != _MessagesToDeregister.end() ; ++siter )
+      map < MessageBase*, unsigned long >::iterator diter;
+      for ( diter = _MessagesToDeregister.begin() ; diter != _MessagesToDeregister.end() ; ++diter )
       {
-         deregisterMessage( mp.msgData().msgId(), (*(MessageBase*)(*siter)) );
+         deregisterMessage( (*diter).second, (*(MessageBase*)(*diter).first) );
       }
-      _MessagesToDeregister.clear();
+      if ( !_MessagesToDeregister.empty() ) _MessagesToDeregister.erase( _MessagesToDeregister.begin(), _MessagesToDeregister.end() );
    }
    else
    {

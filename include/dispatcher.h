@@ -138,7 +138,9 @@ protected:
 
 private:
 
-   set< MessageBase* > _MessagesToDeregister;
+   //
+   // Message point with the message id as the second for the map
+   map< MessageBase*, unsigned long > _MessagesToDeregister;
    bool                _MessageMapInUse;
 
 };

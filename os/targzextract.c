@@ -62,7 +62,6 @@ tar is limited at 100 characters.
 #include <sys/stat.h>
 
 #include <zlib.h>
-#include <stl_algobase.h>
 
 /* data types */
 /*
@@ -74,6 +73,17 @@ tar is limited at 100 characters.
 #define NAMSIZ		100	/* size of file name in TAR tape header */
 #define	MAXLEVEL	16	/* max. # of subdirectory levels, arbitrary */
 #define	NULLDEV		"/null"	/* data sink */
+
+#ifdef __cplusplus
+extern "C" { 
+#endif
+
+int tarExtract ( const char *file     /* archive file name */, 
+                 const char *location /* location for extraction */ );
+
+#ifdef __cplusplus
+};
+#endif
 
 typedef union hblock
 {
@@ -149,7 +159,6 @@ int tarRdBlks ( MT_TAR_SOFT *pCtrl,    /* control structure */
       /* buffer empty, read more blocks from file */
 
       rc = gzread( pCtrl->fd, pCtrl->pBuf->dummy, pCtrl->bFactor * TBLOCK);
-      fprintf( stdout, "\ttarRdBlks: gzread->%d\r", rc);
 
       if ( rc == ERROR )
          return ERROR ;
@@ -342,6 +351,7 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
       register int wc ;
 
       rc = tarRdBlks( pCtrl, &pBuf, nblks, datalogRunning ) ;
+      fprintf( stdout, "\ttarExtract: bytes remaining->%d\r", size);
 
       if ( rc < 0 )
       {

@@ -143,7 +143,7 @@ void SpooferDispatcher :: processMessage( MessagePacket &mp )
          {
             // 
             // Call the appropriate callback function ...
-            ((MessageBase*)((*spiter).first))->notify( mp, ((*spiter).second) );
+            MessageBase::notify( (*(MessageBase*)((*spiter).first)), mp, ((*spiter).second) );
    
             weAreSpoofingThisOne = true;
          }

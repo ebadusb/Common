@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/error.c 1.7 2001/05/11 19:56:17 jl11312 Exp jl11312 $
  * $Log: error.c $
+ * Revision 1.7  2001/05/11 19:56:17  jl11312
+ * - removed "COBE" name from fatal error message
  * Revision 1.6  2000/05/05 21:41:29  BS04481
  * New _log_error function for drivers
  * Revision 1.5  2000/05/03 16:28:35  BD10648
@@ -92,6 +94,7 @@
 #include <stdarg.h>
 
 #include "error.h"
+#include "hal_notify.h"
 
 // NOTE - don't change ERROR_SIZE without also updating associated sprintf format strings.
 // for example:  sprintf(buf, "%.270s", errmsg);  the 270 may need to change.
@@ -122,6 +125,11 @@ fatal_handling(char* file, int line, trace_codes_t code, int usercode, char* eSt
     static struct _psinfo psdata; // this big struct is static to avoid stack overflow
     char *name;
     pid_t id;
+
+    //
+    // Let HAL know about problem in case we can't get the information to the log
+    //
+    hal_notify_fatal(line, usercode, file);
 
     sprintf(buf, "FATAL %.290s", eString);
     _LOG_ERROR_WITH_DISPLAY( file, line, code, usercode, buf);

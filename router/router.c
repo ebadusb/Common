@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/router.c 1.12 2001/05/24 22:42:46 jl11312 Exp jl11312 $
  * $Log: router.c $
+ * Revision 1.12  2001/05/24 22:42:46  jl11312
+ * - initialize msg buffer before Receive() to correct operation of sin ver command (IT 5135)
  * Revision 1.11  2001/05/11 19:57:01  jl11312
  * - removed "COBE" name from fatal error message
  * Revision 1.10  2001/04/05 17:35:24  ms10234
@@ -159,6 +161,7 @@
 
 #include "crc.h"
 #include "error.h"
+#include "hal_notify.h"
 #include "msghdr.h"
 #include "sinver.h"
 #include "mq_check.h"
@@ -273,6 +276,11 @@ void fatalError( int line, int code, char* err)
 {
    static char rev[] = "$ProjectRevision: 5.33 $";     // rev code
    static char buf[ERROR_SIZE]; // static to avoid stack overflow
+
+   //
+   // Let HAL know about problem in case we can't get the information to the log
+   //
+   hal_notify_fatal(line, code, __FILE__);
 
    sprintf(buf, "FATAL %.290s", err);
    

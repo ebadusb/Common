@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/gateway.c 1.5 2001/05/24 22:41:38 jl11312 Exp jl11312 $
  * $Log: gateway.c $
+ * Revision 1.5  2001/05/24 22:41:38  jl11312
+ * - initialize msg buffer before Receive() to correct operation of sin ver command (IT 5135)
  * Revision 1.4  2001/05/11 19:56:38  jl11312
  * - removed "COBE" name from fatal error message
  * Revision 1.3  2000/07/07 20:53:36  bs04481
@@ -70,6 +72,7 @@
 
 #include "crc.h"
 #include "error.h"
+#include "hal_notify.h"
 #include "msghdr.h"
 #include "sinver.h"
 
@@ -114,6 +117,11 @@ void fatalError( int line, int code, char* err)
    static char rev[] = "$ProjectRevision: 5.33 $";     // rev code
    static char buf[ERROR_SIZE]; // static to avoid stack overflow
    
+   //
+   // Let HAL know about problem in case we can't get the information to the log
+   //
+   hal_notify_fatal(line, code, __FILE__);
+
    mq_close( mq);                                  // close remote router queue
    mq_close( gq);                                  // close gateway queue
    mq_unlink( gatewayQueueName);                   // remove it

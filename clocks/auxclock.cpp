@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 2002 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.4 2002/06/19 22:53:29 pn02526 Exp ms10234 $
+ * $Header: //Bctquad3/home/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.6 2002/07/18 13:18:37 pn02526 Exp pn02526 $
  * $Log: auxclock.cpp $
+ * Revision 1.4  2002/06/19 22:53:29  pn02526
+ * Change rawTickString to use sprintf to format the string, rather than its own conversion code.
  * Revision 1.3  2002/06/19 10:01:14  pn02526
  * Simplify the rawTick string formatting code because of the change in typdef from unsigned long long to long long int; completely qualify other type declarations; correct spelling in comments.
  * Revision 1.2  2002/06/18 10:28:09  pn02526
@@ -191,11 +193,11 @@ int auxClockMsgPktEnable( unsigned int periodicity /* number of ticks */,
 {
     int lockKey;
 
-    if( auxClockTicks == (rawTick)0 )  /* At least 1 tick will have accumulated if auxClock is enabled */
-    {
-        /* Can't enable a Message Packet queue without an ISR enabled! */
-        return( FALSE );
-    }
+    // if( auxClockTicks == (rawTick)0 )  /* At least 1 tick will have accumulated if auxClock is enabled */
+    // {
+        // /* Can't enable a Message Packet queue without an ISR enabled! */
+        // return( FALSE );
+    // }
 
     if (periodicity < 1)
     {
@@ -214,7 +216,6 @@ int auxClockMsgPktEnable( unsigned int periodicity /* number of ticks */,
     {
         auxClockMsgPktQDes = mq_open(
                                     MsgPktQName, /* name of queue to open */
-/*                                    O_WRONLY | O_NONBLOCK  open flags */
                                     O_WRONLY  /* open flags */
                                    );
     }
@@ -245,7 +246,6 @@ int auxClockMsgPktEnable( unsigned int periodicity /* number of ticks */,
     }
 
     intUnlock( lockKey );
-
 
     if( extraAuxClockConnect( (FUNCPTR) &auxClockMsgPktISR, (int)0x3BADDEED ) == ERROR )
     {

@@ -3,6 +3,8 @@
 *
 * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.11 1999/10/08 17:59:02 TD10216 Exp TD10216 $
 * $Log: AN2MSGS.H $
+* Revision 1.11  1999/10/08 17:59:02  TD10216
+* IT4415
 * Revision 1.10  1999/10/05 01:05:14  TD10216
 * IT4355
 * Revision 1.9  1999/09/24 19:33:19  TD10216
@@ -86,7 +88,8 @@ enum AN2_SERVICES
 	RUN_UPDATE_SCRIPT,
 	START_STATUS,				// Continuous an2_statusd: 3.3a & above
 	STOP_STATUS,
-	REGISTER_TCP_MSGS			// register for tcp_gate messages
+	REGISTER_TCP_MSGS,			// register for tcp_gate messages
+	LAST_AN2_MSG				// NOTE:LEAVE THIS LAST(Insert before)
 };
 
 #ifdef AN2INETD
@@ -112,7 +115,8 @@ char *AN2_SERVICES_STRINGS[] =
 	"RUN_UPDATE_SCRIPT",
 	"START_STATUS",				// Continuous an2_statusd: 3.3a & above
 	"STOP_STATUS",
-	"REGISTER_TCP_MSGS"			// register for tcp_gate messages
+	"REGISTER_TCP_MSGS",		// register for tcp_gate messages
+	"INVALID SERVICE REQUEST"	// leave this as last
 };
 #else
 extern char *AN2_SERVICES_STRINGS[];
@@ -169,6 +173,7 @@ enum AN2_SERVICE_REQUEST_REPSONSE
 	SERVICE_DENIED_DURING_STARTUP,
 	SERVICE_DENIED_MAX_REQUESTS_EXCEEDED,
 	SERVICE_DENIED_SERVICE_NOT_STARTED,
+	SERVICE_DENIED_INVALID_REQUESTOR_IP
 };
 
 typedef struct 

@@ -286,7 +286,7 @@ void Dispatcher :: dump( ostream &outs )
    set< MessageBase* >::iterator siter;
    map< unsigned long, set< MessageBase* > >::iterator miter;
 
-   outs << "Map size = " << _MessageMap.size() << " " << (int)(_MessageMap.begin() == _MessageMap.end()) << endl;
+   outs << "Map size = " << dec << _MessageMap.size() << " " << (int)(_MessageMap.begin() == _MessageMap.end()) << endl;
    for ( miter = _MessageMap.begin() ; 
          miter != _MessageMap.end() ;
          miter++ )

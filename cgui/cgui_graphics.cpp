@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.22 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.12  2004/11/19 18:14:46Z  cf10242
+ * Integration checkin
  * Revision 1.11  2004/11/12 14:59:44Z  cf10242
  * Add message system to UGL so GUi can handle/send messages.
  * Revision 1.9  2004/11/01 17:27:20Z  cf10242
@@ -45,8 +47,9 @@ static void cguiWinAppStartupTask(void)
 {
 //	if ( !msgSys )
 //	{
-		printf("Creating the message system %x\n", taskIdSelf());
+
 		msgSys = new MessageSystem();
+		printf("startuptask: msgSys = 0x%x\n",msgSys);
 		msgSys->initNonBlock();
 		guiStartCB();
 //	}
@@ -54,8 +57,11 @@ static void cguiWinAppStartupTask(void)
 
 static void cguiWinAppIdleTask(void)
 {
-	msgSys->dispatchMessages();
-	guiWakeupCB();
+	if(msgSys)
+	{
+		msgSys->dispatchMessages();
+		guiWakeupCB();
+	}
 }
 // END MESSAGE_SYSTEM_IN_WIN_MGR
 
@@ -278,24 +284,28 @@ CGUITextItem::~ CGUITextItem()
 
 void CGUITextItem::setText(const char * string, LanguageId = currentLanguage)
 {
-   int stringLength = 0;
 
    if (string)
    {
       if (_id)
       {
-         while (string[stringLength] != '\0')
+			_string = new StringChar[strlen(string) + 1];
+			int cnt = 0;
+			while (string[cnt] != '\0')
          {
-            stringLength++;
+            _string[cnt] = string[cnt];
+				cnt++;
          }
 
-         _string = new StringChar[stringLength + 1];  
-
+/** 
          for (int i=0; i<=stringLength; i++)
          {
             _string[i] = string[i];
          }
+**/
       }
+
+
    }
 }
 

@@ -1,8 +1,10 @@
-# @(#) $Header: M:/BCT_Development/vxWorks/Common/rcs/makefile.flags 1.3 2002/04/12 17:02:39 sb07663 Exp sb07663 $
+# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.flags 1.7 2002/08/15 20:23:17 jl11312 Exp jl11312 $
 #
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags $
+# Revision 1.3  2002/04/12 17:02:39  sb07663
+# Added 'LD' definitions
 # Revision 1.2  2002/04/11 15:50:38  jl11312
 # - default BUILD_TYPE to PRODUCTION
 # - added default for CPU to I80486
@@ -38,6 +40,7 @@ CC = cc386 -c
 CXX = cc386 -c
 AR = ar386
 LD = ld386
+NM = nm386 -g
 
 ARCH_FLAGS = -DCPU=I80486 -m486 -DVXWORKS
 AS_ARCH_FLAGS  = $(ARCH_FLAGS)
@@ -53,6 +56,7 @@ CC  = ccsimpc -c
 CXX = ccsimpc -c
 AR = arsimpc
 LD = ldsimpc
+NM = nmsimpc -g
 
 ARCH_FLAGS = -DCPU=SIMNT -U__WINNT -UWIN32 -U__WINNT__ -UWINNT -U__MINGW32__ -U_WIN32 -U__WIN32 -U__WIN32__ -U__WIN32 -mpentium -DVXWORKS
 AS_ARCH_FLAGS  = $(ARCH_FLAGS)

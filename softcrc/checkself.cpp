@@ -6,6 +6,8 @@
  * CHANGELOG:
  * $Header: I:/BCT_Development/vxWorks/Common/softcrc/rcs/checkself.cpp 1.10 2003/06/17 18:57:13Z td07711 Exp td07711 $
  * $Log: checkself.cpp $
+ * Revision 1.4  2003/01/09 20:53:25Z  pn02526
+ * Change #ifdef VXWORKS to ENABLE_CRC_CHECKING 
  * Revision 1.3  2002/12/20 14:30:39  ms10234
  * Changed function definition to take const char *'s
  * Revision 1.2  2002/08/14 15:40:05Z  pn02526
@@ -27,104 +29,108 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <symLib.h>
 
-#ifndef ENABLE_CRC_CHECKING
- // Temporarily disabled in vxWorks
- int checkself(int argc, const char** argv, const char* start, const char* filename)
- {
-     return 0;
- }
-#else
- static char Last_init_data=1;  // must be assigned nonzero to be placed in initialized data region
 
- // SPECIFICATION:  checkself() - generates a CRC over text and a portion of initialized data, and
- // verifies against the CRC in specified file.
- // inputs:
- //    argc, argv - passed through to checkself.  If "-checkself <file>" is present then instead of doing
- //    the check and returning, checkself writes the calculated crc to <file> and exits(0).
- //    start - starting address of region to verify
- //    filename - file containing CRC to verify
- // outputs:
- //    returns 0 if CRC verifies, else -1
- // ERROR HANDLING:
- //    asserts that args are non null
- //    asserts that size of region to verify is > 0
- int checkself(int argc, const char** argv, const char* start, const char* filename)
- {
-    unsigned long calc_crc = 0;
-    unsigned long exp_crc;
-    FILE* infile;
-    FILE* outfile=0;
-    int i;
-    long size = &Last_init_data - start;
-    char buf[200];
+extern SYMTAB_ID sysSymTbl; // system sysbol table ID needed for symFindByName()
 
-    ASSERT(argc > 0);
-    ASSERT(argv != 0);
-    ASSERT(start != 0);
-    ASSERT(filename != 0);
+
+int checkself( char* startSymbol, char* endSymbol, const char* filename)
+{
+    // PURPOSE:  verifies program loaded in memory has not changed.
+    // Verifies load integrity when run over text and initialized data segments following load.
+    // Verifies no text segment overwrites when run periodically thereafter.
+    // 
+    // checkself calculates a CRC over the data from startSymbol to endSymbol-1
+    //
+    // If filename exists, it reads the contained value as a previously saved CRC and verifies
+    // that it is the same as the one calculated.  
+    // Returns -1 if not validated, 0 if validated
+    //
+    // If filename does not exist, then filename is created and the calculated CRC is saved
+    // for validation on subsequent boots.
+    // Returns -1 if file not written, else 0
+
+    //
+    // determine region to CRC
+    //
+    char* startAddress;
+    char* endAddress;
+    SYM_TYPE symType; 
+    FILE* logfile = stderr;
+    if( symFindByName( sysSymTbl, startSymbol, &startAddress, &symType ) == ERROR )
+    {
+	fprintf( logfile, "ERROR checkself: failed to find %s", startSymbol );
+	return -1;
+    }
+    if( symFindByName( sysSymTbl, endSymbol, &endAddress, &symType ) == ERROR )
+    {
+	fprintf( logfile, "ERROR checkself: failed to find %s", endSymbol );
+	return -1;
+    }
+    long size = endAddress - startAddress;
 
     //
     // calculate crc
     //
-    ASSERT(size > 0);
-    if (crcgen32(&calc_crc, (const unsigned char*)start, size) == -1) {
-       sprintf(buf, "checkself: crcgen32 failed, start=0x%08x size=%ld\n",
-               start, size);
-       _LOG_ERROR(__FILE__, __LINE__, TRACE_CODE, errno, buf);
+    unsigned int calc_crc = 0;
+    if( crcgen32( (unsigned long*)&calc_crc, (const unsigned char*)startAddress, size ) == -1 )
+    {
+       fprintf( logfile, "ERROR checkself: crcgen32 failed, start=0x%08x size=%ld\n",
+               (unsigned int)startAddress, size );
        return -1;
     }
 
-    //
-    // look for "-checkself filename" on command line
-    // if present, write crc and exit
-    //
-    for (i=0; i < (argc-1); i++) {
-       if (strcmp(argv[i], "-checkself") == 0) {
-          if ((outfile = fopen(argv[i+1], "w")) == 0) {
-             fprintf(stderr, "checkself: fopen failed on %s, errno= %d %s\n",
-                     argv[i+1], errno, strerror(errno));
-             exit(1);
-          }
-          fprintf(outfile, "0x%08x\n", calc_crc);
-          printf("checkself: start=0x%08x size=%ld calc_crc=0x%08x placed in %s\n",
-                 start, size, calc_crc, argv[i+1]);
-          exit(0);
-       }
-    }
 
     //
     // read expected crc from file specified
     //
-    if ((infile = fopen(filename, "r")) == 0) {
-       sprintf(buf, "checkself: fopen failed on %.100s, errno= %d %.40s\n",
-               filename, errno, strerror(errno));
-       _LOG_ERROR(__FILE__, __LINE__, TRACE_CODE, 0, buf);
-       return -1;
+    unsigned int exp_crc;
+    FILE* infile;
+    FILE* outfile=0;
+    if( (infile = fopen( filename, "r" )) == 0 ) 
+    {
+       //
+       //  create new crc file if needed
+       //
+       if( (outfile = fopen( filename, "w" )) == 0 )
+       {
+	  fprintf( logfile, "ERROR checkself: fopen failed on %s, errno= %d %s\n",
+		  filename, errno, strerror(errno) );
+	  return -1;
+       }
+       fprintf( outfile, "0x%08x\n", calc_crc );
+       fclose( outfile );
+       fprintf( logfile, "checkself: start=0x%08x size=%ld calc_crc=0x%08x placed in %s\n",
+	      (unsigned int)startAddress, size, calc_crc, filename );
+       return 0;
     }
-    if (fscanf(infile, "%x", &exp_crc) != 1) {
-       sprintf(buf, "checkself: fscanf failed, errno= %d %.100s\n",
-               errno, strerror(errno));
-       _LOG_ERROR(__FILE__, __LINE__, TRACE_CODE, errno, buf);
+
+    if( fscanf( infile, "%x", &exp_crc) != 1 )
+    {
+       fprintf( logfile, "ERROR checkself: fscanf failed, errno= %d %.100s\n",
+               errno, strerror(errno) );
+       fclose( infile );
        return -1;
     }
 
     //
     // verify calculated == expected
     //
-    if (calc_crc != exp_crc) {
-       sprintf(buf, "checkself: bad crc, exp=0x%08x calc=0x%08x file=%.100s start=0x%08x size=%ld\n",
-               exp_crc, calc_crc, filename, start, size);
-       _LOG_ERROR(__FILE__, __LINE__, TRACE_CODE, errno, buf);
+    fclose( infile );
+    if( calc_crc != exp_crc ) 
+    {
+       fprintf( logfile, "ERROR checkself: bad crc, exp=0x%08x calc=0x%08x file=%.100s start=0x%08x size=%ld\n",
+               exp_crc, calc_crc, filename, (unsigned int)startAddress, size );
        return -1;
     }
 
     //
     // log good crc and return
     //
-    sprintf(buf, "checkself: good crc, exp=0x%08x calc=0x%08x file=%.100s start=0x%08x size=%ld\n",
-            exp_crc, calc_crc, filename, start, size);
-    _LOG_ERROR(__FILE__, __LINE__, TRACE_CODE, 0, buf);
+    fprintf( logfile, "checkself: good crc, exp=0x%08x calc=0x%08x file=%.100s start=0x%08x size=%ld\n",
+            exp_crc, calc_crc, filename, (unsigned int)startAddress, size );
     return 0;
  }
-#endif /*ENABLE_CRC_CHECKING*/
+
+

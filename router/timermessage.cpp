@@ -60,36 +60,47 @@ void TimerMessage :: armTimer( TimerState arm )
 
    unsigned long intrvl = Message< unsigned long >::getData();
 
-   _TimerArmed=arm;
+   TimerState newState=arm;
    if ( intrvl == 0 )
-      _TimerArmed=DISARMED;
+      newState=DISARMED;
    if ( arm == DISARMED )
       intrvl = 0;
 
-   if ( _TimerArmed == DISARMED )
+   if ( newState == DISARMED )
       _VirtualNotify = CallbackBase();
    else
       _VirtualNotify = _DisarmedCallback;
    
    //
-   // Notify the timer task ...
-   //  ( send the timer the new interval )
-   if ( _PacketList.front() == 0 || _PacketList.empty() )
+   // Only send the notification if we are resetting the timer or
+   //  disarming an armed timer. ( If the timer was already disarmed
+   //  and we are still wanting it in a disarmed state then don't send
+   //  any message packets to the Timer task ).
+   if (    newState != DISARMED 
+        || newState != _TimerArmed )
    {
-      _FATAL_ERROR( __FILE__, __LINE__, "Initialization failed : packet list is empty" );
-      return;
+      _TimerArmed = newState;
+
+      //
+      // Notify the timer task ...
+      //  ( send the timer the new interval )
+      if ( _PacketList.front() == 0 || _PacketList.empty() )
+      {
+         _FATAL_ERROR( __FILE__, __LINE__, "Initialization failed : packet list is empty" );
+         return;
+      }
+   
+      MessagePacket mp( *( _PacketList.front() ) );
+      mp.msgData().msg( (const unsigned char*) &intrvl, sizeof( unsigned long ) );
+      clock_gettime( CLOCK_REALTIME, &_SentTime );
+      mp.msgData().sendTime( _SentTime );
+      mp.updateCRC();
+   
+      if ( MessageSystem::MsgSystem() )
+         MessageSystem::MsgSystem()->dispatcher().sendTimerMessage( mp );
+      else
+         _FATAL_ERROR( __FILE__, __LINE__, "Message system not initialized" );
    }
-
-   MessagePacket mp( *( _PacketList.front() ) );
-   mp.msgData().msg( (const unsigned char*) &intrvl, sizeof( unsigned long ) );
-   clock_gettime( CLOCK_REALTIME, &_SentTime );
-   mp.msgData().sendTime( _SentTime );
-   mp.updateCRC();
-
-   if ( MessageSystem::MsgSystem() )
-      MessageSystem::MsgSystem()->dispatcher().sendTimerMessage( mp );
-   else
-      _FATAL_ERROR( __FILE__, __LINE__, "Message system not initialized" );
 }
 
 

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.9 2003/10/16 14:57:40Z jl11312 Exp jl11312 $
  * $Log: datalog_port_vxworks.cpp $
+ * Revision 1.2  2002/08/15 20:53:58  jl11312
+ * - added support for periodic logging
  * Revision 1.1  2002/07/18 21:20:52  jl11312
  * Initial revision
  *
@@ -265,7 +267,7 @@ void datalog_SetupPeriodicSignal(const char * signalName, double seconds)
 static SEM_ID 	timeDataLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
 
 #if (CPU != SIMNT)
-static UINT32		timestampStart;
+static long			nanoSecPerTimestampTick;
 #endif
 
 static struct timespec	clockStart;
@@ -278,7 +280,7 @@ static time_t markTimeStampStart(void)
 #if (CPU != SIMNT)
 	//
 	// Make sure time stamp clock is enabled and period set correctly (for the
-	// 8253 driver - getTimeStampPeriod() also sets an internal period value
+	// 8253 driver - sysTimestampPeriod() also sets an internal period value
 	// needed for proper operation).
 	//
 	sysTimestampEnable();
@@ -286,18 +288,12 @@ static time_t markTimeStampStart(void)
 #endif /* if (CPU != SIMNT) */
 
 	//
-	// Latch current values for all clocks needed for log timestamp
+	// Save start time for real-time clock.  All timestamp information in the
+	// log file is relative to this start time.
 	//
 	semTake(timeDataLock, WAIT_FOREVER);
-	oldLevel = intLock();
-
-#if (CPU != SIMNT)
-	timestampStart = sysTimestamp();
-#endif /* if (CPU != SIMNT) */
-
 	clock_gettime(CLOCK_REALTIME, &clockStart);
-
-	intUnlock(oldLevel);
+	nanoSecPerTimestampTick = 1000000000/sysTimestampFreq();
 	semGive(timeDataLock);
 
 	return time(NULL);
@@ -334,21 +330,20 @@ void datalog_GetTimeStamp(DataLog_TimeStamp * stamp)
 	intUnlock(oldLevel);
 #endif /* if (CPU != SIMNT) */
 
-	long			seconds;
-	long long	nanoseconds;
+	long		seconds;
+	long		nanoseconds;
 
 	seconds = clockCurrent.tv_sec - clockStart.tv_sec;
 	nanoseconds = clockCurrent.tv_nsec - clockStart.tv_nsec;
 
 #if (CPU != SIMNT)
-	nanoseconds += ((long long)timestampCurrent - (long long)timestampStart) * (long long)1000000000 / (long long)sysTimestampPeriod();
+	nanoseconds += timestampCurrent * nanoSecPerTimestampTick;
 #endif /* if (CPU != SIMNT) */
 
 	if ( nanoseconds < 0 )
 	{
-		long long multiple = ((long long)999999999-nanoseconds)/(long long)1000000000;
-		nanoseconds += multiple*(long long)1000000000;
-		seconds -= multiple;
+		nanoseconds += 1000000000;
+		seconds -= 1;
 	}
 
 	stamp->_seconds = (DataLog_UINT32)seconds;

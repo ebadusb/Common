@@ -3,6 +3,9 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/error.c 1.7 2001/05/11 19:56:17 jl11312 Exp jl11312 $
  * $Log: error.c $
+ * Revision 1.3  1999/08/31 17:50:03  BS04481
+ * Change _log_error to not display to screen unless the env var
+ * DISPLAYSTATUS=DISPLAY.
  * Revision 1.2  1999/08/06 14:33:45  BS04481
  * New logging function to add entry to log but not display on the 
  * screen
@@ -224,7 +227,7 @@ _LOG_ERROR( char* file, int line, trace_codes_t code, int usercode, char* eStrin
    {
       displayStatus = getenv( "DISPLAYSTATUS" );
       if (displayStatus == NULL)
-         displayStatus = &displayDefault;
+         displayStatus = (char *) &displayDefault;
       displayStatusKnown = 1;
    }
    else

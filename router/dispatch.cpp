@@ -3,6 +3,8 @@
  *
  * $Header: Y:/BCT_Development/Common/ROUTER/rcs/DISPATCH.CPP 1.6 1999/09/30 04:02:15 BS04481 Exp MS10234 $
  * $Log: dispatch.cpp $
+ * Revision 1.4  1999/08/13 01:31:21  MS10234
+ * Added a flag to address IT4255.
  * Revision 1.3  1999/06/02 16:23:34  BS04481
  * Re-institute the changes that were put into revision 36 of this file
  * before it was moved to common project (as rev 35).  
@@ -237,7 +239,7 @@ routeBuffer::~routeBuffer()
 //
 // ERROR HANDLING:   none.
 
-virtual void routeBuffer::notify()
+void routeBuffer::notify()
 {
 };
 
@@ -925,7 +927,7 @@ dispatcher::trace( unsigned short msgID)
 //
 // ERROR HANDLING:   _FATAL_ERROR.
 
-virtual void
+void
 dispatcher::processMessage( pid_t pid)
 {
    timerEntry* t;                               // timer pointer

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/auxclock.h 1.6 2002/12/16 18:29:31Z jl11312 Exp ms10234 $
  * $Log: auxclock.h $
+ * Revision 1.4  2002/07/18 13:18:22  pn02526
+ * Change notification interface to use microseconds rather than ticks.
  * Revision 1.3  2002/06/19 16:59:28  pn02526
  * Make usable by either C or C++ programs.  Modify some comments.
  * Revision 1.2  2002/06/19 09:57:01  pn02526
@@ -64,6 +66,20 @@ char * rawTickString( char * /* String buffer pointer */, rawTick /* tick value 
 extern "C" char *auxClockTicksString();
 #else 
 char *auxClockTicksString();
+#endif
+
+/* Enable the auxClock Semaphore to toggle every given number of microseconds. */
+#ifdef __cplusplus 
+extern "C" int auxClockSemaphoreEnable( unsigned int /* number of microseconds */ );
+#else 
+int auxClockSemaphoreEnable( unsigned int /* number of microseconds */ );
+#endif
+
+/* Wait for the auxClock Semaphore to toggle. */
+#ifdef __cplusplus 
+extern "C" int auxClockBlockOnSemaphore();
+#else 
+int auxClockBlockOnSemaphore();
 #endif
 
 

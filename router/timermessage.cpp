@@ -28,7 +28,7 @@ TimerMessage :: ~TimerMessage()
 
 bool TimerMessage :: init( unsigned long intrvl, const CallbackBase &cb, TimerState armTimer )
 {
-   bool status = MessageBase::init( cb, MessageBase::SNDRCV_RECEIVE_ONLY );
+   bool status = MessageBase::init( cb, MessageBase::SNDRCV_LOCAL );
 
    if ( armTimer == ARMED )
       interval( intrvl );

@@ -106,10 +106,12 @@ bool Router::init()
    while (    ( _RouterQueue = mq_open( "router", O_RDWR | O_CREAT , 0666, &attr) ) == (mqd_t)ERROR 
            && retries++ < MAX_NUM_RETRIES ) nanosleep( &Router::RETRY_DELAY, 0 );
    if ( _RouterQueue == (mqd_t)ERROR )
+   {
       //
       // Error ...
       _FATAL_ERROR( __FILE__, __LINE__, "Router message queue open failed" );
       return false;
+   }
 
    //
    // Set the static pointer to ensure we only init once ...
@@ -136,7 +138,8 @@ void Router::dispatchMessages()
       {
          //
          // Error ...
-         _FATAL_ERROR( __FILE__, __LINE__, "Dispatching message=%lx - message queue receive failed" );
+         _FATAL_ERROR( __FILE__, __LINE__, "Dispatching message - message queue receive failed" );
+         return;
       }
 
       //
@@ -273,14 +276,20 @@ void Router::connectWithGateway( const MessagePacket &mp )
    {
       //
       // Try to connect ...
-      sockinetbuf *socketbuffer = tcpConnect( mp.msgData().nodeId(), 
-                                              222 /*port*/, 
-                                              250 /*timeout in milliseconds*/ );
+      sockinetbuf *socketbuffer = new sockinetbuf( sockbuf::sock_stream );
+      if ( !socketbuffer )
+      {
+         _FATAL_ERROR( __FILE__, __LINE__,"Create socket buffer failed");
+      }
+   
+      struct timeval tv;
+      tv.tv_sec = 0;
+      tv.tv_usec = 250 /*milliseconds*/ * 1000;
+      int status = socketbuffer->connectWithTimeout( mp.msgData().nodeId(), 222 /*port*/, &tv );
 
       //
       // If connected, add to list ...
-      if (    socketbuffer != (sockinetbuf*)ERROR 
-           && socketbuffer != 0 )
+      if ( status == 0 )
       {
          _InetGatewayMap[ mp.msgData().nodeId() ] = socketbuffer;
       }

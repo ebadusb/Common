@@ -3,6 +3,8 @@
  *
  * $Header: Q:/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.14 2004/01/26 18:56:15Z jl11312 Exp jd11007 $
  * $Log: auxclock.cpp $
+ * Revision 1.11  2003/01/08 23:41:46Z  ms10234
+ * Added function to get the time when the auxClockInit function was called
  * Revision 1.10  2002/12/16 18:30:25Z  jl11312
  * - optimized low-level timer related functions
  * Revision 1.9  2002/12/13 20:47:45  pn02526
@@ -177,7 +179,8 @@ void auxClockTimeGet(rawTime * current)
    {
       memcpy((void *)current, (void *)&auxClockTime, sizeof(rawTime));
    }
-   while ( current->nanosec != auxClockTime.nanosec );
+   while ( current->sec != auxClockTime.sec ||
+			  current->nanosec != auxClockTime.nanosec );
 }
 
 /* Get the current value of the time when the auxClockInit function was called. */

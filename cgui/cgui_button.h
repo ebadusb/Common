@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.14  2005/03/15 00:21:35Z  rm10919
+ *  Change CGUIText to not add object to window object list of parent in constructor.
  *  Revision 1.13  2005/02/21 17:17:11Z  cf10242
  *  IT 133 - delete all allocated memory to avoid unrecovered memory
  *  Revision 1.12  2005/01/28 23:52:17Z  rm10919
@@ -254,13 +256,17 @@ public:
    // set the text associated with the button.  
    void setText(CGUITextItem * textItem = NULL); // ptr to a text object associated with the button
    void setText(const char * string = NULL); // ptr to a text object associated with the button
+   void setText(const StringChar * string = NULL); // ptr to a text object associated with the button
   
    void setEnabledText(CGUITextItem * textItem = NULL);
    void setEnabledText(const char * string = NULL);
+   void setEnabledText(const StringChar * string = NULL);
    void setDisabledText(CGUITextItem * textItem = NULL);
    void setDisabledText(const char * string = NULL);
+   void setDisabledText(const StringChar * string = NULL);
    void setPressedText(CGUITextItem * textItem = NULL);
    void setPressedText(const char * string = NULL);
+   void setPressedText(const StringChar * string = NULL);
 
    // SET TEXTSTYLE
    // set/change the style of the text associated with this button in ALL states.  This is a pass-thru to the 

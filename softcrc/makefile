@@ -1,6 +1,6 @@
 #
 # PURPOSE: builds COBE BCT common crc utilities
-# $Header: Y:/BCT_Development/Common/SOFTCRC/rcs/MAKEFILE 1.4 2000/05/12 20:21:02 MS10234 Exp MS10234 $
+# $Header: I:/BCT_Development/Common/softcrc/rcs/makefile 1.5 2000/05/26 21:29:29 MS10234 Exp rm70006 $
 # NB:Do NOT save & try to run this file with DOS CR/LFs
 # Set MKS option Configuration->Personal->Checkout->UNIX
 # symptom:cant open ../commonrules.mk
@@ -72,18 +72,3 @@ TODIR=softcrc
 INSTALLED=$(PROGRAMS)
 include $(COMMONSHAREDTARGETS)
 
-# NOTE: Do not edit below this line
-## dependencies will be put after this line... ##
-crcgen.o:../include/crcgen.h
-crcgen.o:crcgen.cpp
-crcfunctions.o:../include/crcfunctions.h
-crcfunctions.o:../include/crcgen.h
-crcfunctions.o:crcfunctions.cpp
-checkself.o:../include/crcgen.h
-checkself.o:../include/error.h
-checkself.o:checkself.cpp
-checkself.o:checkself.h
-softcrc.o:../include/crcgen.h
-softcrc.o:../include/error.h
-softcrc.o:softcrc.cpp
-softcrc.o:softcrc.h

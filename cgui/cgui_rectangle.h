@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_rectangle.h 1.1 2004/09/20 18:18:07Z rm10919 Exp jl11312 $
+ * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_rectangle.h 1.5 2008/11/06 22:24:16Z rm10919 Exp wms10235 $
  * $Log: cgui_rectangle.h $
+ * Revision 1.1  2004/09/20 18:18:07Z  rm10919
+ * Initial revision
  *
  */
 
@@ -21,8 +23,8 @@
 class CGUIRectangle : public CGUIWindowObject
 {
 public:
-   CGUIRectangle(OSDisplay & display, CGUIColor color = 0);
-   CGUIRectangle(OSDisplay & display, const OSRegion & region, CGUIColor color = 0);
+   CGUIRectangle(CGUIDisplay & display, CGUIColor color = 0);
+   CGUIRectangle(CGUIDisplay & display, const CGUIRegion & region, CGUIColor color = 0);
    virtual ~CGUIRectangle();
 
    void setColor(CGUIColor color);

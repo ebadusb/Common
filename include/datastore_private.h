@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.21  2003/03/28 19:55:49Z  ms10234
+ * HISTORY:    5948 - Changed code to make message synchronization between nodes more robust
  * HISTORY:    Revision 1.20  2002/11/18 18:29:28Z  jl11312
  * HISTORY:    - modifications to improve compile speed, reduce inline function sizes
  * HISTORY:    Revision 1.19  2002/11/07 00:11:53Z  td07711
@@ -68,6 +70,8 @@
 #include <a_out.h>
 #include "error.h"
 
+#include "datalog_levels.h"
+
 ////////////////////////////////////////////////////////////////
 // BindItem
 ////////////////////////////////////////////////////////////////
@@ -92,10 +96,7 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
       *dataPtr = (T *)valPtr;
       created = false;
 
-      if (ds->is_logging())
-      {
-         DataLog(ds->_debug) << "Attaching item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
-      }
+      DataLog(log_level_cds_debug) << "Attaching item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
    }
    else
    {
@@ -105,15 +106,13 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
       // add to symbol table
       status = symAdd(DataStore::getTable(), (char *)nameKey.c_str(), (char *)*dataPtr, N_DATA, item);
 
-      if (ds->is_logging())
-      {
-         DataLog(ds->_debug) << "Creating item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
-      }
+      DataLog(log_level_cds_debug) << "Creating item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
 
       if (status == ERROR)
       {
          // Log Fatal Error
-         DataLog(ds->_fatal) << "BindItem: symAdd failed in CDS " << ds->Name() << "." << endmsg;
+         DataLog_Critical _fatal;
+         DataLog(_fatal) << "BindItem: symAdd failed in CDS " << ds->Name() << "." << endmsg;
          _FATAL_ERROR(__FILE__, __LINE__, "BindItem failed");
       }
 
@@ -306,7 +305,8 @@ template <class dataType> bool BaseElement<dataType>::Set(const dataType &data)
    else
    {
       // Log Fatal Error
-      DataLog(_ds->_fatal) << "BaseElement: Set Failed in CDS " << _ds->Name() << ".  Role is RO." << endmsg;
+      DataLog_Critical _fatal;
+      DataLog(_fatal) << "BaseElement: Set Failed in CDS " << _ds->Name() << ".  Role is RO." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "BaseElement Set failed");
    }
 
@@ -328,7 +328,8 @@ template <class dataType> void BaseElement<dataType>::ReadSelf (ifstream &pfrfil
 
    if (!pfrfile.good())
    {
-      DataLog(_ds->_fatal) << "ReadSelf failed in " << _ds->Name()
+      DataLog_Critical _fatal;
+      DataLog(_fatal) << "ReadSelf failed in " << _ds->Name()
                               << ".  status is: " << pfrfile.rdstate() << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "ReadSelf failed.");
    }
@@ -348,7 +349,8 @@ template <class dataType> void BaseElement<dataType>::WriteSelf (ofstream &pfrfi
 
    if (!pfrfile.good())
    {
-      DataLog(_ds->_fatal) << "WriteSelf failed in " << _ds->Name()
+      DataLog_Critical _fatal;
+      DataLog(_fatal) << "WriteSelf failed in " << _ds->Name()
                               << ".  status is: " << pfrfile.rdstate() << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "WriteSelf failed.");
    }
@@ -457,7 +459,7 @@ template <class dataType> bool RangedElement<dataType>::Set(const dataType &data
    else
    {
       // Log Error
-      DataLog(_ds->_debug) << "RangedElement: Set Failed in datastore " << _ds->Name() 
+      DataLog(log_level_cds_info) << "RangedElement: Set Failed in datastore " << _ds->Name() 
            << ".  Value is out of Range.  Value=" << data 
            << " Range=" << _min << "->" << _max << endmsg;
       return false;

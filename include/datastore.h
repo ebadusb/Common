@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.21  2002/11/18 18:29:28Z  jl11312
+ * HISTORY:    - modifications to improve compile speed, reduce inline function sizes
  * HISTORY:    Revision 1.20  2002/11/07 00:11:35Z  td07711
  * HISTORY:    modified spoofer caching - added setSpooferCacheValid() and isSpooferCacheValid()
  * HISTORY:    Revision 1.19  2002/11/06 15:42:47  rm70006
@@ -209,8 +211,6 @@ private:
 #include <list>
 #include <symLib.h>
 
-#include "datalog.h"
-
 // Forward Reference
 class DataStore;
 
@@ -229,12 +229,6 @@ enum BIND_ITEM_TYPE
 //
 class DataStore
 {
-// Data Members
-public:
-   DataLog_Level    _debug;
-   DataLog_Critical _fatal;
-
-
 // Class Methods
 public:
    friend class ElementType;
@@ -254,11 +248,6 @@ public:
    
    void GetSymbolName (string &s, const BIND_ITEM_TYPE item);
 
-   inline static void turn_on_logging(void)  { _logging = true; };
-   inline static void turn_off_logging(void) { _logging = false; };
-   inline static bool is_logging (void) { return _logging; };
-
-   
 // Class Methods
 protected:
    DataStore (const char *name, Role role);

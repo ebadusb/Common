@@ -3,6 +3,8 @@
  *
  * $Header: Y:/BCT_Development/Common/ROUTER/rcs/DISPATCH.CPP 1.6 1999/09/30 04:02:15 BS04481 Exp MS10234 $
  * $Log: dispatch.cpp $
+ * Revision 1.5  1999/09/29 18:07:51  TD10216
+ * IT4333 - changes for microsoft compiler
  * Revision 1.4  1999/08/13 01:31:21  MS10234
  * Added a flag to address IT4255.
  * Revision 1.3  1999/06/02 16:23:34  BS04481
@@ -294,6 +296,7 @@ void routeBuffer::msgHeader(
 // ERROR HANDLING:   _FATAL_ERROR.
 
 dispatcher::dispatcher( int argc, char** argv, int maxMessages)
+: _nextToProcess(NULL)
 {
    signalNumber = 0;                   // initialize signal
    _programName = argv[0];             // save program name
@@ -605,6 +608,10 @@ dispatcher::deregisterMessage( routeBuffer* m)
    if (lptr->msg == m)
    {
       messageTable[mid] = lptr->next;        // move chain
+      if (_nextToProcess == lptr)
+      {
+         _nextToProcess = lptr->next;        // update to keep processMessage() in sync
+      }
       delete lptr;                           // remove element
    }
    else                                      // check rest of chain
@@ -615,6 +622,10 @@ dispatcher::deregisterMessage( routeBuffer* m)
       {
          if (lptr->msg == m)                 // match found
          {
+            if (_nextToProcess == lptr)
+            {
+               _nextToProcess = lptr->next;  // update to keep processMessage() in sync
+            }
             oneBack->next = lptr->next;      // remove entry
             delete lptr;                     // de-allocate entry
             updateFocusMsgCRC( oneBack);     // fix CRC
@@ -1004,12 +1015,12 @@ dispatcher::processMessage( pid_t pid)
    
                      // call notify function
                      logData( __LINE__, mid, MSG_CALLING_NOTIFY);
-                     linked* next = lptr->next;      // get next pointer
+                     _nextToProcess = lptr->next;      // get next pointer
                      lptr->msg->notify();
                      logData( __LINE__, mid, MSG_NOTIFY_RETURN);
    
                      // move to next entry
-                     lptr = next;
+                     lptr = _nextToProcess;
                   }
                }
                else

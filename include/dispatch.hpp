@@ -3,6 +3,8 @@
  *
  * $Header: Y:/BCT_Development/Common/INCLUDE/rcs/DISPATCH.HPP 1.7 2000/05/31 17:14:59 BD10648 Exp ms10234 $
  * $Log: dispatch.hpp $
+ * Revision 1.3  1999/09/17 04:21:59  BS04481
+ * Changes in support of greater determinism in the drivers.  
  * Revision 1.2  1999/05/31 20:34:54  BS04481
  * Remove unused MSGHEADER structure from messages. 
  * Decrease maximum message size.  Add new version of 
@@ -231,6 +233,9 @@ class dispatcher
       };
 
       linked* messageTable[MAX_MESSAGES];          // dispatch table
+
+      // pointer to next message to process
+      linked* _nextToProcess;
 
 // The timer messages use a linked list to save the proxy and
 // timer message pointer.

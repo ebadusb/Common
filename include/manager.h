@@ -68,11 +68,12 @@ public:
    //   return NO_SUBSTATES -- No substates to manage
    //
    int determineStatus();
-
+ 
    //
-   // Return the name of the current state, "__null__" is returned
-   //  for a null current state 
+   // Return current state, either as a name ("__null__" is returned for a
+   // null current state) or as a pointer to the StateAbs object.
    //
+   StateAbs * currentStatePtr() const { return _CurrentState; }
    const char *currentState() const;
 
 

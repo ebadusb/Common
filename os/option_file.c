@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/option_file.c 1.2 2003/11/05 19:28:49Z jl11312 Exp jl11312 $
  * $Log: option_file.c $
+ * Revision 1.1  2003/06/26 22:31:26Z  jl11312
+ * Initial revision
  *
  */
 
@@ -135,6 +137,11 @@ STATUS readOptionFile(const char * fileName, const char * sectionName, OptionFil
 			}
 			break;
 		}
+	}
+
+	if ( fp )
+	{
+		fclose(fp);
 	}
 
 	return result;

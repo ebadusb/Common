@@ -1,8 +1,10 @@
-# @(#) $Header: L:/BCT_Development/vxWorks/Common/rcs/makefile.rules 1.3 2002/05/16 17:39:03 jl11312 Exp sb07663 $
+# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.rules 1.7 2002/11/27 15:01:04 jl11312 Exp jl11312 $
 #
 # Makefile.rules - common makefile rules for vxWorks
 #
 # $Log: makefile.rules $
+# Revision 1.3  2002/05/16 17:39:03  jl11312
+# - changed assembly source from .S to .s
 # Revision 1.2  2002/04/19 17:28:54  jl11312
 # - moved output directory creation to .o build rule
 # Revision 1.1  2002/04/18 14:27:47  jl11312
@@ -18,6 +20,10 @@ $(CPU)/%.o:%.c
 
 $(CPU)/%.o:%.cpp
 	@if not exist $(CPU) mkdir $(CPU)
+	$(CXX) $(CXXFLAGS) $< -o $@
+
+bin/%.o:%.cpp
+	@if not exist bin mkdir bin
 	$(CXX) $(CXXFLAGS) $< -o $@
 
 $(CPU)/%.o:%.s

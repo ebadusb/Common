@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.7 2003/02/20 20:53:24 jl11312 Exp jl11312 $
  * $Log: datalog_output.cpp $
+ * Revision 1.5  2002/11/20 16:52:06  rm70006
+ * Changed code to match changes made to new inet.h
  * Revision 1.4  2002/09/23 15:35:36Z  jl11312
  * - fixed port number setting
  * Revision 1.3  2002/08/22 20:19:11  jl11312
@@ -20,6 +22,27 @@
 
 #include "datalog.h"
 #include "datalog_internal.h"
+#include "zlib.h"
+
+DataLog_BufferData * datalog_DefaultEncryptFunc(DataLog_BufferData * input, size_t inputLength, size_t * outputLength);
+static DataLog_EncryptFunc * encryptFunc = datalog_DefaultEncryptFunc;
+
+DataLog_Result datalog_SetEncryptFunc(DataLog_EncryptFunc * func)
+{
+	encryptFunc = func;
+	return DataLog_OK;
+}
+
+DataLog_BufferData * datalog_DefaultEncryptFunc(DataLog_BufferData * input, size_t inputLength, size_t * outputLength)
+{
+	for ( size_t i=0; i<inputLength; i++ )
+	{
+		input[i] = input[i] ^ 0xa5;
+	}
+
+	*outputLength = inputLength;
+	return input;
+}
 
 DataLog_OutputTask::DataLog_OutputTask(void)
 {
@@ -64,6 +87,15 @@ int DataLog_OutputTask::main(void)
 		// if we produce any output.
 		//
 		timeStampWritten = false;
+
+		//
+		// If there is no pending data to be processed, perform a flush
+		// operation to insure the output file is up to date.
+		//
+		if ( !datalog_WaitSignal("DataLog_Output", 0) )
+		{
+			flushOutput();
+		}
 
 		//
 		// Wait for data available to be output
@@ -178,14 +210,16 @@ void DataLog_OutputTask::writeSystemLevelRecord(void)
 	delete[] buffer;
 }
 
-DataLog_LocalOutputTask::DataLog_LocalOutputTask(const char * platformName)
+DataLog_LocalOutputTask::DataLog_LocalOutputTask(const char * platformName, const char * nodeName)
 {
 	DataLog_CommonData common;
 
 	//
 	// Output directly to disk file
 	//
+	_compressedFile = NULL;
 	_outputFD = open(common.connectName(), O_WRONLY | O_CREAT, 0666);
+
 	if ( _outputFD < 0 )
 	{
 		perror(common.connectName());
@@ -193,7 +227,7 @@ DataLog_LocalOutputTask::DataLog_LocalOutputTask(const char * platformName)
 	}
 
 	ftruncate(_outputFD, 0);
-	writeLogFileHeader(platformName);
+	writeLogFileHeader(platformName, nodeName);
 }
 
 void DataLog_LocalOutputTask::handleBufferSizeChange(size_t size)
@@ -202,16 +236,54 @@ void DataLog_LocalOutputTask::handleBufferSizeChange(size_t size)
 
 void DataLog_LocalOutputTask::writeOutputRecord(DataLog_BufferData * buffer, size_t size)
 {
-	write(_outputFD, (char *)buffer, size);
+	if ( !_compressedFile )
+	{
+		_compressedFile = gzdopen(_outputFD, "wb1");
+		if ( !_compressedFile < 0 )
+		{
+			DataLog_CommonData	common;
+
+			perror(common.connectName());
+			common.setTaskError(DataLog_OpenOutputFileFailed, __FILE__, __LINE__);
+		}
+	}
+
+	DataLog_BufferData * encryptedBuffer = buffer;
+	size_t  encryptedSize = size; 
+
+	if ( encryptFunc )
+	{
+		encryptedBuffer = (*encryptFunc)(buffer, size, &encryptedSize);
+	}
+
+	gzwrite(_compressedFile, encryptedBuffer, encryptedSize);
 }
 
 void DataLog_LocalOutputTask::shutdown(void)
 {
 	writeFileCloseRecord();
-	close(_outputFD);
+	if ( _compressedFile )
+	{
+		gzclose(_compressedFile);
+	}
+	else
+	{
+		close(_outputFD);
+	}
+
+	_outputFD = -1;
+	_compressedFile = NULL;
 }
 
-void DataLog_LocalOutputTask::writeLogFileHeader(const char * platformName)
+void DataLog_LocalOutputTask::flushOutput(void)
+{
+	if ( _compressedFile )
+	{
+		gzflush(_compressedFile, Z_SYNC_FLUSH);
+	}
+}
+
+void DataLog_LocalOutputTask::writeLogFileHeader(const char * platformName, const char * nodeName)
 {
 	static const char * plainTextMsg = "CONFIDENTIAL: This file is intended only for the use of Gambro BCT and contains information that "
 												  "is proprietary and confidential. You are hereby notified that any use, dissemination, distribution, "
@@ -246,11 +318,22 @@ void DataLog_LocalOutputTask::writeLogFileHeader(const char * platformName)
 
 	DataLog_UINT16	platformNameLen = strlen(platformName);
 	write(_outputFD, (char *)&platformNameLen, sizeof(DataLog_UINT16));
-	write(_outputFD, (char *)platformName, platformNameLen);
+	write(_outputFD, (char *)platformName, platformNameLen*sizeof(char));
+
+#ifndef DATALOG_NO_NETWORK_SUPPORT
+	DataLog_NodeID nodeId = datalog_NodeID();
+	write(_outputFD, (char *)&nodeId, sizeof(DataLog_NodeID));
+#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
 
 	DataLog_TimeStampStart start;
 	datalog_GetTimeStampStart(&start);
 	write(_outputFD, (char *)&start, sizeof(start));
+
+#ifndef DATALOG_NO_NETWORK_SUPPORT
+	DataLog_UINT16	nodeNameLen = strlen(nodeName);
+	write(_outputFD, (char *)&nodeNameLen, sizeof(DataLog_UINT16));
+	write(_outputFD, (char *)nodeName, nodeNameLen*sizeof(char));
+#endif
 }
 
 void DataLog_LocalOutputTask::writeFileCloseRecord(void)
@@ -262,7 +345,7 @@ void DataLog_LocalOutputTask::writeFileCloseRecord(void)
 	writeOutputRecord((DataLog_BufferData *)&fileCloseRecord, sizeof(fileCloseRecord));	
 }
 
-DataLog_NetworkOutputTask::DataLog_NetworkOutputTask(long connectTimeout)
+DataLog_NetworkOutputTask::DataLog_NetworkOutputTask(long connectTimeout, const char * nodeName)
 {
 	DataLog_CommonData common;
 
@@ -283,6 +366,23 @@ DataLog_NetworkOutputTask::DataLog_NetworkOutputTask(long connectTimeout)
 		perror(common.connectName());
 		common.setTaskError(DataLog_NetworkConnectionFailed, __FILE__, __LINE__);
 	}
+
+	writeLogFileNetworkHeader(nodeName);
+}
+
+void DataLog_NetworkOutputTask::writeLogFileNetworkHeader(const char * nodeName)
+{
+	size_t	bufferSize = sizeof(DataLog_NetworkHeaderRecord)+strlen(nodeName)*sizeof(char);
+	DataLog_BufferData * buffer = new DataLog_BufferData[bufferSize];
+	DataLog_NetworkHeaderRecord * networkHeader;
+
+	networkHeader = (DataLog_NetworkHeaderRecord *)buffer;
+	networkHeader->_recordType = DataLog_NetworkHeaderRecordID;
+	networkHeader->_nodeID = datalog_NodeID();
+	datalog_GetTimeStampStart(&networkHeader->_start);
+	networkHeader->_nodeNameLen = strlen(nodeName);
+	memcpy(&buffer[sizeof(DataLog_NetworkHeaderRecord)], nodeName, sizeof(char)*networkHeader->_nodeNameLen);
+	writeOutputRecord(buffer, bufferSize);
 }
 
 void DataLog_NetworkOutputTask::handleBufferSizeChange(size_t size)
@@ -341,5 +441,14 @@ void DataLog_NetworkOutputTask::writeConnectionEndRecord(void)
 	packet._type = DataLog_EndConnection;
 	packet._length = 0;
 	write(_outputFD, (char *)&packet, sizeof(packet));
+}
+
+void DataLog_NetworkOutputTask::writeTimeStampRecord(void)
+{
+	//
+	// Log file write time stamps are not used from network connections.
+	// The time stamp will be written by the node performing the physical
+	// write to the disk file.
+	//
 }
 

@@ -3,6 +3,8 @@
 # Makefile - makefile for datalog library
 #
 # $Log: makefile.vx $
+# Revision 1.5  2002/08/22 20:19:11  jl11312
+# - added network support
 # Revision 1.4  2002/08/15 20:52:46  jl11312
 # - modified to use new application build templates
 # Revision 1.3  2002/07/18 21:20:29  jl11312
@@ -41,7 +43,7 @@ include $(MAINDIR)/makefile.vxc
 #
 LIB_C_FILES   = 
 LIB_CXX_FILES = datalog.cpp datalog_buffer.cpp datalog_client.cpp datalog_init.cpp \
-		datalog_message.cpp datalog_message_print.cpp \
+		datalog_message.cpp datalog_message_binary.cpp datalog_message_print.cpp \
 		datalog_message_stream.cpp datalog_network.cpp datalog_output.cpp \
 		datalog_periodic.cpp datalog_port.cpp
 LIB_S_FILES =

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_init.cpp 1.8 2003/04/11 15:26:11Z jl11312 Exp jl11312 $
  * $Log: datalog_init.cpp $
+ * Revision 1.3  2002/08/22 20:19:11  jl11312
+ * - added network support
  * Revision 1.2  2002/08/15 20:53:54  jl11312
  * - added support for periodic logging
  * Revision 1.1  2002/07/18 21:21:00  jl11312
@@ -14,7 +16,11 @@
 #include "datalog.h"
 #include "datalog_internal.h"
 
+#ifdef DATALOG_NO_NETWORK_SUPPORT
 DataLog_Result datalog_Init(const char * logPath, const char * platformName)
+#else /* ifdef DATALOG_NO_NETWORK_SUPPORT */
+DataLog_Result datalog_Init(const char * logPath, const char * platformName, const char * nodeName)
+#endif /* ifdef DATALOG_NO_NETWORK_SUPPORT */
 {
 	DataLog_Result	result = DataLog_OK;
 
@@ -35,7 +41,12 @@ DataLog_Result datalog_Init(const char * logPath, const char * platformName)
 
 		DataLog_CommonData common;
 		common.setLocalConnect(logPath);
-		datalog_StartLocalOutputTask(platformName);
+
+#ifdef DATALOG_NO_NETWORK_SUPPORT
+		datalog_StartLocalOutputTask(platformName, NULL);
+#else /* ifdef DATALOG_NO_NETWORK_SUPPORT */
+		datalog_StartLocalOutputTask(platformName, nodeName);
+#endif /* ifdef DATALOG_NO_NETWORK_SUPPORT */
 
 #ifndef DATALOG_NO_NETWORK_SUPPORT
 		datalog_StartNetworkTask();
@@ -46,7 +57,7 @@ DataLog_Result datalog_Init(const char * logPath, const char * platformName)
 }
 
 #ifndef DATALOG_NO_NETWORK_SUPPORT
-DataLog_Result datalog_InitNet(const char * ipAddress, int port, long connectTimeout)
+DataLog_Result datalog_InitNet(const char * ipAddress, int port, long connectTimeout, const char * nodeName)
 {
 	DataLog_Result	result = DataLog_OK;
 
@@ -67,7 +78,7 @@ DataLog_Result datalog_InitNet(const char * ipAddress, int port, long connectTim
 
 		DataLog_CommonData common;
 		common.setNetworkConnect(ipAddress, port);
-		datalog_StartNetworkOutputTask(connectTimeout);
+		datalog_StartNetworkOutputTask(connectTimeout, nodeName);
 		datalog_StartNetworkTask();
 	}
 

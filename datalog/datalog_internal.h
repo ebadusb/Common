@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.10 2003/10/03 12:35:02Z jl11312 Exp jl11312 $
  * $Log: datalog_internal.h $
+ * Revision 1.7  2003/01/31 19:52:50  jl11312
+ * - new stream format for datalog
  * Revision 1.6  2002/10/08 14:43:02  jl11312
  * - added code to handle case for application saving a reference to a data log stream and performing multiple message writes
  * Revision 1.5  2002/09/19 21:25:59  jl11312
@@ -368,7 +370,9 @@ enum
 	DataLog_PeriodicItemRecordID = 0x5506,
 	DataLog_TaskCreateRecordID = 0x5507,
 	DataLog_TaskDeleteRecordID = 0x5508,
+	DataLog_NetworkHeaderRecordID = 0x5509,
 
+	DataLog_BinaryRecordID = 0x55f0,
 	DataLog_EndOfNetworkOutputRecordID = 0x55fc,
 	DataLog_FileCloseRecordID = 0x55fd,
 	DataLog_WriteTimeRecordID = 0x55fe,
@@ -390,6 +394,14 @@ struct DataLog_HeaderRecord
 	DataLog_TaskID	_currentTaskID __attribute__ ((packed));
 	DataLog_UINT16	_nodeIDSize __attribute__ ((packed));
 	DataLog_UINT16	_version __attribute__ ((packed));
+};
+
+struct DataLog_NetworkHeaderRecord
+{
+	DataLog_UINT16	_recordType __attribute__ ((packed));
+	DataLog_NodeID _nodeID __attribute__ ((packed));
+	DataLog_TimeStampStart _start __attribute__ ((packed));
+	DataLog_UINT16 _nodeNameLen __attribute__ ((packed));
 };
 
 struct DataLog_LogLevelRecord

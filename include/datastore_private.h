@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.9  2002/09/18 22:13:24Z  rm70006
+ * HISTORY:    Change Get and Set to have built in locking.
  * HISTORY:    Revision 1.8  2002/09/13 20:09:05Z  rm70006
  * HISTORY:    Fix bug with lock/unlock.
  * HISTORY:    Revision 1.7  2002/08/30 15:26:30Z  rm70006
@@ -176,6 +178,58 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, R
    BindItem(ds, &_fp, ITEM_SPOOF, created);
    *_fp = NULL;
 }
+
+
+
+//
+// Get method
+//
+template <class dataType> inline void BaseElement<dataType>::Get(dataType *item) const
+{
+   _ds->Lock();
+
+   // If calling instance is spoofer or no spoof has been registered, return real value
+   if ( (_role == ROLE_SPOOFER) || (*_fp == NULL) )
+   {
+      *item = *_data;
+   }
+   else
+   {
+      FP fp = *_fp;
+      *item = fp(*this);
+   }
+
+   _ds->Unlock();
+}
+
+
+
+#define NOLOCK_FASTGET(T)                                                                  \
+template<> inline void BaseElement<T>::Get(T *item) const                                  \
+{                                                                                          \
+   /* If calling instance is spoofer or no spoof has been registered, return real value */ \
+   if ( (_role == ROLE_SPOOFER) || (*_fp == NULL) )                                        \
+   {                                                                                       \
+      *item = *_data;                                                                      \
+   }                                                                                       \
+   else                                                                                    \
+   {                                                                                       \
+      FP fp = *_fp;                                                                        \
+      *item = fp(*this);                                                                   \
+   }                                                                                       \
+}
+
+
+
+//
+// Get Specializations.
+// The following types are "safe" and do not require locking as a read operation is atomic.
+//
+NOLOCK_FASTGET(int);
+NOLOCK_FASTGET(char);
+NOLOCK_FASTGET(bool);
+NOLOCK_FASTGET(float);
+NOLOCK_FASTGET(double);
 
 
 

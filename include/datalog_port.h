@@ -1,8 +1,11 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.16 2003/10/03 12:32:57Z jl11312 Exp rm70006 $
+ * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.18 2005/05/31 18:26:08Z jheiusb Exp jl11312 $
  * $Log: datalog_port.h $
+ * Revision 1.16  2003/10/03 12:32:57Z  jl11312
+ * - improved DataLog_Handle lookup time
+ * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
  * Revision 1.15  2003/04/29 17:06:56Z  jl11312
  * - added function to get FILE pointer for console output
  * Revision 1.14  2003/03/27 15:47:36Z  jl11312
@@ -113,6 +116,13 @@ DataLog_ErrorInformation	datalog_ErrorInformation[DataLog_LastError] =
 
 #include <vxWorks.h>
 
+#include <ioLib.h>      /* for common file IO */
+#include <errnoLib.h>   /* for error functions */
+#include <sysLib.h>
+#include <sockLib.h>
+#include <symLib.h>
+#include <sysSymTbl.h>
+
 /*
  *	Network related definitions (needed only if platform supports network
  * connections to data log system).
@@ -177,6 +187,118 @@ typedef SEM_ID	DataLog_Lock;
 #define	DataLog_Map		map
 #endif /* ifdef __cplusplus */
 
+/*
+ * Packing directives
+ * VxWorks Supports the packing of individual elements so:
+ *    Packing_Structure_Directive is blank
+ *    Packing_Element_Directive is set appropriately
+ */
+#define Packing_Structure_Directive
+#define Packing_Element_Directive __attribute__ ((packed))
+
+#include <inetLib.h>
+
+#elif defined (WIN32) /************************************************************************************/
+
+#include "stdafx.h"
+
+#include <io.h>      /* Used to get access to open() call. */
+#include <winsock2.h>  /* used for socket calls */
+#include <assert.h>
+
+#define OK 1
+#define WAIT_FOREVER INFINITE
+
+/*
+ *	Network related definitions (needed only if platform supports network
+ * connections to data log system).
+ */
+#define DATALOG_NETWORK_SUPPORT
+typedef unsigned long	DataLog_NodeID;
+
+/*
+ * Support initialization of global datalog levels/handles
+ */
+#define DATALOG_LEVELS_INIT_SUPPORT
+
+/*
+ *	Platform specific data types
+ */
+typedef unsigned char DataLog_UINT8;
+typedef unsigned short DataLog_UINT16;
+typedef unsigned long DataLog_UINT32;
+
+/*
+ *	Internal ID related definitions (used for ID information in log files)
+ */
+typedef unsigned short DataLog_InternalID;
+#define DATALOG_NULL_ID 0
+
+/*
+ *	Task related definitions
+ */
+typedef int DataLog_TaskID;
+#define DATALOG_CURRENT_TASK 0
+
+/*
+ *	Shared memory related definitions
+ */
+#define DataLog_SharedPtr(type) type *
+#define DATALOG_NULL_SHARED_PTR NULL
+
+/*
+ *	Output buffer related definitions
+ */
+typedef unsigned char DataLog_BufferData;
+
+/*
+ *	Access lock related definitions
+ */
+typedef HANDLE	DataLog_Lock;
+
+/*
+ *	STL list type
+ */
+#ifdef __cplusplus
+#include <list>
+#define	DataLog_List std::list
+#endif /* ifdef __cplusplus */
+
+/*
+ *	STL map type
+ */
+#ifdef __cplusplus
+#include <map>
+#define	DataLog_Map	std::map
+#endif /* ifdef __cplusplus */
+
+/*
+ * Packing directives
+ * .NET DOES NOT support the packing of individual elements so:
+ *    Packing_Structure_Directive is set appropriately
+ *    Packing_Element_Directive is blank
+ */
+#define Packing_Structure_Directive __declspec(align(1))  /* pack to the closest byte */
+#define Packing_Element_Directive
+
+#define INET_ADDR_LEN 18
+
+inline int errnoGet (void) { return errno; };
+inline int taskDelay (int ticks) { Sleep (ticks); return 1; };
+
+
+/* required function definitions */
+
+extern int connectWithTimeout (int sock, struct sockaddr *adrs, int adrsLen, struct timeval *timeVal);
+extern void inet_ntoa_b (struct in_addr inetAddress, char *pString);
+inline int  sysClkRateGet (void) { return 1; };
+extern int 	taskLock (void);
+extern int 	taskIdListGet (int idList [ ], int maxTasks);
+extern int 	taskUnlock (void);
+extern int  intLock(void);
+extern int  intUnlock(int level);
+
+
 #else /* ifdef VXWORKS */
 #error "Unknown platform"
 #endif /* ifdef VXWORKS */
@@ -206,9 +328,11 @@ void datalog_FreeSharedMem(DataLog_SharedPtr(void) ptr);
 /*
  *	Access lock related functions
  */
-DataLog_Lock datalog_CreateLock(void);
+DataLog_Lock datalog_CreateMLock(void);
+DataLog_Lock datalog_CreateBLock(void);
+
 void datalog_DeleteLock(DataLog_Lock lock);
-void datalog_LockAccess(DataLog_Lock lock);
+int datalog_LockAccess(DataLog_Lock lock, int delay = WAIT_FOREVER);
 void datalog_ReleaseAccess(DataLog_Lock lock);
 
 /*
@@ -238,20 +362,20 @@ void datalog_StartNetworkClientTask(int clientSocket, struct sockaddr_in * clien
  *	Time stamp related functions.  Note that the related structures
  * are written to the log file and so must be packed.
  */
-typedef struct
+Packing_Structure_Directive typedef struct
 {
-	DataLog_UINT8	_day __attribute__ ((packed));		/* 1-31 */
-	DataLog_UINT8	_month __attribute__ ((packed));		/* 1-12 */
-	DataLog_UINT16	_year __attribute__ ((packed));
-	DataLog_UINT8	_hour __attribute__ ((packed));
-	DataLog_UINT8	_minute __attribute__ ((packed));
-	DataLog_UINT8	_second __attribute__ ((packed));
+	DataLog_UINT8	_day Packing_Element_Directive;		/* 1-31 */
+	DataLog_UINT8	_month Packing_Element_Directive;		/* 1-12 */
+	DataLog_UINT16	_year Packing_Element_Directive;
+	DataLog_UINT8	_hour Packing_Element_Directive;
+	DataLog_UINT8	_minute Packing_Element_Directive;
+	DataLog_UINT8	_second Packing_Element_Directive;
 } DataLog_TimeStampStart;
 
-typedef struct
+Packing_Structure_Directive typedef struct
 {
-	DataLog_UINT32	_seconds __attribute__ ((packed));
-	DataLog_UINT32	_nanoseconds __attribute__ ((packed));
+	DataLog_UINT32	_seconds Packing_Element_Directive;
+	DataLog_UINT32	_nanoseconds Packing_Element_Directive;
 } DataLog_TimeStamp;
 
 void datalog_GetTimeStampStart(DataLog_TimeStampStart * start);
@@ -260,9 +384,9 @@ void datalog_GetTimeStamp(DataLog_TimeStamp * stamp);
 void datalog_TaskCreated(DataLog_TaskID taskID);
 void datalog_TaskDeleted(DataLog_TaskID taskID);
 
-#ifdef DATALOG_NETWORK_SUPPORT
+//#ifdef DATALOG_NETWORK_SUPPORT
 DataLog_NodeID datalog_NodeID(void);
-#endif /* ifdef DATALOG_NETWORK_SUPPORT */
+//#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 #ifdef __cplusplus
 }; // extern "C"

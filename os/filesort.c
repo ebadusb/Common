@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/filesort.c 1.3 2003/05/13 15:01:00Z jl11312 Exp jl11312 $
  * $Log: filesort.c $
+ * Revision 1.2  2002/12/03 19:20:43Z  jl11312
+ * - corrected logic for storing file names
  * Revision 1.1  2002/09/19 22:15:43  jl11312
  * Initial revision
  *
@@ -165,14 +167,6 @@ STATUS fileSort(const char * dirName, FileSortType sortType, fileSortCallBack * 
 				callBackStatus = (*callBack)(fullPathName);
 				file += 1;
 			}
-		}
-
-		if ( callBackStatus == FILE_CALLBACK_CONTINUE )
-		{
-			/*
-			 *	Perform final call back to notify application of end of file list
-			 */
-			(*callBack)(NULL);
 		}
 
 		/*

@@ -5,6 +5,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/debug/rcs/failure_debug.cpp 1.11 2004/02/24 22:31:40Z jl11312 Exp ms10234 $
  * $Log: failure_debug.cpp $
+ * Revision 1.10  2003/12/16 21:57:10Z  jl11312
+ * - replaced binary semaphore with mutex semaphore to avoid potential priority inversion
  * Revision 1.9  2003/10/03 14:31:05Z  jl11312
  * - added switch back from hex to decimal after logging stack traces
  * Revision 1.8  2003/10/03 12:37:20Z  jl11312
@@ -135,6 +137,18 @@ void DBG_DumpData(void)
 			frame = (unsigned int *)(*frame);
 			stackCount += 1;
 	   }
+	}
+	outStream << dec << endmsg;
+
+	outStream << "Task state:" << hex;
+	for ( int i=0; i<numTasks; i++ )
+	{
+		outStream << (unsigned int)taskList[i] << ":" << taskList[i]->status << " " <<
+                    taskList[i]->priority << " " << taskList[i]->priNormal << " ";
+      if ( taskList[i]->pPriMutex )
+		{
+			outStream << (unsigned int)taskList[i]->pPriMutex << " " << (unsigned int)taskList[i]->pPriMutex->state.owner << " ";
+		}
 	}
 	outStream << dec << endmsg;
 

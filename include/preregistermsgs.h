@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1999 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/PreRegisterMsgs.h 1.1 1999/07/24 20:50:41 TD10216 Exp TD10216 $
+ * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/PreRegisterMsgs.h 1.3 1999/07/26 22:30:10 TD10216 Exp TD10216 $
  * $Log: PreRegisterMsgs.h $
+ * Revision 1.1  1999/07/24 20:50:41  TD10216
+ * Initial revision
  *
  *
  * ABSTRACT:Code shared between tcp_gate and everest_logger which
@@ -15,13 +17,12 @@
 //					Parameter: none
 //
 // ERROR HANDLING:	none
-// currently hard-coded for Trima!!
-#define EVERESTMAP "/trima/tcpip/everest_logger.msgs"
 static void PreRegisterMsgs( int RegisterRegistrationMsg )
 {
 	TCPGate_Reg_ReqMsg aRegMsg;
 	FILE *EnumDefFile;
 
+	char *EVERESTMAP = getenv("EVERESTMAP");
 	if((EnumDefFile = fopen(EVERESTMAP,"r")) == NULL)
 	{
         _FATAL_ERROR( __FILE__,__LINE__, TRACE_GATEWAY, errno,  

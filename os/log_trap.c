@@ -3,12 +3,15 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/log_trap.c 1.3 2003/06/19 20:05:59Z jl11312 Exp jl11312 $
  * $Log: log_trap.c $
+ * Revision 1.3  2003/06/19 20:05:59Z  jl11312
+ * - corrected logging of system startup/install messages
  * Revision 1.2  2003/05/21 20:00:30Z  jl11312
  * - enhanced memory protection (IT 6091)
  * Revision 1.1  2003/04/30 14:54:39Z  jl11312
  * Initial revision
  */
 
+#include <ioLib.h>
 #include "log_trap.h"
 
 static char * logBuffer = NULL;
@@ -16,6 +19,7 @@ static int logBufferEndIdx;
 static int logBufferReadIdx;
 static int logBufferWriteIdx;
 static SEM_ID	logDataAvailSem;
+extern int consoleFd;
 
 static void logTrapTask(const char * pipeName, size_t pipeBufferSize)
 {
@@ -140,7 +144,7 @@ int logTrapInit(const char * pipeName, size_t pipeBufferSize, size_t logBufferSi
 		logBufferReadIdx = logBufferWriteIdx = 0;
 
 		logDataAvailSem = semBCreate(SEM_Q_PRIORITY, SEM_EMPTY);
-		taskStart("log_trap", 2, 4000, logTrapTask, (int)pipeName, (int)pipeBufferSize, 0, 0, 0, 0, 0, 0, 0, 0);
+		taskStart("log_trap", 2, 4000, (FUNCPTR)logTrapTask, (int)pipeName, (int)pipeBufferSize, 0, 0, 0, 0, 0, 0, 0, 0);
 	}
 	else
 	{

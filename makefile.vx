@@ -3,6 +3,8 @@
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.18  2003/05/15 15:29:26Z  ms10234
+# 5819, 5820, 5821 - changed mistype path name for statemachine project
 # Revision 1.17  2003/05/15 15:25:34Z  ms10234
 # 5819, 5820, 5821 -  added state machine
 # Revision 1.16  2003/02/28 22:06:02Z  jl11312
@@ -50,18 +52,19 @@ endif
 MAINDIR = .
 include $(MAINDIR)/makefile.vxc
 
+DIR_LIST := cds clocks cmdline datalog debug router socket++ softcrc statemachine zlib
+ifeq ($(CPU),I80486)
+    DIR_LIST += drivers
+endif
+
 .PHONY: libs
-libs:
-	@cd datalog && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
-	@cd debug && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
-	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
-	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
-	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
-	@cd clocks && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
-	@cd cds && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
-	@cd cmdline && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
-	@cd statemachine && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
-	@cd zlib && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
+libs: $(DIR_LIST)
+
+.PHONY: force
+force: ;
+
+$(DIR_LIST) : force
+	@cd $@ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 
 COMMON_BUILD_DIR := $(strip $(subst \,/, $(shell cd)))
 

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/load_module.c 1.2 2003/05/23 16:10:43Z jl11312 Exp jl11312 $
  * $Log: load_module.c $
+ * Revision 1.2  2003/05/23 16:10:43Z  jl11312
+ * - added parameter to get load information
  * Revision 1.1  2003/05/21 20:00:58Z  jl11312
  * Initial revision
  */
@@ -125,12 +127,5 @@ STATUS loadModuleFromFile(const char * fileName, LoadModuleInfo * info)
 	}
 
 	if ( loadFD >= 0 ) close(loadFD);
-	if ( status != OK )
-	{
-		if ( pText) free(pText);
-		if ( pData && pData != LD_NO_ADDRESS ) free(pData);
-		if ( pBSS && pBSS != LD_NO_ADDRESS ) free(pBSS);
-	}
-
 	return status;
 }

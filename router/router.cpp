@@ -437,7 +437,7 @@ void Router::connectWithGateway( const MessagePacket &mp )
    
       struct timeval tv;
       tv.tv_sec = 0;
-      tv.tv_usec = MessageSystemConstant::CONNECT_DELAY * 1000000 /* milliseconds to nanoseconds */;
+      tv.tv_usec = MessageSystemConstant::CONNECT_DELAY * 1000 /* milliseconds to microseconds */;
       short port;
       memmove( &port, mp.msgData().msg(), sizeof( short ) );
       int status = socketbuffer->connectWithTimeout( ntohl( mp.msgData().nodeId() ), port, &tv );

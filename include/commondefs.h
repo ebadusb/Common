@@ -9,6 +9,8 @@
  * ABSTRACT:   COBE BCT common shared definitions 
  *
  * $Log: COMMONDEFS.H $:
+ * Revision 1.4  1999/08/13 00:35:42  TD10216:
+ * IT4219:
  * Revision 1.2  1999/07/08 23:46:04  TD10216:
  * IT4115:
  * Revision 1.1  1999/05/24 23:26:19  TD10216:

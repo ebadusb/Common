@@ -7,6 +7,9 @@
  * CHANGELOG:
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.cpp 1.6 2002/09/20 19:30:23Z td07711 Exp rm70006 $
  * $Log: softcrc.cpp $
+ * Revision 1.3  1999/08/21 21:34:09  BS04481
+ * Machcrc produces read-only crc files but softcrc produces 
+ * read/write crc files
  * Revision 1.2  1999/08/20 23:58:18  BS04481
  * Chmod the resulting update file to readonly
  * Revision 1.1  1999/05/24 23:32:16  TD10216
@@ -195,7 +198,7 @@ int main(int argc, char** argv)
       // calculate CRC over filelist
       //
       if ((filelist = fopen(Filelist[i], "r")) == NULL) {
-         sprintf(buf, "failed to open filelist %.100s\n", Filelist[i]);
+         sprintf(buf, "failed to open filelist %.256s\n", Filelist[i]);
          logerrno(buf);
          exit(-1);
       }
@@ -210,7 +213,7 @@ int main(int argc, char** argv)
 
       // Close the current filelist
       if ( fclose( filelist ) != 0 ) {
-         sprintf(buf, "failed to close filelist %.100s\n", Filelist[i]);
+         sprintf(buf, "failed to close filelist %.256s\n", Filelist[i]);
          logerrno(buf);
          exit(-1);
       }
@@ -238,7 +241,7 @@ int main(int argc, char** argv)
    //
    if (VerifyFile) {
       if ((fp = fopen(VerifyFile, "r")) == NULL) {
-         sprintf(buf, "fopen failed on %.100s, cannot verify\n", VerifyFile);
+         sprintf(buf, "fopen failed on %.256s, cannot verify\n", VerifyFile);
          logerrno(buf);
          exit(-1);
       }
@@ -252,7 +255,7 @@ int main(int argc, char** argv)
       }
       if (crc != InitCRC) {
          if (Verbosity > 0) {
-            sprintf(buf, "%.100s verification failed, crc=0x%08x  expected=0x%08x\n",
+            sprintf(buf, "%.256s verification failed, crc=0x%08x  expected=0x%08x\n",
                     VerifyFile, InitCRC, crc);
             logerror(buf);
          }
@@ -260,7 +263,7 @@ int main(int argc, char** argv)
       }
       else {
          if (Verbosity > 0) {
-            sprintf(buf, "%.100s verified OK crc=0x%08x\n", VerifyFile, InitCRC);
+            sprintf(buf, "%.256s verified OK crc=0x%08x\n", VerifyFile, InitCRC);
             loginfo(buf);
          }
       }
@@ -271,7 +274,7 @@ int main(int argc, char** argv)
    //
    if (UpdateFile) {
       if ((fp = fopen(UpdateFile, "w")) == NULL) {
-         sprintf(buf, "fopen failed on %.100s, cannot update\n", UpdateFile);
+         sprintf(buf, "fopen failed on %.256s, cannot update\n", UpdateFile);
          logerrno(buf);
          exit(-1);
       }
@@ -284,7 +287,7 @@ int main(int argc, char** argv)
       {
          if (fclose(fp) != NULL)
          {
-            sprintf(buf, "fclose failed on %.100s\n", UpdateFile);
+            sprintf(buf, "fclose failed on %.256s\n", UpdateFile);
             logerrno(buf);
             exit(-1);
          }
@@ -293,7 +296,7 @@ int main(int argc, char** argv)
          {
             if (chmod(UpdateFile, (S_IRUSR|S_IRGRP|S_IROTH)) != 0)
             {
-               sprintf(buf, "chmod failed on %.100s, cannot change permission", UpdateFile);
+               sprintf(buf, "chmod failed on %.256s, cannot change permission", UpdateFile);
                logerrno(buf);
                exit(-1);
             }
@@ -302,7 +305,7 @@ int main(int argc, char** argv)
       }
 
       if (Verbosity > 0) {
-         sprintf(buf, "%.100s updated with new crc=0x%08x\n", UpdateFile, InitCRC);
+         sprintf(buf, "%.256s updated with new crc=0x%08x\n", UpdateFile, InitCRC);
          loginfo(buf);
       }
    }
@@ -399,7 +402,7 @@ void parseCmdline(int argc, char** argv)
 #ifdef RESTRICT_TO_MACHINE
          if (strcmp(UpdateFile, MACH_CRCFILE) &&
              strncmp(UpdateFile, "/tmp/", 5)) {
-             sprintf(buf, "-update restricted to %.100s or file in /tmp\n",
+             sprintf(buf, "-update restricted to %.256s or file in /tmp\n",
                      MACH_CRCFILE);
              usage(buf);
          }
@@ -452,7 +455,7 @@ void parseCmdline(int argc, char** argv)
       }
 
       else {
-         sprintf(buf, "invalid argument: %.100s\n", *parg);
+         sprintf(buf, "invalid argument: %.256s\n", *parg);
          usage(buf);
       }
    }
@@ -500,14 +503,14 @@ void doitem(unsigned long* pcrc, char* path, int filelistItem)
 
    // check whether item should be ignored
    if (ignore(path)) {
-      sprintf(buf, "doitem: ignoring %.100s\n", path);
+      sprintf(buf, "doitem: ignoring %.256s\n", path);
       logdebug(buf);
       return;
    }
 
    // check for symlink first
    if (lstat(path, &statbuf) == -1) {
-      sprintf(buf, "failed to lstat %.200s\n", path);
+      sprintf(buf, "failed to lstat %.256s\n", path);
       logerrno(buf);
       exit(-1);
    }
@@ -520,20 +523,20 @@ void doitem(unsigned long* pcrc, char* path, int filelistItem)
       if (FollowSymlinks) {
          // note: stat() does follow symlinks
          if (stat(path, &statbuf) == -1) {
-            sprintf(buf, "failed to stat %.200s\n", path);
+            sprintf(buf, "failed to stat %.256s\n", path);
             logerrno(buf);
             exit(-1);
          }
 
          // check for symlink to different filesystem
          if (Device != statbuf.st_dev && TraverseFileSystems == 0) {
-            sprintf(buf, "doitem: skipping symlink across FS: %.200s\n", path);
+            sprintf(buf, "doitem: skipping symlink across FS: %.256s\n", path);
             logdebug(buf);
             return;
          }
       }
       else {
-         sprintf(buf, "doitem: skipping symlink: %.200s\n", path);
+         sprintf(buf, "doitem: skipping symlink: %.256s\n", path);
          logdebug(buf);
          return;
       }
@@ -541,13 +544,13 @@ void doitem(unsigned long* pcrc, char* path, int filelistItem)
 
    // check for mount point of different file system
    if (Device != statbuf.st_dev && TraverseFileSystems == 0) {
-      sprintf(buf, "doitem: skipping mount point: %.200s\n", path);
+      sprintf(buf, "doitem: skipping mount point: %.256s\n", path);
       logdebug(buf);
       return;
    }
 
    if (Debug) {
-      sprintf(buf, "doitem: %.200s device=0x%x\n", path, statbuf.st_dev);
+      sprintf(buf, "doitem: %.256s device=0x%x\n", path, statbuf.st_dev);
       logdebug(buf);
    }
 
@@ -583,13 +586,13 @@ void dodir(unsigned long* pcrc, char* dirname)
    ASSERT(dirname != 0);
 
    if ((dp = opendir(dirname)) == NULL) {
-      sprintf(buf, "opendir failed on %.200s\n", dirname);
+      sprintf(buf, "opendir failed on %.256s\n", dirname);
       logerrno(buf);
       exit(-1);
    }
 
    if (++NestLevel > SubdirLimit) {
-      sprintf(buf, "recursion limit exceeded, skipping %.200s\n", dirname);
+      sprintf(buf, "recursion limit exceeded, skipping %.256s\n", dirname);
       logwarning(buf);
       NestLevel--;
       return;
@@ -654,7 +657,7 @@ void dodir(unsigned long* pcrc, char* dirname)
    for (pent = table; *pent; pent++) {
 
       if (Debug) {
-         sprintf(buf, "dodir: sorted entry = %.200s\n", *pent);
+         sprintf(buf, "dodir: sorted entry = %.256s\n", *pent);
          logdebug(buf);
       }
 
@@ -665,9 +668,9 @@ void dodir(unsigned long* pcrc, char* dirname)
       }
       // append entry name to dirname
       if (strcmp("/", dirname))
-         sprintf(buf, "%.150s/%.50s", dirname, *pent);
+         sprintf(buf, "%.256s/%.256s", dirname, *pent);
       else
-         sprintf(buf, "/%.50s", *pent);  // special case for "/"
+         sprintf(buf, "/%.256s", *pent);  // special case for "/"
 
       doitem(pcrc, buf, 0);
    }
@@ -684,13 +687,13 @@ void dodir(unsigned long* pcrc, char* dirname)
       printf("ICRC: 0x%08x   %s\n", *pcrc, dirname);
 
    if (Debug) {
-      sprintf(buf, "dodir: dir=%.150s numentries=%d icrc=0x%08x\n",
+      sprintf(buf, "dodir: dir=%.256s numentries=%d icrc=0x%08x\n",
               dirname, nument, *pcrc);
       logdebug(buf);
    }
 
    if (closedir(dp) == -1) {
-      sprintf(buf, "closedir failed on %.150s\n", dirname);
+      sprintf(buf, "closedir failed on %.256s\n", dirname);
       logerrno(buf);
       exit(-1);
    }
@@ -714,7 +717,7 @@ void dofile(unsigned long* pcrc, char* filename)
    ASSERT(filename != 0);
 
    if ((fd = open(filename, O_RDONLY)) == -1) {
-      sprintf(buf, "failed to open %.200s\n", filename);
+      sprintf(buf, "failed to open %.256s\n", filename);
       logerrno(buf);
       exit(-1);
    }
@@ -722,7 +725,7 @@ void dofile(unsigned long* pcrc, char* filename)
    // read the file and calculate new crc
    while(1) {
       if ((n = read(fd, Readbuf, ReadbufSize)) == -1) {
-         sprintf(buf, "read failed on %.200s\n", filename);
+         sprintf(buf, "read failed on %.256s\n", filename);
          logerrno(buf);
          exit(-1);
       }
@@ -737,16 +740,16 @@ void dofile(unsigned long* pcrc, char* filename)
    }
 
    if (Verbosity == 3)
-      printf("ICRC: 0x%08x   %.200s\n", *pcrc, filename);
+      printf("ICRC: 0x%08x   %.256s\n", *pcrc, filename);
 
    if (Debug) {
-      sprintf(buf, "dofile: file=%.200s length=%ld icrc=0x%08x\n",
+      sprintf(buf, "dofile: file=%.256s length=%ld icrc=0x%08x\n",
            filename, length, *pcrc);
       logdebug(buf);
    }
 
    if (close(fd) == -1) {
-      sprintf(buf, "close failed on %.200s\n", filename);
+      sprintf(buf, "close failed on %.256s\n", filename);
       logerrno(buf);
       exit(-1);
    }
@@ -779,7 +782,7 @@ char* getnextitem(FILE* filelist)
       tmpbuf[sizeof(tmpbuf)-1] = 0;  // make sure buf is null terminated
 
       if (Debug) {
-         sprintf(msg, "getnextitem: %.200s", tmpbuf);  // buf has \n already
+         sprintf(msg, "getnextitem: %.256s", tmpbuf);  // buf has \n already
          logdebug(msg);
       }
 
@@ -818,7 +821,7 @@ char* getnextitem(FILE* filelist)
       }
 
       if (Debug) {
-         sprintf(msg, "getnextitem: returned pathname=%.200s\n", buf);
+         sprintf(msg, "getnextitem: returned pathname=%.256s\n", buf);
          logdebug(msg);
       }
 
@@ -841,7 +844,7 @@ void loginfo(char* msg)
 
    ASSERT(msg != 0);
 
-   sprintf(buf, "%.50s: %.200s", ProgramName, msg);
+   sprintf(buf, "%.256s: %.256s", ProgramName, msg);
    if (Verbosity > 0)
       fprintf(stdout, buf);
    TRACELOG(buf);
@@ -861,7 +864,7 @@ void logerrno(char* msg)
 
    ASSERT(msg != 0);
 
-   sprintf(buf, "ERROR %.50s: %.200s\n    errno=%d %.40s\n",
+   sprintf(buf, "ERROR %.256s: %.256s\n    errno=%d %.256s\n",
            ProgramName, msg, errno, strerror(errno));
    if (Verbosity > 0)
       fprintf(stderr, buf);
@@ -881,7 +884,7 @@ void logerror(char* msg)
 
    ASSERT(msg != 0);
 
-   sprintf(buf, "ERROR %.50s: %.200s", ProgramName, msg);
+   sprintf(buf, "ERROR %.256s: %.256s", ProgramName, msg);
    if (Verbosity > 0)
       fprintf(stderr, buf);
    TRACELOG(buf);
@@ -913,7 +916,7 @@ void logwarning(char* msg)
 
    ASSERT(msg != 0);
 
-   sprintf(buf, "Warning %.50s: %.200s", ProgramName, msg);
+   sprintf(buf, "Warning %.256s: %.256s", ProgramName, msg);
    if (Verbosity > 0)
       fprintf(stdout, buf);
    TRACELOG(buf);
@@ -945,7 +948,7 @@ void doignore(char* pathbuf)
 
    // if -chroot AND full pathname, prepend the -chroot string
    if (Rootdir && (*pathbuf == '/'))
-      sprintf(buf, "%.70s%.180s", Rootdir, pathbuf);
+      sprintf(buf, "%.256s%.256s", Rootdir, pathbuf);
    else
       strcpy(buf, pathbuf);
 
@@ -965,7 +968,7 @@ void doignore(char* pathbuf)
    pList = pnode;
 
    if (Debug) {
-      sprintf(buf, "doignore: will ignore %.200s\n", pnode->string);
+      sprintf(buf, "doignore: will ignore %.256s\n", pnode->string);
       logdebug(buf);
    }
 
@@ -1011,7 +1014,7 @@ int compare(const void* pstring1, const void* pstring2)
    rval =  (strcmp(*(char**)pstring1, *(char**)pstring2));
 
    if (Debug) {
-      sprintf(buf, "compare: rval=%d %.100s %.100s\n",
+      sprintf(buf, "compare: rval=%d %.256s %.256s\n",
               rval, *(char**)pstring1, *(char**)pstring2);
       logdebug(buf);
    }

@@ -3,6 +3,8 @@
  *
  * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/COMMON.H 1.2 1999/07/09 15:24:25 BS04481 Exp BS04481 $
  * $Log: COMMON.H $
+ * Revision 1.2  1999/07/09 15:24:25  BS04481
+ * Add logging of data for reboots due to suspected OS hangs
  * Revision 1.1  1999/05/24 23:26:18  TD10216
  * Initial revision
  * Revision 1.7  1999/03/24 21:50:38  BS04481
@@ -43,6 +45,7 @@
 
 #include <i86.h>
 #include <stdlib.h>
+#include <conio.h>
 #include "error.h"
 #include "hardware.h"
 
@@ -52,6 +55,8 @@ enum BOOL
    TRUE=1,
 };
 
+// forward references for driver fatal error (initializes hardware!)
+void FATAL_ERROR( int, char*);               // fatal errors, terminates program
 
 // SPECIFICATION:    Outputs 8 bits to IO space for hardware control.  If the "read"
 //                   variable is TRUE, also reads back the just written value
@@ -76,7 +81,7 @@ inline void Outp( long address, unsigned char data, BOOL read)
                  , address
                  , data
                  , read_back);
-         _FATAL_ERROR_DRV( __FILE__, __LINE__, TRACE_CTL_DRV, address, eString);
+         FATAL_ERROR( __LINE__,  eString);
       }
    }
 }
@@ -104,7 +109,7 @@ inline void Outpw( long address, long data, BOOL read)
                  , address
                  , data
                  , read_back);
-         _FATAL_ERROR_DRV( __FILE__, __LINE__, TRACE_CTL_DRV, address, eString);
+         FATAL_ERROR( __LINE__, eString);
       }
    }
 }

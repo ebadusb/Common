@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.13 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.h $
+ * Revision 1.9  2004/12/27 22:48:51Z  rm10919
+ * Added CGUITextItem::getAscii for use with sprintf().
  * Revision 1.8  2004/11/19 18:14:47Z  cf10242
  * Integration checkin
  * Revision 1.7  2004/11/12 14:53:11Z  rm10919
@@ -124,8 +126,6 @@ public:
    //
    const StringChar * getText(LanguageId languageId = currentLanguage);
    char * getAscii(LanguageId languageId = currentLanguage);
-
-   char * convertToAscii(void);
 
    CGUITextItem * getTextItem(const char * id, LanguageId languageId);
 

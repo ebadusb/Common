@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_network.cpp 1.5 2003/12/09 14:14:28Z jl11312 Exp rm70006 $
  * $Log: datalog_network.cpp $
+ * Revision 1.3  2003/02/25 16:10:21Z  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.2  2002/09/23 15:35:36  jl11312
  * - fixed port number setting
  * Revision 1.1  2002/08/22 20:19:02  jl11312
@@ -17,6 +19,10 @@
 #include <ioLib.h>
 #include <sysLib.h>
 #include "datalog_internal.h"
+
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+# include "datalog_levels.h"
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
 
 DataLog_NetworkTask::DataLog_NetworkTask(int port)
 {
@@ -33,7 +39,6 @@ void DataLog_NetworkTask::exit(int code)
 
 int DataLog_NetworkTask::main(void)
 {
-	DataLog_Critical	critical;
 	int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
    sockaddr_in	addr;
 
@@ -56,13 +61,25 @@ int DataLog_NetworkTask::main(void)
 		if ( clientSocket >= 0 )
 		{
 			inet_ntoa_b(clientAddr.sin_addr, ipAddress);
-			DataLog(critical) << "DataLog network task accepted connection from " << ipAddress << endmsg;
+
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+			DataLog(log_level_datalog_info)
+#else /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+			DataLog_Default
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+				<< "DataLog network task accepted connection from " << ipAddress << endmsg;
 
 			datalog_StartNetworkClientTask(clientSocket, &clientAddr);
 		}
 		else
 		{
-			DataLog(critical) << "DataLog network task accept call failed, errno=" << errnoGet() << endmsg;
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+			DataLog(log_level_datalog_error)
+#else /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+			DataLog_Default
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+				<< "DataLog network task accept call failed, errno=" << errnoGet() << endmsg;
+
 			taskDelay(10*sysClkRateGet());
 		}
 	}

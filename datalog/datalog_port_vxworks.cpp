@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.9 2003/10/16 14:57:40Z jl11312 Exp jl11312 $
  * $Log: datalog_port_vxworks.cpp $
+ * Revision 1.5  2003/02/25 16:10:26Z  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.4  2003/01/10 14:21:46  jl11312
  * - corrected conditional compile problem for simulator
  * Revision 1.3  2003/01/08 15:37:48  jl11312
@@ -23,6 +25,11 @@
 #include <timers.h>
 #include "datalog_internal.h"
 #include "error.h"
+
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+# include "datalog_levels.h"
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+
 
 //
 // Local functions
@@ -105,8 +112,12 @@ void DataLog_CommonData::registerLevelID(const char * levelName, DataLog_Interna
 	semTake(levelIDLock, WAIT_FOREVER);
 	if ( levelIDMap.find(levelName) != levelIDMap.end() )
 	{
-		DataLog_Critical	errorLog;
-		DataLog(errorLog) << "attempt to register duplicate level name ignored" << endmsg;
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+		DataLog(log_level_datalog_error)
+#else /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+		DataLog_Default
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+			<< "attempt to register duplicate level name ignored" << endmsg;
 	}
 	else
 	{

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.13 2003/12/05 16:33:05Z jl11312 Exp rm70006 $
  * $Log: datalog.cpp $
+ * Revision 1.10  2003/02/25 16:10:06Z  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.9  2003/01/31 19:52:49  jl11312
  * - new stream format for datalog
  * Revision 1.8  2002/09/23 13:54:58  jl11312
@@ -29,6 +31,11 @@
 #include "datalog_internal.h"
 #include "datalog_records.h"
 #include "error.h"
+
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+# include "datalog_levels.h"
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+
 
 DataLog_Map<DataLog_TaskID, DataLog_TaskInfo *> DataLog_CommonData::_tasks;
 DataLog_Lock DataLog_CommonData::_tasksLock = datalog_CreateLock();
@@ -168,10 +175,14 @@ void DataLog_CommonData::setTaskError(DataLog_ErrorType error, const char * file
 	const char * message = datalog_ErrorMessage(error);
 	int continuable = datalog_ErrorContinuable(error);
 
-	DataLog_Critical	critical;
-	DataLog(critical) << "datalog error: " << message <<
-                        ((continuable) ? " " : " (fatal) ") <<
-                        "@ " << file << ":" << line << endmsg;
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+	DataLog(log_level_datalog_error)
+#else /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+	DataLog_Default
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+		<< "datalog error: " << message <<
+          ((continuable) ? " " : " (fatal) ") <<
+          "@ " << file << ":" << line << endmsg;
 
 	DataLog_TaskInfo * taskInfo = findTask(DATALOG_CURRENT_TASK);
 

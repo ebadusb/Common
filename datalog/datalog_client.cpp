@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_client.cpp 1.5 2003/12/09 14:14:16Z jl11312 Exp rm70006 $
  * $Log: datalog_client.cpp $
+ * Revision 1.3  2003/02/25 16:10:09Z  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.2  2003/01/31 19:52:50  jl11312
  * - new stream format for datalog
  * Revision 1.1  2002/08/22 20:19:03  jl11312
@@ -15,8 +17,11 @@
 #include <errnoLib.h>
 #include <fcntl.h>
 #include <ioLib.h>
-
 #include "datalog_internal.h"
+
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+# include "datalog_levels.h"
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
 
 DataLog_NetworkClientTask::DataLog_NetworkClientTask(int clientSocket, struct sockaddr_in * clientAddr)
 {
@@ -64,8 +69,13 @@ void DataLog_NetworkClientTask::handlePacket(const DataLog_NetworkPacket & packe
 
 		case DataLog_EndConnection:
 			{
-				DataLog_Critical	critical;
-				DataLog(critical) << "Normal shutdown of client task for " << _asciiAddr << endmsg;
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+				DataLog(log_level_datalog_info)
+#else /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+				DataLog_Default
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+					<< "Normal shutdown of client task for " << _asciiAddr << endmsg;
+
 				_isExiting = true;
 			}
 			break;
@@ -111,12 +121,16 @@ void DataLog_NetworkClientTask::handlePacket(const DataLog_NetworkPacket & packe
 void DataLog_NetworkClientTask::processInvalidPacket(const DataLog_NetworkPacket & packet)
 {
 	DataLog_CommonData	common;
-	DataLog_Critical		critical;
 
-	DataLog(critical) << "Invalid packet from " << _asciiAddr <<
-                     " state=" << (int)_state <<
-                     " packet type=" << (int)packet._type <<
-                     " packet length=" << (int)packet._length << endmsg;
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+	DataLog(log_level_datalog_error)
+#else /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+	DataLog_Default
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+		<< "Invalid packet from " << _asciiAddr <<
+         " state=" << (int)_state <<
+         " packet type=" << (int)packet._type <<
+         " packet length=" << (int)packet._length << endmsg;
 
    common.setTaskError(DataLog_BadNetworkClientData, __FILE__, __LINE__);
 
@@ -146,9 +160,13 @@ bool DataLog_NetworkClientTask::readData(DataLog_BufferData * buffer, size_t siz
 		}
 		else
 		{
-			DataLog_Critical	critical;
-			DataLog(critical) << "Client task for " << _asciiAddr << " shutting down for read error: " << readResult <<
-										" errno = " << errnoGet() << endmsg;
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+			DataLog(log_level_datalog_error)
+#else /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+			DataLog_Default
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
+				<< "Client task for " << _asciiAddr << " shutting down for read error: " <<
+               readResult << " errno = " << errnoGet() << endmsg;
 
 			DataLog_CommonData	common;
 			common.setTaskError(DataLog_BadNetworkClientData, __FILE__, __LINE__);

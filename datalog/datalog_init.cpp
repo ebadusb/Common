@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_init.cpp 1.8 2003/04/11 15:26:11Z jl11312 Exp jl11312 $
  * $Log: datalog_init.cpp $
+ * Revision 1.6  2003/02/25 20:43:02Z  jl11312
+ * - added support for logging platform specific information in log header
  * Revision 1.5  2003/02/25 16:10:11  jl11312
  * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.4  2003/02/06 20:41:30  jl11312
@@ -20,6 +22,25 @@
 
 #include "datalog.h"
 #include "datalog_internal.h"
+
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+#define DATALOG_LEVELS_INIT_TABLE
+#include "datalog_levels.h"
+
+static void datalog_InitLevels(void)
+{
+	for (int level=0; level<sizeof(initTable)/sizeof(initTable[0]); level+=1)
+	{
+		datalog_CreateLevel(initTable[level].name, initTable[level].handle);
+		initTable[level].level->setHandle(*initTable[level].handle);
+
+		if ( !initTable[level].enabled )
+		{
+			initTable[level].level->logOutput(DataLog_LogDisabled);
+		}
+	}
+}
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
 
 #ifdef DATALOG_NETWORK_SUPPORT
 DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * nodeName, const char * platformInfo)
@@ -67,6 +88,10 @@ DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKByte
 #else /* ifdef DATALOG_NETWORK_SUPPORT */
 		datalog_StartLocalOutputTask(platformName, NULL, platformInfo);
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
+
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+		datalog_InitLevels();
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
 
 #ifdef DATALOG_NETWORK_SUPPORT
 		datalog_StartNetworkTask();
@@ -116,6 +141,10 @@ DataLog_Result datalog_InitNet(size_t bufferSizeKBytes, size_t criticalReserveKB
 
 		datalog_StartNetworkOutputTask(connectTimeout, nodeName);
 		datalog_StartNetworkTask();
+
+#ifdef DATALOG_LEVELS_INIT_SUPPORT
+		datalog_InitLevels();
+#endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
 	}
 
 	return result;

@@ -3,6 +3,8 @@
 # Makefile.builds_app - common makefile for vxWorks applications
 #
 # $Log: makefile.build_apps $
+# Revision 1.1  2002/08/15 20:20:41  jl11312
+# Initial revision
 #
 
 .PHONY: clean
@@ -16,10 +18,11 @@ endif
 
 $(APP_LIST) :
 	@echo Building $(*F).out
-	if not exist $($(*F)_dir) mkdir $($(*F)_dir)
-	rm -f $@ $(CPU)/.ctdt.c $(CPU)/.ctdt.o $(CPU)/.partialImage.o
+	@if not exist $($(*F)_dir) mkdir $($(*F)_dir)
+	@rm -f $@ $(CPU)/.ctdt.c $(CPU)/.ctdt.o $(CPU)/.partialImage.o
 	$(LD) $(LDFLAGS) $($(*F)_OBJS) $($(*F)_libs) $($(*F)_LIB_LIST_OPT) -o $(CPU)/.partialImage.o
 	$(NM) $(CPU)/.partialImage.o | $(MUNCH) > $(CPU)/.ctdt.c
 	$(CC) -fdollars-in-identifiers $(CXXFLAGS) $(CPU)/.ctdt.c -o $(CPU)/.ctdt.o
 	$(LD) $(LDFLAGS) $(LD_ARCH_RELOC) $($(*F)_MAP_OPT) $(CPU)/.partialImage.o $(CPU)/.ctdt.o -o $@
+	@rm -f $(CPU)/.ctdt.c $(CPU)/.ctdt.o $(CPU)/.partialImage.o
 

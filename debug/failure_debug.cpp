@@ -5,6 +5,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/debug/rcs/failure_debug.cpp 1.11 2004/02/24 22:31:40Z jl11312 Exp ms10234 $
  * $Log: failure_debug.cpp $
+ * Revision 1.6  2003/05/29 16:26:11Z  jl11312
+ * - added logging of trace back information for all tasks
  * Revision 1.5  2003/05/23 16:09:32Z  jl11312
  * - additional debug logging
  * Revision 1.4  2003/05/21 20:13:23Z  jl11312
@@ -19,6 +21,7 @@
  */
 
 #include <vxWorks.h>
+#include <private/memPartLibP.h>
 #include <sysLib.h>
 #include <tickLib.h>
 #include <taskHookLib.h>
@@ -38,6 +41,8 @@ static volatile unsigned long	idleCounter;
 static unsigned long	maxCountsPerTick;
 static volatile bool resetIdleCount = false;
 static bool idleTaskStarted = false;
+
+static volatile unsigned int	maxWordsAllocated = 0;
 
 void DBG_EnableTaskSwitchLogging(unsigned int recordCount)
 {
@@ -169,6 +174,11 @@ int DBG_GetIdlePercent(void)
 	return result;
 }
 
+unsigned int DBG_GetMaxWordsAllocated(void)
+{
+	return maxWordsAllocated;
+}
+
 static void idleTask(void)
 {
 	enum { CalibrationTicks = 5 };
@@ -195,6 +205,11 @@ static void idleTask(void)
 				idleCounter = 0;
 				resetIdleCount = false; 
 			}
+
+			if ( memSysPartId->curWordsAllocated > maxWordsAllocated )
+			{
+				maxWordsAllocated = memSysPartId->curWordsAllocated;
+			}
 		}
 
 		idleCounter += 1;
@@ -219,6 +234,11 @@ static void idleTask(void)
 					idleCounter = 0;
 					resetIdleCount = false; 
 				}
+
+				if ( memSysPartId->curWordsAllocated > maxWordsAllocated )
+				{
+					maxWordsAllocated = memSysPartId->curWordsAllocated;
+			   }
 			}
 
 			idleCounter += 1;

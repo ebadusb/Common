@@ -110,7 +110,7 @@ void Gateway::receiveLoop()
       if ( byte_count == ERROR )
       {
          DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Gateway::receiveLoop : socket receive failed, error no -> " << errnoGet() << endmsg;
+         DataLog(criticalLog) << "Gateway::receiveLoop : socket receive failed, error->" << strerror( errnoGet() ) << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "socket receive failed" );
          return;
       }

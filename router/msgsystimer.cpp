@@ -7,6 +7,7 @@
 
 #include <vxWorks.h>
 
+#include <errnoLib.h>
 #include <stdio.h>
 #include <taskHookLib.h>
 
@@ -215,8 +216,8 @@ void MsgSysTimer::maintainTimers()
       unsigned long overruns = auxClockNotificationOverruns();
       if ( overruns > 0 )
       {
-         DataLog_Level logError( LOG_ERROR );
-         DataLog( logError ) << "TimerOverruns: " << overruns  << endmsg;
+         DataLog_Critical criticalLog;
+         DataLog( criticalLog ) << "TimerOverruns: " << overruns  << endmsg;
       }
 
    } while ( _StopLoop == false );
@@ -426,7 +427,7 @@ void MsgSysTimer::checkTimers()
          {
             DataLog_Critical criticalLog;
             DataLog(criticalLog) << "Check timers - timer Id=" << hex << mpPtr->msgData().msgId() 
-                                 << ", send failed" << endmsg;
+                                 << ", send failed for error-" << strerror( errnoGet() ) << endmsg;
             _FATAL_ERROR( __FILE__, __LINE__, "mq_send failed" );
          }
          
@@ -558,6 +559,11 @@ int MsgSysTimer::QueueEntry::operator>( const long long l ) const
 int MsgSysTimer::QueueEntry::operator>=( const long long l ) const
 {
    return ( _ExpirationTime >= l );
+}
+
+void msgsystimerInit()
+{
+   MsgSysTimer::MsgSysTimer_main();
 }
 
 void msgsystimerDump()

@@ -7,6 +7,7 @@
 
 #include <vxWorks.h>
 
+#include <errnoLib.h>
 #include <stdio.h>
 #include <taskHookLib.h>
 
@@ -130,6 +131,11 @@ bool Router::init()
    {
       //
       // Error ...
+      int errorNo = errnoGet();
+      DataLog_Critical criticalLog;
+      DataLog(criticalLog) << "Router message queue open failed" 
+                           << ", (" << strerror( errorNo ) << ")"
+                           << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Router message queue open failed" );
       return false;
    }
@@ -164,11 +170,18 @@ void Router::dispatchMessages()
       unsigned int retries=0;
       while (    ( size = mq_receive( _RouterQueue, &buffer, sizeof( MessagePacket ), &priority ) ) == ERROR 
               && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
+      {
+         cout << "mq_receive failure - sleep for 1 second" << endl;
          nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
-      if ( size == ERROR )
+      }
+      if ( size == ERROR || size == 0 )
       {
          //
          // Error ...
+         int errorNo = errnoGet();
+         DataLog_Critical criticalLog;
+         DataLog(criticalLog) << "Dispatching message - mq_receive return size=" << size
+                              << " and (" << strerror( errorNo ) << ")" << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "Dispatching message - message queue receive failed" );
          return;
       }
@@ -311,8 +324,11 @@ bool Router::initGateways()
          {
             //
             // Error ...
+            int errorNo = errnoGet();
             DataLog_Critical criticalLog;
-            DataLog(criticalLog) << "Router init - could not spawn gateway for address -> " << hex << netAddress << endmsg;
+            DataLog(criticalLog) << "Router init - could not spawn gateway for address -> " << hex << netAddress 
+                                 << ", (" << strerror( errorNo ) << ")"
+                                 << endmsg;
             _FATAL_ERROR( __FILE__, __LINE__, "Gateway spawn error" );
             return false;
          }
@@ -421,10 +437,10 @@ void Router::connectWithGateway( const MessagePacket &mp )
    
       struct timeval tv;
       tv.tv_sec = 0;
-      tv.tv_usec = MessageSystemConstant::CONNECT_DELAY * 1000;
+      tv.tv_usec = MessageSystemConstant::CONNECT_DELAY * 1000000 /* milliseconds to nanoseconds */;
       short port;
       memmove( &port, mp.msgData().msg(), sizeof( short ) );
-      int status = socketbuffer->connectWithTimeout( ntohl( mp.msgData().nodeId() ), port/*port*/, &tv );
+      int status = socketbuffer->connectWithTimeout( ntohl( mp.msgData().nodeId() ), port, &tv );
 
       //
       // If connected, add to list ...
@@ -438,15 +454,24 @@ void Router::connectWithGateway( const MessagePacket &mp )
          // Synch up the remote node's message list ...
          synchUpRemoteNode( socketbuffer );
       }
-      //
-      // If not connected, add message to the queue to try again ...
-      else
+      else 
       {
+         //
+         // If not connected, add message to the queue to try again ...
+         if ( status == ETIMEDOUT )
+         {
+            sendMessage( mp, _RouterQueue, taskIdSelf(), 0 );
+         }
+         else
+         {
+            DataLog_Critical criticalLog;
+            DataLog(criticalLog) << "Connect with gateway=" << hex << mp.msgData().nodeId() 
+                                 << " failed with error-" << strerror( status ) << endmsg;
+         }
+
          //
          // ... give back my socket memory.
          delete socketbuffer;
-         
-         sendMessage( mp, _RouterQueue, taskIdSelf(), 0 );
       }
    }
    else
@@ -517,7 +542,9 @@ void Router::registerTask( unsigned long tId, const char *qName )
          //
          // Error ...
          DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Register task=" << hex << tId << " - message queue open failed" << endmsg;
+         DataLog(criticalLog) << "Register task=" << hex << tId << " - message queue open failed" 
+                              << ", (" << strerror( (int)tQueue ) << ")" 
+                              << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "mq_open failed" );
       }
    }
@@ -910,9 +937,12 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
       // The task's queue is full!
       //
       // Error ...
+      int errorNo = errnoGet();
       DataLog_Critical criticalLog;
       DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() << " - Task Id=" << tId 
-                           << " queue full (" << dec << qattributes.mq_curmsgs << " messages)" << endmsg;
+                           << " queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
+                           << ", (" << strerror( errorNo ) << ")"
+                           << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
    }
 
@@ -926,9 +956,12 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
    {
       //
       // Error ...
+      int errorNo = errnoGet();
       DataLog_Critical criticalLog;
       DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
-                           << " - Task Id=" << tId << " send failed" << endmsg;
+                           << " - Task Id=" << tId << " send failed" 
+                           << ", (" << strerror( errorNo ) << ")"
+                           << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "mq_send failed" );
    }
 }
@@ -1014,8 +1047,13 @@ void Router::sendMessageToGateway( sockinetbuf *sockbuffer, const MessagePacket 
    {
       //
       // Error ...
+      int errorNo = errnoGet();
       DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() << " - Gateway=" << sockbuffer->peerhost() << " (" << mp.msgData().nodeId() << ") send failed" << endmsg;
+      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+                           << " - Gateway=" << sockbuffer->peerhost() 
+                           << " (" << mp.msgData().nodeId() << ") send failed" 
+                           << ", (" << strerror( errorNo ) << ")"
+                           << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "socket send failed" );
    }
    sockbuffer->flush_all();
@@ -1147,6 +1185,11 @@ void Router::cleanup()
 
    _TheRouter = 0;
    _TheRouterTid = 0;
+}
+
+void routerInit()
+{
+   Router::Router_main();
 }
 
 void routerDump()

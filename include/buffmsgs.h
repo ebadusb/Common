@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/BUFFMSGS.H 1.4 1999/07/26 15:38:48 BS04481 Exp TD10216 $
+ * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/BUFFMSGS.H 1.5 1999/07/28 21:52:24 TD10216 Exp TD10216 $
  * $Log: BUFFMSGS.H $
  * Revision 1.3  1999/07/23 01:37:15  BS04481
  * Add BasinTempStatus message
@@ -199,8 +199,8 @@ MsgStructMapEntry MsgStructMap[LAST_BUFFER_MESSAGE+1] =
 	{ FIRST_BUFFER_MESSAGE, NULL },  	// Dont change this
 
 	{ AN2SetHostMsg, NOTUSED },
-	{ AN2AreYouThereRequestMsg, NOTUSED },
-	{ AN2AreYouThereReplyMsg, "SAN2Broadcast" },
+	{ AN2AreYouThereRequestMsg, "SAN2Broadcast" },
+	{ AN2AreYouThereReplyMsg, NOTUSED },
 	{ AN2StatusRequestMsg, NOTUSED },
 	{ AN2StatusRequestReplyMsg, "SFSAN2Status" },
 	{ AN2ServiceRequestMsg,	NOTUSED },	// SAN2ServiceRequest union
@@ -319,8 +319,7 @@ MsgStructMapEntry MsgStructMap[LAST_BUFFER_MESSAGE+1] =
 	{ AlarmLogRequest, "GUI_Alarm_struct" },
 	{ TcpgateRegistration, "TCPGate_Reg_ReqStruct" },
 	{ ModifyProduct, "ModifyProductStruct" },
-   { BasinTempStatus, "basinTemp" },
-
+	{ BasinTempStatus, "basinTemp" },
 	// don't change this entry
 	{ LAST_BUFFER_MESSAGE, NULL }
 };

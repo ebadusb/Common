@@ -8,6 +8,12 @@
 #include "timermessage.h"
 #include "messagesystem.h"
 
+TimerMessage :: TimerMessage()
+:  Message< unsigned long >(), 
+   _TimerArmed( false )
+{
+}
+
 TimerMessage :: TimerMessage( unsigned long interval, const CallbackBase &cb, bool armTimer )
 :  Message< unsigned long >(), 
    _TimerArmed( false )

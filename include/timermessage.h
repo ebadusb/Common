@@ -18,6 +18,10 @@ class TimerMessage : public Message< unsigned long >
 {
 public:
 
+   //
+   // Default constructor
+   TimerMessage();
+
    // 
    // Constructor for timer messages ...
    //  interval - time in milliseconds
@@ -72,7 +76,6 @@ protected:
 
 private:
 
-   TimerMessage();                                                // Not implemented
    TimerMessage( TimerMessage const &);                           // Not implemented
    TimerMessage& operator=( TimerMessage const &);                // Not implemented
 

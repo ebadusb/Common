@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/Common/router/rcs/gateway.c 1.4 2001/05/11 19:56:38 jl11312 Exp jl11312 $
+ * $Header: K:/BCT_Development/Common/router/rcs/gateway.c 1.5 2001/05/24 22:41:38 jl11312 Exp jl11312 $
  * $Log: gateway.c $
+ * Revision 1.4  2001/05/11 19:56:38  jl11312
+ * - removed "COBE" name from fatal error message
  * Revision 1.3  2000/07/07 20:53:36  bs04481
  * Bump priorities up 1
  * Revision 1.2  1999/08/31 17:51:01  BS04481
@@ -208,6 +210,7 @@ main(int argc, char** argv)
 
 // wait for messages
 
+      memset(msg, 0xff, sizeof(struct _sysmsg_hdr));
       pid = Receive( 0, msg, sizeof( msg));
       if (pid == -1)
       {

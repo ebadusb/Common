@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/dispatch.cpp 1.11 2001/05/24 22:41:08 jl11312 Exp jl11312 $
  * $Log: dispatch.cpp $
+ * Revision 1.10  2001/05/11 19:55:22  jl11312
+ * - added test to skip attempt to deregister messages which were never registered
  * Revision 1.9  2000/12/14 23:53:02  ms10234
  * IT4618,4685 -  Changes were made to the message types to allow for 
  * messages to be sent, but not received, and for messages to remain local
@@ -1000,6 +1002,7 @@ dispatcher::dispatchLoop()
 
    while( taskRunning)                       // loop until signal
    {
+      memset(msg, 0xff, sizeof(struct _sysmsg_hdr));
       pid = Receive( 0, msg, sizeof( msg));  // get message
       if (pid == QNX_ERROR)
       {

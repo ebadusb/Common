@@ -1,8 +1,12 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/Common/router/rcs/pearlyg.c 1.5 2000/12/19 20:01:36 ms10234 Exp jl11312 $
+ * $Header: K:/BCT_Development/Common/router/rcs/pearlyg.c 1.5 2000/12/19 20:01:36 ms10234 Exp $
  * $Log: pearlyg.c $
+ * Revision 1.5  2000/12/19 20:01:36  ms10234
+ * IT3481 -  Changed the order of asking for the process status information
+ * and the sinVerMessage.  The previous order caused some informaiton to be
+ * cleaned up before we could log the task death.
  * Revision 1.4  2000/07/07 20:53:39  bs04481
  * Bump priorities up 1
  * Revision 1.3  1999/09/14 16:51:30  TD10216
@@ -122,6 +126,7 @@ main()
    while ( 1)
    {
       // get messages
+      memset(msg, 0xff, sizeof(struct _sysmsg_hdr));
       pid = Receive( 0, msg, sizeof( msg));
       if (pid == QNX_ERROR)
       {
@@ -131,25 +136,23 @@ main()
       // get task name
 
       status = qnx_psinfo( PROC_PID, pid, &psdata, 0, 0);
-      replyMsg.status = EOK;
-
-      // reply to proc
-
-      Reply( pid, &replyMsg, sizeof( replyMsg));
 
       // check for sin ver message, if not process task termination
 
       if (!sinVerMessage( pid, (SINVERMSG*) &msg[0]))
       {
-
          SYS_MSG* s = (SYS_MSG*) &msg[0];
+
+         // reply to proc
+
+         replyMsg.status = EOK;
+         Reply( pid, &replyMsg, sizeof( replyMsg));
 
          // check for task messages
 
          if (( s->hdr.type == _SYSMSG) &&
              ( s->hdr.subtype == _SYSMSG_SUBTYPE_DEATH))
          {
-
             // enter trace data into log if abnormal termination
 
             signal = s->body.signum;

@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/Common/router/rcs/router.c 1.11 2001/05/11 19:57:01 jl11312 Exp jl11312 $
+ * $Header: K:/BCT_Development/Common/router/rcs/router.c 1.12 2001/05/24 22:42:46 jl11312 Exp jl11312 $
  * $Log: router.c $
+ * Revision 1.11  2001/05/11 19:57:01  jl11312
+ * - removed "COBE" name from fatal error message
  * Revision 1.10  2001/04/05 17:35:24  ms10234
  * IT5045 - Messages were incorrectly being stopped if the pids matched on
  * the control and safety side between two processes.  Added a conditional
@@ -345,6 +347,7 @@ messageLoop(pid_t gatePID, char* ownPrefix)
    while(taskRunning)                        // cleared by signals
    {
       // get a message
+      memset(msg, 0xff, sizeof(struct _sysmsg_hdr));
       pid = Receive( 0, &msg[0], sizeof( msg));
       if(pid == QNX_ERROR)                  // error occured
       {

@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/BUFFMSGS.H 1.9 2000/04/13 14:27:08 BD10648 Exp MS10234 $
  * $Log: BUFFMSGS.H $
+ * Revision 1.7  2000/03/07 00:29:00  BD10648
+ * Additional messages for resturcturing: HalStatus, HalOrders, Calibration
  * Revision 1.6  1999/08/04 22:51:48  TD10216
  * IT3640
  * Revision 1.5  1999/07/28 21:52:24  TD10216
@@ -181,7 +183,7 @@ enum BUFFER_MESSAGES
    TcpgateRegistration,     // External->an2inetd->tcp_gate:register for tcpgate msgs
    ModifyProduct,           // anyone -> proc : modify product (see predict_msgs.h)
    BasinTempStatus,         // safety driver -> anyone who want basin temp data
-	EverestConfigLog,		// Not Sent: Used by Everest to parse log file
+   EverestConfigLog,    // Not Sent: Used by Everest to parse log file
     HalStatusMsg,           // sent by Hal Task
     HalOrdersMsg,           // sent to hal task
     ArcCalibrationMsg,      // Cal.dat message from Archive
@@ -196,8 +198,8 @@ enum BUFFER_MESSAGES
 
 typedef struct
 {
-	int MsgId;			// From BUFFER_MESSAGES above
-	char *MsgStructure;	// The name of the structure the message sends
+   int MsgId;        // From BUFFER_MESSAGES above
+   char *MsgStructure;  // The name of the structure the message sends
 } MsgStructMapEntry;
 
 // Dont use NOTUSED for real messages!
@@ -205,138 +207,138 @@ typedef struct
 #ifdef STRUCTDEFGEN
 MsgStructMapEntry MsgStructMap[LAST_BUFFER_MESSAGE+1] =
 {
-	{ FIRST_BUFFER_MESSAGE, NULL },  	// Dont change this
+   { FIRST_BUFFER_MESSAGE, NULL },     // Dont change this
 
-	{ AN2SetHostMsg, NOTUSED },
-	{ AN2AreYouThereRequestMsg, "SAN2Broadcast" },
-	{ AN2AreYouThereReplyMsg, NOTUSED },
-	{ AN2StatusRequestMsg, NOTUSED },
-	{ AN2StatusRequestReplyMsg, "SFSAN2Status" },
-	{ AN2ServiceRequestMsg,	NOTUSED },	// SAN2ServiceRequest union
-	{ AN2ServiceRequestReplyMsg, "SAN2ServiceRequestReply" },
-	{ AN2SetDonorVitalsMsg, NOTUSED },
-	{ AN2SetDonorVitalsReplyMsg, NOTUSED },
-	{ AN2AutoServiceControlCommand, "structAutoServiceControlOrders" },
-	{ AN2ManualServiceControlCommand, "structManualServiceControlOrders" },
-	{ AN2Test3, "AP2_Section_Name_Struct" }, 
-	{ AN2Test2, "AP2_Section_Name_Struct" }, 
-	{ AN2Test1, "DATA_MEMBERS" },
+   { AN2SetHostMsg, NOTUSED },
+   { AN2AreYouThereRequestMsg, "SAN2Broadcast" },
+   { AN2AreYouThereReplyMsg, NOTUSED },
+   { AN2StatusRequestMsg, NOTUSED },
+   { AN2StatusRequestReplyMsg, "SFSAN2Status" },
+   { AN2ServiceRequestMsg, NOTUSED },  // SAN2ServiceRequest union
+   { AN2ServiceRequestReplyMsg, "SAN2ServiceRequestReply" },
+   { AN2SetDonorVitalsMsg, NOTUSED },
+   { AN2SetDonorVitalsReplyMsg, NOTUSED },
+   { AN2AutoServiceControlCommand, NOTUSED },
+   { AN2ManualServiceControlCommand, NOTUSED },
+   { AN2Test3, "AP2_Section_Name_Struct" }, 
+   { AN2Test2, "AP2_Section_Name_Struct" }, 
+   { AN2Test1, NOTUSED },
 
-	{ ControlHardwareCommands, "CHwOrders" }, 
-	{ ControlHardwareStatus, "CHwStates" },
-	{ CurrentProcedureStatus, "CURRENT_PROCEDURE_STATUS_STRUCT" },
-	{ DataLog, NOTUSED },
-	{ GUIConfigToProcedure, "ProcedureInformationStruct" },
-	{ GUIToProcedureDonorVitals, "SDonorVitals" },
-	{ GUIToProcedureAdjust, NOTUSED },
-	{ GUIToProcedureProductRequest, NOTUSED },
-	{ HALtoVDStatus, "HALtoVDdata" },
-	{ KeyboardMessage, NOTUSED },
-	{ KeypadReturnMsg, "KEYPAD_RETURN_STRUCT" },
-	{ ProcedureToGUIAdjust, "ADJUST_SCREEN_CONFIG" },
-	{ ProcToSafetyDonorVitals, "SDonorVitals" },
-	{ EndRunStats, "RUN_SUMMARY_STRUCT" },
-	{ RequestRanges, NOTUSED },
-	{ SafetyHardwareCommands, "SHwOrders" },
-	{ SafetyHardwareStatus, "SHwStates" },
-	{ SafetyToGuiDonorVitals, "SDonorVitals" },
-	{ StatusLine, NOTUSED },
-	{ VDtoHALCommands, "VDtoHALdata" },
-	{ AlarmMessage, "Alarm_struct" }, 
-	{ GUIAlarmResponse, "Alarm_response_struct" },
-	{ AlarmDisplayRequest, "GUI_Alarm_struct" },
-	{ TaskManagerCommand, "Task_msg_struct" },
-	{ ScreenInvokeStateless, "SCREEN_INVOKE_STRUCT" },
-	{ ScreenInvokeChild, "SCREEN_INVOKE_STRUCT" },
-	{ ScreenSwapStateless, "SCREEN_INVOKE_STRUCT" },
-	{ ScreenSwapChild, "SCREEN_INVOKE_STRUCT" },
-	{ ScreenInvoke, "SCREEN_INVOKE_STRUCT" },
-	{ SoundCommands, "SoundOrders" },
-	{ BuffTestMessage1, NOTUSED },
-	{ BuffTestMessage2, NOTUSED },
-	{ FastUsData, "FASTDATA" },
-	{ FastApsData, "FASTDATA" },
-	{ FastPumpData, "FASTDATA" },
-	{ SafetyDonorMon, NOTUSED },
-	{ SafetyResMon, NOTUSED },
-	{ SafetyCycleMon, NOTUSED },
-	{ GUIChildScreenToGUI, "GUI_LISTBOX_STRUCT" },
+   { ControlHardwareCommands, "CHwOrders" }, 
+   { ControlHardwareStatus, "CHwStates" },
+   { CurrentProcedureStatus, "CURRENT_PROCEDURE_STATUS_STRUCT" },
+   { DataLog, NOTUSED },
+   { GUIConfigToProcedure, "ProcedureInformationStruct" },
+   { GUIToProcedureDonorVitals, "SDonorVitals" },
+   { GUIToProcedureAdjust, NOTUSED },
+   { GUIToProcedureProductRequest, NOTUSED },
+   { HALtoVDStatus, NOTUSED },
+   { KeyboardMessage, NOTUSED },
+   { KeypadReturnMsg, "KEYPAD_RETURN_STRUCT" },
+   { ProcedureToGUIAdjust, "ADJUST_SCREEN_CONFIG" },
+   { ProcToSafetyDonorVitals, "SDonorVitals" },
+   { EndRunStats, "RUN_SUMMARY_STRUCT" },
+   { RequestRanges, NOTUSED },
+   { SafetyHardwareCommands, "SHwOrders" },
+   { SafetyHardwareStatus, "SHwStates" },
+   { SafetyToGuiDonorVitals, "SDonorVitals" },
+   { StatusLine, NOTUSED },
+   { VDtoHALCommands, NOTUSED },
+   { AlarmMessage, "Alarm_struct" }, 
+   { GUIAlarmResponse, "Alarm_response_struct" },
+   { AlarmDisplayRequest, "GUI_Alarm_struct" },
+   { TaskManagerCommand, NOTUSED },
+   { ScreenInvokeStateless, "SCREEN_INVOKE_STRUCT" },
+   { ScreenInvokeChild, "SCREEN_INVOKE_STRUCT" },
+   { ScreenSwapStateless, "SCREEN_INVOKE_STRUCT" },
+   { ScreenSwapChild, "SCREEN_INVOKE_STRUCT" },
+   { ScreenInvoke, "SCREEN_INVOKE_STRUCT" },
+   { SoundCommands, "SoundOrders" },
+   { BuffTestMessage1, NOTUSED },
+   { BuffTestMessage2, NOTUSED },
+   { FastUsData, "FASTDATA" },
+   { FastApsData, "FASTDATA" },
+   { FastPumpData, "FASTDATA" },
+   { SafetyDonorMon, NOTUSED },
+   { SafetyResMon, NOTUSED },
+   { SafetyCycleMon, NOTUSED },
+   { GUIChildScreenToGUI, "GUI_LISTBOX_STRUCT" },
 
-	// Spectra ProcII Messages, Please leave these in a block
-	// They are given unique IDs for the TCP/IP processes
-	{ SpectraAcMsg, NOTUSED },
-	{ SpectraAsMsg, NOTUSED },
-	{ SpectraAwMsg, NOTUSED },
-	{ SpectraAxMsg, NOTUSED },
-	{ SpectraAyMsg, NOTUSED },
-	{ SpectraAzMsg, NOTUSED },
-	{ SpectraDsMsg, NOTUSED },
-	{ SpectraDyMsg, NOTUSED },
-	{ SpectraKMsg,	NOTUSED },
-	{ SpectraMcMsg, NOTUSED },
-	{ SpectraMsgAck, NOTUSED },
-	{ SpectraMsgCmd, NOTUSED },
-	{ SpectraPwrFailAck, NOTUSED },
-	{ SpectraPwrFailData, NOTUSED },
-	{ SpectraPwrFailReq, NOTUSED },
-	{ SpectraPmMsg,	NOTUSED },
-	{ SpectraPmAckMsg, NOTUSED },
-	{ SpectraPsMsg, NOTUSED },
-	{ SpectraPuMsg, NOTUSED },
-	{ SpectraPxMsg, NOTUSED },
-	{ SpectraPyMsg, NOTUSED },
-	{ SpectraPzMsg, NOTUSED },
-	{ SpectraSsMsg, NOTUSED },
-	{ SpectraSxMsg, NOTUSED },
-	{ SpectraSync, NOTUSED },
-	{ SpectraTest6, NOTUSED },
-	{ SpectraTest5, NOTUSED },
-	{ SpectraTest4, NOTUSED },
-	{ SpectraTest3, NOTUSED },
-	{ SpectraTest2, NOTUSED },
-	{ SpectraTest1, NOTUSED },
-	// End of Spectra Messages
+   // Spectra ProcII Messages, Please leave these in a block
+   // They are given unique IDs for the TCP/IP processes
+   { SpectraAcMsg, NOTUSED },
+   { SpectraAsMsg, NOTUSED },
+   { SpectraAwMsg, NOTUSED },
+   { SpectraAxMsg, NOTUSED },
+   { SpectraAyMsg, NOTUSED },
+   { SpectraAzMsg, NOTUSED },
+   { SpectraDsMsg, NOTUSED },
+   { SpectraDyMsg, NOTUSED },
+   { SpectraKMsg, NOTUSED },
+   { SpectraMcMsg, NOTUSED },
+   { SpectraMsgAck, NOTUSED },
+   { SpectraMsgCmd, NOTUSED },
+   { SpectraPwrFailAck, NOTUSED },
+   { SpectraPwrFailData, NOTUSED },
+   { SpectraPwrFailReq, NOTUSED },
+   { SpectraPmMsg,   NOTUSED },
+   { SpectraPmAckMsg, NOTUSED },
+   { SpectraPsMsg, NOTUSED },
+   { SpectraPuMsg, NOTUSED },
+   { SpectraPxMsg, NOTUSED },
+   { SpectraPyMsg, NOTUSED },
+   { SpectraPzMsg, NOTUSED },
+   { SpectraSsMsg, NOTUSED },
+   { SpectraSxMsg, NOTUSED },
+   { SpectraSync, NOTUSED },
+   { SpectraTest6, NOTUSED },
+   { SpectraTest5, NOTUSED },
+   { SpectraTest4, NOTUSED },
+   { SpectraTest3, NOTUSED },
+   { SpectraTest2, NOTUSED },
+   { SpectraTest1, NOTUSED },
+   // End of Spectra Messages
 
-	{ ScreenSwapStackChild, "SCREEN_INVOKE_STRUCT" },
-	{ ScreenSwapStackStateless, "SCREEN_INVOKE_STRUCT" },
-	{ misc_log, "MISC_LOG_STRUCT" },
-	{ PowerFailRecoveryData, "float" },
-	{ ProcStateSubstate, "stateSubstateChangeRequest_t" },
-	{ MeterDataMsg, "Meter_Return_Struct" },
-	{ FastFilterAPS, "FASTFILTER" },
+   { ScreenSwapStackChild, "SCREEN_INVOKE_STRUCT" },
+   { ScreenSwapStackStateless, "SCREEN_INVOKE_STRUCT" },
+   { misc_log, "MISC_LOG_STRUCT" },
+   { PowerFailRecoveryData, "float" },
+   { ProcStateSubstate, "stateSubstateChangeRequest_t" },
+   { MeterDataMsg, "Meter_Return_Struct" },
+   { FastFilterAPS, "FASTFILTER" },
 
-	// Spectra ProcII Messages, Please leave these in a block
-	{ SpectraTest7, NOTUSED },
-	{ SpectraTest8, NOTUSED },
-	{ SpectraTest9, NOTUSED },
-	{ SpectraTest10, NOTUSED },
-	{ SpectraTest11, NOTUSED },
-	{ SpectraTest12, NOTUSED },
-	{ SpectraTest13, NOTUSED },
-	{ SpectraTest14, NOTUSED },
-	{ SpectraTest15, NOTUSED },
-	{ SpectraTest16, NOTUSED },
-	// End of Spectra Messages
-	
-	// NOTE: When adding buffer messages,
-	// Add to end of list, after this comment
-	{ HardwareVersion, "hardware" },
-	{ CreateProduct, "CreateProductStruct" },
-	{ OptimizerCommands, "InitializeOptimizerStruct" },
-	{ OptimizerResults, "OptimizerResultsStruct" },
-	{ ProcedureInformation, "ProcedureInformationStruct" },
-	{ AlarmLogRequest, "GUI_Alarm_struct" },
-	{ TcpgateRegistration, "TCPGate_Reg_ReqStruct" },
-	{ ModifyProduct, "ModifyProductStruct" },
-	{ BasinTempStatus, "basinTemp" },
-	{ EverestConfigLog, "ConfigDataItem" },
+   // Spectra ProcII Messages, Please leave these in a block
+   { SpectraTest7, NOTUSED },
+   { SpectraTest8, NOTUSED },
+   { SpectraTest9, NOTUSED },
+   { SpectraTest10, NOTUSED },
+   { SpectraTest11, NOTUSED },
+   { SpectraTest12, NOTUSED },
+   { SpectraTest13, NOTUSED },
+   { SpectraTest14, NOTUSED },
+   { SpectraTest15, NOTUSED },
+   { SpectraTest16, NOTUSED },
+   // End of Spectra Messages
+   
+   // NOTE: When adding buffer messages,
+   // Add to end of list, after this comment
+   { HardwareVersion, "hardware" },
+   { CreateProduct, "CreateProductStruct" },
+   { OptimizerCommands, NOTUSED },
+   { OptimizerResults, NOTUSED },
+   { ProcedureInformation, "ProcedureInformationStruct" },
+   { AlarmLogRequest, "GUI_Alarm_struct" },
+   { TcpgateRegistration, "TCPGate_Reg_ReqStruct" },
+   { ModifyProduct, "ModifyProductStruct" },
+   { BasinTempStatus, "basinTemp" },
+   { EverestConfigLog, "ConfigDataItem" },
     { HalStatusMsg , NOTUSED },
     { HalOrdersMsg , NOTUSED },
     { ArcCalibrationMsg, NOTUSED },
     { ArcConfigMsg, NOTUSED },
 
     // don't change this entry
-	{ LAST_BUFFER_MESSAGE, NULL }
+   { LAST_BUFFER_MESSAGE, NULL }
 };
 #endif
 

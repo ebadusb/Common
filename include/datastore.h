@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.28  2004/01/05 18:10:36Z  rm70006
+ * HISTORY:    IT 5858.  Add function to tell whether an element is writable or not.
  * HISTORY:    Revision 1.27  2003/11/13 14:47:46Z  rm70006
  * HISTORY:    IT 6507.  Change Lock/Unlock scheme to try to get rid of deadlock problem.
  * HISTORY:    Revision 1.26  2003/07/22 14:51:29Z  rm70006
@@ -281,12 +283,8 @@ public:
    bool _pfDataRestored;
       
    // Mutex semaphores
-   SEM_ID _readSemaphore;
-   SEM_ID _writeSemaphore;
+   SEM_ID _semaphore;
       
-   // Mutex control flags
-   int  _readCount;
-
    // Flag tracking number of writers.
    bool _writerDeclared;
 };

@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.30  2004/01/05 19:25:27Z  rm70006
+ * HISTORY:    IT 6665.  Changed semaphore use to use mutex'es.
  * HISTORY:    Revision 1.29  2003/11/13 14:49:26Z  rm70006
  * HISTORY:    IT 6507.  Change Lock/Unlock scheme to solve deadlock issues.
  * HISTORY:    Revision 1.28  2003/11/06 17:12:35Z  rm70006
@@ -94,10 +96,8 @@
 
 
 
-#define DS_LOCK_RO_EVENT   10
-#define DS_LOCK_RW_EVENT   20
-#define DS_UNLOCK_RO_EVENT 30
-#define DS_UNLOCK_RW_EVENT 40
+#define DS_LOCK_EVENT      10
+#define DS_UNLOCK_EVENT    30
 #define DS_CREATE_EVENT    50
 #define DS_PF_SAVE_GROUP   60
 #define DS_PF_SAVE_ELEMENT 70
@@ -175,36 +175,17 @@ void DataStore::CreateSymbolTableEntry()
    // Create mutex semaphores
    //
 
-   // Create the read semaphore
-   _handle->_readSemaphore = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
+   _handle->_semaphore = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
 
-   // Fatal if _readSemaphore = NULL
-   if (_handle->_readSemaphore == NULL)
+   // Fatal if _semaphore = NULL
+   if (_handle->_semaphore == NULL)
    {
-      DataLog(_fatal) << "_readSemaphore could not be created for " << _name 
-                          << ".  Errno " << errnoMsg << "." << endmsg;
-      _FATAL_ERROR(__FILE__, __LINE__, "_readSemaphore could not be created.");
+      DataLog(_fatal) << "_semaphore could not be created for " << _name 
+         << ".  Errno " << errnoMsg << "." << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "_semaphore could not be created.");
    }
    else
-      DataLog(log_level_cds_debug) << "_readSemaphore value(" << hex << _handle->_readSemaphore << dec << ")." << endmsg;
-   
-   // Create the write semaphore.
-   _handle->_writeSemaphore = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
-
-   // Fatal if _writeSemaphore = NULL
-   if (_handle->_writeSemaphore == NULL)
-   {
-      DataLog(_fatal) << "_writeSemaphore could not be created for " << _name 
-                       << ".  Errno " << errnoMsg << "." << endmsg;
-      _FATAL_ERROR(__FILE__, __LINE__, "_writeSemaphore could not be created.");
-   }
-   else
-      DataLog(log_level_cds_debug) << "_writeSemaphore value(" << hex << _handle->_writeSemaphore << dec << ")." << endmsg;
-
-   //
-   // Create symbol names for mutex control flags and assign their values to the member variables.
-   //
-   _handle->_readCount = 0;
+      DataLog(log_level_cds_debug) << "_semaphore value(" << hex << _handle->_semaphore << dec << ")." << endmsg;
 }
 
 
@@ -426,44 +407,11 @@ bool DataStore::RestoreAllPfData()
 //
 void DataStoreSymbolContainer::Lock( Role role )
 {
-   int event_type = 0;
-
-   // If instance is RO, perform RO semaphore lock
-   if (role == ROLE_RO || role == ROLE_SPOOFER )
-   {
 #if EVENT_TRACE == 1
-      event_type = DS_LOCK_RO_EVENT;
-      wvEvent(event_type, (char *)_name.c_str(), _name.length());
+   wvEvent(DS_LOCK_EVENT, (char *)_name.c_str(), _name.length());
 #endif
 
-      SEM_TAKE(_readSemaphore, WAIT_FOREVER);
-
-      // Increment the read count
-      ++_readCount;
-
-      // If first reader, block future writers
-      if (_readCount == 1)
-      {
-         SEM_TAKE(_writeSemaphore, WAIT_FOREVER);   // Better be Non-blocking
-      }
-
-      // Unblock pending readers
-      SEM_GIVE(_readSemaphore);
-   }
-   else  // Do RW semaphore lock
-   {
-#if EVENT_TRACE == 1
-      event_type = DS_LOCK_RW_EVENT;
-      wvEvent(event_type, (char *)_name.c_str(), _name.length());
-#endif
-
-      // Wait for our turn to write
-      SEM_TAKE(_writeSemaphore, WAIT_FOREVER);
-   }
-
-#if EVENT_TRACE == 1
-   wvEvent(++event_type, (char *)_name.c_str(), _name.length());
-#endif
+   SEM_TAKE(_semaphore, WAIT_FOREVER);
 }
 
 
@@ -473,43 +421,11 @@ void DataStoreSymbolContainer::Lock( Role role )
 //
 void DataStoreSymbolContainer::Unlock( Role role )
 {
-   int event_type = 0;
-
-   // If instance is RO, perform RO semaphore lock
-   if (role == ROLE_RO || role == ROLE_SPOOFER )
-   {
 #if EVENT_TRACE == 1
-      event_type = DS_UNLOCK_RO_EVENT;
-      wvEvent(event_type, (char *)_name.c_str(), _name.length());
+   wvEvent(DS_UNLOCK_EVENT, (char *)_name.c_str(), _name.length());
 #endif
 
-      SEM_TAKE(_readSemaphore, WAIT_FOREVER);
-
-      --_readCount;
-
-      if (_readCount == 0)
-      {
-         SEM_GIVE(_writeSemaphore);
-         //SEM_FLUSH(_writeSemaphore);
-      }
-
-      SEM_GIVE(_readSemaphore);
-   }
-   else  // Do RW semaphore lock
-   {
-#if EVENT_TRACE == 1
-      event_type = DS_UNLOCK_RW_EVENT;
-      wvEvent(event_type, (char *)_name.c_str(), _name.length());
-#endif
-
-      // Unlock the semaphore
-      SEM_GIVE(_writeSemaphore);
-      //SEM_FLUSH(_writeSemaphore);
-   }
-
-#if EVENT_TRACE == 1
-   wvEvent(++event_type, (char *)_name.c_str(), _name.length());
-#endif
+   SEM_GIVE(_semaphore);
 }
 
 

@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.16  2002/10/31 19:26:48  rm70006
+ * HISTORY:    Changed internal stucture to use less symbols which improved datastore creation speed.
  * HISTORY:    Revision 1.15  2002/10/25 20:45:08Z  td07711
  * HISTORY:    support spoofer caching mechanism
  * HISTORY:    Revision 1.14  2002/10/18 23:15:19  td07711
@@ -124,7 +126,7 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
 //
 template <class dataType> BaseElement<dataType>::BaseElement() :
    ElementType(),
-   _handle(0)
+   _handle( 0 )
 {
 }
 
@@ -151,12 +153,15 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, P
    BindItem(ds, &_handle, ITEM_BASE_ELEMENT_SYMBOL_CONTAINER, created);
 
    // Only add the element if PFR is desired and it didn't exist in the list (avoid duplicates).
-   if ( created && (_pfrType == PFR_RECOVER) )
+   if ( created )
    {
       // Create the items in the symbol table entry
       CreateSymbolTableEntry();
 
-      _ds->AddElement(this);
+      if (_pfrType == PFR_RECOVER) 
+      {
+         _ds->AddElement(this);
+      }
    }
 }
 

@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.22 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.13  2004/12/09 00:20:41Z  cf10242
+ * Put guard in for message system being created
  * Revision 1.12  2004/11/19 18:14:46Z  cf10242
  * Integration checkin
  * Revision 1.11  2004/11/12 14:59:44Z  cf10242
@@ -48,20 +50,20 @@ static void cguiWinAppStartupTask(void)
 //	if ( !msgSys )
 //	{
 
-		msgSys = new MessageSystem();
-		printf("startuptask: msgSys = 0x%x\n",msgSys);
-		msgSys->initNonBlock();
-		guiStartCB();
+   msgSys = new MessageSystem();
+   printf("startuptask: msgSys = 0x%x\n",msgSys);
+   msgSys->initNonBlock();
+   guiStartCB();
 //	}
 }
 
 static void cguiWinAppIdleTask(void)
 {
-	if(msgSys)
-	{
-		msgSys->dispatchMessages();
-		guiWakeupCB();
-	}
+   if (msgSys)
+   {
+      msgSys->dispatchMessages();
+      guiWakeupCB();
+   }
 }
 // END MESSAGE_SYSTEM_IN_WIN_MGR
 
@@ -77,9 +79,9 @@ CGUIDisplay::CGUIDisplay(const CallbackBase & startCB, const CallbackBase & wake
       taskSuspend(taskIdSelf());
    }
 
-	// set statics to input callback functions
-	guiStartCB = startCB;
-	guiWakeupCB = wakeupCB;
+   // set statics to input callback functions
+   guiStartCB = startCB;
+   guiWakeupCB = wakeupCB;
    //
    // Get an ID for the display driver, then check that we are in the proper
    // color mode.
@@ -100,10 +102,10 @@ CGUIDisplay::CGUIDisplay(const CallbackBase & startCB, const CallbackBase & wake
 
    uglDriverFind(UGL_EVENT_SERVICE_TYPE, 0, (UGL_UINT32 *)&_uglEventService);
 
-	// START MESSAGE_SYSTEM_IN_WIN_MGR
-	winAppStartupTask = cguiWinAppStartupTask;
-	winAppIdleTask = cguiWinAppIdleTask;
-	// END MESSAGE_SYSTEM_IN_WIN_MGR
+   // START MESSAGE_SYSTEM_IN_WIN_MGR
+   winAppStartupTask = cguiWinAppStartupTask;
+   winAppIdleTask = cguiWinAppIdleTask;
+   // END MESSAGE_SYSTEM_IN_WIN_MGR
 
 
    _uglApp = winAppCreate("winApp", 0, 0, 0, UGL_NULL);     
@@ -282,30 +284,24 @@ CGUITextItem::~ CGUITextItem()
    delete _string;
 }
 
+
 void CGUITextItem::setText(const char * string, LanguageId = currentLanguage)
 {
-
    if (string)
    {
       if (_id)
       {
-			_string = new StringChar[strlen(string) + 1];
-			int cnt = 0;
-			while (string[cnt] != '\0')
-         {
-            _string[cnt] = string[cnt];
-				cnt++;
-         }
+         _string = new StringChar[strlen(string) + 1];
+         
+         int stringLength = 0;
 
-/** 
-         for (int i=0; i<=stringLength; i++)
+         while (string[stringLength] != '\0')
          {
-            _string[i] = string[i];
+            _string[stringLength] = string[stringLength];
+            stringLength++;
          }
-**/
+         _stringLength = stringLength;
       }
-
-
    }
 }
 
@@ -319,6 +315,9 @@ void CGUITextItem::setText(const StringChar * string, LanguageId = currentLangua
       {
          stringLength += 1;
       }
+      
+      _stringLength = ++stringLength;
+
       _string = new StringChar[stringLength+1];
       memcpy(_string, string, stringLength * sizeof(StringChar));
    }
@@ -326,22 +325,6 @@ void CGUITextItem::setText(const StringChar * string, LanguageId = currentLangua
 
 const StringChar * CGUITextItem::getText(LanguageId languageId = currentLanguage)
 {
-//   const StringChar * string;
-//   StringChar * stringNonsense=NULL;
-
-//   string = (StringChar *) "\x41\x00\x63\x00\x63\x00\x65\x00\x73\x00" "\x73\x00\x20\x00\x50\x00\x72\x00\x65\x00" "\x73\x00\x73\x00\x75\x00\x72\x00\x65\x00\x00";
-
-//   if (string)
-//   {
-//      int length = 0;
-//      while (string[length] != '\0')
-//      {
-//         length += 1;
-//      }
-
-//      stringNonsense = new UGL_WCHAR [length+1];
-//      memcpy(stringNonsense, string, length * sizeof(StringChar));
-//   }
    if (_string)
    {
       return  _string;
@@ -352,6 +335,58 @@ const StringChar * CGUITextItem::getText(LanguageId languageId = currentLanguage
    }
 }
 
+char * CGUITextItem::getAscii(LanguageId languageId = currentLanguage)
+{
+   char * string;
+   int stringLength = 0;
+
+   if (_string)
+   {
+      while (_string[stringLength])
+      {
+         stringLength ++;
+      }
+      
+      stringLength++;
+      
+      string =  new char[stringLength];
+
+      for (int i=0; i<=_stringLength; i++)
+      {
+         if (_string[i] > 0xff)
+         {
+            //  have an invalid character!!
+            return NULL;
+         }
+         string[i] = _string[i];
+      }
+
+      return string;
+   }
+   else
+   {
+      return NULL;
+   }
+}
+
+char * CGUITextItem::convertToAscii(void)
+{
+   char * asciiString;
+   int stringLength;
+   
+   while (_string[stringLength])
+   {
+      stringLength += 1;
+   }
+
+//   asciiString = strlen(_string) + 1;   // add 1 for the NULL
+
+   for (int i=0; i<_stringLength; i++)
+   {
+     asciiString[i] = _string[i];
+   }
+   return asciiString;
+}
 
 void CGUITextItem::setId(const char * id)
 {

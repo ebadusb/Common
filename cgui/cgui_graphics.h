@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.13 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.h $
+ * Revision 1.8  2004/11/19 18:14:47Z  cf10242
+ * Integration checkin
  * Revision 1.7  2004/11/12 14:53:11Z  rm10919
  * Modify some TextItem class rountines.
  * Revision 1.6  2004/11/01 17:27:21Z  cf10242
@@ -121,6 +123,9 @@ public:
    //
    //
    const StringChar * getText(LanguageId languageId = currentLanguage);
+   char * getAscii(LanguageId languageId = currentLanguage);
+
+   char * convertToAscii(void);
 
    CGUITextItem * getTextItem(const char * id, LanguageId languageId);
 
@@ -133,6 +138,11 @@ public:
    void setDefaultLanguage(LanguageId languageId){_defaultLanguageId = languageId;}
 
    bool isInitialized(void);
+
+
+protected:
+
+   unsigned short _stringLength;
 
 private:
    //

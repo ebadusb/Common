@@ -3,6 +3,8 @@
 # Makefile.vx - main Trima makefile
 #
 # $Log: makefile.vx $
+# Revision 1.3  2002/05/24 10:12:01  ms10234
+# Added router library
 # Revision 1.2  2002/05/17 14:53:27  jl11312
 # - added datalog and softcrc make commands
 # Revision 1.1  2002/04/30 19:25:18  rm70006
@@ -22,6 +24,7 @@ common:
 #	@cd convert && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
 	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
 	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
+	@cd clocks && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
 
 socket++:
 	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
@@ -35,4 +38,5 @@ clean:
 #	@cd convert && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
 	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
 	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
+	@cd clocks && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
  

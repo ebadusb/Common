@@ -3,6 +3,7 @@
  *
  * $Header: L:/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.8 2004/10/29 15:11:14Z rm10919 Exp cf10242 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.5  2004/10/07 18:52:19Z  cf10242
  * Revision 1.4  2004/09/30 19:47:27Z  jl11312
  * - temporary add of bitmap data array
  * Revision 1.3  2004/09/30 17:00:53Z  cf10242
@@ -67,12 +68,6 @@ CGUIDisplay::CGUIDisplay(void)
    winAttach(_uglRootWindow, UGL_NULL_ID, UGL_NULL_ID);
 
    uglDriverFind(UGL_FONT_ENGINE_TYPE, 0, (UGL_UINT32 *)&_uglFontDriver);
-
-   for (int i=0; i<BITMAP_ID_COUNT; i++)
-   {
-      _bitmapStatus[i]._uglId = UGL_NULL_ID;
-      _bitmapStatus[i]._loadCount = 0;
-   }
 }
 
 

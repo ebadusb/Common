@@ -3,6 +3,8 @@
 *
 * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.7 1999/08/18 17:08:16 TD10216 Exp TD10216 $
 * $Log: AN2MSGS.H $
+* Revision 1.6  1999/08/13 00:35:40  TD10216
+* IT4219
 * Revision 1.5  1999/08/04 22:51:45  TD10216
 * IT3640
 * an2msgs.h
@@ -12,6 +14,12 @@
 */
 #ifndef _AN2MSGS_H						/* include guard */
 #define _AN2MSGS_H
+
+
+// Routine to get the machine type
+extern int GetMachineType(void);
+// Machine types supported by the common project
+enum { UNKNOWN, SPECTRA, TRIMA };
 
 // AN2 Service Request Port Managed by the FS Host 
 #define FS_AN2_SERVICE_PORT			7000	

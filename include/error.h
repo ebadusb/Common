@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/error.h 1.11 2002/10/29 21:19:03Z jl11312 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/error.h 1.11 2002/10/29 21:19:03Z jl11312 Exp $
  * $Log: error.h $
+ * Revision 1.11  2002/10/29 21:19:03Z  jl11312
+ * - change char * to const char * for _FATAL_ERROR arguments
  * Revision 1.10  2002/06/10 21:37:03  ms10234
  * Added default error logging levels
  * Revision 1.9  2002/06/07 21:42:04  jl11312
@@ -66,11 +68,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-//
-// Definitions for common error logging levels
-#define LOG_ERROR               "log_error"
-#define LOG_FATAL               "log_fatal"
 
 /*
  * SPECIFICATION:    _FATAL_ERROR

@@ -12,6 +12,7 @@
 
 #include <list>
 #include <string>
+#include "datalog.h"
 
 #ifdef WIN32
 using namespace std;

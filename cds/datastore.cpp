@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.8  2002/08/23 14:55:08Z  rm70006
+ * HISTORY:    Changed binditem to work with 486 compiler bug
  * HISTORY:    Revision 1.7  2002/07/17 14:03:22Z  sb07663
  * HISTORY:    latest latest fix for multiple writer check
  * HISTORY:    Revision 1.6  2002/07/16 22:22:13  rm70006
@@ -162,12 +164,6 @@ DataStore::DataStore(char *name, Role role) :
       *_writerDeclared = false;
    }
 
-   if (role == ROLE_RW)
-   {
-
-      CheckForMultipleWriters();
-   }
-
    //
    // Create list symbol name and assign it's value to the member variable.
    //
@@ -244,25 +240,6 @@ DataStore::DataStore(char *name, Role role) :
 DataStore::~DataStore()
 {
    // Don't delete anything.  The rest of the system is still using it.
-}
-
-
-
-//
-// CheckForMultipleWriters
-//
-void DataStore::CheckForMultipleWriters()
-{
-   // The base implementation of DataStore fatal errors when multiple writers are declared.
-   if (*_writerDeclared)
-   {
-      // This is an error.
-      DataLog(*_fatal) << "Error.  Multiple Writers Declared for CDS " << _name << ".  Abort!!!!!!" << endmsg;
-      _FATAL_ERROR(__FILE__, __LINE__, "Datastore multiple writers");
-      return;
-   }
-   else
-      *_writerDeclared = true;
 }
 
 
@@ -510,9 +487,48 @@ void DataStore::GetSymbolName(string &s, const BIND_ITEM_TYPE item)
 //
 // Base Constructor
 // 
+SingleWriteDataStore::SingleWriteDataStore(char * name, Role role) :
+   DataStore (name, role)
+{
+   // Ensure no multiple writers
+   CheckForMultipleWriters();
+}
+
+
+
+//
+// CheckForMultipleWriters
+//
+void SingleWriteDataStore::CheckForMultipleWriters()
+{
+   // The base implementation of DataStore fatal errors when multiple writers are declared.
+   if (*_writerDeclared)
+   {
+      // This is an error.
+      DataLog(*_fatal) << "Error.  Multiple Writers Declared for CDS " << Name() << ".  Abort!!!!!!" << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "Datastore multiple writers");
+      return;
+   }
+   else
+      *_writerDeclared = true;
+}
+
+
+
+//
+// MultWriteDataStrore
+//
+
+
+
+//
+// Base Constructor
+// 
 MultWriteDataStore::MultWriteDataStore(char * name, Role role) :
    DataStore (name, role)
 {
+   // Empty check.  Included for completeness.
+   CheckForMultipleWriters();
 }
 
 

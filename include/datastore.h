@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.10  2002/09/19 16:04:10Z  rm70006
+ * HISTORY:    Added fast get for large datastore items.
  * HISTORY:    Revision 1.9  2002/09/18 22:13:21Z  rm70006
  * HISTORY:    Change Get and Set to have built in locking.
  * HISTORY:    Revision 1.8  2002/09/13 20:09:04Z  rm70006
@@ -208,6 +210,8 @@ public:
 
    static void turn_on_logging(void)  { _logging = true; };
    static void turn_off_logging(void) { _logging = false; };
+   static bool is_logging (void) { return _logging; };
+
    
 // Class Methods
 protected:

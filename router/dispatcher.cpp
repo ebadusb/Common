@@ -127,6 +127,7 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
    //
    // Send register message to router ...
    send( mp, MessageSystemConstant::DEFAULT_REGISTER_PRIORITY );
+   sendTimerMessage( mp, MessageSystemConstant::DEFAULT_REGISTER_PRIORITY );
 
 }
 

@@ -84,8 +84,8 @@ MsgSysTimer::MsgSysTimer()
  : _Time( 0 ),
    _TimerMsgMap(),
    _TimerQueue(),
+   _TaskQueueMap(),
    _TimerMQ( (mqd_t)ERROR ),
-   _RouterMQ( (mqd_t)ERROR ),
    _StopLoop( false )
 {
 }
@@ -139,25 +139,6 @@ bool MsgSysTimer::init()
    //
    // I'm now ready to receive a time message ...
    _ReadyToReceiveTimeMsg=1;
-
-   //
-   // Open the router's queue ...
-   retries=0;
-   do
-   {
-      _RouterMQ = mq_open( "router", O_WRONLY );
-      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
-   } 
-   while (    _RouterMQ == (mqd_t)ERROR 
-           && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
-
-   if ( _RouterMQ == (mqd_t)ERROR )
-   {
-      //
-      // Error ...
-      _FATAL_ERROR( __FILE__, __LINE__, "Router message queue open failed" );
-      return false;
-   }
 
    //
    // Initialize the ISR routine ...
@@ -241,13 +222,20 @@ void MsgSysTimer::dump( ostream &outs )
         // << "  size " << qattributes.mq_curmsgs
         // << "  maxsize " << qattributes.mq_maxmsg 
         << endmsg;
-   // if ( _RouterMQ != (mqd_t)0 ) mq_getattr( _RouterMQ, &qattributes );
-   outs << " RouterQueue: " << hex << (long)_RouterMQ 
-        // << "  flags " << qattributes.mq_flags
-        // << "  size " << qattributes.mq_curmsgs
-        // << "  maxsize " << qattributes.mq_maxmsg 
-        << endmsg;
 
+   outs << "   Task Queue Map: size " << dec << _TaskQueueMap.size() << endl;
+   map< unsigned long, mqd_t >::iterator tqiter;                                  // _TaskQueueMap;
+   for ( tqiter  = _TaskQueueMap.begin() ;
+         tqiter != _TaskQueueMap.end() ;
+         tqiter++ )
+   {
+      // if ( (*tqiter).second != (mqd_t)0 ) mq_getattr( (*tqiter).second, &qattributes );
+      outs << "    Tid " << hex << (*tqiter).first << " " << hex << (long)(*tqiter).second
+           // << "  flags " << qattributes.mq_flags
+           // << "  size " << qattributes.mq_curmsgs
+           // << "  maxsize " << qattributes.mq_maxmsg 
+           << endl;
+   }
    outs << endmsg 
         << " Time: " << dec << ((unsigned long)_Time) << endmsg;
    outs << " StopLoop: " << _StopLoop << endmsg;
@@ -290,7 +278,11 @@ void MsgSysTimer::processMessage( const MessagePacket &mp )
    unsigned long interval;
    switch ( mp.msgData().osCode() )
    {
+   case MessageData::TASK_REGISTER:
+      registerTask( mp.msgData().taskId(), (const char *)(mp.msgData().msg() ) );
+      break;
    case MessageData::TASK_DEREGISTER:
+      deregisterTask( mp.msgData().taskId() );
       deregisterTimersOfTask( mp.msgData().taskId() );
       break;
    case MessageData::TIME_UPDATE:
@@ -330,6 +322,64 @@ void MsgSysTimer::updateTime( const long long usecs )
    //
    // Check the registered timers ...
    checkTimers();
+}
+
+void MsgSysTimer::registerTask( unsigned long tId, const char *qName )
+{
+   //
+   // Try to find the task in the list ...
+   if ( _TaskQueueMap.find( tId ) == _TaskQueueMap.end() )
+   {
+      //
+      // The task is not registered, 
+      //  so try to open the given queue ...
+      mqd_t tQueue = (mqd_t)ERROR;
+      unsigned int retries=0;
+      while ( ( tQueue = mq_open( qName, O_RDWR ) ) == (mqd_t)ERROR 
+              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
+
+      //
+      // If opened ...
+      if ( tQueue != (mqd_t)ERROR )
+      {
+         //
+         // ... add task and queue to map ...
+         _TaskQueueMap[ tId ] = tQueue;
+
+      }
+      //
+      // if not opened ...
+      else
+      {
+         //
+         // ... error, the task should already have opened the queue
+         //  before connecting to the router.
+         //
+         // Error ...
+         DataLog_Critical criticalLog;
+         DataLog(criticalLog) << "Register task=" << hex << tId << "(" << taskName( tId ) << ") - message queue open failed" 
+                              << endmsg;
+         _FATAL_ERROR( __FILE__, __LINE__, "mq_open failed" );
+      }
+   }
+
+}
+
+void MsgSysTimer::deregisterTask( unsigned long tId )
+{
+   //
+   // Find the task in the list ...
+   map< unsigned long, mqd_t >::iterator titer;
+   titer = _TaskQueueMap.find( tId );
+   if ( titer != _TaskQueueMap.end() )
+   {
+      //
+      // If found ...  
+      //    remove the task and close the queue
+      // 
+      mq_close( (mqd_t)(*titer).second );
+      _TaskQueueMap.erase( titer );
+   }
 }
 
 void MsgSysTimer::registerTimer( const MessagePacket &mp, const unsigned long interval )
@@ -439,19 +489,39 @@ void MsgSysTimer::checkTimers()
          _TimerQueue.push( qe );
 
          //
-         // Send the message packet ...
-         unsigned int retries=0;
-         while (    mq_send( _RouterMQ, mpPtr, sizeof( MessagePacket ), 
-                             MessageSystemConstant::DEFAULT_TIMER_MESSAGE_PRIORITY ) == ERROR
-                 && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
-         if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
+         // Get the task out of the registered task/queue map ...
+         map< unsigned long, mqd_t >::iterator tqiter;
+         tqiter = _TaskQueueMap.find( mpPtr->msgData().taskId() );
+
+         if ( tqiter == _TaskQueueMap.end() )
          {
+            //
+            // Error ...
             DataLog_Critical criticalLog;
-            DataLog(criticalLog) << "Check timers - timer Id=" << hex << mpPtr->msgData().msgId() 
-                                 << ", send failed for error-" << strerror( errnoGet() ) << endmsg;
-            _FATAL_ERROR( __FILE__, __LINE__, "mq_send failed" );
+            DataLog(criticalLog) << "Sending message=" << hex << mpPtr->msgData().msgId() 
+                                 << "- Task Id=" << mpPtr->msgData().taskId() 
+                                 << "(" << taskName( mpPtr->msgData().taskId() ) << ")"
+                                 << " not found in task list" << endmsg;
+            _FATAL_ERROR( __FILE__, __LINE__, "Task lookup failed" );
          }
-         
+         //
+         // If the task was found to be registered ...
+         else
+         {
+            //
+            // Send the message packet ...
+            unsigned int retries=0;
+            while (    mq_send( (*tqiter).second, mpPtr, sizeof( MessagePacket ), 
+                                MessageSystemConstant::DEFAULT_TIMER_MESSAGE_PRIORITY ) == ERROR
+                    && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
+            if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
+            {
+               DataLog_Critical criticalLog;
+               DataLog(criticalLog) << "Check timers - timer Id=" << hex << mpPtr->msgData().msgId() 
+                                    << ", send failed for error-" << strerror( errnoGet() ) << endmsg;
+               _FATAL_ERROR( __FILE__, __LINE__, "mq_send failed" );
+            }
+         }
       }
       else if ( qe._MapEntryPtr )
       {
@@ -475,10 +545,15 @@ void MsgSysTimer::shutdown()
       _TimerMQ = (mqd_t)0;
    }
 
-   if ( _RouterMQ != (mqd_t)0 )
+   //
+   // Close the other queues ...
+   map< unsigned long, mqd_t >::iterator qiter;
+   for ( qiter = _TaskQueueMap.begin() ;
+         qiter != _TaskQueueMap.end() ;
+         qiter++ )
    {
-      mq_close( _RouterMQ );
-      _RouterMQ = (mqd_t)0;
+      mq_close( (*qiter).second );
+      (*qiter).second = (mqd_t)0;
    }
 
 }
@@ -492,6 +567,7 @@ void MsgSysTimer::cleanup()
    //
    // Clean the list structures ...
    _TimerMsgMap.empty();
+   _TaskQueueMap.clear();
 
    MapEntry *mePtr;
    while ( _TimerQueue.size() > 0 )

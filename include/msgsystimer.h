@@ -87,6 +87,15 @@ protected:
    void updateTime( const long long usecs );
 
    //
+   // This function will be called to register a task in the task maps
+   void registerTask( unsigned long tId, const char *qName );
+   //
+   // This function will remove the task from the task map, and the message maps.  No
+   //  references to the passed in taskId will remain in any of the structures.  All
+   //  messages registered for by this task will be deregistered.
+   void deregisterTask( unsigned long tId );
+
+   //
    // Function to register a new timer
    void registerTimer( const MessagePacket &mp, const unsigned long interval );
 
@@ -147,8 +156,13 @@ private:
    map< unsigned long, MapEntry* > _TimerMsgMap;
    priority_queue< QueueEntry, vector< QueueEntry >, greater< QueueEntry > > _TimerQueue;
 
+   //
+   // This structure will map the task Id with it's associated Posix message queue. The 
+   //  router will open a queue for each task as a write only queue.  The task must create
+   //  the queue before registering itself with the router.
+   map< unsigned long, mqd_t >                                  _TaskQueueMap;
+
    mqd_t _TimerMQ;
-   mqd_t _RouterMQ;
 
    bool _StopLoop;
 

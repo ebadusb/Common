@@ -149,6 +149,13 @@ bool Router::init()
       return false;
    }
 
+   MessagePacket mp;
+   mp.msgData().osCode( MessageData::TASK_REGISTER );
+   mp.msgData().taskId( taskIdSelf() );
+   mp.msgData().msg( (const unsigned char*)"router", strlen( "router" ) );
+   mp.updateCRC();
+   sendMessage( mp, _TimerQueue, taskIdSelf(), MessageSystemConstant::DEFAULT_REGISTER_PRIORITY );
+
    if ( initGateways() == false )
    {
       //

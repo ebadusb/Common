@@ -6,6 +6,8 @@
  * CHANGELOG:
  *  $Header: K:/BCT_Development/vxWorks/Common/include/rcs/crcgen.h 1.7 2003/05/21 20:01:26Z jl11312 Exp jl11312 $
  *  $Log: crcgen.h $
+ *  Revision 1.7  2003/05/21 20:01:26Z  jl11312
+ *  - enhanced memory protection (IT 6091)
  *  Revision 1.6  2002/05/09 19:44:55Z  ms10234
  *  changed data from const char to const unsigned char
  *  Revision 1.4  2001/08/22 14:33:20  rm70006
@@ -31,7 +33,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif /* ifdef __cplusplus */
 
 /*
 // crcgen32() generates a 32bit CRC over the input data
@@ -46,7 +48,7 @@ extern "C" {
 //    returns -1 if invalid argument (NULL ptr or length < 0)
 */
 
-int crcgen32(unsigned long* pcrc, const unsigned char* pdata, long length);
+int crcgen32(unsigned long * pcrc, const unsigned char * pdata, long length);
 
 /*
 // file_crcgen32() generates a 32bit CRC over the contents of a file.
@@ -67,12 +69,12 @@ int file_crcgen32 (const char *filename, unsigned long *pcrc);
  */
 int softcrc(const char * cmdLine);
 
-/*// common seed for all users to get common results.*/
+/* common seed for all users to get common results. */
 #define INITCRC_DEFAULT (0xFFFFFFFFL)
 
 
 #ifdef __cplusplus
 }
-#endif
+#endif /* ifdef __cplusplus */
 
-#endif
+#endif /* ifndef _CRCGEN_HEADER */

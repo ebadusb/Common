@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.h 1.6 2005/02/21 17:17:13Z cf10242 Exp psanusb $
  * $Log: cgui_window.h $
+ * Revision 1.4  2004/11/04 20:19:09Z  rm10919
+ * Common updates and changes.
  * Revision 1.3  2004/10/22 20:14:35Z  rm10919
  * CGUIButton updates and changes.
  * Revision 1.2  2004/09/30 17:00:53Z  cf10242
@@ -107,7 +109,7 @@ private:
 
    UGL_REGION_ID  _activeDrawRegion;
 
-   CGUIText::StylingRecord  _defaultTextStylingRecord;
+   StylingRecord  _defaultTextStylingRecord;
 
    CGUIWindow *   _parent;
    list<CGUIWindow *>  _childWindows;

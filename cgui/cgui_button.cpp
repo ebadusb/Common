@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.9  2005/01/18 18:38:52Z  rm10919
+ *  Fix icon placement on button.
  *  Revision 1.8  2005/01/03 20:41:24Z  cf10242
  *  add an enablePressed method a button can shown as enabled and pressed
  *  Revision 1.7  2004/11/19 18:14:45Z  cf10242
@@ -94,12 +96,12 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
    
    if (buttonData.enabledTextItem)
    {
-      if ((buttonData.enabledTextStyle->region.width == 0) && (buttonData.enabledTextStyle->region.height == 0))
+      if ((buttonData.enabledStylingRecord->region.width == 0) && (buttonData.enabledStylingRecord->region.height == 0))
       {
-         buttonData.enabledTextStyle->region.width = _enabledBitmap->getRegion().width;
-         buttonData.enabledTextStyle->region.height = _enabledBitmap->getRegion().height;
+         buttonData.enabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
+         buttonData.enabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
       }
-      _enabledText = new CGUIText(display, this, buttonData.enabledTextItem, buttonData.enabledTextStyle);
+      _enabledText = new CGUIText(display, this, buttonData.enabledTextItem, buttonData.enabledStylingRecord);
       _enabledText->setCaptureBackgroundColor();
    }
    else
@@ -109,12 +111,12 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
 
    if (buttonData.disabledTextItem)
    {
-      if ((buttonData.disabledTextStyle->region.width == 0) && (buttonData.disabledTextStyle->region.height == 0))
+      if ((buttonData.disabledStylingRecord->region.width == 0) && (buttonData.disabledStylingRecord->region.height == 0))
       {
-         buttonData.disabledTextStyle->region.width = _enabledBitmap->getRegion().width;
-         buttonData.disabledTextStyle->region.height = _enabledBitmap->getRegion().height;
+         buttonData.disabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
+         buttonData.disabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
       }
-      _disabledText = new CGUIText(display, this, buttonData.disabledTextItem, buttonData.disabledTextStyle);
+      _disabledText = new CGUIText(display, this, buttonData.disabledTextItem, buttonData.disabledStylingRecord);
       _disabledText->setCaptureBackgroundColor();
       _disabledText->setVisible(false);
    }
@@ -125,12 +127,12 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
 
    if (buttonData.pressedTextItem)
    {
-      if ((buttonData.pressedTextStyle->region.width == 0) && (buttonData.pressedTextStyle->region.height == 0))
+      if ((buttonData.pressedStylingRecord->region.width == 0) && (buttonData.pressedStylingRecord->region.height == 0))
       {
-         buttonData.pressedTextStyle->region.width = _enabledBitmap->getRegion().width;
-         buttonData.pressedTextStyle->region.height = _enabledBitmap->getRegion().height;
+         buttonData.pressedStylingRecord->region.width = _enabledBitmap->getRegion().width;
+         buttonData.pressedStylingRecord->region.height = _enabledBitmap->getRegion().height;
       }
-      _pressedText = new CGUIText(display, this, buttonData.pressedTextItem, buttonData.pressedTextStyle);
+      _pressedText = new CGUIText(display, this, buttonData.pressedTextItem, buttonData.pressedStylingRecord);
       _pressedText->setCaptureBackgroundColor();
       _pressedText->setVisible(false);
    }
@@ -662,7 +664,7 @@ void CGUIButton::setPressedText (const char * string = NULL)
 // Set/change the style of the text associated with 
 // this button in ALL states.  This is a pass-thru to the 
 // text object previously set with this button.  
-void CGUIButton::setTextStyle (CGUIText::StylingRecord * textStylingRecord) // style record with appropriate features set
+void CGUIButton::setStylingRecord (StylingRecord * textStylingRecord) // style record with appropriate features set
 {
    if (_enabledText)  _enabledText->setStylingRecord(textStylingRecord);
    if (_disabledText) _disabledText->setStylingRecord(textStylingRecord);
@@ -675,17 +677,17 @@ void CGUIButton::setTextStyle (CGUIText::StylingRecord * textStylingRecord) // s
 // set/change the style of text associated with this button for each of the four states that the button
 // can be in.  Note these call does nothing if there is no text associated with the button.
 // They will work if the text is disabled.
-void CGUIButton::setEnabledTextStyle (CGUIText::StylingRecord * enabledTextStylingRecord) // style record with appropriate features set
+void CGUIButton::setEnabledStylingRecord (StylingRecord * enabledTextStylingRecord) // style record with appropriate features set
 {                     
    if (_enabledText)  _enabledText->setStylingRecord(enabledTextStylingRecord);
 }
 
-void CGUIButton::setDisabledTextStyle (CGUIText::StylingRecord * disabledTextStylingRecord)
+void CGUIButton::setDisabledStylingRecord (StylingRecord * disabledTextStylingRecord)
 {
    if (_disabledText) _disabledText->setStylingRecord(disabledTextStylingRecord);
 }
 
-void CGUIButton::setPressedTextStyle (CGUIText::StylingRecord * pressedTextStylingRecord)
+void CGUIButton::setPressedStylingRecord (StylingRecord * pressedTextStylingRecord)
 {
    if (_pressedText)  _pressedText->setStylingRecord(pressedTextStylingRecord);
 }

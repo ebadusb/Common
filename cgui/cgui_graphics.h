@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.13 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.h $
+ * Revision 1.10  2005/01/12 20:06:09Z  rm10919
+ * Deleted convertToAscii().
  * Revision 1.9  2004/12/27 22:48:51Z  rm10919
  * Added CGUITextItem::getAscii for use with sprintf().
  * Revision 1.8  2004/11/19 18:14:47Z  cf10242
@@ -70,7 +72,10 @@ typedef UGL_DDB_ID   CGUIBitmapId;
 //
 typedef UGL_WCHAR StringChar;
 
-enum {MAX_FONTS = 256};
+enum
+{
+   MAX_FONTS = 256
+};
 
 class DataItemBase
 {
@@ -104,66 +109,6 @@ typedef int LanguageId;
 extern int currentLanguage;
 
 //
-// This class will access the strings from the database
-// or the file that holds all of the string information
-// (both string id and the actual string text).  The 
-// string id is the key to accessing this information.
-//
-
-
-class CGUITextItem
-{
-public:
-   CGUITextItem();
-   CGUITextItem(const char * id);
-   virtual ~ CGUITextItem();
-
-   
-   void setId(const char * id);
-   //
-   // The method will retrun the text string
-   //
-   //
-   const StringChar * getText(LanguageId languageId = currentLanguage);
-   char * getAscii(LanguageId languageId = currentLanguage);
-
-   CGUITextItem * getTextItem(const char * id, LanguageId languageId);
-
-   void setText(const char * string, LanguageId = currentLanguage);
-   void setText(const StringChar * texString, LanguageId = currentLanguage);
-
-   LanguageId getLanguageId(void){ return _languageId;}
-
-   void setLanguageId(LanguageId languageId){_languageId = languageId;}
-   void setDefaultLanguage(LanguageId languageId){_defaultLanguageId = languageId;}
-
-   bool isInitialized(void);
-
-
-protected:
-
-   unsigned short _stringLength;
-
-private:
-   //
-   // All the methods and routines to manipulate getting the string id's and text go here.
-   // These will be defined as the text string database is designed. A balance between
-   // cacheing and reading the database will need to be developed. As this part is being 
-   // developed a method to create dynamic string id's (for dymanic data, e.g. numeric
-   // values) will need to be done.
-   //
-   const char * _id;
-   StringChar * _string;
-   LanguageId   _languageId;
-
-   static int   _defaultLanguageId;
-
-	// copy constructor and copy assignment are not legal for this class
-	//CGUITextItem (CGUITextItem &);
-	//CGUITextItem& operator= (const CGUITextItem&);
-};
-
-//
 // The CGUIDisplay class handles the underlying UGL graphics context
 // and event loop.  Currently, only one instance of the CGUIDisplay
 // class should be created by the application.  The intent of making
@@ -174,9 +119,9 @@ class CGUIWindow;
 class CGUIDisplay
 {
 public:
-   
+
    CGUIFontId     _font[MAX_FONTS];
-                     
+
    CGUIDisplay(const CallbackBase & startCB=CallbackBase(), const CallbackBase & wakeupCB=CallbackBase());
    virtual ~CGUIDisplay();
 
@@ -241,9 +186,9 @@ private:
 
    list<CGUIWindow *> _windowList;
 
-	// copy constructor and copy assignment are not legal for this class
-	CGUIDisplay (CGUIDisplay &);
-	CGUIDisplay& operator= (const CGUIDisplay&);
+   // copy constructor and copy assignment are not legal for this class
+   CGUIDisplay (CGUIDisplay &);
+   CGUIDisplay& operator= (const CGUIDisplay&);
 
 
 };
@@ -266,7 +211,7 @@ public:
    void convertToUGLRect(UGL_RECT & rect) const;
 
 private:
-	// copy constructor and copy assignment are not legal for this class
+   // copy constructor and copy assignment are not legal for this class
 //	CGUIRegion (CGUIRegion &);
 //	CGUIRegion& operator= (const CGUIRegion&);
 

@@ -3,6 +3,8 @@
 # Makefile - makefile for common GUI library
 #
 # $Log: makefile.vx $
+# Revision 1.7  2004/11/22 19:13:10Z  cf10242
+# add cgui_button
 # Revision 1.6  2004/11/03 17:49:34Z  rm10919
 # Added cgui_time_dat.cpp to compile list.
 # Revision 1.5  2004/11/02 00:07:00Z  cf10242
@@ -44,7 +46,9 @@ include $(MAINDIR)/makefile.vxc
 LIB_C_FILES   = 
 LIB_CXX_FILES = cgui_graphics.cpp cgui_rectangle.cpp cgui_window.cpp \
 		cgui_window_object.cpp cgui_bitmap_info.cpp cgui_bitmap.cpp \
-		cgui_frame.cpp cgui_text.cpp cgui_time_date.cpp cgui_button.cpp
+		cgui_frame.cpp cgui_text_item.cpp cgui_text.cpp cgui_time_date.cpp \
+                cgui_button.cpp
+#               cgui_string_data.cpp
 LIB_S_FILES =
 
 #

@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.11  2005/01/03 20:41:25Z  cf10242
+ *  add an enablePressed method a button can shown as enabled and pressed
  *  Revision 1.10  2004/12/17 15:10:18Z  rm10919
  *  Change disableIcon to public not protected.
  *  Revision 1.9  2004/11/19 18:14:47Z  cf10242
@@ -69,17 +71,17 @@ public:
       unsigned short vMargin;            // vertical and horizontal margins from edge of button to
       unsigned short hMargin;            // where any button labels are allowed to start
 
-      CGUIBitmapInfo    * enabledBitmapId;  // enabled state bitmap id
-      CGUITextItem      * enabledTextItem;  // label text (if any) used in enabled state
-      CGUIText::StylingRecord * enabledTextStyle; // label text styling information in enabled state
+      CGUIBitmapInfo * enabledBitmapId;  // enabled state bitmap id
+      CGUITextItem * enabledTextItem;    // label text (if any) used in enabled state
+      StylingRecord * enabledStylingRecord;// label text styling information in enabled state
 
-      CGUIBitmapInfo    * disabledBitmapId; // disableded state bitmap id
-      CGUITextItem      * disabledTextItem; // attributes for label text used in disabled state
-      CGUIText::StylingRecord * disabledTextStyle; // label text styling information in disableded state
+      CGUIBitmapInfo * disabledBitmapId; // disableded state bitmap id
+      CGUITextItem * disabledTextItem;   // attributes for label text used in disabled state
+      StylingRecord * disabledStylingRecord; // label text styling information in disableded state
 
-      CGUIBitmapInfo    * pressedBitmapId;  // pressed state bitmap id
-      CGUITextItem      * pressedTextItem;  // label text used in pressed state
-      CGUIText::StylingRecord * pressedTextStyle; // label text styling information in pressed state
+      CGUIBitmapInfo * pressedBitmapId;  // pressed state bitmap id
+      CGUITextItem * pressedTextItem;    // label text used in pressed state
+      StylingRecord * pressedStylingRecord;// label text styling information in pressed state
 
       ButtonBehavior type;               // button behavior  
    };
@@ -259,7 +261,7 @@ public:
    // SET TEXTSTYLE
    // set/change the style of the text associated with this button in ALL states.  This is a pass-thru to the 
    // text object previously set with this button.  
-   void setTextStyle(CGUIText::StylingRecord * textStylingRecord); // style record with appropriate features set
+   void setStylingRecord(StylingRecord * textStylingRecord); // style record with appropriate features set
 
    // SET ENABLED TEXTSTYLE 
    // SET DISABLED TEXTSTYLE
@@ -267,13 +269,13 @@ public:
    // set/change the style of text associated with this button for each of the four states that the button
    // can be in.  Note these call does nothing if there is no text associated with the button.
    // They will work if the text is disabled.
-   void setEnabledTextStyle(CGUIText::StylingRecord * enabledTextStylingRecord); // style record with appropriate features set
-   void setDisabledTextStyle(CGUIText::StylingRecord * disabledTextStylingRecord); //	style record with appropriate features set
-   void setPressedTextStyle(CGUIText::StylingRecord * pressedTextStylingRecord); // style record with appropriate features set
+   void setEnabledStylingRecord(StylingRecord * enabledTextStylingRecord); // style record with appropriate features set
+   void setDisabledStylingRecord(StylingRecord * disabledTextStylingRecord); //	style record with appropriate features set
+   void setPressedStylingRecord(StylingRecord * pressedTextStylingRecord); // style record with appropriate features set
 
-   CGUIText::StylingRecord * getEnabledTextStyle(void){ return _enabledText->getStylingRecord();}
-   CGUIText::StylingRecord * getDisabledTextStyle(void){ return _disabledText->getStylingRecord();}
-   CGUIText::StylingRecord * getPressedTextStyle(void){ return _pressedText->getStylingRecord();}
+   StylingRecord * getEnabledStylingRecord(void){ return _enabledText->getStylingRecord();}
+   StylingRecord * getDisabledStylingRecord(void){ return _disabledText->getStylingRecord();}
+   StylingRecord * getPressedStylingRecord(void){ return _pressedText->getStylingRecord();}
   
    void setEnabledTextColor(CGUIColor color);
    void setDisabledTextColor(CGUIColor color);

@@ -8,6 +8,8 @@
  * needed for the meter.  If a scale is not provided, a default scale of
  * zero to one (0-1) is assumed.
  * $Log: cgui_meter.h $
+ * Revision 1.1  2004/09/24 21:59:49Z  rm10919
+ * Initial revision
  *
  */
 #ifndef _CGUI_METER_INCLUDE
@@ -35,10 +37,10 @@ public:
 
     struct Scale
     {
-       float initialEdge = 0;
-       float fillEdge = 0;
-       float finishEdge = 1;
-    }
+       float initialEdge;
+       float fillEdge;
+       float finishEdge;
+    };
 
    CGUIMeter(CGUIDisplay & display, 
              CGUIWindow * window,
@@ -68,10 +70,10 @@ public:
 
    // Add a frame around the meter
    
-   void setupFrame( list of CGUIFrame options - frame constructed with region from constructor )
+   void setupFrame(void);
 
-   void setMeterRegion (CGUIRegion * region);
-   CGUIRegion * getMeterRegion (void) { return _meterRegion;}
+   void setMeterRegion (CGUIRegion region);
+   CGUIRegion getMeterRegion (void) { return _meterRegion;}
 
 private:
 
@@ -84,7 +86,7 @@ private:
 
    bool _isFramed;                           //Does the meter have a frame? Default is false.
 
-   CGUIRegion  *  _meterRegion;              // Define the entire meter region.
+   CGUIRegion  _meterRegion;                 // Define the entire meter region.
 
    CGUIRectangle  *   _fillRectangle;        // Filled area of meter.
    CGUIRectangle  *   _backgroundRectangle;  // Background area of meter.

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.8  2005/01/03 23:49:51Z  cf10242
+ * add a setRegion to cguiText to invalidate region even if region size did not change
  * Revision 1.7  2004/11/18 22:31:41Z  rm10919
  * Modified getStylingRecord.
  * Revision 1.6  2004/11/04 20:19:09Z  rm10919
@@ -44,6 +46,7 @@
 
 #include "cgui_graphics.h"
 #include "cgui_window_object.h"
+#include "cgui_text_item.h"
 
 
 class CGUIWindow;
@@ -81,15 +84,6 @@ public:
    {
       LEFT_TO_RIGHT = 0x0000, RIGHT_TO_LEFT = 0x1000
    };    // text direction options
-   
-   struct StylingRecord
-   {
-      CGUIColor     color;       // color of the text as applied to whole string
-      unsigned int  attributes;  // attributes from the attribute enums above
-      CGUIRegion    region;      // placement in window or _owner relative
-      CGUIFontId    fontId;      // font used, this should use the _owner default value
-      int           fontSize;    // size of font most of the time
-   };
 
    //
    // Constructors

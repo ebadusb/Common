@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.22 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.16  2005/01/17 17:47:06Z  jl11312
+ * - implemented setId function
  * Revision 1.15  2005/01/12 20:06:08Z  rm10919
  * Deleted convertToAscii().
  * Revision 1.14  2004/12/27 22:48:51Z  rm10919
@@ -270,108 +272,3 @@ void CGUIRegion::convertToUGLRect(UGL_RECT & rect) const
 }
 
 
-int CGUITextItem::_defaultLanguageId = 0;
-
-CGUITextItem::CGUITextItem()
-:_id(NULL), _string(NULL)
-{
-}
-
-CGUITextItem::CGUITextItem(const char * id)
-:_id(id), _string(NULL)
-{
-}
-
-CGUITextItem::~ CGUITextItem()
-{
-   delete _id;
-   delete _string;
-}
-
-
-void CGUITextItem::setText(const char * string, LanguageId = currentLanguage)
-{
-   if (string)
-   {
-      if (_id)
-      {
-         _string = new StringChar[strlen(string) + 1];
-         
-         int stringLength = 0;
-
-         while (string[stringLength] != '\0')
-         {
-            _string[stringLength] = string[stringLength];
-            stringLength++;
-         }
-         _stringLength = stringLength;
-      }
-   }
-}
-
-void CGUITextItem::setText(const StringChar * string, LanguageId = currentLanguage)
-{
-   int stringLength = 0;
-
-   if (_id)
-   {
-      while (string[stringLength])
-      {
-         stringLength += 1;
-      }
-      
-      _stringLength = ++stringLength;
-
-      _string = new StringChar[stringLength+1];
-      memcpy(_string, string, stringLength * sizeof(StringChar));
-   }
-}
-
-const StringChar * CGUITextItem::getText(LanguageId languageId = currentLanguage)
-{
-	return _string;
-}
-
-char * CGUITextItem::getAscii(LanguageId languageId = currentLanguage)
-{
-   char * string;
-   int stringLength = 0;
-
-   if (_string)
-   {
-      while (_string[stringLength])
-      {
-         stringLength ++;
-      }
-      
-      stringLength++;
-      
-      string =  new char[stringLength];
-
-      for (int i=0; i<=_stringLength; i++)
-      {
-         if (_string[i] > 0xff)
-         {
-            //  have an invalid character!!
-            return NULL;
-         }
-         string[i] = _string[i];
-      }
-
-      return string;
-   }
-   else
-   {
-      return NULL;
-   }
-}
-
-void CGUITextItem::setId(const char * id)
-{
-	_id = id;
-}
-
-bool CGUITextItem::isInitialized(void)
-{
-   return (_id != NULL);
-}

@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.2  2002/07/01 16:38:41Z  sb07663
+ * HISTORY:    More descriptive logs and fatal errors
  * HISTORY:    Revision 1.1  2002/06/24 20:33:48  rm70006
  * HISTORY:    Initial revision
  * HISTORY:    Revision 1.1  2002/06/24 19:24:25Z  rm70006
@@ -86,9 +88,6 @@ void ElementType::Register(DataStore *ds, Role role, PfrType pfr)
 
 DATASTORE_LISTTYPE DataStore::_datastoreList;
 
-bool DataStore::_writerDeclared = false;
-
-
 DataLog_Level    DataStore::_debug(LOG_DATASTORE);
 DataLog_Critical DataStore::_fatal;
 
@@ -138,15 +137,7 @@ DataStore::DataStore(char *name, Role role) :
    //
    if (role == ROLE_RW)
    {
-      if (_writerDeclared)
-      {
-         // This is an error.
-         DataLog(_fatal) << "Error.  Multiple Writers Declared for CDS " << _name << ".  Abort!!!!!!" << endmsg;
-         _FATAL_ERROR(__FILE__, __LINE__, "Datastore multiple writers");
-         return;
-      }
-      else
-         _writerDeclared = true;
+      CheckForMultipleWriters();
    }
 
    // Create the Symbol table.
@@ -231,6 +222,27 @@ DataStore::DataStore(char *name, Role role) :
 DataStore::~DataStore()
 {
    // Don't delete anything.  The rest of the system is still using it.
+}
+
+
+
+//
+// CheckForMultipleWriters
+//
+void DataStore::CheckForMultipleWriters()
+{
+   static bool _writerDeclared = false;
+   
+   // The base implementation of DataStore fatal errors when multiple writers are declared.
+   if (_writerDeclared)
+   {
+      // This is an error.
+      DataLog(_fatal) << "Error.  Multiple Writers Declared for CDS " << _name << ".  Abort!!!!!!" << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "Datastore multiple writers");
+      return;
+   }
+   else
+      _writerDeclared = true;
 }
 
 
@@ -408,6 +420,22 @@ void DataStore::Unlock()
          semGive(*_writeSemaphore);
       }
    }
+}
+
+
+
+//
+// MultWriteDataStrore
+//
+
+
+
+//
+// Base Constructor
+// 
+MultWriteDataStore::MultWriteDataStore(char * name, Role role) :
+   DataStore (name, role)
+{
 }
 
 

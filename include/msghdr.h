@@ -1,8 +1,13 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/MSGHDR.H 1.2 1999/05/31 20:35:00 BS04481 Exp TD10216 $
+ * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/MSGHDR.H 1.3 1999/07/13 18:16:10 TD10216 Exp TD10216 $
  * $Log: MSGHDR.H $
+ * Revision 1.2  1999/05/31 20:35:00  BS04481
+ * Remove unused MSGHEADER structure from messages. 
+ * Decrease maximum message size.  Add new version of 
+ * focusBufferMsg and focusInt32Msg that do not bounce the message
+ * back to the originator.  All changes to increase free memory.
  * Revision 1.1  1999/05/24 23:26:41  TD10216
  * Initial revision
  * Revision 1.12  1999/03/29 17:10:12  TD10216
@@ -44,24 +49,22 @@
 #define MSGHDR_HPP
 
 // Check to see if this is for the windows version or QNX version.
-#ifndef WIN32
-// QNX
+#ifdef __QNX__
 #include <sys/types.h>
 #include <time.h>
-
 #else
-// Windows
-
+// Windows & ~linux
+#ifndef __linux__
 struct timespec 
 {
     long    tv_sec;
     long    tv_nsec;    
 };
-
 typedef struct
 {
    unsigned char buffer[1];   // length allocated in constructor
 } MSGDATA;
+#endif
 
 typedef  int         pid_t;            /* Used for process IDs & group IDs */
 typedef long         nid_t;            /* Used for network IDs         */

@@ -3,6 +3,8 @@
 *
 * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.3 1999/07/13 18:16:06 TD10216 Exp TD10216 $
 * $Log: AN2MSGS.H $
+* Revision 1.2  1999/06/30 21:40:12  TD10216
+* IT3908
 * Revision 1.1  1999/05/24 23:26:05  TD10216
 * Initial revision
 * Revision 1.26  1999/05/06 19:41:50  TD10216
@@ -323,4 +325,7 @@ typedef struct
 	TCPGate_Reg_ReqStruct Msg_Struct;	// Request info
 } TCPGate_Reg_ReqMsg;
 
+// enums for primitives types found in 1st field of TrimaMsgMap
+enum { mBOOL,mCHAR,mSHORT,mINT,mLONG,mFLOAT,mDOUBLE,mUNSIGNED,mENUM, 
+		mSTRUCT, mUNION, mWCHAR_T, mNONE };
 #endif										/* include guard */	

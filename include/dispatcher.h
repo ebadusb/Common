@@ -62,7 +62,7 @@ public:
    void deregisterMessage( const MessageBase &mb, MessagePacket &mp );
    void deregisterMessage( const unsigned long messageId, const MessageBase &mb );
 
-   void dump();
+   void dump( ostream &outs );
 
 protected:
 

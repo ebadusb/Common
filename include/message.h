@@ -50,9 +50,9 @@ public:
 
    //
    // Get/Set the message data
-   const T &get( ) const;
+   const T &getData( ) const;
    // set the data
-   void set( const T &buffer);
+   void setData( const T &buffer);
 
 protected:
 
@@ -63,7 +63,7 @@ protected:
    //
    // Get the message name ...
    //  (used for creating message Ids )
-   virtual const char *genMessageName();
+   virtual const char *genMsgName();
 
    //
    // Put the 'T' data into the message packets ...
@@ -113,18 +113,18 @@ Message<T>::~Message()
 template < class T >
 void Message<T>::send( const T &buffer )
 {
-   set( buffer );
+   setData( buffer );
    MessageBase::send();
 }
 
 template < class T >
-const T &Message<T>::get() const
+const T &Message<T>::getData() const
 {
    return _MsgData;
 }
 
 template < class T >
-void Message<T>::set( const T &buffer)
+void Message<T>::setData( const T &buffer)
 {
    _MsgData = buffer; 
 
@@ -138,7 +138,7 @@ unsigned long Message<T>::sizeOfData() const
 }
 
 template < class T >
-const char *Message<T>::genMessageName() 
+const char *Message<T>::genMsgName() 
 {
    _MessageName = typeid( *this ).name();
    return (const char*)_MessageName.data();

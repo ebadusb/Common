@@ -36,7 +36,8 @@ public:
    {
       SNDRCV_LOCAL=SEND_LOCAL,   // Send to processes on the local node
       SNDRCV_GLOBAL=SEND_GLOBAL, // Send to processes on all nodes
-      SNDRCV_RECEIVE_ONLY        // No sending this message, only receiving
+      SNDRCV_RECEIVE_ONLY,       // No sending this message, only receiving
+      SNDRCV_SPOOF_MSG          // Sending and receiving of spoofed messages
    };
 
 public:
@@ -78,7 +79,7 @@ public:
 
    //
    // Dump the contents of the class ...
-   void dump();
+   void dump( ostream &outs );
 
 protected:
 
@@ -89,7 +90,7 @@ protected:
    //
    // Generate the message name ...
    //  (used for creating message Ids )
-   virtual const char *genMessageName() = 0;
+   virtual const char *genMsgName() = 0;
 
    //
    // Get the message name from the member data
@@ -121,7 +122,7 @@ protected:
 
    //
    // Function to produce a unique message Id
-   unsigned long generateMsgId();
+   unsigned long genMsgId();
 
    //
    // Function called by the dispatcher to notify this message

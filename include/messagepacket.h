@@ -137,15 +137,15 @@ public:
 
    //
    // Dump the contents of the class ...
-   void dump()
+   void dump( ostream &outs )
    {
-      cout << "######################### Message Data ############################" << endl;
-      cout << "OSCode: " << _OSCode << " MsgId: " << hex << _MsgId << dec << " ";
-      cout << "Length: " << _Length << " Node: " << _NodeId << " ";
-      cout << "Tid: " << _TaskId << " Time: " << _SendTime.tv_sec << " " << _SendTime.tv_nsec << " ";
-      cout << "Seq: " << _SeqNum << " Tot: " << _TotNum << " ";
-      cout << "PcktLngth: " << _PacketLength << " Msg: " << _Msg << endl;
-      cout << "###################################################################" << endl;
+      outs << "######################### Message Data ############################" << endl;
+      outs << "OSCode: " << _OSCode << " MsgId: " << hex << _MsgId << dec << " ";
+      outs << "Length: " << _Length << " Node: " << _NodeId << " ";
+      outs << "Tid: " << _TaskId << " Time: " << _SendTime.tv_sec << " " << _SendTime.tv_nsec << " ";
+      outs << "Seq: " << _SeqNum << " Tot: " << _TotNum << " ";
+      outs << "PcktLngth: " << _PacketLength << " Msg: " << _Msg << endl;
+      outs << "###################################################################" << endl;
    }
 
 protected:
@@ -225,12 +225,12 @@ public:
 
    //
    // Dump the contents of the class ...
-   void dump()
+   void dump( ostream &outs )
    {
-      cout << "^^^^^^^^^^^^^^^^^^^^^^^^ Message Packet ^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
-      _MessageData.dump();
-      cout << "CRC: " << hex << _CRC << dec << " Unopened: " << _Unopened << endl;
-      cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
+      outs << "^^^^^^^^^^^^^^^^^^^^^^^^ Message Packet ^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
+      _MessageData.dump( outs );
+      outs << "CRC: " << hex << _CRC << dec << " Unopened: " << _Unopened << endl;
+      outs << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
    }
 
 protected:

@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/Common/ROUTER/rcs/TCP_GATE.CPP 1.4 1999/08/10 00:09:03 TD10216 Exp MS10234 $
  * $Log: TCP_GATE.CPP $
+ * Revision 1.3  1999/07/24 21:07:35  TD10216
+ * IT4154
  * Revision 1.2  1999/06/30 21:40:21  TD10216
  * IT3908
  * Revision 1.1  1999/05/24 23:29:22  TD10216
@@ -458,9 +460,11 @@ static void processGatewayQueue( mqd_t gqd, struct sigevent* qnotify)
 			break;
 			// known & registered for - relay it
 			case 1:
+			// dont change anything as this alters the CRC
 				// time stamp message b4 send out to 
 				// allow for t-sync on external computer for
 				// msgs originating on differnet procesors
+#if 0
 				clock_gettime( CLOCK_REALTIME,
 					&((MSGHEADER*)msg)->sendTime );
 				
@@ -468,7 +472,7 @@ static void processGatewayQueue( mqd_t gqd, struct sigevent* qnotify)
 				// rpl NID field with unsigned long rep of FS IP
 				((MSGHEADER*)msg)->taskNID = (long)ulFSIP;
 				((MSGHEADER*)msg)->taskPID = number_of_messages;
-		
+#endif		
 				if( sendto( sock, msg,
 										((MSGHEADER*)msg)->length,
 										0,

@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.25  2003/05/19 17:11:10Z  ms10234
+ * HISTORY:    5816 - changed Access function to be usable with const objects
  * HISTORY:    Revision 1.24  2003/05/19 16:16:13Z  ms10234
  * HISTORY:    5816 - fixing misstyped name for Access function
  * HISTORY:    Revision 1.23  2003/04/11 22:15:48Z  td07711
@@ -179,11 +181,9 @@ template <class dataType> BaseElement<dataType>::~BaseElement()
 //
 // Register method
 //
-template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, PfrType pfr)
+template <class dataType> bool BaseElement<dataType>::Register (DataStore *ds, PfrType pfr)
 {
-   bool created;
-
-   ElementType::Register(ds, pfr);
+   bool created = ElementType::Register(ds, pfr);
 
    BindItem(ds, &_handle, ITEM_BASE_ELEMENT_SYMBOL_CONTAINER, created);
 
@@ -195,9 +195,11 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, P
       // Only add the element if PFR is desired and it didn't exist in the list (avoid duplicates).
       if (_pfrType == PFR_RECOVER)
       {
-         _ds->AddElement(this);
+         _ds->AddElement( _handle, sizeof( dataType ) );
       }
    }
+
+   return created;
 }
 
 
@@ -205,30 +207,19 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, P
 //
 // Register method
 //
-template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, PfrType pfr, const dataType &initValue)
+template <class dataType> bool BaseElement<dataType>::Register (DataStore *ds, PfrType pfr, const dataType &initValue)
 {
-   bool created; 
-
-   ElementType::Register(ds, pfr);
-
-   BindItem(ds, &_handle, ITEM_BASE_ELEMENT_SYMBOL_CONTAINER, created);
+   bool created = Register(ds, pfr);
 
    if (created)
    {
-      // Create the items in the symbol table entry
-      CreateSymbolTableEntry();
-
-      // Only add the element if PFR is desired and it didn't exist in the list (avoid duplicates).
-      if (_pfrType == PFR_RECOVER)
-      {
-         _ds->AddElement(this);
-      }
-
       // First datastore initializes the element
-      // TBD.  This may need to be semaphore protected.
+      Access(LockAccess);
       *_handle->_data = initValue;
-      //Set(initValue);
+      Access(UnlockAccess);
    }
+
+   return created;
 }
 
 
@@ -320,49 +311,23 @@ template <class dataType> bool BaseElement<dataType>::Set(const dataType &data)
 }
 
 
-
-
-//
-// ReadSelf method
-//
-template <class dataType> void BaseElement<dataType>::ReadSelf (ifstream &pfrfile)
+template <class dataType> unsigned int BaseElementSymbolContainer<dataType>::Restore ( unsigned char *from )
 {
-   pfrfile.read(_handle->_data, sizeof(dataType));
-   //pfrfile >> _data;
-   
-   //DataLog(_ds->*_debug) << "Reading value " << *_data << ", size " << sizeof(dataType) << endmsg;
-
-   if (!pfrfile.good())
-   {
-      DataLog_Critical _fatal;
-      DataLog(_fatal) << "ReadSelf failed in " << _ds->Name()
-                              << ".  status is: " << pfrfile.rdstate() << endmsg;
-      _FATAL_ERROR(__FILE__, __LINE__, "ReadSelf failed.");
-   }
-}
-   
-
-
-//
-// WriteSelf method
-//
-template <class dataType> void BaseElement<dataType>::WriteSelf (ofstream &pfrfile)
-{
-   //DataLog(_ds->*_debug) << "Writing value " << *_data << ", size " << sizeof(dataType) << endmsg;
-
-   pfrfile.write(_handle->_data, sizeof(dataType));
-   //pfrfile << _data;
-
-   if (!pfrfile.good())
-   {
-      DataLog_Critical _fatal;
-      DataLog(_fatal) << "WriteSelf failed in " << _ds->Name()
-                              << ".  status is: " << pfrfile.rdstate() << endmsg;
-      _FATAL_ERROR(__FILE__, __LINE__, "WriteSelf failed.");
-   }
+   //
+   // Copy the data into my variable from the memory location provided
+   //
+   memcpy( _data, from, sizeof( dataType ) );
+   return sizeof( dataType );
 }
 
-
+template <class dataType> unsigned int BaseElementSymbolContainer<dataType>::Save    ( unsigned char *to )
+{
+   //
+   // Copy my data into the memory location provided
+   //
+   memcpy( to, _data, sizeof( dataType ) );
+   return sizeof( dataType );
+}
 
 //
 // SetSpoof
@@ -433,12 +398,12 @@ template <class dataType> RangedElement<dataType>::~RangedElement()
 //
 // Register method
 //
-template <class dataType> void RangedElement<dataType>::Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max)
+template <class dataType> bool RangedElement<dataType>::Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max)
 {
    _min = min;
    _max = max;
 
-   BaseElement<dataType>::Register(ds, pfr);
+   return BaseElement<dataType>::Register(ds, pfr);
 }
 
 
@@ -446,12 +411,12 @@ template <class dataType> void RangedElement<dataType>::Register (DataStore *ds,
 //
 // Register method
 //
-template <class dataType> void RangedElement<dataType>::Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max, const dataType &initValue)
+template <class dataType> bool RangedElement<dataType>::Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max, const dataType &initValue)
 {
    _min = min;
    _max = max;
 
-   BaseElement<dataType>::Register(ds, pfr, initValue);
+   return BaseElement<dataType>::Register(ds, pfr, initValue);
 }
 
 

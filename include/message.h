@@ -45,6 +45,10 @@ public:
    virtual ~Message();
 
    //
+   // Send the message out with the current data
+   void send( );
+
+   //
    // Send the message out with this data
    void send( const T &buffer);
 
@@ -108,6 +112,12 @@ Message<T>::Message( const CallbackBase &cb, const SendReceiveType st ) :
 template < class T >
 Message<T>::~Message()
 {
+}
+
+template < class T >
+void Message<T>::send( )
+{
+   MessageBase::send();
 }
 
 template < class T >

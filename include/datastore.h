@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.23  2003/05/19 17:11:06Z  ms10234
+ * HISTORY:    5816 - changed Access function to be usable with const objects
  * HISTORY:    Revision 1.22  2003/04/07 14:46:59Z  rm70006
  * HISTORY:    IT 5818.
  * HISTORY:    
@@ -88,23 +90,22 @@ enum Role    {ROLE_RO,     ROLE_RW, ROLE_SPOOFER};
 // Forward Reference
 class DataStore;
 
-
 //
 // Encapsulation of an element.
 //
 class ElementType
 {
+public:
    friend class DataStore;
+
+   PfrType pfrType() { return _pfrType; }
 
 // Class Methods
 protected:
    ElementType ();  // Hide default constructor
    virtual ~ElementType();
 
-   void Register (DataStore *ds, PfrType pfr);
-
-   virtual void ReadSelf  (ifstream &pfrfile) = 0;
-   virtual void WriteSelf (ofstream &pfrfile) = 0;
+   bool Register (DataStore *ds, PfrType pfr);
 
 private:
 
@@ -113,11 +114,38 @@ private:
 
 // Data Members
 protected:
+
    PfrType    _pfrType;
    DataStore *_ds;
-   //string     _name;
+
 };
 
+class BaseElementSymbolContainerAbs
+{
+public:
+
+   virtual unsigned int Restore ( unsigned char *from ) = 0; // return size 
+   virtual unsigned int Save    ( unsigned char *to ) = 0;   // return size
+
+};
+
+//
+// data element instance vars connected to the global symbol table
+//
+template <class dataType> class BaseElementSymbolContainer : public BaseElementSymbolContainerAbs
+{
+public:
+
+   inline BaseElementSymbolContainer<dataType>() : _data(0), _fp(0), _spooferCacheIsValid(false) {}
+
+   virtual unsigned int Restore ( unsigned char *from ); // return size of dataType restored
+   virtual unsigned int Save    ( unsigned char *to );   // return size of dataType saved
+
+   dataType             *_data;                 // Pointer to data
+   const CallbackBase  **_fp;                   // Points to the callback function
+   bool                  _spooferCacheIsValid;  // if true, spoofer get() is bypassed to avoid unecessary copy 
+
+};
 
 
 
@@ -146,8 +174,9 @@ public:
    void SetSpoof   (const CallbackBase* fp);
    void ClearSpoof ();
 
-   virtual void Register (DataStore *ds, PfrType pfr);
-   virtual void Register (DataStore *ds, PfrType pfr, const dataType &initValue);
+   // returns 'true' if it was created already
+   virtual bool Register (DataStore *ds, PfrType pfr);
+   virtual bool Register (DataStore *ds, PfrType pfr, const dataType &initValue);
 
    // these two functions for use by spoofer to avoid unnecessary data copies
    inline void setSpooferCacheValid() { _handle->_spooferCacheIsValid = true; };
@@ -156,9 +185,6 @@ public:
 // Class Methods
 protected:
    inline const dataType & GetRef() const { return *_handle->_data; };
-
-   virtual void ReadSelf  (ifstream &pfrfile);
-   virtual void WriteSelf (ofstream &pfrfile);
 
 	enum AccessOp { LockAccess, UnlockAccess };
 	void Access(AccessOp op) const;
@@ -173,19 +199,7 @@ private:
 // Data Members
 private:
 
-   //
-   // data element instance vars connected to the global symbol table
-   //
-   typedef struct BaseElementSymbolContainer
-   {
-      dataType             *_data;                 // Pointer to data
-      const CallbackBase  **_fp;                   // Points to the callback function
-      bool                  _spooferCacheIsValid;  // if true, spoofer get() is bypassed to avoid unecessary copy 
-
-      inline BaseElementSymbolContainer() : _data(0), _fp(0), _spooferCacheIsValid(false) {}
-   };
-
-   BaseElementSymbolContainer *_handle;
+   BaseElementSymbolContainer<dataType> *_handle;
 };
 
 
@@ -204,8 +218,8 @@ public:
 
    virtual bool Set(const dataType &data);   // Perform range check on set call.
 
-   virtual void Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max);
-   virtual void Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max, const dataType &initValue);
+   virtual bool Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max);
+   virtual bool Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max, const dataType &initValue);
 
    inline dataType operator = (const dataType &data) { Set(data); return Get();}  // Implicit Set call.
 
@@ -221,19 +235,55 @@ private:
 // Base CDS Container Class.  All CDS Containers are derived from this class.
 //
 #include <list>
+#include <map>
 #include <symLib.h>
-
-// Forward Reference
-class DataStore;
-
 
 
 enum BIND_ITEM_TYPE
-{  ITEM_DATASTORE_SYMBOL_CONTAINER,
+{  
+   ITEM_DATASTORE_SYMBOL_CONTAINER,
    ITEM_BASE_ELEMENT_SYMBOL_CONTAINER
 };
 
+typedef list<BaseElementSymbolContainerAbs *> ELEMENT_LISTTYPE;
 
+//
+// datastore instance vars connected to the global symbol table
+//
+class DataStoreSymbolContainer
+{
+public:
+
+   void Lock( Role role );
+   void Unlock( Role role );
+
+   unsigned int SetPfData(  unsigned char *memBlock ); // return length
+   bool RetrievePfData( unsigned char *memBlock );
+   bool RestorePfData();
+
+   string _name;
+
+   // List of PFR elements
+   ELEMENT_LISTTYPE _pfrList;
+   unsigned char *_pfDataPtr;
+   unsigned int _pfDataStoreLength;
+   bool _pfDataRestored;
+      
+   // Mutex semaphores
+   SEM_ID _mutexSemaphore;
+   SEM_ID _readSemaphore;
+   SEM_ID _writeSemaphore;
+      
+   // Mutex control flags
+   bool _signalRead;
+   bool _signalWrite;
+   int  _readCount;
+
+   // Flag tracking number of writers.
+   bool _writerDeclared;
+};
+
+typedef map< string, DataStoreSymbolContainer *> DATASTORE_LISTTYPE;
 
 
 //
@@ -245,13 +295,22 @@ class DataStore
 public:
    friend class ElementType;
 
-   static void SavePfrData (ofstream &pfrFile);
-   static void RestorePfrData (ifstream &pfrFile);
+   //
+   // Static PFR methods
+   static unsigned int SetAllPfData( ); // return length
+   static bool RetrieveAllPfData( );
+   static bool RestoreAllPfData ( );
+   static unsigned int PfCompleteLength() { return _pfCompleteLength; }
+   static unsigned char *PfMemoryBlock() { if ( !_pfCompleteDataPtr ) _pfCompleteDataPtr = new unsigned char [ _pfCompleteLength ]; return _pfCompleteDataPtr; }
 
-   void Lock();
-   void Unlock();
+   void Lock() { _handle->Lock( _role ); }
+   void Unlock() { _handle->Unlock( _role ); }
 
-   inline void AddElement (ElementType *member) { _handle->_pfrList.push_back(member); }
+   void AddElement (BaseElementSymbolContainerAbs *element, unsigned int size );
+
+   //
+   // Non-static PFR method
+   bool RestorePfData() { return _handle->RestorePfData(); }
 
    // Accessor functions
    static const SYMTAB_ID & getTable() { return _datastoreTable; }
@@ -265,40 +324,16 @@ protected:
    DataStore (const char *name, Role role);
    virtual ~DataStore();
 
-   inline void DeleteElement (ElementType *member) { _handle->_pfrList.remove(member); }
    virtual void CheckForMultipleWriters() = 0;
 
 // Data Members
 protected:
-   typedef list<ElementType *> ELEMENT_LISTTYPE;
-   typedef list<DataStore *>   DATASTORE_LISTTYPE;
-
-   //
-   // datastore instance vars connected to the global symbol table
-   //
-   typedef struct
-   {
-      // List of PFR elements
-      ELEMENT_LISTTYPE _pfrList;
-      
-      // Mutex semaphores
-      SEM_ID _mutexSemaphore;
-      SEM_ID _readSemaphore;
-      SEM_ID _writeSemaphore;
-      
-      // Mutex control flags
-      bool _signalRead;
-      bool _signalWrite;
-      int  _readCount;
-
-      // Flag tracking number of writers.
-      bool _writerDeclared;
-   } DataStoreSymbolContainer;
 
    // instance vars connected to the global symbol table
    DataStoreSymbolContainer *_handle;
 
    Role _role;
+
 
 // Class Methods
 private:
@@ -308,13 +343,16 @@ private:
 
 // Data Members
 private:
+
    // instance vars
    string _name;
-   
+
    int _refCount;
-   
+
    // static class vars
-   static DATASTORE_LISTTYPE _datastoreList;
+   static DATASTORE_LISTTYPE _pfrDataStoreList;
+   static unsigned int       _pfCompleteLength;
+   static unsigned char      *_pfCompleteDataPtr; // I own the allocated memory
    static SYMTAB_ID          _datastoreTable;
 
    static bool _logging;

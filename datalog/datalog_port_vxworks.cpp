@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.9 2003/10/16 14:57:40Z jl11312 Exp jl11312 $
  * $Log: datalog_port_vxworks.cpp $
+ * Revision 1.3  2003/01/08 15:37:48  jl11312
+ * - corrected timestamp operation
  * Revision 1.2  2002/08/15 20:53:58  jl11312
  * - added support for periodic logging
  * Revision 1.1  2002/07/18 21:20:52  jl11312
@@ -293,7 +295,11 @@ static time_t markTimeStampStart(void)
 	//
 	semTake(timeDataLock, WAIT_FOREVER);
 	clock_gettime(CLOCK_REALTIME, &clockStart);
+
+#if (CPU != SIMNT)
 	nanoSecPerTimestampTick = 1000000000/sysTimestampFreq();
+#endif /* if (CPU != SIMNT) */
+
 	semGive(timeDataLock);
 
 	return time(NULL);

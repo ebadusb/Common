@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.17  2002/10/18 19:58:14  rm70006
+ * HISTORY:    Added new type of CDS for proc.
  * HISTORY:    Revision 1.16  2002/09/25 16:05:00Z  rm70006
  * HISTORY:    Fixed bug in fatal logging.
  * HISTORY:    Revision 1.15  2002/09/24 16:48:39Z  rm70006
@@ -493,7 +495,7 @@ void DataStore::Lock()
    static char temp[20];
 
    // If instance is RO, perform RO semaphore lock
-   if (_role == ROLE_RO)
+   if (_role == ROLE_RO || _role == ROLE_SPOOFER )
    {
       if (_logging)
       {
@@ -655,7 +657,7 @@ void DataStore::Unlock()
    int event_type = 0;
 
    // If instance is RO, perform RO semaphore lock
-   if (_role == ROLE_RO)
+   if (_role == ROLE_RO || _role == ROLE_SPOOFER )
    {
       if (_logging)
       {
@@ -805,6 +807,10 @@ void DataStore::GetSymbolName(string &s, const BIND_ITEM_TYPE item)
 
    case ITEM_WRITER_DECLARED:
       size = sprintf((char *)s.c_str(), DATASTORE_WRITER_DECLARED, _name.c_str());
+      break;
+
+   case ITEM_SPOOF_CACHE:
+      size = sprintf((char *)s.c_str(), DATASTORE_SPOOF_CACHE_NAME, _name.c_str());
       break;
 
    default:
@@ -1025,6 +1031,12 @@ BOOL DumpEntry(char *name, int val, SYM_TYPE type, int arg, UINT16 group)
       if (dump_table_choice > 0)
          cout << "WriterDeclared " << name << ",\tvalue " << *data << endl;
 
+      break;
+
+   case ITEM_SPOOF_CACHE:
+      if (dump_table_choice > 0)
+         cout << "SpoofCache " << name << ",\tvalue " << *data << endl;
+    
       break;
 
    default:

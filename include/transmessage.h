@@ -128,4 +128,4 @@ protected:
 
 };
 
-#endif
+#endif /* ifndef TRANSMESSAGE_H */

@@ -96,4 +96,4 @@ protected:
 
 };
 
-#endif
+#endif /* ifndef TRANSUNCONDITIONAL_H */

@@ -147,9 +147,9 @@ protected:
    //
    // Cannot be used outside of this class and its descendants...
    CallbackBase( CallbackBase* ptr, MemFncPtrVoid fptr ) 
-   : _Ptr( ptr ), _MemFncPtrVoid( fptr ), _MemFncPtrData( 0 ), _Data( 0 ) { _Assigned = (fptr != NULL); }
+   : _Ptr( ptr ), _MemFncPtrVoid( fptr ), _MemFncPtrData( 0 ), _Data( 0 ), _Assigned( true ) { }
    CallbackBase( CallbackBase* ptr, MemFncPtrData fptr, void *data ) 
-   : _Ptr( ptr ), _MemFncPtrVoid( 0 ), _MemFncPtrData( fptr ), _Data( data ) { _Assigned = (fptr != NULL); }
+   : _Ptr( ptr ), _MemFncPtrVoid( 0 ), _MemFncPtrData( fptr ), _Data( data ), _Assigned( true ) { }
 
 private:
 

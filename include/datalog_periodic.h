@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog_periodic.h 1.2 2004/01/26 18:51:28Z jl11312 Exp jl11312 $
  * $Log: datalog_periodic.h $
+ * Revision 1.1  2003/02/25 16:11:37Z  jl11312
+ * Initial revision
  * Revision 1.3  2003/01/21 20:53:55  ms10234
  * Removed const version of periodic string member funcs because the compiler is too stupid to see const and non-const as different.
  * Revision 1.2  2002/11/14 15:53:13Z  jl11312
@@ -187,7 +189,7 @@ class DataLog_PeriodicItemStringFunc : public DataLog_PeriodicItemBase
 {
 public:
 	DataLog_PeriodicItemStringFunc(DataLog_SetHandle set, DataLog_CharPtr (* func)(void), const char * key, const char * description, const char * format)
-		: DataLog_PeriodicItemBase(set, DataLog_PeriodicItemBase::BUFFER_SIZE_INC, key, description, format), _func(func) { }
+		: DataLog_PeriodicItemBase(set, DataLog_PeriodicItemBase::BUFFER_SIZE_INC, key, description, format), _func((DataLog_ConstCharPtr (*)(void))func) { }
 
 	DataLog_PeriodicItemStringFunc(DataLog_SetHandle set, DataLog_ConstCharPtr (* func)(void), const char * key, const char * description, const char * format)
 		: DataLog_PeriodicItemBase(set, DataLog_PeriodicItemBase::BUFFER_SIZE_INC, key, description, format), _func(func) { }

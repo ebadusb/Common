@@ -104,4 +104,4 @@ protected:
 
 };
 
-#endif
+#endif /* ifdef TRANSCONDITIONAL_H */

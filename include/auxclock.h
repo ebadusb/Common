@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/auxclock.h 1.9 2004/01/26 18:51:21Z jl11312 Exp jl11312 $
  * $Log: auxclock.h $
+ * Revision 1.8  2003/05/07 20:06:01Z  jl11312
+ * - added option to use counting semaphore for aux clock notification
  * Revision 1.7  2003/01/08 23:43:01Z  ms10234
  * Added new function to return auxClock initialization time.
  * Revision 1.6  2002/12/16 18:29:31Z  jl11312
@@ -69,6 +71,10 @@ SEM_ID auxClockSemaphoreAttach(unsigned int microSecInterval, AuxClockSemaphoreT
 
 /* Enable the auxClock Message Packet queue to send auxClockMuSec every given number of microseconds. */
 void auxClockMsgPktEnable(unsigned int microSecInterval, const char * MsgPktQName);
+
+/* additions to system aux clock interface */
+int extraAuxClockRateGet(void);
+STATUS extraAuxClockConnect(FUNCPTR routine, int arg);
 
 #ifdef __cplusplus
 }; // extern "C"

@@ -78,7 +78,7 @@ public:
 
    static int valid( const char *n );
 
-   static void dump( ostream &outs );
+   static void dump( DataLog_Stream &outs );
 
 protected:
 

@@ -127,4 +127,4 @@ protected:
    int _MSecs;
 };
 
-#endif
+#endif /* ifndef TRANSTIMER_H */

@@ -3,6 +3,8 @@
 # Makefile.rules - common makefile rules for vxWorks
 #
 # $Log: makefile.rules $
+# Revision 1.5  2002/09/06 13:08:47  jl11312
+# - correct dependency generation rule to properly handle source files not in the current directory
 # Revision 1.4  2002/08/28 16:46:13  sb07663
 # added rule to create a bin/.o file from a .cpp
 # Revision 1.3  2002/05/16 17:39:03  jl11312
@@ -50,13 +52,13 @@ $(CPU)/%.o:%.s
 	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .cpp,.o,$(subst /,\/,$(CPU)/$(notdir $<))) $(subst /,\/,$@) : /g" < $@.tmp > $@
 	@rm -f $@.tmp
 
-.dfile/%.d:%.S
+.dfile/%.d:%.s
 	@echo Rebuilding dependency file for $<
 	@if not exist .dfile mkdir .dfile
-	@rm -f $(CPU)/$(notdir $(subst .S,.o,$<))
+	@rm -f $(CPU)/$(notdir $(subst .s,.o,$<))
 	@rm -f $@.tmp
 	@$(CC) -M $(CPPFLAGS) $< >$@.tmp
-	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .S,.o,$(subst /,\/,$(CPU)/$(notdir $<))) $(subst /,\/,$@) : /g" < $@.tmp > $@
+	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .s,.o,$(subst /,\/,$(CPU)/$(notdir $<))) $(subst /,\/,$@) : /g" < $@.tmp > $@
 	@rm -f $@.tmp
 
 endif

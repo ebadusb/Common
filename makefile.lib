@@ -3,6 +3,8 @@
 # Makefile.lib - common makefile for libraries
 #
 # $Log: makefile.lib $
+# Revision 1.3  2002/08/15 20:46:32  jl11312
+# - added support for BUILD_TYPE=CLEAN
 # Revision 1.2  2002/04/19 17:28:54  jl11312
 # - moved output directory creation to .o build rule
 # Revision 1.1  2002/04/18 14:27:47  jl11312
@@ -26,11 +28,11 @@
 #    
 LIB_OBJ := $(addprefix $(CPU)/, $(notdir $(LIB_C_FILES:.c=.o))) \
            $(addprefix $(CPU)/, $(notdir $(LIB_CXX_FILES:.cpp=.o))) \
-	   $(addprefix $(CPU)/, $(notdir $(LIB_S_FILES:.S=.o)))
+	   $(addprefix $(CPU)/, $(notdir $(LIB_S_FILES:.s=.o)))
 
 DEPEND_CXX_FILES := $(addprefix .dfile/, $(notdir $(LIB_CXX_FILES:.cpp=.d)))
 DEPEND_C_FILES   := $(addprefix .dfile/, $(notdir $(LIB_C_FILES:.c=.d)))
-DEPEND_S_FILES   := $(addprefix .dfile/, $(notdir $(LIB_S_FILES:.S=.d)))
+DEPEND_S_FILES   := $(addprefix .dfile/, $(notdir $(LIB_S_FILES:.s=.d)))
 LIB_DEPEND := $(DEPEND_CXX_FILES) $(DEPEND_C_FILES) $(DEPEND_S_FILES)
 LIB_ARCHIVE := $(ARCHIVE_DIR)/$(ARCHIVE_NAME)
 

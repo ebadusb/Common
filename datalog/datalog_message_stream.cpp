@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.9 2003/04/29 17:07:54Z jl11312 Exp jl11312 $
  * $Log: datalog_message_stream.cpp $
+ * Revision 1.3  2002/08/28 14:37:08  jl11312
+ * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.2  2002/08/15 20:53:56  jl11312
  * - added support for periodic logging
  * Revision 1.1  2002/07/18 21:20:57  jl11312
@@ -12,6 +14,8 @@
 
 #include <vxWorks.h>
 #include <stdarg.h>
+#include <symLib.h>
+#include <sysSymTbl.h>
 #include <typeinfo>
 #include "datalog.h"
 #include "datalog_internal.h"
@@ -177,7 +181,7 @@ DataLog_EnabledType streamCallBack(const DataLog_BufferData * data, size_t size)
 {
 	OutputControl * control = (OutputControl *)data;
 
-//	if ( control->consoleOutput == DataLog_ConsoleEnabled )
+	if ( control->consoleOutput == DataLog_ConsoleEnabled )
 	{
 		//
 		// Parse the stream output record and send data to stdout
@@ -192,10 +196,10 @@ DataLog_EnabledType streamCallBack(const DataLog_BufferData * data, size_t size)
 		streamDataLen = (DataLog_UINT16 *)(fileName + streamOutputRecord->_fileNameLen*sizeof(char));
 		streamData = ((DataLog_BufferData *)streamDataLen) + sizeof(DataLog_UINT16);
 
-		fwrite(fileName, sizeof(char), (unsigned int)streamOutputRecord->_fileNameLen, stderr);
-		fprintf(stderr, "(%d): ", streamOutputRecord->_lineNum);
-		fwrite(streamData, sizeof(char), (unsigned int)(*streamDataLen), stderr);
-		fputc('\n', stderr);
+		fwrite(fileName, sizeof(char), (unsigned int)streamOutputRecord->_fileNameLen, stdout);
+		fprintf(stdout, "(%d): ", streamOutputRecord->_lineNum);
+		fwrite(streamData, sizeof(char), (unsigned int)(*streamDataLen), stdout);
+		fputc('\n', stdout);
 	}
 
 	return control->logOutput;
@@ -261,15 +265,21 @@ DataLog_Stream & DataLog_Level::operator()(const char * fileName, int lineNumber
 	streamOutputRecord._fileNameLen = strlen(fileName);
 	streamOutputRecord._lineNum = lineNumber;
  
-	DataLog_Stream	& stream = outputBuffer->streamWriteStart(&streamCallBack, sizeof(outputControl));
-	stream.write(&outputControl, sizeof(outputControl));
-	stream.write(&streamOutputRecord, sizeof(streamOutputRecord));
-	stream.write(fileName, streamOutputRecord._fileNameLen * sizeof(char));
+	bool	firstWrite;
+	DataLog_Stream	& stream = outputBuffer->streamWriteStartOrContinue(&streamCallBack, sizeof(outputControl), firstWrite);
 
-	DataLog_UINT16	dataLen = 0;
-	stream.write(&dataLen, sizeof(dataLen));
+	if ( firstWrite )
+	{
+		stream.write(&outputControl, sizeof(outputControl));
+		stream.write(&streamOutputRecord, sizeof(streamOutputRecord));
+		stream.write(fileName, streamOutputRecord._fileNameLen * sizeof(char));
 
-	outputBuffer->streamWriteReleaseToApp();
+		DataLog_UINT16	dataLen = 0;
+		stream.write(&dataLen, sizeof(dataLen));
+
+		outputBuffer->streamWriteReleaseToApp();
+	}
+
 	return stream;
 }
 
@@ -332,6 +342,36 @@ ostream & endmsg(ostream & stream)
 
 	return stream;
 }
+
+ostream & errnoMsg(ostream & stream)
+{
+	bool	decodeOK = false; 
+	int	errnoCopy = errno;
+
+	if ( statSymTbl != NULL )
+	{
+		SYM_TYPE	type;
+		char  	errName[MAX_SYS_SYM_LEN+1];
+		int		errValue;
+
+		if ( symFindByValue(statSymTbl, errnoCopy, errName, &errValue, &type) == OK )
+		{
+			if ( errValue == errnoCopy )
+			{
+				stream << errName;
+				decodeOK = true;
+			}
+		}
+	}
+
+	if ( !decodeOK )
+	{
+		stream << "errno=" << errnoCopy;
+	}
+
+	return stream;
+} 
+		
 
 ostream & datalog_GetDefaultStream(const char * file, int line)
 {

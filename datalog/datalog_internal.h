@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.10 2003/10/03 12:35:02Z jl11312 Exp jl11312 $
  * $Log: datalog_internal.h $
+ * Revision 1.4  2002/08/28 14:37:07  jl11312
+ * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.3  2002/08/22 20:19:11  jl11312
  * - added network support
  * Revision 1.2  2002/08/15 20:53:55  jl11312
@@ -104,6 +106,7 @@ public:
 
 	typedef DataLog_EnabledType NotifyStreamWriteComplete(const DataLog_BufferData * ptr, size_t size);
 	virtual DataLog_Stream & streamWriteStart(NotifyStreamWriteComplete * callBack = NULL, size_t callBackArgSize = 0);
+	virtual DataLog_Stream & streamWriteStartOrContinue(NotifyStreamWriteComplete * callBack, size_t callBackArgSize, bool & firstWrite);
 	virtual void streamWriteReleaseToApp(void);
 	virtual size_t streamWriteComplete(void);
 

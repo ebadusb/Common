@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_buffer.cpp 1.5 2003/01/31 19:52:49 jl11312 Exp jl11312 $
  * $Log: datalog_buffer.cpp $
+ * Revision 1.1  2002/08/15 21:20:59  jl11312
+ * Initial revision
  * Revision 1.4  2002/07/18 21:20:29  jl11312
  * - preliminary implementation
  * Revision 1.3  2002/06/04 20:22:53  jl11312
@@ -293,6 +295,12 @@ DataLog_Stream & DataLog_OutputBuffer::streamWriteStart(NotifyStreamWriteComplet
 	return *_writeStream;
 }
 
+DataLog_Stream & DataLog_OutputBuffer::streamWriteStartOrContinue(NotifyStreamWriteComplete * callBack, size_t callBackArgSize, bool & firstWrite)
+{
+	firstWrite = ( !_streamWriteInProgress || !_streamWriteReleasedToApp ) ? true : false;
+	return (firstWrite) ? streamWriteStart(callBack, callBackArgSize) : *_writeStream;
+}
+
 void DataLog_OutputBuffer::streamWriteReleaseToApp(void)
 {
 	lockWriteAccess();
@@ -371,8 +379,8 @@ size_t DataLog_OutputBuffer::streamWriteComplete(void)
 	}
 
 	_streamWriteInProgress = false;
+	_streamWriteReleasedToApp = false;
 	releaseWriteAccess();
-
 	return result;
 }
 

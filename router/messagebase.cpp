@@ -16,6 +16,8 @@
 #include "messagebase.h"
 #include "messagesystem.h"
 #include "messagesystemconstant.h"
+#include "spoofermessagesystem.h"
+#include <typeinfo>
 
 MessageBase::MessageBase( ) :
    _VirtualNotify(),
@@ -167,10 +169,20 @@ void MessageBase::send()
 
    if ( MessageSystem::MsgSystem() )
    {
-      //
-      // reset my task and node Ids to my own because I am the last sender ...
-      _TaskId = taskIdSelf();
-      _NodeId = 0;
+      bool changeInfo = true;
+      if (    typeid( *MessageSystem::MsgSystem() ) == typeid( SpooferMessageSystem ) 
+           && _TaskId != taskIdSelf() ) 
+      {
+         changeInfo = false;
+      }
+
+      if ( changeInfo )
+      {
+         //
+         // reset my task and node Ids to my own because I am the last sender ...
+         _TaskId = taskIdSelf();
+         _NodeId = 0;
+      }
 
       list< MessagePacket* >::iterator pckt;
       for ( pckt  = _PacketList.begin();
@@ -179,9 +191,12 @@ void MessageBase::send()
       {
          //
          // Set the sent time, task, and node in the message packets ...
-         (*pckt)->updateTime();
-         (*pckt)->msgData().taskId( _TaskId );
-         (*pckt)->msgData().nodeId( _NodeId );
+         if ( changeInfo ) 
+         {
+            (*pckt)->updateTime();
+            (*pckt)->msgData().taskId( _TaskId );
+            (*pckt)->msgData().nodeId( _NodeId );
+         }
          (*pckt)->updateCRC();
    
          //

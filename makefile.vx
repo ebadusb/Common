@@ -1,8 +1,10 @@
-# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.14 2003/01/31 19:17:18Z ms10234 Exp ms10234 $
+# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.15 2003/02/04 15:50:47Z ms10234 Exp jl11312 $
 #
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.14  2003/01/31 19:17:18Z  ms10234
+# added support for latest_common_build_dir.mk
 # Revision 1.13  2002/11/12 23:55:54Z  ms10234
 # added zlib
 # Revision 1.12  2002/09/19 21:42:40  jl11312
@@ -57,7 +59,7 @@ libs:
 	@cd cmdline && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd zlib && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 
-COMMON_BUILD_DIR := $(shell cd)
+COMMON_BUILD_DIR := $(strip $(subst \,/, $(shell cd)))
 
-latest_common_build_dir.mk:
-	@echo $(COMMON_BUILD_DIR) > ../$@
+latest_common_build_dir.mk: ;
+	@echo $(addprefix .\, $(notdir $(COMMON_BUILD_DIR))) > ../$@

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.10 2003/10/03 12:35:02Z jl11312 Exp jl11312 $
  * $Log: datalog_internal.h $
+ * Revision 1.9  2003/02/25 16:10:13Z  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.8  2003/02/06 20:41:30  jl11312
  * - added support for binary record type
  * - added support for symbolic node names in networked configurations
@@ -121,9 +123,9 @@ struct DataLog_SetInfo
 
   long _logIntervalMilliSec;
   DataLog_List<DataLog_PeriodicItemBase *> _items;
-  const char * _writeSignalName;
-  const char * _modifiedSignalName;
-  const char * _periodUpdateSignalName;
+  DataLog_SignalInfo * _writeSignal;
+  DataLog_SignalInfo * _modifiedSignal;
+  DataLog_SignalInfo * _periodUpdateSignal;
   
   DataLog_Lock _lock;
   DataLog_Lock _outputLock;
@@ -139,8 +141,8 @@ public:
 	void addTask(DataLog_TaskInfo * taskInfo);
 	void deleteTask(DataLog_TaskID task);
 
-	DataLog_Handle findHandle(const char * levelName);
-	void addHandle(const char * levelName, DataLog_Handle handle);
+	DataLog_Handle findHandle(const char * handleName);
+	void addHandle(const char * handleName, DataLog_Handle handle);
 
 	void setTaskError(DataLog_ErrorType error, const char * file, int line);
 	DataLog_TaskErrorHandler * getTaskErrorHandler(DataLog_TaskID task);

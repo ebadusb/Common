@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.13 2003/12/05 16:33:05Z jl11312 Exp rm70006 $
  * $Log: datalog.cpp $
+ * Revision 1.11  2003/03/27 16:26:55Z  jl11312
+ * - added support for new datalog levels
  * Revision 1.10  2003/02/25 16:10:06Z  jl11312
  * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.9  2003/01/31 19:52:49  jl11312
@@ -39,9 +41,6 @@
 
 DataLog_Map<DataLog_TaskID, DataLog_TaskInfo *> DataLog_CommonData::_tasks;
 DataLog_Lock DataLog_CommonData::_tasksLock = datalog_CreateLock();
-
-DataLog_Map<DataLog_InternalID, DataLog_Handle> DataLog_CommonData::_handles;
-DataLog_Lock DataLog_CommonData::_handlesLock = datalog_CreateLock();
 
 const DataLog_HandleInfo DataLog_CommonData::_criticalHandleInfo = { 0, DataLog_HandleInfo::CriticalHandle, DataLog_LogEnabled, DataLog_ConsoleDisabled };
 
@@ -102,32 +101,6 @@ void DataLog_CommonData::deleteTask(DataLog_TaskID task)
 
 		delete taskInfo;
 	}
-}
-
-DataLog_Handle DataLog_CommonData::findHandle(const char * levelName)
-{
-	DataLog_Handle	result = DATALOG_NULL_HANDLE;
-
-	datalog_LockAccess(_handlesLock);
-
-	DataLog_InternalID levelID = lookupLevelID(levelName);
-	if ( levelID != DATALOG_NULL_ID )
-	{
-		result = _handles[levelID];
-	}
-
-	datalog_ReleaseAccess(_handlesLock);
-	return result;
-}
-
-void DataLog_CommonData::addHandle(const char * levelName, DataLog_Handle handle)
-{
-	datalog_LockAccess(_handlesLock);
-	
-	registerLevelID(levelName, handle->_id);
-	_handles[handle->_id] = handle;
-
-	datalog_ReleaseAccess(_handlesLock);
 }
 
 void DataLog_CommonData::setLocalConnect(const char * fileName)

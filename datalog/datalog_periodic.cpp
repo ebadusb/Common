@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_periodic.cpp 1.6 2005/05/31 20:26:46Z jheiusb Exp ms10234 $
  * $Log: datalog_periodic.cpp $
+ * Revision 1.3  2003/02/25 16:10:24Z  jl11312
+ * - modified buffering scheme to help prevent buffer overruns
  * Revision 1.2  2003/01/31 19:52:51  jl11312
  * - new stream format for datalog
  * Revision 1.1  2002/08/15 21:20:57  jl11312
@@ -37,10 +39,10 @@ int DataLog_PeriodicTask::main(void)
 
 	while ( !_isExiting )
 	{
-		datalog_WaitSignal(_set->_writeSignalName, -1);
-		if ( datalog_WaitSignal(_set->_periodUpdateSignalName, 0) )
+		datalog_WaitSignal(_set->_writeSignal, -1);
+		if ( datalog_WaitSignal(_set->_periodUpdateSignal, 0) )
 		{
-			datalog_SetupPeriodicSignal(_set->_writeSignalName, _set->_logIntervalMilliSec);
+			datalog_SetupPeriodicSignal(_set->_writeSignal, _set->_logIntervalMilliSec);
 		}
 
 		datalog_LockAccess(_set->_outputLock);
@@ -52,7 +54,7 @@ int DataLog_PeriodicTask::main(void)
 			++itemsIter;
 		}
 
-		if ( datalog_WaitSignal(_set->_modifiedSignalName, 0) )
+		if ( datalog_WaitSignal(_set->_modifiedSignal, 0) )
 		{
 			size_t	newSize = 0;
 
@@ -174,17 +176,17 @@ DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_SetHandle
    char * signalName = new char[setNameLen+strlen(writeSuffix)+1];
    strcpy(signalName, setName);
    strcat(signalName, writeSuffix);
-	setInfo->_writeSignalName = signalName;
+	setInfo->_writeSignal = datalog_CreateSignal(signalName);
 
 	signalName = new char[setNameLen+strlen(modifiedSuffix)+1];
    strcpy(signalName, setName);
    strcat(signalName, modifiedSuffix);
-   setInfo->_modifiedSignalName = signalName;
+   setInfo->_modifiedSignal = datalog_CreateSignal(signalName);
 
 	signalName = new char[setNameLen+strlen(modifiedSuffix)+1];
    strcpy(signalName, setName);
    strcat(signalName, periodUpdateSuffix);
-   setInfo->_periodUpdateSignalName = signalName;
+   setInfo->_periodUpdateSignal = datalog_CreateSignal(signalName);
 
 	setInfo->_lock = datalog_CreateLock();
 	setInfo->_outputLock = datalog_CreateLock();
@@ -228,16 +230,16 @@ DataLog_Result datalog_GetPeriodicOutputInterval(DataLog_SetHandle handle, long 
 DataLog_Result datalog_SetPeriodicOutputInterval(DataLog_SetHandle handle, long milliSeconds)
 {
 	handle->_logIntervalMilliSec = milliSeconds;
-	datalog_SendSignal(handle->_periodUpdateSignalName);
-	datalog_SendSignal(handle->_writeSignalName);
+	datalog_SendSignal(handle->_periodUpdateSignal);
+	datalog_SendSignal(handle->_writeSignal);
 	
 	return DataLog_OK;
 }
 
 DataLog_Result datalog_ForcePeriodicOutput(DataLog_SetHandle handle)
 {
-	datalog_SendSignal(handle->_periodUpdateSignalName);
-	datalog_SendSignal(handle->_writeSignalName);
+	datalog_SendSignal(handle->_periodUpdateSignal);
+	datalog_SendSignal(handle->_writeSignal);
 
 	return DataLog_OK;
 }
@@ -274,7 +276,7 @@ DataLog_PeriodicItemBase::DataLog_PeriodicItemBase(DataLog_SetHandle set, size_t
 	datalog_LockAccess(set->_lock);
 	set->_items.push_back(this);
 	datalog_ReleaseAccess(set->_lock);
-	datalog_SendSignal(set->_modifiedSignalName);
+	datalog_SendSignal(set->_modifiedSignal);
 
 	DataLog_PeriodicItemRecord periodicItemRecord;
 	periodicItemRecord._recordType = DataLog_PeriodicItemRecordID;
@@ -359,7 +361,7 @@ void DataLog_PeriodicItemBase::copyItemData(size_t size, const void * data)
 		_allocSize = size+BUFFER_SIZE_INC;
 		_data = malloc(_allocSize);
 
-		datalog_SendSignal(_set->_modifiedSignalName);
+		datalog_SendSignal(_set->_modifiedSignal);
 	}
 
 	_size = size;

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.9 2003/10/16 14:57:40Z jl11312 Exp jl11312 $
  * $Log: datalog_port_vxworks.cpp $
+ * Revision 1.7  2003/04/29 17:07:58Z  jl11312
+ * - direct console output directly to console instead of stdout
  * Revision 1.6  2003/03/27 16:27:04Z  jl11312
  * - added support for new datalog levels
  * Revision 1.5  2003/02/25 16:10:26Z  jl11312
@@ -36,9 +38,7 @@
 //
 // Local functions
 //
-struct SignalInfo;
-static SignalInfo * getSignalInfo(const char * signalName);
-static void timerNotify(timer_t timerID, SignalInfo * signalInfo);
+static void timerNotify(timer_t timerID, DataLog_SignalInfo * signalInfo);
 static time_t markTimeStampStart(void);
 
 //
@@ -90,43 +90,43 @@ DataLog_InternalID DataLog_CommonData::getNextInternalID(void)
 }
 
 //
-// Level ID related functions
+// DataLog_Handle related functions
 //
-static SEM_ID	levelIDLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
-static map<string, DataLog_InternalID>	levelIDMap;
+static SEM_ID	handleLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+static map<string, DataLog_Handle>	handleMap;
 
-DataLog_InternalID DataLog_CommonData::lookupLevelID(const char * levelName)
+DataLog_Handle DataLog_CommonData::findHandle(const char * handleName)
 {
-	DataLog_InternalID result = DATALOG_NULL_ID;
+	DataLog_Handle result = DATALOG_NULL_HANDLE;
 
-	semTake(levelIDLock, WAIT_FOREVER);
-	if ( levelIDMap.find(levelName) != levelIDMap.end() )
+	semTake(handleLock, WAIT_FOREVER);
+	if ( handleMap.find(handleName) != handleMap.end() )
 	{
-		result = levelIDMap[levelName];
+		result = handleMap[handleName];
 	}
 
-	semGive(levelIDLock);
+	semGive(handleLock);
 	return result;
 }
 
-void DataLog_CommonData::registerLevelID(const char * levelName, DataLog_InternalID id)
+void DataLog_CommonData::addHandle(const char * handleName, DataLog_Handle handle)
 {
-	semTake(levelIDLock, WAIT_FOREVER);
-	if ( levelIDMap.find(levelName) != levelIDMap.end() )
+	semTake(handleLock, WAIT_FOREVER);
+	if ( handleMap.find(handleName) != handleMap.end() )
 	{
 #ifdef DATALOG_LEVELS_INIT_SUPPORT
 		DataLog(log_level_datalog_error)
 #else /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
 		DataLog_Default
 #endif /* ifdef DATALOG_LEVELS_INIT_SUPPORT */
-			<< "attempt to register duplicate level name ignored" << endmsg;
+			<< "attempt to register duplicate handle name ignored" << endmsg;
 	}
 	else
 	{
-		levelIDMap[levelName] = id;
+		handleMap[handleName] = handle;
 	}
 
-	semGive(levelIDLock);
+	semGive(handleLock);
 }
 
 //
@@ -164,7 +164,7 @@ void DataLog_CommonData::setCommonDataPtr(void)
 //
 // Signal related functions
 //
-struct SignalInfo
+struct DataLog_SignalInfo
 {
 	SEM_ID	_semID;
 
@@ -173,19 +173,24 @@ struct SignalInfo
 };
 
 static SEM_ID	signalDataLock = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
-static map<string, SignalInfo *>	signalMap;
+static map<string, DataLog_SignalInfo *>	signalMap;
 
-static SignalInfo * getSignalInfo(const char * signalName)
+static void timerNotify(timer_t timerID, DataLog_SignalInfo * signalInfo)
+{
+	semGive(signalInfo->_semID);
+}
+
+DataLog_SignalInfo * datalog_CreateSignal(const char * signalName)
 {
 	//
 	//	Create signal if necessary
 	//
-	SignalInfo *	result;
+	DataLog_SignalInfo *	result;
 
 	semTake(signalDataLock, WAIT_FOREVER);
 	if ( signalMap.find(signalName) == signalMap.end() )
 	{
-		result = new SignalInfo;
+		result = new DataLog_SignalInfo;
 		result->_semID = semBCreate(SEM_Q_PRIORITY, SEM_EMPTY);
 		result->_timerCreated = false;
 		signalMap[signalName] = result;
@@ -196,16 +201,9 @@ static SignalInfo * getSignalInfo(const char * signalName)
 	return result;
 }
 
-static void timerNotify(timer_t timerID, SignalInfo * signalInfo)
+bool datalog_WaitSignal(DataLog_SignalInfo * signalInfo, long milliSeconds)
 {
-	semGive(signalInfo->_semID);
-}
-
-bool datalog_WaitSignal(const char * signalName, long milliSeconds)
-{
-	SignalInfo * signalInfo = getSignalInfo(signalName);
 	int timeout = WAIT_FOREVER;
-
 	if (milliSeconds >= 0)
 	{
 		timeout = milliSeconds * sysClkRateGet() / 1000;
@@ -215,15 +213,13 @@ bool datalog_WaitSignal(const char * signalName, long milliSeconds)
 	return (result == OK) ? true : false;
 }
 
-void datalog_SendSignal(const char * signalName)
+void datalog_SendSignal(DataLog_SignalInfo * signalInfo)
 {
-	SignalInfo * signalInfo = getSignalInfo(signalName);
 	semGive(signalInfo->_semID);
 }
 
-void datalog_SetupPeriodicSignal(const char * signalName, long milliSeconds)
+void datalog_SetupPeriodicSignal(DataLog_SignalInfo * signalInfo, long milliSeconds)
 {
-	SignalInfo * signalInfo = getSignalInfo(signalName);
 	if ( !signalInfo->_timerCreated )
 	{
 		if ( timer_create(CLOCK_REALTIME, NULL, &(signalInfo->_timerID)) != OK )
@@ -417,12 +413,17 @@ struct DataLog_BufferList
 #endif /* ifdef DATALOG_BUFFER_STATISTICS */
 };
 
+static DataLog_SignalInfo *	outputSignal = NULL;
+static DataLog_SignalInfo *   dataLostSignal = NULL;
 static DataLog_BufferList	traceList;
 static DataLog_BufferList	criticalList;
 static DataLog_BufferList	freeList;
 
 void DataLog_BufferManager::initialize(size_t bufferSizeKBytes)
 {
+	outputSignal = datalog_CreateSignal("DataLog_Output");
+	dataLostSignal = datalog_CreateSignal("DataLog_DataLost");
+
 	unsigned long	bufferCount = (bufferSizeKBytes*1024+DataLog_BufferSize-1)/DataLog_BufferSize;
 	DataLog_Buffer	* buffer = new DataLog_Buffer[bufferCount];
 
@@ -549,9 +550,10 @@ void DataLog_BufferManager::addChainToList(DataLog_BufferManager::BufferList lis
 			intUnlock(level);
 
 			bufferList = &freeList;
-			datalog_SendSignal("DataLog_DataLost");
+			datalog_SendSignal(dataLostSignal);
 		}
 
+		int chainBufferCount = (chain._head->_length+DataLog_BufferSize-1)/DataLog_BufferSize;
 		int level = intLock();
 		if ( bufferList->_tail )
 		{
@@ -568,7 +570,6 @@ void DataLog_BufferManager::addChainToList(DataLog_BufferManager::BufferList lis
 			signalNeeded = true;
 		}
 
-		int	chainBufferCount = (chain._head->_length+DataLog_BufferSize-1)/DataLog_BufferSize;
 		bufferList->_currentBufferCount += chainBufferCount;
 
 		if ( bufferList != &freeList )
@@ -586,7 +587,7 @@ void DataLog_BufferManager::addChainToList(DataLog_BufferManager::BufferList lis
 
 		if ( signalNeeded && list != FreeList )
 		{
-			datalog_SendSignal("DataLog_Output");
+			datalog_SendSignal(outputSignal);
 	   }
 	}
 }

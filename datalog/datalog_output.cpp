@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.11 2003/10/03 12:35:06Z jl11312 Exp jl11312 $
  * $Log: datalog_output.cpp $
+ * Revision 1.10  2003/06/18 18:56:14Z  jl11312
+ * - handle both SIGINT and SIGQUIT
  * Revision 1.9  2003/02/25 20:43:04Z  jl11312
  * - added support for logging platform specific information in log header
  * Revision 1.8  2003/02/25 16:10:23  jl11312
@@ -55,18 +57,20 @@ DataLog_BufferData * datalog_DefaultEncryptFunc(DataLog_BufferData * input, size
 DataLog_OutputTask::DataLog_OutputTask(void)
 {
 	_state = Run;
+	_outputSignal = datalog_CreateSignal("DataLog_Output");
+	_dataLostSignal = datalog_CreateSignal("DataLog_DataLog");
 }
 
 void DataLog_OutputTask::exit(void)
 {
 	_state = Exit;
-	datalog_SendSignal("DataLog_Output");
+	datalog_SendSignal(_outputSignal);
 }
 
 void DataLog_OutputTask::exitImmediately(void)
 {
 	_state = ExitImmediately;
-	datalog_SendSignal("DataLog_Output");
+	datalog_SendSignal(_outputSignal);
 }
 
 void DataLog_OutputTask::main(void)
@@ -94,16 +98,16 @@ void DataLog_OutputTask::main(void)
 		// If there is no pending data to be processed, perform a flush
 		// operation to insure the output file is up to date.
 		//
-		if ( !datalog_WaitSignal("DataLog_Output", 0) )
+		if ( !datalog_WaitSignal(_outputSignal, 0) )
 		{
 			flushOutput();
-			datalog_WaitSignal("DataLog_Output", 10000);
+			datalog_WaitSignal(_outputSignal, 10000);
 		}
 
 		//
 		// Wait for data available to be output
 		//
-		if ( datalog_WaitSignal("DataLog_DataLost", 0) )
+		if ( datalog_WaitSignal(_dataLostSignal, 0) )
 		{
 			writeTimeStampRecord();
 			timeStampWritten = true;

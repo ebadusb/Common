@@ -133,12 +133,14 @@ protected:
    // This function will register a message for the calling task.  The task must already
    //  be registered in the task map before it can register messages.   
    void registerMessage( unsigned long msgId, unsigned long tId );
+   void registerMessageWithGateway( unsigned long msgId, unsigned long nId );
    void registerSpooferMessage( unsigned long msgId, unsigned long tId );
    //
    // This function will remove one registration of the message from the calling task's 
    //  entry in the message map.  When the number of registrations by the task is at 0, the
    //  task's entry will be removed from the given message Id's list.
    void deregisterMessage( unsigned long msgId, unsigned long tId );
+   void deregisterMessageWithGateway( unsigned long msgId, unsigned long nId );
    void deregisterSpooferMessage( unsigned long msgId);
 
    //
@@ -150,9 +152,16 @@ protected:
    // This function sends the message packet to the registered gateways.
    void sendMessageToGateways( const MessagePacket &mp );
    //
+   // This function sends the message packet to this specific gateway.
+   void sendMessageToGateway( sockinetbuf *sockbuffer, const MessagePacket &mpConst );
+
+   //
    // This function sends the message packet to the Spoofer task.
    void sendMessageToSpoofer( const MessagePacket &mp );
 
+   //
+   // This function will synchronize the remote node's registered messages with my list
+   void synchUpRemoteNode( sockinetbuf *sockbuffer );
    //
    // This function will close the router's message queues and socket connections.
    void shutdown();
@@ -186,6 +195,13 @@ protected:
    //  the queue before registering itself with the router.
    map< unsigned long, mqd_t >                                  _TaskQueueMap;
    //
+   // This structure will map the message Ids with the set of gateways that are registered
+   //  to receive that specific message.  A message will not be passed along to a gateway
+   //  that is not registered to receive it.  The map will be indexed on the message Id.  
+   //  The Set will be indexed by network address.  The network address is associated with
+   //  a network address held in the InetGatewayMap.
+   map< unsigned long, set< unsigned long > >                   _MessageGatewayMap;
+   //
    // This structure will hold the socket connections for all the given gateways.  The map
    //  will be indexed on gateway inet address.  The second entry in the map will contain
    //  the socket connection to the gateway.
@@ -201,5 +217,12 @@ protected:
    bool _StopLoop;
 
 };
+
+
+#ifdef __cplusplus 
+extern "C" void routerDump();
+#else 
+void routerDump();
+#endif
 
 #endif

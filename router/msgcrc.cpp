@@ -1,8 +1,10 @@
 /*
  * copyright 1995, 1996 Cobe BCT Lakewood, Colorado
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/msgcrc.cpp 1.2 2002/07/03 20:10:36 ms10234 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/msgcrc.cpp 1.2 2002/07/03 20:10:36 ms10234 Exp $
  * $Log: msgcrc.cpp $
+ * Revision 1.2  2002/07/03 20:10:36  ms10234
+ * Completed some code cleanup and minor fixes.
  * Revision 1.1  1999/05/24 23:30:00  TD10216
  * Initial revision
  * Revision 1.2  1996/07/24 19:49:20  SS03309
@@ -18,6 +20,8 @@
  * Select OMT:       I:\router
  * Test:             I:\ieee1498\STP2.DOC
  */
+
+#include <vxWorks.h>
 
 #include "msgcrc.h"
 #include "crcgen.h"

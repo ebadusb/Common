@@ -6,10 +6,11 @@
  */
 
  
+#include <vxWorks.h>
+
 #include <stdlib.h>
 #include <errnoLib.h>
 #include <time.h>
-#include <vxWorks.h>
 #include <taskHookLib.h>
 
 #include "error.h"

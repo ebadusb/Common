@@ -5,6 +5,8 @@
  *
  */
 
+#include <vxWorks.h>
+
 #include "datalog.h"
 #include "error.h"
 #include "objdictionary.h"

@@ -5,6 +5,8 @@
  *
  */
 
+#include <vxWorks.h>
+
 #include "error.h"
 #include "timermessage.h"
 #include "messagepacket.h"

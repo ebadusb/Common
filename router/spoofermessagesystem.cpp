@@ -7,6 +7,7 @@
 
 #include <vxWorks.h>
 
+#include "datalog.h"
 #include "error.h"
 #include "spooferdispatcher.h"
 #include "spoofermessagesystem.h"
@@ -14,10 +15,15 @@
 SpooferMessageSystem::SpooferMessageSystem() :
    MessageSystem()
 {
+   DataLog_Level slog( "Spoofer" );
+   slog( __FILE__, __LINE__ ) << "Creating Spoofer message system for task " << hex << taskIdSelf() << endmsg;
 }
 
 SpooferMessageSystem::~SpooferMessageSystem()
 {
+   DataLog_Level slog( "Spoofer" );
+   slog( __FILE__, __LINE__ ) << "Spoofer message system for task " << hex << taskIdSelf() 
+                              << " has been deleted." << endmsg;
 }
 
 void SpooferMessageSystem::createDispatcher()

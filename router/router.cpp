@@ -5,10 +5,12 @@
  *
  */
 
-#include <stdio.h>
 #include <vxWorks.h>
+
+#include <stdio.h>
 #include <taskHookLib.h>
 
+#include "datalog.h"
 #include "error.h"
 #include "gateway.h"
 #include "messagesystem.h"
@@ -237,7 +239,15 @@ void Router::dump( ostream &outs )
    {
       outs << "  Address " << hex << (*igiter).first << endl;
    }
-   outs << " StopLoop " << _StopLoop << endl;
+   outs << " Spoofer Message Map: size " << dec << _SpooferMsgMap.size() << endl;
+   map< unsigned long, unsigned long >::iterator smiter;                            // _SpooferMsgMap;
+   for ( smiter  = _SpooferMsgMap.begin() ;
+         smiter != _SpooferMsgMap.end() ;
+         smiter++ )
+   {
+      outs << "  Mid " << hex << (*smiter).first << " Spoofer Tid " << hex << (*smiter).second << endl;
+   }
+   outs << " StopLoop " << dec << _StopLoop << endl;
    outs << "-------------------------------------------------------------------" << endl;
 
 }
@@ -351,9 +361,13 @@ void Router::processMessage( MessagePacket &mp, int priority )
    case MessageData::GATEWAY_DISCONNECT:
       disconnectWithGateway( mp.msgData().nodeId() );
       break;
-   case MessageData::SPOOFER_REGISTER:
+   case MessageData::SPOOF_MSG_REGISTER:
+      checkMessageId( mp.msgData().msgId(), (const char *)( mp.msgData().msg() ) );
+      registerSpooferMessage( mp.msgData().msgId(), mp.msgData().taskId() );
       break;
-   case MessageData::SPOOFER_DEREGISTER:
+   case MessageData::SPOOF_MSG_DEREGISTER:
+      checkMessageId( mp.msgData().msgId(), (const char *)( mp.msgData().msg() ) );
+      deregisterSpooferMessage( mp.msgData().msgId() );
       break;
    case MessageData::DISTRIBUTE_GLOBALLY:
    case MessageData::DISTRIBUTE_LOCALLY:
@@ -521,6 +535,21 @@ void Router::deregisterTask( unsigned long tId )
       {
          deregisterMessage( (*mtiter).first, tId );
       }
+
+      //
+      // Remove any entry from the Spoofer-Message map ...
+      //
+      //  iterate over the spoofer-message map ...
+      map< unsigned long, unsigned long >::iterator smiter;
+      for ( smiter = _SpooferMsgMap.begin() ; 
+            smiter != _SpooferMsgMap.end() ;
+            smiter++ )
+      {
+         //
+         // erase the entry if it relates to this task ...
+         if ( (*smiter).second == tId )
+            _SpooferMsgMap.erase( smiter );
+      }
    }
 }
 
@@ -673,9 +702,14 @@ void Router::registerMessageWithGateway( unsigned long msgId, unsigned long node
 
 void Router::registerSpooferMessage( unsigned long msgId, unsigned long tId )
 {
+   DataLog_Level slog( "Spoofer" );
+   slog( __FILE__, __LINE__ ) << "Spoofer task " << hex << tId 
+                              << " registered for message " << hex << msgId << endmsg;
+
    //
    // Add the message Id to the map ...
-   _SpooferMsgMap[ msgId ] = tId;
+   _SpooferMsgMap[ msgId ] = tId;      
+   
 }
 
 void Router::deregisterMessage( unsigned long msgId, unsigned long tId )
@@ -772,10 +806,34 @@ void Router::deregisterMessageWithGateway( unsigned long msgId, unsigned long no
 
 void Router::deregisterSpooferMessage( unsigned long msgId)
 {
+   DataLog_Level slog( "Spoofer" );
+   slog( __FILE__, __LINE__ ) << "Deregistering Spoofer for message " << hex << msgId << endmsg;
+
+   //
+   // Find the message Id in the list ...
+   map< unsigned long, unsigned long >::iterator mtiter;
+   mtiter = _SpooferMsgMap.find( msgId );
+
+   //
+   // If message found ...
+   if ( mtiter != _SpooferMsgMap.end() )
+   {
+      //
+      // Delete the entry from the map ...
+      _SpooferMsgMap.erase( mtiter );
+   }
 }
 
 void Router::sendMessage( const MessagePacket &mp, int priority )
 {
+   //
+   // Check for spoofer ...
+   if ( sendMessageToSpoofer( mp, priority ) == true )
+      //
+      // The spoofer is spoofing this message, so don't send
+      //  it to the normal subscribers ...
+      return;
+
    //
    // Distribute the message to the local tasks
    unsigned long msgId = mp.msgData().msgId();
@@ -821,7 +879,7 @@ void Router::sendMessage( const MessagePacket &mp, int priority )
    }
 
    //
-   // ... and if the message isn't supposed to be local, distribute
+   // ... and if the message isn't supposed to be just local, distribute
    //  the message over the socket connections to the gateways...
    //
    sendMessageToGateways( mp );
@@ -863,7 +921,10 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
 }
 
 void Router::sendMessageToGateways( const MessagePacket &mpConst )
-{
+{    
+   //
+   // Only send message packets to the other nodes if they contain
+   //  these osCodes ...
    if (    (    mpConst.msgData().osCode() == MessageData::DISTRIBUTE_GLOBALLY
              || mpConst.msgData().osCode() == MessageData::SPOOFED_GLOBALLY
              || mpConst.msgData().osCode() == MessageData::MESSAGE_NAME_REGISTER
@@ -871,7 +932,11 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
              || mpConst.msgData().osCode() == MessageData::MESSAGE_DEREGISTER )
         && mpConst.msgData().nodeId() == 0 )
    {
+      map< unsigned long, sockinetbuf* >::iterator sockiter;
 
+      //
+      // Send message packets with these osCodes to the nodes which have
+      //  subscribers for this message packet's message Id ...
       if (    mpConst.msgData().osCode() == MessageData::DISTRIBUTE_GLOBALLY
            || mpConst.msgData().osCode() == MessageData::SPOOFED_GLOBALLY )
       {
@@ -880,7 +945,6 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
    
          if ( mgiter != _MessageGatewayMap.end() )
          {
-            map< unsigned long, sockinetbuf* >::iterator sockiter;
             set< unsigned long >::iterator gatewayiter;
             for ( gatewayiter = (*mgiter).second.begin() ;
                   gatewayiter != (*mgiter).second.end() ;
@@ -888,7 +952,6 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
             {
    
                sockiter = _InetGatewayMap.find( (*gatewayiter) );
-         
                if ( sockiter != _InetGatewayMap.end() )
                {
                   //
@@ -907,9 +970,10 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
             }
          }
       }
+      //
+      // ... send remaining types of osCodes to all nodes ...
       else
       {
-         map< unsigned long, sockinetbuf* >::iterator sockiter;
          for ( sockiter = _InetGatewayMap.begin() ;
                sockiter != _InetGatewayMap.end() ;
                sockiter++ )
@@ -948,8 +1012,41 @@ void Router::sendMessageToGateway( sockinetbuf *sockbuffer, const MessagePacket 
    sockbuffer->flush_all();
 }
 
-void Router::sendMessageToSpoofer( const MessagePacket &mp )
+bool Router::sendMessageToSpoofer( const MessagePacket &mp, int priority )
 {
+   //
+   // We can only spoof message packets which have these osCodes ...
+   if (    mp.msgData().osCode() == MessageData::DISTRIBUTE_GLOBALLY 
+        || mp.msgData().osCode() == MessageData::DISTRIBUTE_LOCALLY )
+   {
+      map< unsigned long, unsigned long >::iterator mtiter;
+      for ( mtiter = _SpooferMsgMap.begin() ;
+            mtiter != _SpooferMsgMap.end() ;
+            mtiter++ )
+      {
+         if ( (*mtiter).first == mp.msgData().msgId() )
+         {
+            map< unsigned long, mqd_t >::iterator tqiter;
+            tqiter = _TaskQueueMap.find( mp.msgData().msgId() );
+            if ( tqiter == _TaskQueueMap.end() )
+            {
+               //
+               // Error ...
+               char buffer[256];
+               sprintf( buffer,"Sending message=%lx - Task Id=%lx not found in task list",
+                        mp.msgData().msgId(), mp.msgData().taskId() );
+               _FATAL_ERROR( __FILE__, __LINE__, buffer );
+            }
+            
+            sendMessage( mp, (*tqiter).second, (*tqiter).first, priority );
+            //
+            // We only allow one spoofer to register for each message Id ...
+            return true;
+         }
+      }
+   }
+
+   return false;
 }
 
 void Router::synchUpRemoteNode( sockinetbuf *sockbuffer )

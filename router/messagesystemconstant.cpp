@@ -5,7 +5,9 @@
  *
  */
 
-#include <messagesystemconstant.h>
+#include <vxWorks.h>
+
+#include "messagesystemconstant.h"
 
 const unsigned int MessageSystemConstant::DEFAULT_ROUTER_Q_SIZE=100;
 const unsigned int MessageSystemConstant::DEFAULT_Q_SIZE=30;

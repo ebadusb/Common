@@ -9,6 +9,7 @@
 #include <list>
 #include <time.h>
 
+#include "datalog.h"
 #include "spooferdispatcher.h"
 
 
@@ -35,6 +36,10 @@ void SpooferDispatcher :: spoofMessage( MessageBase &mb )
 
 void SpooferDispatcher :: spoofMessage( MessageBase &mb, const CallbackBase &cb )
 {
+   DataLog_Level slog( "Spoofer" );
+   slog( __FILE__, __LINE__ ) << "Spoofing message " << hex << mb.msgId() 
+                              << " (" << mb.messageName() << ")" << endmsg;
+
    //
    // Change the message packet list for the MessageBase object ...
    list< MessagePacket* >::iterator pckt;
@@ -75,6 +80,10 @@ void SpooferDispatcher :: spoofMessage( MessageBase &mb, const CallbackBase &cb 
 
 void SpooferDispatcher :: despoofMessage( MessageBase &mb )
 {
+   DataLog_Level slog( "Spoofer" );
+   slog( __FILE__, __LINE__ ) << "Despoofing message " << hex << mb.msgId() 
+                              << " (" << mb.messageName() << ")" << endmsg;
+
    //
    // Remove the message entry from the spoofed messages list ...
    map< const MessageBase*, CallbackBase >::iterator spiter;
@@ -121,8 +130,8 @@ void SpooferDispatcher :: processMessage( MessagePacket &mp )
 
    //
    // If we haven't already spoofed this message packet ...
-   if (    mp.msgData().osCode() == MessageData::SPOOFED_GLOBALLY 
-        || mp.msgData().osCode() == MessageData::SPOOFED_LOCALLY )
+   if (    mp.msgData().osCode() != MessageData::SPOOFED_GLOBALLY 
+        && mp.msgData().osCode() != MessageData::SPOOFED_LOCALLY )
    {
       //
       // Search the spoofed message map for a message
@@ -139,7 +148,7 @@ void SpooferDispatcher :: processMessage( MessagePacket &mp )
          {
             // 
             // Call the appropriate callback function ...
-            ((*spiter).second).operator();
+            ((MessageBase*)((*spiter).first))->notify( mp, ((*spiter).second) );
    
             weAreSpoofingThisOne = true;
          }
@@ -148,8 +157,8 @@ void SpooferDispatcher :: processMessage( MessagePacket &mp )
 
    //
    // else we will treat this message packet like any
-   //  normal application ...
-   if ( weAreSpoofingThisOne == true )
+   //  normal application messages ...
+   if ( weAreSpoofingThisOne == false )
    {
       Dispatcher::processMessage( mp );
    }

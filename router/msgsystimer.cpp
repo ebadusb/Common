@@ -5,8 +5,9 @@
  *
  */
 
-#include <stdio.h>
 #include <vxWorks.h>
+
+#include <stdio.h>
 #include <taskHookLib.h>
 
 #include "auxclock.h"

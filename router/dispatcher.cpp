@@ -5,6 +5,8 @@
  *
  */
 
+#include <vxWorks.h>
+
 #include "error.h"
 #include "dispatcher.h"
 #include "messagesystemconstant.h"

@@ -7,6 +7,8 @@
  *              base class for messages
  */
 
+#include <vxWorks.h>
+
 #include "messagebase.h"
 #include "messagesystem.h"
 #include "messagesystemconstant.h"
@@ -254,6 +256,11 @@ unsigned long MessageBase::genMsgId()
 
 bool MessageBase::notify( const MessagePacket &mp )
 {
+   return notify( mp, _VirtualNotify );
+}
+
+bool MessageBase::notify( const MessagePacket &mp, const CallbackBase &cb )
+{
    list< MessagePacket* >::iterator pckt;
    for ( pckt  = _PacketList.begin();
          pckt != _PacketList.end() ;
@@ -297,7 +304,7 @@ bool MessageBase::notify( const MessagePacket &mp )
 
       //
       // and notify the application ...
-      _VirtualNotify();
+      cb();
    }
 
    return true;

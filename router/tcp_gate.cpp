@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/TCP_GATE.CPP 1.1 1999/05/24 23:29:22 TD10216 Exp TD10216 $
+ * $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/TCP_GATE.CPP 1.2 1999/06/30 21:40:21 TD10216 Exp TD10216 $
  * $Log: TCP_GATE.CPP $
+ * Revision 1.1  1999/05/24 23:29:22  TD10216
+ * Initial revision
  * Revision 1.7  1998/09/17 18:35:28  TM02109
  * Added a message counter in the taskPID.
  * Revision 1.6  1997/06/30 17:29:47  SM02805
@@ -240,8 +242,8 @@ static void RegisterMessages(TCPGate_Reg_ReqMsg *msg)
 	// HOST, PORT, STRUCTURE.
 	service_reply = new UDP_Reply<SAN2ServiceRequestReply>
 	( 
-		msg->Msg_Struct.sRequest.host_struct.szAN2HostIP, 
-		msg->Msg_Struct.sRequest.host_struct.szAN2HostPort, 
+		msg->Msg_Struct.host_struct.szAN2HostIP, 
+		msg->Msg_Struct.host_struct.szAN2HostPort, 
 		(unsigned short)AN2ServiceRequestReplyMsg
 	);
 	// Initalize the request reply structure.

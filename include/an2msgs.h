@@ -1,8 +1,10 @@
 /*
 * Copyright (c) 1995, 1996 by Cobe BCT, Inc.	All rights reserved.
 *
-* $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.1 1999/05/24 23:26:05 TD10216 Exp TD10216 $
+* $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.3 1999/07/13 18:16:06 TD10216 Exp TD10216 $
 * $Log: AN2MSGS.H $
+* Revision 1.1  1999/05/24 23:26:05  TD10216
+* Initial revision
 * Revision 1.26  1999/05/06 19:41:50  TD10216
 * I/T 3841
 * Revision 1.25	1999/04/03 14:53:32	TD10216
@@ -237,13 +239,14 @@ typedef struct
 // requested service ID and the IP address and port ( UDP socket ) the requestor 
 // is prepared to manage for erquested service communications. 
 // 
+
 typedef struct
 {
 	int	iAN2ServiceRequest;	// AN2 Service being requested from AN2 host
-	union 
+	union
 	{
-		HOST_IP_PORT_STRUCT host_struct;
-		LOAD_AGENT_FILE_STRUCT load_struct;
+	HOST_IP_PORT_STRUCT host_struct;
+	LOAD_AGENT_FILE_STRUCT load_struct;
 	};
 }SAN2ServiceRequest;
 
@@ -308,7 +311,8 @@ typedef struct
 // what an2inetd sends to tcp_gate
 typedef struct
 {
-	SAN2ServiceRequest sRequest;	// request header
+	int iAN2ServiceRequest;
+	HOST_IP_PORT_STRUCT host_struct; // Request header
 	TCPGate_Reg_Struct Reg_Struct;	// Request info
 } TCPGate_Reg_ReqStruct;
 

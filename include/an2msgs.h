@@ -1,8 +1,10 @@
 /*
 * Copyright (c) 1995, 1996 by Cobe BCT, Inc.	All rights reserved.
 *
-* $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.3 1999/07/13 18:16:06 TD10216 Exp TD10216 $
+* $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/AN2MSGS.H 1.4 1999/07/16 13:08:45 TD10216 Exp TD10216 $
 * $Log: AN2MSGS.H $
+* Revision 1.3  1999/07/13 18:16:06  TD10216
+* IT4130
 * Revision 1.2  1999/06/30 21:40:12  TD10216
 * IT3908
 * Revision 1.1  1999/05/24 23:26:05  TD10216
@@ -168,7 +170,7 @@ char *AN2_SERVICES_STRINGS[] =
 extern char *AN2_SERVICES_STRINGS[];
 #endif
 
-// AN2 Current running services struct
+// an2_statusd heartbeat structure - from the CDS
 typedef struct
 {
 	int		iSeqNo;					// packet count since service started
@@ -176,7 +178,8 @@ typedef struct
 	int		iSubState;				// Current sub-state of the focus system.
 	int		iServices;				// Bit field of START... AN2_SERVICES.
 	int		iFileIndex;				// file index for run data file
-	int		iCurrentAlarm;			// Current alarm name
+	int		product_number;			// product selected
+	int		cassette_type;			// cassette being used
 	float	fProcedureTargetTime;	// procedure target time
 	float	fCurrentProcedureTime;	// current procedure time
 	float	fYieldTarget;			// Current projected yield target
@@ -188,7 +191,6 @@ typedef struct
 	char	szMachineName[32];		// Name of machine status came from
 	char	szMMDDYY[9];			// mm/dd/yy FS date
 	char	szHHMMSS[9];			// hh:mm:ss FS time
-	char	cInAlarmMode;			// Bool set when in an alarm
 }SFSAN2Status;
 
 // AN2 Service Request Responses

@@ -105,15 +105,24 @@ void Gateway::receiveLoop()
    MessagePacket mp;
    do
    {
-      int byte_count = _ClientSocket.recv( &mp, sizeof( MessagePacket ), 0 );
+		char	* mpBuff = (char *)&mp;
+		int	  total_byte_count = 0;
+		while ( total_byte_count < sizeof(MessagePacket) )
+		{
+			int byte_count = _ClientSocket.recv( &mpBuff[total_byte_count], sizeof( MessagePacket ) - total_byte_count, 0 );
 
-      if ( byte_count == ERROR )
-      {
-         DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Gateway::receiveLoop : socket receive failed, error->" << strerror( errnoGet() ) << endmsg;
-         _FATAL_ERROR( __FILE__, __LINE__, "socket receive failed" );
-         return;
-      }
+			if ( byte_count == ERROR )
+			{
+				DataLog_Critical criticalLog;
+				DataLog(criticalLog) << "Gateway::receiveLoop : socket receive failed, error->" << strerror( errnoGet() ) << endmsg;
+				_FATAL_ERROR( __FILE__, __LINE__, "socket receive failed" );
+				return;
+		   }
+		   else
+			{
+				total_byte_count += byte_count;
+			}
+		}
 
       //
       // Send the message packet to the router ...

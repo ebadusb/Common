@@ -1,8 +1,10 @@
-# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.flags_55 1.1 2004/01/26 18:55:01Z jl11312 Exp jl11312 $
+# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.flags_55 1.2 2004/04/27 20:06:39Z jl11312 Exp jl11312 $
 #
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags_55 $
+# Revision 1.1  2004/01/26 18:55:01Z  jl11312
+# Initial revision
 # Revision 1.12  2003/12/29 17:54:05Z  jl11312
 # - added check to insure -ffloat-store flag is not removed inadvertently (IT 6150)
 # Revision 1.11  2003/09/10 14:42:24Z  jl11312
@@ -133,7 +135,7 @@ AS  = ccsimpc -c
 CPP = ccsimpc -E
 CC  = ccsimpc -c
 CXX = ccsimpc -c
-AR = arsimpc
+AR = arpentium
 LD = ldsimpc
 NM = nmsimpc -g
 GREP = grep -h

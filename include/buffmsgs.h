@@ -2,6 +2,8 @@
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
  * $Log: BUFFMSGS.H $
+ * Revision 1.10  2000/04/14 19:37:02  MS10234
+ * Added OverrideAlarmMsg enum
  * Revision 1.8  2000/03/24 18:08:05  BS04481
  * Change several messages to NOTUSED in the message structure
  * which is used for AN2.  Service Control is not used because 
@@ -197,6 +199,7 @@ enum BUFFER_MESSAGES
     ArcConfigMsg,           // Config.dat message to/from Archive
     ProcDonorMsg,
     OverrideAlarmMsg,
+    Opt2ProcMsg,
 
    LAST_BUFFER_MESSAGE           // don't change this entry
 };
@@ -347,6 +350,7 @@ MsgStructMapEntry MsgStructMap[LAST_BUFFER_MESSAGE+1] =
    { ArcConfigMsg, NOTUSED },
    { ProcDonorMsg , NOTUSED },
    { OverrideAlarmMsg , NOTUSED },
+   { Opt2ProcMsg , NOTUSED },
 
     // don't change this entry
    { LAST_BUFFER_MESSAGE, NULL }

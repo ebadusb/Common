@@ -1,4 +1,3 @@
-
 /******************************************************************************
  * Copyright (c) 1997 by Cobe BCT, Inc.
  *
@@ -7,6 +6,8 @@
  * CHANGELOG:
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.cpp 1.10 2003/06/26 22:33:44Z jl11312 Exp MS10234 $
  * $Log: softcrc.cpp $
+ * Revision 1.7  2002/11/20 17:15:00Z  rm70006
+ * Change code to keep format string literal to keep compiler from whining.
  * Revision 1.6  2002/09/20 19:30:23Z  td07711
  * fix some constness mismatches
  * Revision 1.5  2002/09/19 22:34:44  td07711
@@ -65,952 +66,858 @@
  *  5/23/97 - dyes - moved CRC file paths
  ******************************************************************************/
 
+#ifdef VXWORKS
+# include <vxWorks.h>
+#endif /* ifdef VXWORKS */
+
+#include <ctype.h>
+#include <fcntl.h>
+#include <stdarg.h>
 #include <stdio.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-// #include <sys/uio.h>
+#include <sys/stat.h>
 #include <sys/types.h>
-#include <fcntl.h>
-#include <dirent.h>
-// #include <sys/trace.h>
 
-#include "softcrc.h"
 #include "crcgen.h"
-#include "optionparser.h"
-#include "error.h"
 
-#define TRACELOG(buf) fprintf(stderr, "%s: %s\n", ProgramName, buf);
+// Windows does not use opendir/readdir/closedir, so we define them here
+#ifdef VXWORKS
 
-// softcrc is for usage on Cobe QNX servers by non-root users
-//#ifdef RESTRICT_TO_COBE
-char* ProgramName = "softcrc";
+#include <dirent.h>
+#include <unistd.h>
 
-// must redefine to avoid linking in trace calls whose linkage results in
-// SIGSEGV when run by nonroot user.
-#undef ASSERT
-#undef LOG_ASSERT
+#else /* ifdef VXWORKS */
 
-#include "assert.h"
-#define ASSERT(expr)  assert(expr)
-#define LOG_ASSERT(expr, errmsg)  ((void)0)
+#include <io.h>
 
-//#endif // ifdef RESTRICT_TO_COBE
-
-
-// machcrc is for use on Trima machines by root
-#ifdef RESTRICT_TO_MACHINE
-char* ProgramName = "machcrc";
-#endif
-
-int compare(const void*, const void*);
-
-
-char* UsageText = "\
--filelist <filename> [other options] \n\
-   -bufsize - size of read buffer in bytes, default=4096\n\
-   -debug - turns on debug msgs\n\
-   -filelist <filename> [-filelist <filename>] - list of files and directories to CRC\n\
-   -chroot <path> [-chroot <path>] - specify prefix for absolute pathnames, default is no prefix\n\
-        multiple -chroot OK and are associated with corresponding -filelist entries\n\
-   -initcrc <value> - initial CRC value, default=0\n\
-   -limit <value> - limits subdirectory nesting, default=10\n\
-   -quiet - suppresses output to stderr and stdout, same as -verbose 0\n\
-   -update <filename> - saves calculated CRC, default is no update\n\
-   -symlink - follow symlinks, default is to ignore (NOT APPLICABLE in vxworks)\n\
-   -travfs - follow symlinks across filesystems, default is not to\n\
-   -verbose <value> - verbosity of CRC output\n\
-                      0 - suppresses all output to stdout and stderr\n\
-                      1 - outputs only the final CRC\n\
-                      2 - outputs intermediate CRC's of things in filelist\n\
-                      3 - outputs intermediate CRC's of all files and dirs\n\
-   -verify <filename> - verify calculated CRC, default is no verify\n\
-   \n\
-   examples:\n\
-   \n\
-   softcrc -filelist filelists/trima.files -chroot /releases/build1.179/current_build\n\
-           -filelist filelists/focgui.files -chroot /releases/build1.179/current_build\n\
-           -filelist filelists/qnx.files -chroot /qnx_oem -update ../disk.crc\n\
-   \n\
-   machcrc -filelist filelists/trima.files -filelist filelists/focgui.files\n\
-           -filelist filelists/qnx.files -verify /trima/disk.crc\n\
-\n";
-
-//
-// Globals
-//
-static const char* Filelist[FILELIST_MAX+1];       // filelist to parse for files to compute CRC over
-static const char* Rootdirlist[FILELIST_MAX+1];    // Rootdirlist to parse for chroots to compute CRC over
-static const char* UpdateFile = 0;      // filename to update with new CRC
-static const char* VerifyFile = 0;      // filename holding expected CRC
-static unsigned long InitCRC = INITCRC_DEFAULT;  // initial CRC value
-static int Verbosity = VERBOSE_DEFAULT;          // verbosity of output
-static int Debug = 0;                             // flag to enable debug msgs
-static int FollowSymlinks = 0;        // flag to enable following symlinks
-static int TraverseFileSystems = 0;  // flag to enable following symlinks across file systems
-static int SubdirLimit = LIMIT_DEFAULT;    // subdirectory recursion limit
-static int ReadbufSize = READBUF_DEFAULT;  // size of read buffer
-static unsigned char* Readbuf = 0;        // address of read buffer, initialized with malloc
-static const char* Rootdir = 0;       // prefix to added to absolute pathnames in filelist
-
-struct node {
-   char* string;
-   struct node* next;
+struct dirent
+{
+   char  d_name[FILENAME_MAX];
 };
-static struct node* pList = 0;
+
+struct DIR
+{
+   struct dirent  entry;
+   struct _finddata_t   findData;
+   long  findHandle;
+};
+
+DIR * opendir(const char * dirName)
+{
+   DIR * result = new DIR;
+   char * wildcard = "/*";
+   char * pattern = new char[strlen(dirName)+strlen(wildcard)+1];
+
+   strcpy(pattern, dirName);
+   strcat(pattern, wildcard);
+
+   result->findHandle = _findfirst(pattern, &result->findData);
+   if ( result->findHandle < 0 )
+   {
+      delete result;
+      result = NULL;
+   }
+
+   delete[] pattern;
+   return result;
+}
+
+struct dirent * readdir(DIR * dir)
+{
+   strcpy(dir->entry.d_name, dir->findData.name);
+   if ( dir->findHandle >= 0 &&
+        _findnext(dir->findHandle, &dir->findData) < 0 )
+   {
+      dir->findData.name[0] = '\0';
+      _findclose(dir->findHandle);
+      dir->findHandle = -1;
+   }
+
+   return ( dir->entry.d_name[0] ) ? &dir->entry : NULL;
+}
+
+int closedir(DIR * dir)
+{
+   if (dir->findHandle >= 9 )
+   {
+      _findclose(dir->findHandle);
+   }
+
+   delete dir;
+   return 0;
+}
+
+char * strtok_r(char * str, const char * sep, char ** next)
+{
+   return strtok(str, sep);
+}
+
+bool S_ISDIR(int m)
+{
+   return ((m & _S_IFDIR) != 0 );
+}
+
+bool S_ISREG(int m)
+{
+   return ((m & _S_IFREG) != 0 );
+}
+
+#endif /* ifdef VXWORKS */
+
+// Verbosity levels - these must match the integer values specified on the command line
+enum OutputType
+{
+   OT_First = 0,
+   OT_None = OT_First,
+   OT_Normal,
+   OT_CRCFileList,
+   OT_CRCAll,
+   OT_Debug,
+   OT_Last
+};
+
+// Linked list of file names
+struct FileNameNode
+{
+   char * _name;
+   FileNameNode * _next;
+
+   static void append(FileNameNode ** head, const char * name);
+   static void append(FileNameNode ** head, const char * path, const char * name);
+   static void clear(FileNameNode * head);
+};
+
+class SoftCRC;
+class FileList
+{
+public:
+   FileList(SoftCRC * crcObj);
+   virtual ~FileList();
+
+   bool init(const char * fileName, const char * rootDir);
+   bool getNextItem(char * itemName, size_t nameSize);
+   void processItem(const char * itemName, unsigned long * crc);
+
+   bool checkError(void) { return _error; }
+
+private:
+   bool checkIgnore(const char * fileName);
+   void processDir(const char * dirName, unsigned long * crc);
+   void processRegular(const char * fileName, unsigned long * crc);
+
+private:
+   SoftCRC *      _crcObj;
+   char *         _fileName;
+   char *         _rootDir;
+   FILE *         _fp;
+   FileNameNode * _ignoreList;
+   int            _line;
+   bool           _error;
+   int            _subDirLevel;
+};
+
+// Program options from command line
+class SoftCRC
+{
+public:
+   SoftCRC(void);
+   virtual ~SoftCRC();
+
+   int process(char * cmdLine);
+
+   void log_printf(OutputType logType, const char * format, ...);
+
+   int recursionLimit(void) { return subDirLimit; }
+
+private:
+   int processFileList(const char * fileListName, const char * rootDir);
+   bool setOptions(char * cmdLine);
+   void usage(const char * message);
+
+private:
+   OutputType     outputType;       // output type (-verbose, -quiet)
+   bool           debug;            // debug output enabled (-debug)
+   FileNameNode * fileList;         // file lists (-filelist)
+   FileNameNode * rootDirList;      // root directories (-chroot)
+   char *         updateFileName;   // update file name (-update) 
+   char *         verifyFileName;   // verify file name (-verify)
+   unsigned long  initCRC;          // initial CRC value (-initcrc)
+   int            subDirLimit;      // subdirectory recursion limit (-limit)
+
+   unsigned long  currentCRC;
+};
+
+void FileNameNode::append(FileNameNode ** head, const char * name)
+{
+   append(head, "", name);
+}
+
+void FileNameNode::append(FileNameNode ** head, const char * path, const char * name)
+{
+   FileNameNode ** tail = head;
+   while ( *tail )
+   {
+      tail = &((*tail)->_next);
+   }
+
+   *tail = new FileNameNode;
+   (*tail)->_name = new char[strlen(path)+strlen(name)+1];
+   strcpy((*tail)->_name, path);
+   strcat((*tail)->_name, name);
+   (*tail)->_next = NULL;
+}
+
+void FileNameNode::clear(FileNameNode * head)
+{
+   FileNameNode * current = head;
+
+   while ( current )
+   {
+      FileNameNode * next = current->_next;
+      delete[] current->_name;
+      delete current;
+
+      current = next;
+   }
+}
+
+FileList::FileList(SoftCRC * crcObj)
+      : _crcObj(crcObj), _fileName(NULL), _rootDir(NULL), _fp(NULL), _ignoreList(NULL), _line(0), _error(false), _subDirLevel(0)
+{
+}
+
+FileList::~FileList()
+{
+   delete[] _fileName;
+   delete[] _rootDir;
+
+   if ( _fp )
+   {
+      fclose(_fp);
+   }
+
+   FileNameNode::clear(_ignoreList);
+}
+
+bool FileList::init(const char * fileName, const char * rootDir)
+{
+   // save the file name for use in error messages
+   _fileName = new char[strlen(fileName)+1];
+   strcpy(_fileName, fileName);
+
+   // save the specified root directory (default is "/")
+   const char * rootUse = (rootDir) ? rootDir : "/";
+   _rootDir = new char[strlen(rootUse)+1];
+   strcpy(_rootDir, rootUse);
+
+   // remove final '/' in root directory if present
+   if ( _rootDir[strlen(_rootDir)-1] == '/' )
+   {
+      _rootDir[strlen(_rootDir)-1] = '\0';
+   }
+
+   // open specified file list
+   _fp = fopen(fileName, "r");
+   if ( !_fp )
+   {
+      _crcObj->log_printf(OT_Normal, "%s: open failed (errno=%d)\n", fileName, errno);
+      _error = true;
+   }
+
+   return (_fp != NULL);
+}
+
+bool FileList::getNextItem(char * itemName, size_t nameSize)
+{
+   enum { BufSize = 512 };
+   const char * separators = " \t\r\n";
+
+   char * buf = new char[BufSize];
+   bool  result = false;
+
+   while ( !result &&
+           _fp &&
+           fgets(buf, BufSize, _fp) )
+   {
+      _line += 1;
+      if ( buf[strlen(buf)-1] != '\n' )
+      {
+         _crcObj->log_printf(OT_Normal, "%s(%d): line too long\n", _fileName, _line);
+         _error = true;
+         break;
+      }
+
+      int   startIdx = strspn(buf, separators);
+      char * token = &buf[startIdx];
+      char * nextToken = NULL;
+
+      if ( strtok_r(token, separators, &nextToken) )
+      {
+         if ( strcmp(token, "IGNORE") == 0 )
+         {
+            token = strtok_r(NULL, separators, &nextToken);
+            if ( !token || token[0] == '#' )
+            {
+               _crcObj->log_printf(OT_Normal, "%s(%d): expected file name after \"IGNORE\"\n", _fileName, _line);
+               _error = true;
+               break;
+            }
+
+            if ( token[0] == '/' )
+            {
+               FileNameNode::append(&_ignoreList, _rootDir, token);
+            }
+            else
+            {
+               FileNameNode::append(&_ignoreList, token);
+            }
+            
+         }
+         else if ( token[0] && token[0] != '#' )
+         {
+            if ( token[0] == '/' &&
+                 strlen(token)+strlen(_rootDir) < nameSize )
+            {
+               strcpy(itemName, _rootDir);
+               strcat(itemName, token);
+               result = true;
+            }
+            else if ( token[0] != '/' &&
+                      strlen(token) < nameSize )
+            {
+               strcpy(itemName, token);
+               result = true;
+            }
+            else
+            {
+               _crcObj->log_printf(OT_Normal, "%s(%d): pathname too long (limited to %u characters)\n", _fileName, _line, nameSize-1);
+               _error = true;
+               break;
+            }
+         }
+      }
+   }
+
+   if ( !result )
+   {
+      // found last entry, so just close the file
+      fclose(_fp);
+      _fp = NULL;
+   }
+
+   delete[] buf;
+   return result;
+}
+
+void FileList::processItem(const char * itemName, unsigned long * crc)
+{
+   if ( !checkIgnore(itemName) )
+   {
+      struct stat statData;
+      if ( stat((char *)itemName, &statData) != 0 )
+      {
+         _crcObj->log_printf(OT_Normal, "%s: stat failed (errno=%d)\n", itemName, errno);
+         _error = true;
+      }
+      else if ( S_ISDIR(statData.st_mode) )
+      {
+         processDir(itemName, crc);
+      }
+      else if ( S_ISREG(statData.st_mode) )
+      {
+         processRegular(itemName, crc);
+      }
+   }
+   else
+   {
+      _crcObj->log_printf(OT_Debug, "%s: ignoring %s\n", _fileName, itemName);
+   }
+}
+
+bool FileList::checkIgnore(const char * fileName)
+{
+   bool result = false;
+   FileNameNode * entry = _ignoreList;
+
+   while ( !result && entry )
+   {
+      result = ( strcmp(entry->_name, fileName) == 0 );
+      entry = entry->_next;
+   }
+
+   return result;
+}
+
+void FileList::processDir(const char * dirName, unsigned long * crc)
+{
+   DIR *    dir = NULL;
+   size_t   nameListSize = 0;
+   size_t   nameListCount = 0;
+   char **  nameList = NULL;
+   size_t   idx;
+
+   // check for recursion limit reached
+   _subDirLevel += 1;
+   if ( _subDirLevel > _crcObj->recursionLimit() )
+   {
+      _crcObj->log_printf(OT_Normal, "%s: skipping directory - recursion limit reached\n", dirName);
+      goto processDirDone;
+   }
+   
+   // open the directory to be processed
+   dir = opendir((char *)dirName);
+   if ( !dir )
+   {
+      _crcObj->log_printf(OT_Normal, "%s: opendir failed (errno=%d)\n", dirName, errno);
+      goto processDirDone;
+   }
+
+   // allocated storage area for sorted file list - this area is expanded as needed during processing
+   enum { NameListBlockSize = 64 };
+   nameListSize = NameListBlockSize;
+   nameList = (char **)malloc(nameListSize*sizeof(char *));
+
+   // since this isn't time critical, just do a slow but simple insertion sort
+   struct dirent * dirEntry;
+   while ( (dirEntry = readdir(dir)) != NULL &&
+           !_error )
+   {
+      if ( strcmp(dirEntry->d_name, ".") != 0 &&
+           strcmp(dirEntry->d_name, "..") != 0 )
+      {
+         nameListCount += 1;
+         if ( nameListCount > nameListSize )
+         {
+            nameListSize += NameListBlockSize;
+            nameList = (char **)realloc(nameList, nameListSize*sizeof(char *));
+         }
+
+         size_t nameListIdx = 0;
+         while ( nameListIdx < nameListCount-1 &&
+                 strcmp(dirEntry->d_name, nameList[nameListIdx]) > 0 )
+         {
+            nameListIdx += 1;
+         }
+
+         memmove(&nameList[nameListIdx+1], &nameList[nameListIdx], (nameListCount-nameListIdx-1)*sizeof(char *));
+         nameList[nameListIdx] = new char[strlen(dirEntry->d_name)+1];
+         strcpy(nameList[nameListIdx], dirEntry->d_name);
+      }
+   }
+
+   for ( idx=0; idx<nameListCount && !_error; idx++ )
+   {
+      char * itemName = new char[strlen(nameList[idx])+strlen(dirName)+2];
+      strcpy(itemName, dirName);
+      if ( itemName[strlen(itemName)-1] != '/' )
+      {
+         strcat(itemName, "/");
+      }
+
+      strcat(itemName, nameList[idx]);
+
+      processItem(itemName, crc);
+      _crcObj->log_printf(OT_CRCAll, "%s: ICRC 0x%08lx\n", itemName, *crc);
+      delete[] itemName;
+   }
+
+processDirDone:
+   _subDirLevel -= 1;
+
+   if ( dir )
+   {
+      closedir(dir);
+   }
+
+   if ( nameListSize )
+   {
+      for ( idx=0; idx<nameListCount; idx++ )
+      {
+         delete[] nameList[idx];
+      }
+
+      free(nameList);
+   }
+}
+
+void FileList::processRegular(const char * fileName, unsigned long * crc)
+{
+	// Windows requires opening files in binary mode to avoid translating line endings
+#ifdef VXWORKS
+   int   fd = open(fileName, O_RDONLY, 0666);
+#else /* ifdef VXWORKS */
+   int   fd = open(fileName, O_RDONLY | O_BINARY, 0666);
+#endif /* ifdef VXWORKS */
+
+   if ( fd < 0 )
+   {
+      _crcObj->log_printf(OT_Normal, "%s: open failed (errno = %d)\n", fileName, errno);
+      _error = true;
+   }
+   else
+   {
+      enum { ReadBuffSize = 4096 };
+      unsigned char  * buffer = new unsigned char[ReadBuffSize];
+
+      int   readSize; 
+      while ( (readSize = read(fd, (char *)buffer, ReadBuffSize)) > 0 )
+      {
+         crcgen32(crc, buffer, readSize);
+      }
+      
+      delete[] buffer;
+      close(fd);
+   }
+}
+
+SoftCRC::SoftCRC(void)
+      : outputType(OT_Normal),
+        debug(false),
+        fileList(NULL),
+        rootDirList(NULL),
+        updateFileName(NULL),
+        verifyFileName(NULL),
+        initCRC(0),
+        subDirLimit(10),
+        currentCRC(0)
+{
+}
+
+SoftCRC::~SoftCRC()
+{
+   FileNameNode::clear(fileList);
+   FileNameNode::clear(rootDirList);
+
+   delete[] updateFileName;
+   delete[] verifyFileName;
+}
+
+int SoftCRC::process(char * cmdLine)
+{
+   if ( !setOptions(cmdLine) )
+   {
+      return -1;
+   }
+
+   FileNameNode * currentFileList = fileList;
+   FileNameNode * currentRootDir = rootDirList;
+   currentCRC = initCRC;
+
+   while ( currentFileList )
+   {
+      log_printf(OT_Normal, "FILELIST: %s\n", currentFileList->_name);
+      if ( currentRootDir )
+      {
+         log_printf(OT_Normal, "ROOTDIR: %s\n", currentRootDir->_name);
+      }
+
+      int result = processFileList(currentFileList->_name, (currentRootDir) ? currentRootDir->_name : NULL);
+      if ( result < 0 )
+      {
+         return result;
+      }
+
+      currentFileList = currentFileList->_next;
+      currentRootDir = (currentRootDir) ? currentRootDir->_next : NULL;
+   }
+
+   log_printf(OT_Normal, "CRC: 0x%08lx\n", currentCRC);
+   if ( verifyFileName )
+   {
+      FILE * fp = fopen(verifyFileName, "r");
+      if ( !fp )
+      {
+         log_printf(OT_Normal, "%s: open failed (errno=%d)\n", verifyFileName, errno);
+         return -1;
+      }
+
+      unsigned long  compareCRC;
+      bool  compareReadOK = (fscanf(fp, "%lx", &compareCRC) == 1);
+      fclose(fp);
+
+      if ( !compareReadOK )
+      {
+         log_printf(OT_Normal, "%s: CRC read failed\n", verifyFileName);
+         return -1;
+      }
+
+      if ( compareCRC != currentCRC )
+      {
+         log_printf(OT_Normal, "%s: verification failed (crc=0x%08lx expected=0x%08lx)\n", verifyFileName, compareCRC, currentCRC);
+         return -1;
+      }
+      else
+      {
+         log_printf(OT_Normal, "%s: verified OK (crc=0x%08lx)\n", verifyFileName, currentCRC);
+      }
+   }
+
+   if ( updateFileName )
+   {
+      FILE * fp = fopen(updateFileName, "w");
+      if ( !fp )
+      {
+         log_printf(OT_Normal, "%s: open failed (errno=%d)\n", updateFileName, errno);
+         return -1;
+      }
+
+      fprintf(fp, "0x%08lx\n", currentCRC);
+      fclose(fp);
+
+      log_printf(OT_Normal, "%s: updated (crc=0x%08lx)\n", updateFileName, currentCRC);
+   }
+
+   return 0;
+}
+
+bool SoftCRC::setOptions(char * cmdLine)
+{
+   const char * separators = " \t\n";
+
+   bool result = true;
+   int   startIdx = strspn(cmdLine, separators);
+   char * token = &cmdLine[startIdx];
+   char * nextToken = NULL;
+
+   strtok_r(token, separators, &nextToken);
+   while ( result && token && token[0] )
+   {
+      if ( strcmp(token, "-chroot") == 0 )
+      {
+         token = strtok_r(NULL, separators, &nextToken);
+         if ( !token )
+         {
+            usage("expected path name after -chroot");
+            result = false;
+         }
+         else
+         {
+            FileNameNode::append(&rootDirList, token);
+         }
+      }
+      else if ( strcmp(token, "-debug") == 0 )
+      {
+         debug = true;
+      }
+      else if ( strcmp(token, "-filelist") == 0 )
+      {
+         token = strtok_r(NULL, separators, &nextToken);
+         if ( !token )
+         {
+            usage("expected file name after -filelist");
+            result = false;
+         }
+         else
+         {
+            FileNameNode::append(&fileList, token);
+         }
+      }
+      else if ( strcmp(token, "-initcrc") == 0 )
+      {
+         token = strtok_r(NULL, separators, &nextToken);
+         if ( !token || sscanf(token, "%lu", &initCRC) != 1 )
+         {
+            usage("expected value after -initcrc");
+            result = false;
+         }
+      }
+      else if ( strcmp(token, "-limit") == 0 )
+      {
+         token = strtok_r(NULL, separators, &nextToken);
+         if ( !token || sscanf(token, "%d", &subDirLimit) != 1 )
+         {
+            usage("expected value after -limit");
+            result = false;
+         }
+      }
+      else if ( strcmp(token, "-update") == 0 )
+      {
+         token = strtok_r(NULL, separators, &nextToken);
+         if ( !token )
+         {
+            usage("expected file name after -update");
+            result = false;
+         }
+         else
+         {
+            updateFileName = new char[strlen(token)+1];
+            strcpy(updateFileName, token);
+         }
+      }
+      else if ( strcmp(token, "-verbose") == 0 )
+      {
+         int   level;
+         token = strtok_r(NULL, separators, &nextToken);
+         if ( !token || sscanf(token, "%d", &level) != 1 )
+         {
+            usage("expected value after -verbose");
+            result = false;
+         }
+         else if ( level < OT_First || level >= OT_Last )
+         {
+            usage("value of out range for -verbose");
+            result = false;
+         }
+         else
+         {
+            outputType = (OutputType)level;
+         }
+      }
+      else if ( strcmp(token, "-verify") == 0 )
+      {
+         token = strtok_r(NULL, separators, &nextToken);
+         if ( !token )
+         {
+            usage("expected file name after -verify");
+            result = false;
+         }
+         else
+         {
+            verifyFileName = new char[strlen(token)+1];
+            strcpy(verifyFileName, token);
+         }
+      }
+
+      if ( result )
+      {
+         token = strtok_r(NULL, separators, &nextToken);
+      }
+   }
+
+   if ( result )
+   {
+      if ( !fileList )
+      {
+         usage("-filelist option required");
+         result = false;
+      }
+
+      if ( verifyFileName && updateFileName && strcmp(verifyFileName, updateFileName) == 0 )
+      {
+         usage("verify and update on the same file is not allowed");
+         result = false;
+      }
+   }
+
+   return result;
+}
+
+int SoftCRC::processFileList(const char * fileListName, const char * rootDir)
+{
+   FileList fileList(this);
+   if ( !fileList.init(fileListName, rootDir) )
+   {
+      return -1;
+   }
+
+   enum { ItemSize = 512 };
+   char item[ItemSize];
+   while ( !fileList.checkError() &&
+           fileList.getNextItem(item, ItemSize) )
+   {
+      fileList.processItem(item, &currentCRC);
+      log_printf(OT_CRCFileList, "%s: ICRC 0x%08lx\n", item, currentCRC);
+   }
+
+   return ( fileList.checkError() ) ? -1 : 0;
+}
+
+void SoftCRC::log_printf(OutputType logType, const char * format, ...)
+{
+   if ( logType <= outputType )
+   {
+      va_list  argList;
+      va_start(argList, format);
+
+      vfprintf(stderr, format, argList);
+   }
+}
+
+void SoftCRC::usage(const char * message)
+{
+   const char * usageText =
+      "softcrc -filelist <filename> [other options]\n"
+      "   -filelist <filename> [-filelist <filename>] - list of files and directories to CRC\n"
+      "   -chroot <path> [-chroot <path>] - specify prefix for absolute pathnames, default is no prefix\n"
+      "        multiple -chroot OK and are associated with corresponding -filelist entries\n"
+      "   -initcrc <value> - initial CRC value, default=0\n"
+      "   -limit <value> - limits subdirectory nesting, default=10\n"
+      "   -update <filename> - saves calculated CRC, default is no update\n"
+      "   -verbose <value> - verbosity of CRC output\n"
+      "                      0 - suppresses all output to stdout and stderr\n"
+      "                      1 - outputs only the final CRC\n"
+      "                      2 - outputs intermediate CRC's of things in filelist\n"
+      "                      3 - outputs intermediate CRC's of all files and dirs\n"
+      "                      4 - full debug information\n"
+      "   -verify <filename> - verify calculated CRC, default is no verify\n"
+      "   \n"
+      "   examples:\n"
+      "   \n"
+      "   softcrc -filelist filelists/trima.files -chroot /releases/build1.179/current_build\n"
+      "           -filelist filelists/focgui.files -chroot /releases/build1.179/current_build\n"
+      "           -update ../disk.crc\n"
+      "   \n"
+      "   machcrc -filelist filelists/trima.files -filelist filelists/focgui.files\n"
+      "           -filelist filelists/qnx.files -verify /trima/disk.crc\n";
+
+   if ( outputType >= OT_Normal )
+   {
+      fprintf(stderr, "%s\n", message);
+      fprintf(stderr, "\nUsage:\n%s\n", usageText);
+   }
+}
 
 //
 // main entry point
 //
+#ifdef VXWORKS
+
+extern "C"
 int softcrc(const char* options)
 {
-   FILE* filelist;
-   FILE* fp;
-   char* path;
-   unsigned long crc;
-   char buf[BUF_SIZE];
+   // make a writable copy of the command line options
+   char * cmdLine = new char[strlen(options)+1];
+   strcpy(cmdLine, options);
 
-   // Ensure that you have a NULL filelist and rootdirlist to start.
-   Filelist[0] = NULL;
-   Rootdirlist[0] = NULL;
+   // perform the actual CRC calculations
+   SoftCRC  softCRCObj;
+   int result = softCRCObj.process(cmdLine);
 
-   OptionParser cmdline( ProgramName, "crc file verification" );
-   cmdline.init( options );
-   parseCmdline( cmdline.getArgc(), cmdline.getArgv() );
+   delete[] cmdLine;
+   return result;
+}
 
-   // get readbuffer
-   if ((Readbuf = (unsigned char*)malloc(ReadbufSize)) == NULL) {
-      logerrno("malloc failed\n");
-      exit(-1);
-   }
+#else /* ifdef VXWORKS */
 
-   for ( int i = 0; Filelist[i]; i++ )
+int main(int argc, char ** argv)
+{
+   // concatenate the command line options into a single string
+   // to allow use of the same interface as vxWorks
+   size_t   optLength = 1;
+   int      arg;
+
+   for ( arg=1; arg<argc; arg++ )
    {
-
-      if (Rootdirlist[i]) {
-         // Assign the Root dir for this particular Filelist.
-         Rootdir = Rootdirlist[i];
-      }
-      else {
-         Rootdir = NULL;
-      }
-
-      if (Verbosity > 0) {
-         printf("FILELIST: %s\n", Filelist[i]);
-         if (Rootdir) {
-            printf("ROOTDIR: %s\n", Rootdir);
-         }
-      }
-
-
-
-      //
-      // calculate CRC over filelist
-      //
-      if ((filelist = fopen(Filelist[i], "r")) == NULL) {
-         sprintf(buf, "failed to open filelist %.256s\n", Filelist[i]);
-         logerrno(buf);
-         exit(-1);
-      }
-      while ((path = getnextitem(filelist)) != 0) {
-
-         doitem(&InitCRC, path, 1);
-
-         if (Verbosity == 2) {
-            printf("ICRC: 0x%08lx   %s\n", InitCRC, path);
-         }
-      } // end while
-
-      // Close the current filelist
-      if ( fclose( filelist ) != 0 ) {
-         sprintf(buf, "failed to close filelist %.256s\n", Filelist[i]);
-         logerrno(buf);
-         exit(-1);
-      }
-
-      // Ensure that the IGNORE list is freed between calls to different 
-      // filelists.
-      struct node* temp_node = 0;
-      while ( pList )
-      {
-         temp_node = pList;         
-         free( pList->string );
-         pList = pList->next;
-         free ( temp_node );
-      }
+      optLength += strlen(argv[arg])+1;
    }
 
-   //
-   // output final CRC to stdout
-   //
-   if (Verbosity != 0)
-      printf("CRC: 0x%08lx\n", InitCRC);
+   char * options = new char[optLength];
+   options[0] = '\0';
 
-   //
-   // CRC verification
-   //
-   if (VerifyFile) {
-      if ((fp = fopen(VerifyFile, "r")) == NULL) {
-         sprintf(buf, "fopen failed on %.256s, cannot verify\n", VerifyFile);
-         logerrno(buf);
-         exit(-1);
-      }
-      if (fgets(buf, sizeof(buf), fp) == NULL) {
-         logerrno("fgets failed on -verify filename\n");
-         exit(-1);
-      }
-      if (sscanf(buf, "%lx", &crc) != 1) {
-         logerrno("sscanf could not read -verify CRC\n");
-         exit(-1);
-      }
-      if (crc != InitCRC) {
-         if (Verbosity > 0) {
-            sprintf(buf, "%.256s verification failed, crc=0x%08lx  expected=0x%08lx\n",
-                    VerifyFile, InitCRC, crc);
-            logerror(buf);
-         }
-         exit(-1);
-      }
-      else {
-         if (Verbosity > 0) {
-            sprintf(buf, "%.256s verified OK crc=0x%08lx\n", VerifyFile, InitCRC);
-            loginfo(buf);
-         }
-      }
+   for ( arg=1; arg<argc; arg++ )
+   {
+      strcat(options, argv[arg]);
+      strcat(options, " ");
    }
 
-   //
-   // CRC update
-   //
-   if (UpdateFile) {
-      if ((fp = fopen(UpdateFile, "w")) == 0 ) {
-         sprintf(buf, "fopen failed on %.256s, cannot update\n", UpdateFile);
-         logerrno(buf);
-         exit(-1);
-      }
-      if (fprintf(fp, "0x%08lx\n", InitCRC) < 0) {
-         logerrno("fprintf failed to update -update filename\n");
-         exit(-1);
-      }
+   // perform the actual CRC calculations
+   SoftCRC  softCRCObj;
+   int result = softCRCObj.process(options);
 
-      if (fp != 0 )
-      {
-         if (fclose(fp) != 0 )
-         {
-            sprintf(buf, "fclose failed on %.256s\n", UpdateFile);
-            logerrno(buf);
-            exit(-1);
-         }
-#ifdef RESTRICT_TO_MACHINE
-         else
-         {
-            if (chmod(UpdateFile, (S_IRUSR|S_IRGRP|S_IROTH)) != 0)
-            {
-               sprintf(buf, "chmod failed on %.256s, cannot change permission", UpdateFile);
-               logerrno(buf);
-               exit(-1);
-            }
-         }
-#endif
-      }
-
-      if (Verbosity > 0) {
-         sprintf(buf, "%.256s updated with new crc=0x%08lx\n", UpdateFile, InitCRC);
-         loginfo(buf);
-      }
-   }
-
-   return 0;
-
-} // end main
-
-
-// SPECIFICATION:  parseCmdline()
-//   parses command line
-//   validates arguments
-//   implements -update restrictions
-// ERROR HANDLING: gives usage message and exits -1 (255)
-void parseCmdline(int argc, const char** argv)
-{
-   int n = argc;
-   const char** parg = argv;
-   char buf[BUF_SIZE];
-   int i_filelists = 0;
-   int i_rootdirlists = 0;
-
-   ASSERT(argv != 0);
-   ASSERT(argc > 0);
-
-   parg++; // advance past command pathname
-   n--;
-
-   // first scan for -quiet to suppress usage msg
-   for (parg = argv+1, n = argc-1; n > 0; n--, parg++) {
-      if (strcmp("-quiet", *parg) == 0) {
-         Verbosity = 0;
-      }
-   }
-
-   for (parg = argv+1, n = argc-1; n > 0; n--, parg++) {
-
-      if (strcmp("-quiet", *parg) == 0) {
-         Verbosity = 0;
-      }
-
-      else if (strcmp("-debug", *parg) == 0) {
-         Debug = 1;
-      }
-
-      else if (strcmp("-symlink", *parg) == 0) {
-         FollowSymlinks = 1;
-      }
-      else if (strcmp("-travfs", *parg) == 0) {
-         FollowSymlinks = 1;
-         TraverseFileSystems = 1;
-      }
-
-      else if (strcmp("-filelist", *parg) == 0) {
-         if (--n <= 0) {
-            usage("needs -filelist value\n");
-         }
-         Filelist[i_filelists] = *(++parg);
-         i_filelists++;
-         Filelist[i_filelists] = NULL;
-         if ( i_filelists >= FILELIST_MAX ) {
-            usage("Maximum number of filelists exceeded\n");
-         }
-      }
-
-      else if (strcmp("-verify", *parg) == 0) {
-         if (--n <= 0) {
-            usage("needs -verify value\n");
-         }
-         VerifyFile = *(++parg);
-      }
-
-      else if (strcmp("-chroot", *parg) == 0) {
-         if (--n <= 0) {
-            usage("needs -chroot value\n");
-         }
-         Rootdirlist[i_rootdirlists] = *(++parg);
-         i_rootdirlists++;
-         Rootdirlist[i_rootdirlists] = NULL;
-         if ( i_rootdirlists >= FILELIST_MAX ) {
-            usage("Maximum number of chroots exceeded\n");
-         } 
-      }
-
-      else if (strcmp("-update", *parg) == 0) {
-         if (--n <= 0) {
-            usage("needs -update value\n");
-         }
-         UpdateFile = *(++parg);
-
-         // softcrc can update any file
-         // machcrc can update ONLY the machine.crc file or files in /tmp
-        
-#ifdef RESTRICT_TO_MACHINE
-         if (strcmp(UpdateFile, MACH_CRCFILE) &&
-             strncmp(UpdateFile, "/tmp/", 5)) {
-             sprintf(buf, "-update restricted to %.256s or file in /tmp\n",
-                     MACH_CRCFILE);
-             usage(buf);
-         }
-#endif
-      }
-
-      else if (strcmp("-verbose", *parg) == 0) {
-         if (--n <= 0) {
-            usage("needs -verbose value\n");
-         }
-         if (sscanf(*(++parg), "%d", &Verbosity) != 1) {
-            usage("invalid -verbose value\n");
-         }
-         if (Verbosity < 0 || Verbosity > VERBOSE_MAX) {
-            usage("invalid -limit value\n");
-         }
-      }
-
-      else if (strcmp("-limit", *parg) == 0) {
-         if (--n <= 0) {
-            usage("needs -limit value\n");
-         }
-         if (sscanf(*(++parg), "%d", &SubdirLimit) != 1) {
-            usage("invalid -limit value\n");
-         }
-         if (SubdirLimit < 0 || SubdirLimit > LIMIT_MAX) {
-            usage("invalid -limit value\n");
-         }
-      }
-
-      else if (strcmp("-bufsize", *parg) == 0) {
-         if (--n <= 0) {
-            usage("needs -bufsize value\n");
-         }
-         if (sscanf(*(++parg), "%d", &ReadbufSize) != 1) {
-            usage("invalid -bufsize value\n");
-         }
-         if (ReadbufSize <= 0 || ReadbufSize > READBUF_MAX) {
-            usage("invalid -bufsize value\n");
-         }
-      }
-
-      else if (strcmp("-initcrc", *parg) == 0) {
-         if (--n <= 0) {
-            usage("needs -initcrc value\n");
-         }
-         if (sscanf(*(++parg), "%lx", &InitCRC) != 1) {
-            usage("invalid -initcrc value\n");
-         }
-      }
-
-      else {
-         sprintf(buf, "invalid argument: %.256s\n", *parg);
-         usage(buf);
-      }
-   }
-
-   if (Filelist[0] == 0)
-      usage("-filelist value is required\n");
-
-   if (VerifyFile && UpdateFile &&
-      (strcmp(VerifyFile, UpdateFile) == 0))
-      usage("verify and update on the same file is not allowed\n");
+   delete[] options;
+   return result;
 }
 
+#endif /* ifdef VXWORKS */
 
-// SPECIFICATION:  usage()
-//   display specific error msg
-//   display usage text
-//   exit -1
-// ERROR HANDLING: none
-void usage(char* msg)
-{
-   ASSERT(msg != 0);
-
-   if (Verbosity > 0) {
-      fprintf(stderr, "ERROR %s: %s", ProgramName, msg);
-      fprintf(stderr, "USAGE: %s %s", ProgramName, UsageText);
-   }
-   exit(-1);
-}
-
-
-// SPECIFICATION: doitem()
-//   handle a filelist or directory entry
-//   special handling for symbolic links
-// ERROR HANDLING: logs error and exits -1
-void doitem(unsigned long* pcrc, char* path, int filelistItem)
-// filelistItem - nonzero if from filelist, 0 if from directory traversal
-//                used to restrict filesystem crossings
-{
-   struct stat statbuf;
-   char buf[BUF_SIZE];
-   static int Device = 0;
-
-   ASSERT(pcrc != 0);
-   ASSERT(path != 0);
-
-   // check whether item should be ignored
-   if (ignore(path)) {
-      sprintf(buf, "doitem: ignoring %.256s\n", path);
-      logdebug(buf);
-      return;
-   }
-
-
-   if (filelistItem) {
-      Device = statbuf.st_dev;
-   }
-
-
-   // check for mount point of different file system
-   if (Device != statbuf.st_dev && TraverseFileSystems == 0) {
-      sprintf(buf, "doitem: skipping mount point: %.256s\n", path);
-      logdebug(buf);
-      return;
-   }
-
-   if (Debug) {
-      sprintf(buf, "doitem: %.256s device=0x%lx\n", path, statbuf.st_dev);
-      logdebug(buf);
-   }
-
-   if (S_ISDIR(statbuf.st_mode)) { // handle directories
-      dodir(pcrc, path);
-   }
-   else if (S_ISREG(statbuf.st_mode)) { // handle regular file
-      dofile(pcrc, path);
-   }
-}
-
-
-// SPECIFICATION: dodir()
-//   handle directory
-//   walks through directory entries
-//   skips . and ..
-//   implements recursion limit, warning message
-//   generates a sorted table of directory entries to ensure
-//     a deterministic crc calculation.
-// ERROR HANDLING: exits -1
-void dodir(unsigned long* pcrc, char* dirname)
-{
-   DIR* dp;
-   struct dirent* pde;
-   int nument = 0;
-   char buf[BUF_SIZE];
-   static int NestLevel = 0;
-   char** pent;  // ptr to table entry
-   char** table; // NULL terminated table of char*'s
-   int i;
-
-   ASSERT(pcrc != 0);
-   ASSERT(dirname != 0);
-
-   if ((dp = opendir(dirname)) == NULL) {
-      sprintf(buf, "opendir failed on %.256s\n", dirname);
-      logerrno(buf);
-      exit(-1);
-   }
-
-   if (++NestLevel > SubdirLimit) {
-      sprintf(buf, "recursion limit exceeded, skipping %.256s\n", dirname);
-      logwarning(buf);
-      NestLevel--;
-      return;
-   }
-
-
-   //
-   // sort all entries in the directory
-   //
-   //   first count the entries
-   while (1) {
-      if ((pde = readdir(dp)) != NULL) {
-         if (strcmp(".", pde->d_name) == 0 ||
-             strcmp("..", pde->d_name) == 0)
-            continue;  // ignore . and .. entries
-
-         nument++;
-      }
-      else {
-         break;
-      }
-   }
-   //   next, malloc the table, allow for NULL terminator
-   table = (char**)malloc((nument+1) * sizeof(char*));
-   if (table == 0) {
-      logerrno("dodir: malloc of table failed\n");
-      exit(-1);
-   }
-   //   next, malloc space for each entry and fill in table
-   rewinddir(dp);
-   pent = table, i = 0;
-   while(1) {
-      if ((pde = readdir(dp)) != NULL) {
-         if (strcmp(".", pde->d_name) == 0 ||
-             strcmp("..", pde->d_name) == 0)
-            continue;  // ignore . and .. entries
-
-         *pent = (char*)malloc(strlen(pde->d_name) + 1);
-         if (*pent == 0) {
-            logerrno("dodir: malloc of table entry failed\n");
-            exit(-1);
-         }
-         strcpy(*pent, pde->d_name);  // copy name
-      }
-      else {
-         break;
-      }
-      pent++, i++;
-   }
-   if (i != nument) {
-      logerror("dodir: i==nument assertion failed\n");
-      exit(-1);
-   }
-   *pent = 0;  // NULL terminate the table
-   //
-   //   finally, sort the table using qsort
-   qsort(table, nument, sizeof(char*), compare);
-
-   //
-   // crc the sorted list
-   //
-   for (pent = table; *pent; pent++) {
-
-      if (Debug) {
-         sprintf(buf, "dodir: sorted entry = %.256s\n", *pent);
-         logdebug(buf);
-      }
-
-      // avoid buffer overflow
-      if ((strlen(dirname) + 1 + strlen(*pent)) >= sizeof(buf)) {
-         logerror("dodir: pathname too big\n");
-         exit(-1);
-      }
-      // append entry name to dirname
-      if (strcmp("/", dirname))
-         sprintf(buf, "%.256s/%.256s", dirname, *pent);
-      else
-         sprintf(buf, "/%.256s", *pent);  // special case for "/"
-
-      doitem(pcrc, buf, 0);
-   }
-
-   //
-   // free the table entries and the table
-   //
-   for (pent = table; *pent; pent++) {
-      free(*pent);
-   }
-   free(table);
-
-   if (Verbosity == 3)
-      printf("ICRC: 0x%08lx   %s\n", *pcrc, dirname);
-
-   if (Debug) {
-      sprintf(buf, "dodir: dir=%.256s numentries=%d icrc=0x%08lx\n",
-              dirname, nument, *pcrc);
-      logdebug(buf);
-   }
-
-   if (closedir(dp) == -1) {
-      sprintf(buf, "closedir failed on %.256s\n", dirname);
-      logerrno(buf);
-      exit(-1);
-   }
-
-   NestLevel--;
-   ASSERT(NestLevel >= 0);
-}
-
-
-// SPECIFICATION: dofile()
-//   handles a file - uses file contents to calculate a CRC
-// ERROR HANDLING: exits -1
-void dofile(unsigned long* pcrc, char* filename)
-{
-   char buf[BUF_SIZE];
-   int fd;
-   long length = 0;
-   long n = 0;
-
-   ASSERT(pcrc != 0);
-   ASSERT(filename != 0);
-
-   if ((fd = open(filename, O_RDONLY, 0444)) == -1) {
-      sprintf(buf, "failed to open %.256s\n", filename);
-      logerrno(buf);
-      exit(-1);
-   }
-
-   // read the file and calculate new crc
-   while(1) {
-      if ((n = read(fd, (char*)Readbuf, ReadbufSize)) == -1) {
-         sprintf(buf, "read failed on %.256s\n", filename);
-         logerrno(buf);
-         exit(-1);
-      }
-      if (n == 0)
-         break;
-
-      if (crcgen32(pcrc, Readbuf, n) == -1) {
-         logerror("dofile: crcgen32 failed\n");
-         exit(-1);
-      }
-      length += n;
-   }
-
-   if (Verbosity == 3)
-      printf("ICRC: 0x%08lx   %.256s\n", *pcrc, filename);
-
-   if (Debug) {
-      sprintf(buf, "dofile: file=%.256s length=%ld icrc=0x%08lx\n",
-           filename, length, *pcrc);
-      logdebug(buf);
-   }
-
-   if (close(fd) == -1) {
-      sprintf(buf, "close failed on %.256s\n", filename);
-      logerrno(buf);
-      exit(-1);
-   }
-}
-
-
-// SPECIFICATION: getnextitem()
-//   parses filelist for next pathname to CRC
-//   skips comments and blank lines
-//   skips leading white space
-//   handle IGNORE keyword to skip specified files/dirs
-//   returns pathname, prefixed with rootdir if required
-// ERROR HANDLING: none
-char* getnextitem(FILE* filelist)
-{
-   static char buf[BUF_SIZE]; // persistant storage for pathname
-   char* ptr;
-   char* pathname;
-   char msg[BUF_SIZE];
-   char tmpbuf[BUF_SIZE];
-
-   ASSERT(filelist != 0);
-
-   // look for non blank non comment
-   while (1) {
-
-      if (fgets(tmpbuf, sizeof(tmpbuf), filelist) == NULL)
-         return 0;
-
-      tmpbuf[sizeof(tmpbuf)-1] = 0;  // make sure buf is null terminated
-
-      if (Debug) {
-         sprintf(msg, "getnextitem: %.256s", tmpbuf);  // buf has \n already
-         logdebug(msg);
-      }
-
-      // skip whitespace
-      for(ptr=tmpbuf; *ptr && isspace(*ptr); ptr++);
-      pathname = ptr;
-
-      // handle IGNORE keyword
-      if (strncmp(ptr, IGNORE_KEYWORD, strlen(IGNORE_KEYWORD)) == 0) {
-         doignore(ptr);
-         continue;
-      }
-
-      // terminate string on next whitespace
-      while(*ptr && !isspace(*ptr))
-         ptr++;
-      *ptr = 0;
-
-      // skip comments and blank lines
-      if (*pathname == 0 || *pathname == '#')
-         continue;
-
-      // prefix -chroot value for absolute pathnames
-      if (Rootdir && (*pathname == '/')) {
-         strcpy(buf, Rootdir);
-
-         // following check avoids problem of chroot usage with listitem "/" resulting in
-         // pathnames containing "//" instead of "/" and so not matching IGNORE pathnames
-         // containing a "/".
-         if (*(pathname+1)) {
-            strcat(buf, pathname);
-         }
-      }
-      else {
-         strcpy(buf, pathname);
-      }
-
-      if (Debug) {
-         sprintf(msg, "getnextitem: returned pathname=%.256s\n", buf);
-         logdebug(msg);
-      }
-
-      ASSERT(buf[0] != 0);
-      return(buf);
-   }
-}
-
-
-
-// SPECIFICATION:  loginfo()
-//   sends msg string to stdout
-//   prepends msg with ProgramName
-//   checks verbosity setting to decide whether to send
-//   logs message in tracelog
-// ERROR HANDLING: none
-void loginfo(char* msg)
-{
-   char buf[BUF_SIZE+40];
-
-   ASSERT(msg != 0);
-
-   sprintf(buf, "%.256s: %.256s", ProgramName, msg);
-
-   if (Verbosity > 0)
-      fprintf(stdout, "%.256s: %.256s", ProgramName, msg);
-
-   TRACELOG(buf);
-}
-
-
-// SPECIFICATION: logerrno()
-//   sends error msg to stderr
-//   sends errno and errno string as well
-//   prepends msg with ProgramName
-//   checks verbosity setting to decide whether to send
-//   logs message in tracelog
-// ERROR HANDLING: none
-void logerrno(char* msg)
-{
-   char buf[BUF_SIZE+120];
-
-   ASSERT(msg != 0);
-
-   sprintf(buf, "ERROR %.256s: %.256s\n    errno=%d %.256s\n",
-           ProgramName, msg, errno, strerror(errno));
-
-   if (Verbosity > 0)
-      fprintf(stderr, "ERROR %.256s: %.256s\n    errno=%d %.256s\n",
-           ProgramName, msg, errno, strerror(errno));
-   
-   TRACELOG(buf);
-}
-
-
-// SPECIFICATION: logerror()
-//   sends error msg to stderr
-//   prepends msg with ProgramName
-//   checks verbosity setting to decide whether to send
-//   logs message in tracelog
-// ERROR HANDLING: none
-void logerror(char* msg)
-{
-   char buf[BUF_SIZE+40];
-
-   ASSERT(msg != 0);
-
-   sprintf(buf, "ERROR %.256s: %.256s", ProgramName, msg);
-
-   if (Verbosity > 0)
-      fprintf(stderr, "ERROR %.256s: %.256s", ProgramName, msg);
-
-   TRACELOG(buf);
-}
-
-
-// SPECIFICATION:
-//   sends debug msg string to stderr
-//   prepends msg with ProgramName
-//   checks verbosity setting to decide whether to send
-// ERROR HANDLING: none
-void logdebug(char* msg)
-{
-   ASSERT(msg != 0);
-
-   if (Debug)
-      fprintf(stderr, "debug %s: %s", ProgramName, msg);
-}
-
-
-// SPECIFICATION:
-//   sends warning msg string to stdout
-//   prepends msg with ProgramName
-//   checks verbosity setting to decide whether to send
-// ERROR HANDLING: none
-void logwarning(char* msg)
-{
-   char buf[BUF_SIZE+40];
-
-   ASSERT(msg != 0);
-
-   sprintf(buf, "Warning %.256s: %.256s", ProgramName, msg);
-
-   if (Verbosity > 0)
-      fprintf(stdout, "Warning %.256s: %.256s", ProgramName, msg);
-
-   TRACELOG(buf);
-}
-
-// SPECIFICATION:
-//   parse pathname from buf
-//   add pathname to ignore list
-// ERROR HANDLING: none
-void doignore(char* pathbuf)
-{
-   struct node* pnode;
-   char* ptr;
-   char buf[BUF_SIZE];
-
-   ASSERT(pathbuf != 0);
-
-   // skip IGNORE
-   pathbuf+=strlen(IGNORE_KEYWORD);
-
-   // skip whitespace
-   for(ptr=pathbuf; *ptr && isspace(*ptr); ptr++);
-   pathbuf = ptr;
-
-   // terminate string on next whitespace
-   while(*ptr && !isspace(*ptr))
-      ptr++;
-   *ptr = 0;
-
-   // if -chroot AND full pathname, prepend the -chroot string
-   if (Rootdir && (*pathbuf == '/'))
-      sprintf(buf, "%.256s%.256s", Rootdir, pathbuf);
-   else
-      strcpy(buf, pathbuf);
-
-   // copy string to list node
-   if ((pnode = (struct node*)malloc(sizeof(struct node))) == 0) {
-      logerrno("doignore: node malloc failed\n");
-      exit(-1);
-   }
-   if ((pnode->string = (char*)malloc(strlen(buf)+1)) == 0) {
-      logerrno("doignore: string malloc failed\n");
-      exit(-1);
-   }
-   strcpy(pnode->string, buf);
-
-   // add node to front of list
-   pnode->next = pList;
-   pList = pnode;
-
-   if (Debug) {
-      sprintf(buf, "doignore: will ignore %.256s\n", pnode->string);
-      logdebug(buf);
-   }
-
-   ASSERT(pList != 0);
-}
-
-
-// SPECIFICATION:
-//   check ignore list for path, must be exact match
-//   returns zero if no match, non-zero if match
-// ERROR HANDLING: none
-int ignore(char* pathname)
-{
-   struct node* pnode = pList;
-
-   ASSERT(pathname != 0);
-
-   while (pnode) {
-      if (strcmp(pathname, pnode->string) == 0) {
-         return 1;  // matched, so ignore
-      }
-      pnode = pnode->next;
-   }
-   return 0;  // no match
-}
-
-
-// SPECIFICATION:
-//   qsort comparison function
-//   uses strcmp() to compare ptrs to table entries
-//     where table is array of char*'s.
-// ERROR HANDLING: none
-int compare(const void* pstring1, const void* pstring2)
-{
-   int rval;
-   char buf[BUF_SIZE];
-
-   ASSERT(pstring1 != 0);
-   ASSERT(pstring2 != 0);
-   ASSERT(*(char**)pstring1 != 0);
-   ASSERT(*(char**)pstring2 != 0);
-
-   rval =  (strcmp(*(char**)pstring1, *(char**)pstring2));
-
-   if (Debug) {
-      sprintf(buf, "compare: rval=%d %.256s %.256s\n",
-              rval, *(char**)pstring1, *(char**)pstring2);
-      logdebug(buf);
-   }
-
-   return(rval);
-}

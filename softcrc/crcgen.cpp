@@ -1,17 +1,18 @@
 /*****************************************************************
- * copyright 1997 Cobe BCT Lakewood, Colorado
+ * Copyright(C) 2003 Gambro BCT
  *
- * FILENAME: crcgen.c
- * PURPOSE: generic function for calculating a 32 bit CRC on specified data.
+ * $Header$
+ * $Log$
+ *
  * CHANGELOG:
  *   4/29/97 - dyes
  *****************************************************************/
 
+#ifdef VXWORKS
+# include <vxworks.h>
+#endif /* ifdef VXWORKS */
+
 #include "crcgen.h"
-#include "datalog.h"
-#include <fstream.h>
-#include <stdio.h>
-#include <errno.h>
 
 /*****************************************************************/
 /*                                                               */
@@ -34,10 +35,6 @@
 /*****************************************************************/
 
 #define TABLE_SIZE 256
-
-// Note:  256 is an arbitrary number
-#define MAXBUFFERLENGTH 256
-
 
 static
 unsigned long  crctable[TABLE_SIZE] =
@@ -114,7 +111,9 @@ unsigned long  crctable[TABLE_SIZE] =
 // ERROR HANDLING:  returns -1 if arg error, else returns 0
 int crcgen32(unsigned long* pcrc, const unsigned char* pdata, long length)
 {
-#if 0
+
+#ifndef VXWORKS
+
    // check args
    if (length < 0)
       return -1;
@@ -128,7 +127,8 @@ int crcgen32(unsigned long* pcrc, const unsigned char* pdata, long length)
       *pcrc = crctable[ (*pcrc ^ *pdata++) & 0xFFL] ^ (*pcrc >> 8);
 
 	return 0;
-#endif
+
+#else /* ifndef VXWORKS */
 
 	int	result = -1;
 	__asm__ volatile
@@ -174,61 +174,8 @@ int crcgen32(unsigned long* pcrc, const unsigned char* pdata, long length)
    );
 
    return result;
+
+#endif /* ifndef VXWORKS */
+
 }
 
-
-
-
-
-// file_crcgen32() generates a 32bit CRC over the contents of a file.
-// inputs:
-//    filename - filename (plus path) to be crc'ed.  file must obviously exist.
-//    pcrc - ptr to initial crc value, the crc value is modified as each byte of input data
-//           is read.
-// outputs:
-//    *pcrc is updated with new crc value
-//    returns 0 if success
-//    returns -1 if failed
-int file_crcgen32 (const char *filename, unsigned long *pcrc)
-{
-   unsigned char buffer[MAXBUFFERLENGTH];
-   int count;
-   int totalBytesRead = 0;
-
-   ifstream inStream (filename, ios::in + ios::binary + ios::nocreate);
-
-   if (inStream.fail())
-   {
-      inStream.close();
-      DataLog_Critical	critical;
-      DataLog(critical) << "Couldn't open file " << filename << " (" << errnoMsg <<")" << endmsg;
-      return -1;
-   }
-   
-   // Start at the beginning of the stream.
-   inStream.seekg(0);
-   
-   // Read in the stream on block at a time.
-   do
-   {
-      inStream.read (buffer, MAXBUFFERLENGTH);
-      count = inStream.gcount();
-      totalBytesRead += count;
-
-      // There is something goofy with this stream class.  Fail bit is triggered
-      // on the reading of the end of a file.  Don't know what causes it, but
-      // ignore fail status.
-      if (inStream.bad())
-      {
-			DataLog_Critical	critical;
-			DataLog(critical) << "Stream read failed (" << count << ", " << totalBytesRead <<") (0x" << hex << inStream.rdstate() << dec << ")" << endmsg;
-         inStream.close();
-         return -1;
-      }
-      
-      crcgen32 (pcrc, buffer, count);
-   
-   } while ( count == MAXBUFFERLENGTH );
-
-   return 0;
-}

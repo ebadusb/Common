@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.4 2002/09/23 15:35:36Z jl11312 Exp rm70006 $
  * $Log: datalog_output.cpp $
+ * Revision 1.3  2002/08/22 20:19:11  jl11312
+ * - added network support
  * Revision 1.2  2002/08/15 20:53:57  jl11312
  * - added support for periodic logging
  * Revision 1.1  2002/07/18 21:20:58  jl11312
@@ -271,7 +273,7 @@ DataLog_NetworkOutputTask::DataLog_NetworkOutputTask(long connectTimeout)
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = inet_addr(common.connectName());
-	addr.sin_port = common.connectPort();
+	addr.sin_port = htons(common.connectPort());
 
 	struct timeval	timeout = { connectTimeout, 0 };
 	if ( connectWithTimeout(_outputFD, (sockaddr *)&addr, sizeof(addr), &timeout) != OK )

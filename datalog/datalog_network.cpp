@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_network.cpp 1.5 2003/12/09 14:14:28Z jl11312 Exp rm70006 $
  * $Log: datalog_network.cpp $
+ * Revision 1.1  2002/08/22 20:19:02  jl11312
+ * Initial revision
  *
  */
 
@@ -37,7 +39,7 @@ int DataLog_NetworkTask::main(void)
 	memset(&addr , 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = INADDR_ANY;
-	addr.sin_port = _port;
+	addr.sin_port = htons(_port);
 
    bind(serverSocket, (sockaddr *)&addr, sizeof(addr));
    while ( 1 )

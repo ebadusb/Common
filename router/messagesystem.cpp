@@ -132,14 +132,13 @@ bool MessageSystem::init( const char *qname, const unsigned int qsize, const boo
       return false;
    }
 
-   if ( _TheMessageSystem != 0 )
-   {
+	if ( taskVarGet(taskIdSelf(), (int *)&_TheMessageSystem) != ERROR )
+	{
       DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Static variable, _TheMessageSystem not = 0 ( value=" 
-                           << hex << (unsigned long)_TheMessageSystem << ", currentObj=" 
-                           << (unsigned long)this << " )." << endmsg;
+      DataLog(criticalLog) << "Task variable _TheMessageSystem has already been added for this task ("
+                           << hex << (unsigned long)_TheMessageSystem << " currentObj=" 
+                           << (unsigned long)this << " )" << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "MessageSystem initialization failed" );
-      return false;
    }
 
    //
@@ -151,7 +150,6 @@ bool MessageSystem::init( const char *qname, const unsigned int qsize, const boo
       DataLog_Critical criticalLog;
       DataLog(criticalLog) << "taskVarAdd failed.  errno=" << errno << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "MessageSystem initialization failed" );
-      return false;
    }
 
    //

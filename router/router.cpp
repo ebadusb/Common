@@ -47,13 +47,6 @@ Router *Router::globalRouter()
    return _TheRouter;
 }
 
-int Router::taskCreateHook( WIND_TCB *pTcb )
-{
-   MessageSystem::MsgSystem( 0 );
-
-   return 1;
-}
-
 int Router::taskDeleteHook( WIND_TCB *pTcb )
 {
    if ( _TheRouterTid == pTcb )
@@ -108,9 +101,8 @@ bool Router::init()
       return false;
 
    //
-   // Add the task create to initialize tasks correctly and delete hooks 
-   //  to catch all task deletion and keep the task lists up to date ...
-   taskCreateHookAdd( (FUNCPTR) &Router::taskCreateHook );
+   // Add the task delete hook to catch all task deletion and
+   // keep the task lists up to date ...
    taskDeleteHookAdd( (FUNCPTR) &Router::taskDeleteHook );
 
    //

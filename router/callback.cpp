@@ -11,7 +11,6 @@
 
 #include <stdarg.h>
 
-
 Callback :: Callback(FncPtr ff)
 {
    //
@@ -30,7 +29,6 @@ Callback :: Callback(void *pp, ...)
    va_list ap; va_start(ap,pp);
    _Ptr=(Callback*)pp;
    _MemFncPtr = va_arg(ap,MemFncPtr);
-   _FncPtr = 0;
 };
 
 Callback :: ~Callback()

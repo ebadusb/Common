@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/BUFFMSGS.H 1.9 2000/04/13 14:27:08 BD10648 Exp MS10234 $
  * $Log: BUFFMSGS.H $
  * Revision 1.8  2000/03/24 18:08:05  BS04481
  * Change several messages to NOTUSED in the message structure
@@ -197,6 +196,7 @@ enum BUFFER_MESSAGES
     ArcCalibrationMsg,      // Cal.dat message from Archive
     ArcConfigMsg,           // Config.dat message to/from Archive
     ProcDonorMsg,
+    OverrideAlarmMsg,
 
    LAST_BUFFER_MESSAGE           // don't change this entry
 };
@@ -346,6 +346,7 @@ MsgStructMapEntry MsgStructMap[LAST_BUFFER_MESSAGE+1] =
    { ArcCalibrationMsg, NOTUSED },
    { ArcConfigMsg, NOTUSED },
    { ProcDonorMsg , NOTUSED },
+   { OverrideAlarmMsg , NOTUSED },
 
     // don't change this entry
    { LAST_BUFFER_MESSAGE, NULL }

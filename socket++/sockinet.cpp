@@ -159,7 +159,7 @@ bool operator == (const sockinetaddr &lhs, const sockinetaddr &rhs)
 
 
 
-ostream & operator << (ostream &os, const sockinetaddr &sa)
+DataLog_Stream & operator << (DataLog_Stream &os, const sockinetaddr &sa)
 {
    char buffer[INET_ADDR_LEN];
 

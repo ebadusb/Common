@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.1  2002/06/24 19:30:44Z  rm70006
+ * HISTORY:    Initial revision
  * HISTORY:    Revision 1.4  2002/06/17 18:40:41Z  rm70006
  * HISTORY:    Change design to make data store instance based instead of static.  Changed from taskVars to using the symbol table library.
  * HISTORY:    Revision 1.3  2002/06/04 18:52:50Z  rm70006
@@ -186,7 +188,7 @@ protected:
 
    void AddElement (ElementType *member);
    void DeleteElement (ElementType *member);
-
+   virtual void CheckForMultipleWriters();
 
 // Data Members
 protected:
@@ -208,8 +210,6 @@ private:
 
 private:
 // Data Members
-   static bool _writerDeclared;
-   
    static DATASTORE_LISTTYPE _datastoreList;
 
    DataStore();    // Base Constructor not available
@@ -222,6 +222,22 @@ private:
    static SYMTAB_ID _datastoreTable;
 
 };
+
+
+
+class MultWriteDataStore : public DataStore
+{
+// Class Methods
+protected:
+   MultWriteDataStore (char *name, Role role);
+   virtual ~MultWriteDataStore();
+
+   virtual void CheckForMultipleWriters() { };
+
+private:
+   MultWriteDataStore();    // Base Constructor not available
+};
+
 
 #include "datastore_private.h"
 

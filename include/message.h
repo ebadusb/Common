@@ -163,7 +163,7 @@ void Message<T>::setMsgData()
    list< MessagePacket* >::iterator pckt;
    for ( pckt  = _PacketList.begin();
          pckt != _PacketList.end() ;
-         pckt++ ) 
+         ++pckt ) 
    {
       ((MessagePacket*)(*pckt))->msgData().msg( ( ( (const unsigned char *) &_MsgData) + offset ), 
                                                ((MessagePacket*)(*pckt))->msgData().packetLength() );
@@ -187,7 +187,7 @@ void Message<T>::retrieveMsgData()
    list< MessagePacket* >::iterator pckt;
    for ( pckt  = _PacketList.begin();
          pckt != _PacketList.end() ;
-         pckt++ ) 
+         ++pckt ) 
    {
       memmove( ( (char *) &_MsgData ) + offset , 
                (char *) ((MessagePacket*)(*pckt))->msgData().msg(), 

@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.6  2002/09/03 14:36:33Z  rm70006
+ * HISTORY:    Added new single write class.
  * HISTORY:    Revision 1.5  2002/08/23 14:53:21Z  rm70006
  * HISTORY:    Changed binditem to work with 486 compiler bug.
  * HISTORY:    Revision 1.4  2002/07/16 21:05:02Z  rm70006
@@ -192,6 +194,7 @@ public:
    // Accessor functions
    static const SYMTAB_ID & getTable() { return _datastoreTable; }
    const        string    & Name () const {return _name; }
+   const        Role      & GetRole () const { return _role; }
    void                     GetSymbolName (string &s, const BIND_ITEM_TYPE item);
 
 

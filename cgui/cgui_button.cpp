@@ -6,10 +6,13 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.6  2004/11/18 22:33:37Z  rm10919
+ *  Added ability to modify button text.
  *  Revision 1.5  2004/11/04 20:19:08Z  rm10919
  *  Common updates and changes.
  *  Revision 1.4  2004/11/02 20:48:19Z  rm10919
- *  change setText() fucntions & add checks for bitmaps in enable() & disable().
+ *  change setText() fucntions & add checks for bitma
+ps in enable() & disable().
  *  Revision 1.3  2004/11/01 17:27:21Z  cf10242
  *  Change TextItem to CGUITextItem
  *  Revision 1.2  2004/10/29 15:11:13Z  rm10919
@@ -177,10 +180,9 @@ CGUIButton::~CGUIButton ()
 //  If currently invisible, the button is made visible.
 void CGUIButton::enable(void)
 {
-   if (!_enabled)
-   {
       _enabled = true;
       if (_disabledBitmap) moveObjectToBack(_disabledBitmap);
+		if (_pressedBitmap) moveObjectToBack(_pressedBitmap);
       if (_enabledBitmap) moveObjectToFront(_enabledBitmap);
 
       if (_iconPointer) moveObjectToFront(_iconPointer);
@@ -193,7 +195,6 @@ void CGUIButton::enable(void)
          _enabledText->setVisible(true);
          _enabledText->setCaptureBackgroundColor();
       }
-   }
 }
 
 // DISABLE
@@ -207,7 +208,7 @@ void CGUIButton::disable()
       if (_enabledBitmap) moveObjectToBack(_enabledBitmap);
       if (_disabledBitmap) moveObjectToFront(_disabledBitmap);
 
-      if (_iconPointer) deleteObject(_iconPointer);
+      if (_iconPointer) moveObjectToBack(_iconPointer);
 
       if (_enabledText)  _enabledText->setVisible(false);
       if (_pressedText)  _pressedText->setVisible(false);
@@ -746,9 +747,9 @@ void CGUIButton::doOnPress()
    if (_enabled)
    {
       if (_pressedBitmap) moveObjectToFront(_pressedBitmap);
-      deleteObject(_enabledBitmap);
+      // deleteObject(_enabledBitmap);
 
-      if (_iconPointer) deleteObject(_iconPointer);
+      if (_iconPointer) moveObjectToBack(_iconPointer);
 
       if (_pressedText)
       {
@@ -778,9 +779,9 @@ void CGUIButton::doOnRelease()
    if (_enabled)
    {
       if (_enabledBitmap) moveObjectToFront(_enabledBitmap);
-      deleteObject(_pressedBitmap);
+      // deleteObject(_pressedBitmap);
 
-      if (_iconPointer) deleteObject(_iconPointer);
+      if (_iconPointer) moveObjectToFront(_iconPointer);
 
       if (_enabledText)
       {
@@ -810,8 +811,8 @@ void CGUIButton::doOnEnable()
 {
    if (_enabled)
    {
-      addObjectToFront(_enabledBitmap);
-      deleteObject(_pressedBitmap);
+      moveObjectToFront(_enabledBitmap);
+      // deleteObject(_pressedBitmap);
 
       if (_iconPointer) moveObjectToFront(_iconPointer);
 
@@ -839,11 +840,11 @@ void CGUIButton::doOnDisable()
 {
    if (!_enabled)
    {
-      addObjectToFront(_disabledBitmap);
-      if (_enabledBitmap)deleteObject(_enabledBitmap);
-      if (_pressedBitmap)deleteObject(_pressedBitmap);
+      moveObjectToFront(_disabledBitmap);
+      if (_enabledBitmap)moveObjectToBack(_enabledBitmap);
+      if (_pressedBitmap)moveObjectToBack(_pressedBitmap);
 
-      if (_iconPointer) addObjectToFront(_iconPointer);
+      if (_iconPointer) moveObjectToFront(_iconPointer);
 
       //
       // Display disabled text else leave text as is.

@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.13 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.h $
+ * Revision 1.7  2004/11/12 14:53:11Z  rm10919
+ * Modify some TextItem class rountines.
  * Revision 1.6  2004/11/01 17:27:21Z  cf10242
  * Change TextItem to CGUITextItem
  * Revision 1.5  2004/10/29 15:11:14Z  rm10919
@@ -36,7 +38,7 @@
 #include <ugl/uglwin.h>
 #include <ugl/uglinput.h>
 
-#include "bitmap_info.h"
+#include "callback.h"
 
 //
 // Window Attributes
@@ -131,9 +133,8 @@ public:
    void setDefaultLanguage(LanguageId languageId){_defaultLanguageId = languageId;}
 
    bool isInitialized(void);
-protected:
 
-   private:
+private:
    //
    // All the methods and routines to manipulate getting the string id's and text go here.
    // These will be defined as the text string database is designed. A balance between
@@ -146,6 +147,10 @@ protected:
    LanguageId   _languageId;
 
    static int   _defaultLanguageId;
+
+	// copy constructor and copy assignment are not legal for this class
+	//CGUITextItem (CGUITextItem &);
+	//CGUITextItem& operator= (const CGUITextItem&);
 };
 
 //
@@ -162,7 +167,7 @@ public:
    
    CGUIFontId     _font[MAX_FONTS];
                      
-   CGUIDisplay(void);
+   CGUIDisplay(const CallbackBase & startCB=CallbackBase(), const CallbackBase & wakeupCB=CallbackBase());
    virtual ~CGUIDisplay();
 
    //
@@ -226,6 +231,11 @@ private:
 
    list<CGUIWindow *> _windowList;
 
+	// copy constructor and copy assignment are not legal for this class
+	CGUIDisplay (CGUIDisplay &);
+	CGUIDisplay& operator= (const CGUIDisplay&);
+
+
 };
 
 
@@ -244,6 +254,12 @@ public:
    void vertShift (short vertShift)  { y+=vertShift;}
 
    void convertToUGLRect(UGL_RECT & rect) const;
+
+private:
+	// copy constructor and copy assignment are not legal for this class
+//	CGUIRegion (CGUIRegion &);
+//	CGUIRegion& operator= (const CGUIRegion&);
+
 };
 #endif /* #ifndef _CGUI_GRAPHICS_INCLUDE */
 

@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: L:/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.11 2004/11/12 14:59:44Z cf10242 Exp cf10242 $
+ * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.22 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.11  2004/11/12 14:59:44Z  cf10242
+ * Add message system to UGL so GUi can handle/send messages.
  * Revision 1.9  2004/11/01 17:27:20Z  cf10242
  * Change TextItem to CGUITextItem
  * Revision 1.8  2004/10/29 15:11:14Z  rm10919
@@ -29,13 +31,15 @@
 #include "cgui_window.h"
 //#include "datalogger.h"
 
-BITMAP_DATA_ENTRY bitmap_data_table[BITMAP_ID_COUNT];
 
 // START MESSAGE_SYSTEM_IN_WIN_MGR
 #include "messagesystem.h"
 extern void (* winAppStartupTask)(void);
 extern void (* winAppIdleTask)(void);
 MessageSystem * msgSys = NULL;
+
+static CallbackBase guiStartCB;
+static CallbackBase guiWakeupCB;
 
 static void cguiWinAppStartupTask(void)
 {
@@ -44,16 +48,18 @@ static void cguiWinAppStartupTask(void)
 		printf("Creating the message system %x\n", taskIdSelf());
 		msgSys = new MessageSystem();
 		msgSys->initNonBlock();
+		guiStartCB();
 //	}
 }
 
 static void cguiWinAppIdleTask(void)
 {
 	msgSys->dispatchMessages();
+	guiWakeupCB();
 }
 // END MESSAGE_SYSTEM_IN_WIN_MGR
 
-CGUIDisplay::CGUIDisplay(void)
+CGUIDisplay::CGUIDisplay(const CallbackBase & startCB, const CallbackBase & wakeupCB)
 {
    //
    // Perform basic UGL initialization
@@ -65,6 +71,9 @@ CGUIDisplay::CGUIDisplay(void)
       taskSuspend(taskIdSelf());
    }
 
+	// set statics to input callback functions
+	guiStartCB = startCB;
+	guiWakeupCB = wakeupCB;
    //
    // Get an ID for the display driver, then check that we are in the proper
    // color mode.

@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.8  2004/11/18 22:33:37Z  rm10919
+ *  Added ability to modify button text.
  *  Revision 1.7  2004/11/04 20:19:08Z  rm10919
  *  Common updates and changes.
  *  Revision 1.6  2004/11/02 20:48:19Z  rm10919
@@ -284,6 +286,7 @@ public:
    // set a previously set icon as visible on the button
    void enableIcon();
 
+protected:
    // DISABLE ICON
    // set a previously set icon as invisible
    void disableIcon();
@@ -324,12 +327,11 @@ public:
    //   display disabled bitmap
    //   display text in "disabled" text style
    virtual void doOnDisable();
-
-protected:
    // DO ON INVISIBLE
    // actions performed when button is made invisible.  Actions are:
    //  	if button is visible, reset to invisible internally and with parent
    virtual void doOnInvisible();
+
 private:
    bool _pressed;
 };

@@ -3,6 +3,8 @@
  *
  * $Header: Y:/BCT_Development/Common/INCLUDE/rcs/DISPATCH.HPP 1.7 2000/05/31 17:14:59 BD10648 Exp ms10234 $
  * $Log: dispatch.hpp $
+ * Revision 1.6  2000/05/26 19:37:23  BS04481
+ * Add no_bounce version of routeBuffer when enums are ints.
  * Revision 1.5  2000/03/07 00:30:05  BD10648
  * Default Queue size reduced in conjunction with increased message size.
  * Revision 1.4  1999/09/30 04:02:12  BS04481
@@ -88,7 +90,7 @@ class focusTimerMsg;
 
 static const short ARG_COUNT=4;              // command line args
 #define COUNT_OF(x) (sizeof(x)/sizeof(*x))   // array size
-static const int   DEFAULT_Q_SIZE=22;        // default Q size
+static const int   DEFAULT_Q_SIZE=30;        // default Q size
 static const short PROG_NAME=0;              // command arg for prog name
 static const int   MAX_ARG_LENGTH=68;        // 80  - 12
 static const int   MAX_QUEUE_NAME_LENGTH=80; // buffer length

@@ -283,7 +283,7 @@ void Router::dump( DataLog_Stream &outs )
       for ( gateiter  = ((*mtogiter).second).begin() ;
             gateiter != ((*mtogiter).second).end() ;
             ++gateiter )
-         outs << " " << (*gateiter).first << "-" << dec << (*gateiter).second;
+         outs << " " << hex << (*gateiter).first << "-" << dec << (*gateiter).second;
       outs << endmsg;
    }
    outs << " Message Task Map: size " << _MessageTaskMap.size();
@@ -1266,12 +1266,15 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
                bool sendMessage = false;
                if (    mpConst.msgData().osCode() == MessageData::MESSAGE_NAME_REGISTER )
                {
-                  if ( ( _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ] )[ mpConst.msgData().nodeId() ] == Router::MsgNoSynch )
+                  map< unsigned long, MessageSynchStatus >::iterator statusCheckIter =
+                                          _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ].find( (*sockiter).first );
+                  if (    statusCheckIter != _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ].end() 
+                       && (*statusCheckIter).second == Router::MsgNoSynch )
                   {
                      sendMessage = true;
                   }
-                  ( _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ] )[ mpConst.msgData().nodeId() ] = (MessageSynchStatus)
-                       ( ( _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ] )[ mpConst.msgData().nodeId() ] | Router::MsgNameSynch );
+                  ( _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ] )[ (*sockiter).first ] = (MessageSynchStatus)
+                       ( ( _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ] )[ (*sockiter).first ] | Router::MsgNameSynch );
                }
                else if ( mpConst.msgData().osCode() == MessageData::MESSAGE_REGISTER )
                {
@@ -1316,7 +1319,7 @@ void Router::sendMessageToGateway( unsigned long nodeId, const MessagePacket &mp
       //
       // Assign the message packet this nodes network address
       mp.msgData().netSequenceNum( ++_NetSequenceNum );
-      mp.msgData().nodeId( getNetworkAddress() );
+      mp.msgData().nodeId( getNetworkAddress( nodeId ) );
       mp.updateCRC();
                             
       //

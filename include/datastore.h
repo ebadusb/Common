@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.18  2002/10/31 19:25:58Z  rm70006
+ * HISTORY:    Changed internal stucture to use less symbols which improved datastore creation speed.
  * HISTORY:    Revision 1.17  2002/10/25 20:45:21Z  td07711
  * HISTORY:    support spoofer caching mechanism
  * HISTORY:    Revision 1.16  2002/10/21 20:19:16  rm70006
@@ -146,12 +148,14 @@ private:
    //
    // data element instance vars connected to the global symbol table
    //
-   typedef struct
+   typedef struct BaseElementSymbolContainer
    {
-      dataType *_data;             // Pointer to data
-      const CallbackBase** _fp;    // Points to the Symbol Table entry
-      bool *_spooferCacheIsValid;  // if true, spoofer get() is bypassed to avoid unecessary copy 
-   } BaseElementSymbolContainer;
+      dataType             *_data;                 // Pointer to data
+      const CallbackBase  **_fp;                   // Points to the callback function
+      bool                  _spooferCacheIsValid;  // if true, spoofer get() is bypassed to avoid unecessary copy 
+
+      BaseElementSymbolContainer() : _data(0), _fp(0), _spooferCacheIsValid(false) {}
+   };
 
    BaseElementSymbolContainer *_handle;
 };
@@ -228,7 +232,7 @@ public:
    void Lock();
    void Unlock();
 
-   void AddElement (ElementType *member);
+   inline void AddElement (ElementType *member) { _handle->_pfrList.push_back(member); }
 
    // Accessor functions
    static const SYMTAB_ID & getTable() { return _datastoreTable; }
@@ -247,7 +251,7 @@ protected:
    DataStore (const char *name, Role role);
    virtual ~DataStore();
 
-   void DeleteElement (ElementType *member);
+   inline void DeleteElement (ElementType *member) { _handle->_pfrList.remove(member); }
    virtual void CheckForMultipleWriters() = 0;
 
 // Data Members
@@ -261,20 +265,20 @@ protected:
    typedef struct
    {
       // List of PFR elements
-      ELEMENT_LISTTYPE *_pfrList;
+      ELEMENT_LISTTYPE _pfrList;
       
       // Mutex semaphores
-      SEM_ID *_mutexSemaphore;
-      SEM_ID *_readSemaphore;
-      SEM_ID *_writeSemaphore;
+      SEM_ID _mutexSemaphore;
+      SEM_ID _readSemaphore;
+      SEM_ID _writeSemaphore;
       
       // Mutex control flags
-      bool *_signalRead;
-      bool *_signalWrite;
-      int  *_readCount;
+      bool _signalRead;
+      bool _signalWrite;
+      int  _readCount;
 
       // Flag tracking number of writers.
-      bool *_writerDeclared;
+      bool _writerDeclared;
    } DataStoreSymbolContainer;
 
    // instance vars connected to the global symbol table

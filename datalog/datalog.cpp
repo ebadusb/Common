@@ -3,6 +3,9 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.13 2003/12/05 16:33:05Z jl11312 Exp rm70006 $
  * $Log: datalog.cpp $
+ * Revision 1.12  2003/10/03 12:34:58Z  jl11312
+ * - improved DataLog_Handle lookup time
+ * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
  * Revision 1.11  2003/03/27 16:26:55Z  jl11312
  * - added support for new datalog levels
  * Revision 1.10  2003/02/25 16:10:06Z  jl11312
@@ -255,7 +258,6 @@ void datalog_TaskCreated(DataLog_TaskID taskID)
 {
 	DataLog_CommonData common;
 	DataLog_TaskInfo * info = new DataLog_TaskInfo;
-	WIND_TCB	* tcb = taskTcb(taskID);
 
 	info->_id = taskID;
 	info->_error = DataLog_NoError;
@@ -282,13 +284,19 @@ void datalog_TaskCreated(DataLog_TaskID taskID)
 	taskCreateRecord._nodeID = datalog_NodeID();
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
-	taskCreateRecord._nameLen = strlen(tcb->name);
-
+	const char * taskName = datalog_TaskName(taskID);
+	taskCreateRecord._nameLen = (taskName) ? strlen(taskName) : 0;
+	
 	DataLog_BufferChain	outputChain;
 	DataLog_BufferManager::createChain(outputChain);
 
 	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&taskCreateRecord, sizeof(taskCreateRecord));
-	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)tcb->name, taskCreateRecord._nameLen * sizeof(char));
+
+	if ( taskName )
+	{
+		DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)taskName, taskCreateRecord._nameLen * sizeof(char));
+	}
+
 	DataLog_BufferManager::addChainToList(DataLog_BufferManager::CriticalList, outputChain);
 }
 

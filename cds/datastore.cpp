@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.5  2002/07/16 21:02:44Z  rm70006
+ * HISTORY:    Fix bug in check for multiple writers.
  * HISTORY:    Revision 1.4  2002/07/05 16:36:46Z  rm70006
  * HISTORY:    Added destructor.
  * HISTORY:    Revision 1.3  2002/07/02 16:00:20Z  rm70006
@@ -130,17 +132,28 @@ DataStore::DataStore(char *name, Role role) :
    _readCountSemaphore(NULL),
    _writeSemaphore(NULL),
    _signalWrite(NULL),
-   _readCount(NULL)
+   _readCount(NULL),
+   _writerDeclared(NULL)
 {
    const int SEM_FLAGS = SEM_Q_PRIORITY | SEM_DELETE_SAFE | SEM_INVERSION_SAFE;
 
    bool created;
 
+   
    //
    // Keep track of how many writers there are.  There should only be 1.
    //
+   BindItem(&_writerDeclared, ITEM_WRITER_DECLARED, created);
+
+   // If the symbol doesn't exist, initialize it (first time).
+   if (created)
+   {
+      *_writerDeclared = false;
+   }
+
    if (role == ROLE_RW)
    {
+
       CheckForMultipleWriters();
    }
 
@@ -215,14 +228,6 @@ DataStore::DataStore(char *name, Role role) :
    if (created)
    {
       *_readCount = 0;
-   }
-   
-   BindItem(&_writerDeclared, ITEM_WRITER_DECLARED, created);
-   
-   // If the symbol doesn't exist, initialize it (first time).
-   if (created)
-   {
-      *_writerDeclared = false;
    }
 }
 

@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.15  2002/10/18 23:16:01Z  td07711
+ * HISTORY:    use CallbackBase class for spoofing callback
  * HISTORY:    Revision 1.14  2002/10/18 20:00:49  rm70006
  * HISTORY:    Add new cds type for proc.  this version allows dynamic roles.
  * HISTORY:    Revision 1.13  2002/10/17 20:14:47Z  rm70006
@@ -154,6 +156,8 @@ public:
 
    virtual void Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max);
    virtual void Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max, const dataType &initValue);
+
+   dataType operator = (const dataType &data) { Set(data); return Get();}  // Implicit Set call.
 
 // Data Members
 private:

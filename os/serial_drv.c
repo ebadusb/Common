@@ -2,7 +2,7 @@
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  * Copyright 1984-1995 Wind River Systems, Inc.
  *
- * vxWorks serial port driver for Trima control CPU
+ * vxWorks serial port driver with support for Ampro LB-486
  *
  *	This driver is based on the i8250sio.c vxWorks driver, with the
  * following modifications:
@@ -11,6 +11,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/serial_drv.c 1.1 2002/06/07 21:43:16 jl11312 Exp jl11312 $
  * $Log: serial_drv.c $
+ * Revision 1.1  2002/06/07 21:43:16  jl11312
+ * Initial revision
  *
  */
 
@@ -23,8 +25,6 @@
 #include <stdlib.h>
 
 #include "serial_drv.h"
-#include "../trima_common/trima_opsys.h"
-
 
 /* channel data structure  */
 

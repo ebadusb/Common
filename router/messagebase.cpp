@@ -9,6 +9,7 @@
 
 #include <vxWorks.h>
 
+#include "auxclock.h"
 #include "datalog.h"
 #include "error.h"
 #include "messagebase.h"
@@ -192,6 +193,50 @@ unsigned long MessageBase::originTask() const
 struct timespec MessageBase::sentTime() const
 {
    return _SentTime;
+}
+
+unsigned long MessageBase::latency() const
+{
+   long msecs;
+   //
+   // Get the time when the tick counter started ...
+   struct rawTime  currentTickCount;
+   struct timespec diffTime;
+   struct timespec startTime;
+
+   //
+   // Get the current tick count and the initialization time ...
+   auxClockTimeGet( &currentTickCount );
+   auxClockInitTimeGet( &startTime );
+
+   //
+   // Calculate the current time ...
+   //
+   diffTime.tv_sec  = startTime.tv_sec;
+   diffTime.tv_nsec = startTime.tv_nsec;
+   //
+   //   add on the current tick count ...
+   diffTime.tv_sec  += currentTickCount.sec;
+   diffTime.tv_nsec += currentTickCount.nanosec;
+   if ( diffTime.tv_nsec >= 1000000000 )
+   {
+      diffTime.tv_nsec -= 1000000000;
+      diffTime.tv_sec++;
+   }
+
+   //
+   // Calculate the difference ...
+   diffTime.tv_sec -= _SentTime.tv_sec; 
+   diffTime.tv_nsec -= _SentTime.tv_nsec;
+   if ( diffTime.tv_nsec < 0 )
+   {
+      diffTime.tv_nsec += 1000000000;
+      diffTime.tv_sec--;
+   }
+   msecs = diffTime.tv_sec*1000;
+   msecs += diffTime.tv_nsec/1000000; 
+   
+   return ( msecs < 0 ? 0 : msecs );
 }
 
 void MessageBase::dump( ostream &outs ) 

@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_print.cpp 1.4 2002/10/08 12:09:50Z jl11312 Exp rm70006 $
+ * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_print.cpp 1.7 2003/02/25 16:10:17Z jl11312 Exp jl11312 $
  * $Log: datalog_message_print.cpp $
+ * Revision 1.4  2002/10/08 12:09:50Z  jl11312
+ * - added support for %X format
  * Revision 1.3  2002/08/28 14:37:07  jl11312
  * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.2  2002/08/15 20:53:56  jl11312
@@ -169,7 +171,7 @@ DataLog_Result datalog_VPrint(DataLog_Handle handle, const char * file, int line
 				{
 				case PrintArg_Char:
 					{
-						char	chArg = va_arg(argList, char);
+						char	chArg = va_arg(argList, int);
 						stream.write(&chArg, sizeof(char));
 					}
 					break;

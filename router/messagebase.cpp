@@ -174,31 +174,31 @@ struct timespec MessageBase::sentTime() const
    return _SentTime;
 }
 
-void MessageBase::dump() 
+void MessageBase::dump( ostream &outs ) 
 {
-   cout << "========================== Message Base ===========================" << endl;
-   cout << "Name: " << _MessageName << " ";
-   cout << "DisType: " << _DistributionType << " RegFlag: " << (bool)_RegisteredFlag 
+   outs << "========================== Message Base ===========================" << endl;
+   outs << "Name: " << _MessageName << " ";
+   outs << "DisType: " << _DistributionType << " RegFlag: " << (bool)_RegisteredFlag 
         << " MsgId: " << _MsgId << " NodeId: " << _NodeId  << " Tid: " << _TaskId 
         << " Time: " << _SentTime.tv_sec << " " << _SentTime.tv_nsec << " ";
 
-   cout << endl;
+   outs << endl;
    int i = 0;
    list< MessagePacket* >::iterator pckt;
    for ( pckt  = _PacketList.begin() ;
          pckt != _PacketList.end() ;
          pckt++ ) 
    {
-      cout << "pckt#" << i++ << endl;
-      (*pckt)->dump();
+      outs << "pckt#" << i++ << endl;
+      (*pckt)->dump( outs );
    }
-   cout << "===================================================================" << endl;
+   outs << "===================================================================" << endl;
 }
 
 void MessageBase::postConstructInit()
 {
-   genMessageName();
-   generateMsgId();
+   genMsgName();
+   genMsgId();
    _TaskId = taskIdSelf();
 }
 
@@ -238,7 +238,7 @@ bool MessageBase::init( )
    return true;
 }
 
-unsigned long MessageBase::generateMsgId()
+unsigned long MessageBase::genMsgId()
 {
    unsigned long initcrc = 0;
    if ( crcgen32( &initcrc,  (unsigned char *)messageName().data(), _MessageName.length() ) == 0 )

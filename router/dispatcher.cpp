@@ -224,13 +224,13 @@ void Dispatcher :: deregisterMessage( const unsigned long mId, const MessageBase
 
 }
 
-void Dispatcher :: dump()
+void Dispatcher :: dump( ostream &outs )
 {                  
-   cout << "************************* Dispatcher DUMP *************************" << endl;
+   outs << "************************* Dispatcher DUMP *************************" << endl;
    set< MessageBase* >::iterator siter;
    map< unsigned long, set< MessageBase* > >::iterator miter;
 
-   cout << "Map size = " << _MessageMap.size() << " " << (int)(_MessageMap.begin() == _MessageMap.end()) << endl;
+   outs << "Map size = " << _MessageMap.size() << " " << (int)(_MessageMap.begin() == _MessageMap.end()) << endl;
    for ( miter = _MessageMap.begin() ; 
          miter != _MessageMap.end() ;
          miter++ )
@@ -239,10 +239,10 @@ void Dispatcher :: dump()
             siter != (*miter).second.end() ;
             siter++ )
       {
-         ( (MessageBase*)(*siter) )->dump();
+         ( (MessageBase*)(*siter) )->dump( outs );
       }
     }
-   cout << "************************** DUMP finished **************************" << endl;
+   outs << "************************** DUMP finished **************************" << endl;
 }
 
 void Dispatcher :: processMessage( MessagePacket &mp )

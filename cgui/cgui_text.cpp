@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.8  2005/01/03 20:40:52Z  cf10242
+ * add defensive coding to catch gui crashes
  * Revision 1.7  2004/12/10 23:29:20Z  cf10242
  * Correct issues with length of text in UGL.
  * Revision 1.6  2004/11/30 16:43:21Z  rm10919
@@ -564,6 +566,15 @@ void CGUIText::computeTextRegion(void)
 
    setRegion(text_region);
 } // END compute_text_region
+
+void CGUIText::setRegion(const CGUIRegion & newRegion)
+{
+     if (_owner)
+        _owner->setObjectRegion(this, newRegion);
+	  else
+         _region = newRegion;
+}
+
 
 
 void CGUIText::draw(UGL_GC_ID gc)

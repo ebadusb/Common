@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: L:/vxWorks/Common/cgui/rcs/cgui_text.h 1.7 2004/11/18 22:31:41Z rm10919 Exp cf10242 $
+ * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.7  2004/11/18 22:31:41Z  rm10919
+ * Modified getStylingRecord.
  * Revision 1.6  2004/11/04 20:19:09Z  rm10919
  * Common updates and changes.
  * Revision 1.5  2004/11/01 17:27:24Z  cf10242
@@ -169,7 +171,7 @@ public:
    // This method sets the region by x, y, Width, and height
    // for the text.
    //
-//   void setRegion(CGUIRegion region);
+   void setRegion(const CGUIRegion & region);
    CGUIRegion getRegion(void) { return _stylingRecord.region;}
 
 

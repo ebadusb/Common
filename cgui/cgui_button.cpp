@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.8  2005/01/03 20:41:24Z  cf10242
+ *  add an enablePressed method a button can shown as enabled and pressed
  *  Revision 1.7  2004/11/19 18:14:45Z  cf10242
  *  Integration checkin
  *  Revision 1.6  2004/11/18 22:33:37Z  rm10919
@@ -13,8 +15,7 @@
  *  Revision 1.5  2004/11/04 20:19:08Z  rm10919
  *  Common updates and changes.
  *  Revision 1.4  2004/11/02 20:48:19Z  rm10919
- *  change setText() fucntions & add checks for bitma
-ps in enable() & disable().
+ *  change setText() fucntions & add checks for bitmaps in enable() & disable().
  *  Revision 1.3  2004/11/01 17:27:21Z  cf10242
  *  Change TextItem to CGUITextItem
  *  Revision 1.2  2004/10/29 15:11:13Z  rm10919
@@ -724,18 +725,17 @@ void CGUIButton::setIcon (CGUIBitmapInfo * iconId,  // ptr to bitmap object for 
       CGUIRegion bitmapSize;
       CGUIRegion buttonSize;
 
-      _iconPointer = new CGUIBitmap(_display, CGUIRegion(0, 0, 0, 0), *iconId);
-      bitmapSize = _iconPointer->getRegion();
+      bitmapSize.height = iconId->getHeight();
       buttonSize = _enabledBitmap->getRegion();
 
       if ((x == -1 ) && (y == -1))
       {
          // Default placement of icon.
-         _iconPointer->setRegion(CGUIRegion(3, buttonSize.height-bitmapSize.height-3, 0, 0));
+         _iconPointer = new CGUIBitmap(_display, CGUIRegion(3, buttonSize.height-bitmapSize.height-3, 0, 0), *iconId);
       }
       else
       {
-         _iconPointer->setRegion(CGUIRegion(x, y, 0, 0));
+         _iconPointer = new CGUIBitmap(_display, CGUIRegion(x, y, 0, 0), *iconId);
       }
       addObjectToFront(_iconPointer);
       _iconPointer->setVisible(visible);

@@ -1,0 +1,32 @@
+# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.2 2002/05/17 14:53:27 jl11312 Exp ms10234 $
+#
+# Makefile.vx - main Trima makefile
+#
+# $Log: makefile.vx $
+#
+
+.PHONY: all
+all: check_opt_change common
+
+MAINDIR = .
+include $(MAINDIR)/makefile.vxc
+
+.PHONY: common
+common:
+	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
+#	@cd convert && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
+#	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
+#	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
+
+socket++:
+	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
+       
+
+
+.PHONY: clean
+clean:
+	@cd socket++ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
+#	@cd convert && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
+#	@cd router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
+#	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) clean
+ 

@@ -1,8 +1,12 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Y:/BCT_Development/Common/ROUTER/rcs/DISPATCH.CPP 1.6 1999/09/30 04:02:15 BS04481 Exp MS10234 $
+ * $Header: K:/BCT_Development/Common/router/rcs/dispatch.cpp 1.11 2001/05/24 22:41:08 jl11312 Exp jl11312 $
  * $Log: dispatch.cpp $
+ * Revision 1.6  1999/09/30 04:02:15  BS04481
+ * Port fix from Spectra.  Avoids SIGSEV which can occur if a 
+ * message object is deleted from inside of a notify for another
+ * message.
  * Revision 1.5  1999/09/29 18:07:51  TD10216
  * IT4333 - changes for microsoft compiler
  * Revision 1.4  1999/08/13 01:31:21  MS10234
@@ -94,11 +98,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "buffmsg.hpp"
 #include "crc.h"
 #include "dispatch.hpp"
 #include "error.h"
-#include "msg.hpp"
 #include "sinver.h"
 #include "mq_check.h"
 
@@ -135,44 +137,17 @@ void signalHandler( int signum)
 //                   id - message id
 //
 // ERROR HANDLING:   _FATAL_ERROR.
+routeBuffer::routeBuffer( ) :
+_msgID( 0 )
+{
+}
+
 
 routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short id) :
    _msgID( id)
 {
-
-// range checks
-   if ( dispatch ) 
-   {
-      if (msgLength < sizeof( MSGHEADER))
-      {
-         dispatch->fError( __LINE__, 0, "message length");
-      }
-      if (msgLength > BSIZE)
-      {
-         dispatch->fError( __LINE__, msgLength, "message length to big");
-      }
-      if ((id == FIRST_BUFFER_MESSAGE) || (id >= focusInt32Msg::LAST_INT32_MESSAGE))
-      {
-         dispatch->fError( __LINE__, id, "message id");
-      }
-
-// create message, fill in data
-
-      message = new char[msgLength];
-      *msg = message;
-      MSGHEADER * hdr = (MSGHEADER*) message;
-      hdr->osCode = MESSAGE_REGISTER;        // router code
-      hdr->length = msgLength;               // total length, bytes
-      hdr->msgID = id;                       // msg id
-      hdr->taskPID = getpid();               // PID from OS
-      hdr->taskNID = getnid();               // network node
-      clock_gettime( CLOCK_REALTIME, &(hdr->sendTime));
-
-      updateFocusMsgCRC( hdr);               // update CRC
-      dispatch->registerMessage( this);      // register message
-   }
-};
-
+   init( msg, msgLength, id, (bounce_t)MESSAGE_REGISTER );
+}
 
 
 // SPECIFICATION:    routeBuffer constructor  (see above)
@@ -188,6 +163,15 @@ routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short i
 routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short id, bounce_t bounce) :
    _msgID( id)
 {
+   init( msg, msgLength, id, bounce );
+}
+
+int routeBuffer::init( void** msg, 
+                   unsigned short msgLength, 
+                   unsigned short id, 
+                   bounce_t bounce)
+{
+   _msgID = id;
 
 // range checks
    if ( dispatch ) 
@@ -195,16 +179,19 @@ routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short i
       if (msgLength < sizeof( MSGHEADER))
       {
          dispatch->fError( __LINE__, 0, "message length");
+         return 0;
       }
       if (msgLength > BSIZE)
       {
          dispatch->fError( __LINE__, msgLength, "message length to big");
+         return 0;
       }
-      if ((id == FIRST_BUFFER_MESSAGE) || (id >= focusInt32Msg::LAST_INT32_MESSAGE))
-      {
-         dispatch->fError( __LINE__, id, "message id");
-      }
-   
+      // if ((id == FIRST_BUFFER_MESSAGE) || (id >= focusInt32Msg::LAST_INT32_MESSAGE))
+      // {
+         // dispatch->fError( __LINE__, id, "message id");
+         // return 0;
+      // }
+
 // create message, fill in data
 
       message = new char[msgLength];
@@ -214,16 +201,19 @@ routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short i
          hdr->osCode = MESSAGE_REGISTER_NO_BOUNCE;        // router code
       else
          hdr->osCode = MESSAGE_REGISTER;                 // router code
-      hdr->length = msgLength;                           // total length, bytes
-      hdr->msgID = id;                                   // msg id
-      hdr->taskPID = getpid();                           // PID from OS
-      hdr->taskNID = getnid();                           // network node
+      hdr->length = msgLength;               // total length, bytes
+      hdr->msgID = id;                       // msg id
+      hdr->taskPID = getpid();               // PID from OS
+      hdr->taskNID = getnid();               // network node
       clock_gettime( CLOCK_REALTIME, &(hdr->sendTime));
-   
+
       updateFocusMsgCRC( hdr);               // update CRC
       dispatch->registerMessage( this);      // register message
    }
+
+   return 1;
 };
+
 
 // SPECIFICATION:    destructor
 //
@@ -231,10 +221,20 @@ routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short i
 
 routeBuffer::~routeBuffer()
 {
+   cleanup();
+}
+
+void routeBuffer::cleanup()
+{
+   deregister();
+};
+
+void routeBuffer::deregister()
+{
    if ( dispatch ) 
       dispatch->deregisterMessage( this);    // remove this message
    delete [] message;                     // delete storage
-};
+}
 
 
 // SPECIFICATION:    default notify function, does nothing
@@ -243,6 +243,8 @@ routeBuffer::~routeBuffer()
 
 void routeBuffer::notify()
 {
+   // Call the appropriate notify function
+   _VirtualNotify();
 };
 
 // SPECIFICATION:    send function
@@ -283,6 +285,130 @@ void routeBuffer::msgHeader(
     sendTime = mhdr->sendTime;
 };
 
+int routeBuffer::safeCopy( void *m1, const void *m2, size_t size ) const
+{
+   memcpy( m1, m2, size );
+   if (memcmp( m1, m2, size ) != 0)
+   {
+      _FATAL_ERROR( __FILE__, __LINE__, TRACE_DISPATCHER, 0, "routeBuffer copy");
+      return 0;
+   }
+   return 1;
+}
+
+// constants
+
+static const long MS=1000;             // millisec/sec
+static const long US=1000000;          // microsec/sec
+//
+// timerMsg
+//
+
+// SPECIFICATION:    timer message constructor
+//                   Parameter:
+//                   interval - timer interval in milliseconds, resolution
+//                   depends on QNX setting of ticksize.
+//
+//                   These messages use the QNX timer functions.  Should
+//                   the system (QNX) not be able to schedule the timer on
+//                   time, QNX will attempt to catch up so that the average rate
+//                   of the calls will match the interval chosen.  If accurate
+//                   time information is needed, you have to use the QNX clock
+//                   functions to determine the real interval between calls.
+//
+// ERROR HANDLING:   Terminates program.
+
+timerMsg::timerMsg( )
+{
+}
+
+timerMsg::timerMsg( unsigned long tinterval)
+{
+   init( tinterval );
+}
+
+int timerMsg::init( unsigned long tinterval)
+{
+   struct sigevent event;           // event structure
+
+
+   // get proxy for timer
+   proxy = qnx_proxy_attach( 0, NULL, 0, -1);
+   if (proxy == QNX_ERROR)          // attach failed
+   {
+      _FATAL_ERROR( __FILE__, __LINE__, TRACE_DISPATCHER, 0, "qnx_proxy_attach()");
+      return 0;
+   }
+
+   // set event structure and create timer
+   event.sigev_signo = -proxy;      // set up proxy
+   timerID = timer_create( CLOCK_REALTIME, &event);
+   if ( timerID == QNX_ERROR)       // timer create failed
+   {
+      _FATAL_ERROR( __FILE__, __LINE__, TRACE_DISPATCHER, 0, "timer_create()");
+      return 0;
+   }
+
+// set dispatcher entry
+   dispatch->setTimerEntry( proxy, this);
+
+// set QNX timer, start time and interval
+   this->interval( tinterval);
+
+   return 1;
+};
+
+// SPECIFICATION:    destructor
+//
+// ERROR HANDLING:   none.
+
+timerMsg::~timerMsg()
+{
+   cleanup();
+}
+
+void timerMsg::cleanup()
+{
+   deregister();
+}
+
+void timerMsg::deregister()
+{
+   if (dispatch)
+   {
+      timer_delete( timerID);                // remove QNX timer
+      qnx_proxy_detach( proxy);              // remove QNX proxy
+      dispatch->clearTimerEntry( proxy);     // clear dispatcher entry
+   }
+};
+
+// SPECIFICATION:    reset timer interval
+//
+// ERROR HANDLING:   none.
+
+void
+timerMsg::interval( unsigned long tinterval)
+{
+   struct itimerspec timer;               // timer structure
+
+   // zero interval stops timer
+
+   // set QNX timer, start time and interval
+   timer.it_value.tv_sec = tinterval / MS;
+   timer.it_interval.tv_sec = tinterval / MS;
+   unsigned long fraction = tinterval - MS * timer.it_value.tv_sec;
+   fraction *= US;
+   timer.it_value.tv_nsec = fraction;
+   timer.it_interval.tv_nsec = fraction;
+   timer_settime( timerID, 0, &timer, NULL);
+};
+
+void timerMsg::notify() 
+{
+   // Call the appropriate timeout function
+   _VirtualTimeout();
+};
+   
 
 // SPECIFICATION:    The dispatcher is used to distribute messages within
 //                   a task.  This is the constructor.
@@ -295,8 +421,18 @@ void routeBuffer::msgHeader(
 //
 // ERROR HANDLING:   _FATAL_ERROR.
 
+dispatcher::dispatcher()
+: _nextToProcess(NULL)
+{
+}
+
 dispatcher::dispatcher( int argc, char** argv, int maxMessages)
 : _nextToProcess(NULL)
+{
+   init( argc, argv, maxMessages );
+}
+
+int dispatcher::init( int argc, char** argv, int maxMessages )
 {
    signalNumber = 0;                   // initialize signal
    _programName = argv[0];             // save program name
@@ -305,14 +441,7 @@ dispatcher::dispatcher( int argc, char** argv, int maxMessages)
    if (argc < ARG_COUNT)               // check argument count
    {
       fError( __LINE__, 0, "argument count");
-   }
-
-// message id check
-
-   int testValue=LAST_BUFFER_MESSAGE;  // int used to prevent compile problem
-   if (testValue >= focusInt32Msg::FIRST_INT32_MESSAGE)
-   {
-      fError( __LINE__, 0, "Message ID conflict, check msg.hpp and buffmsg.hpp");
+      return 0;
    }
 
 // set up signal handlers
@@ -332,6 +461,7 @@ dispatcher::dispatcher( int argc, char** argv, int maxMessages)
    if (strlen( basename( argv[PROG_NAME])) > MAX_ARG_LENGTH)
    {
       fError( __LINE__, 0, "argument length");
+      return 0;
    }
    sprintf( queueName, "%s%d", basename( argv[PROG_NAME]), getpid());
 
@@ -345,6 +475,7 @@ dispatcher::dispatcher( int argc, char** argv, int maxMessages)
    if (mq == MQ_ERROR)                 // open failed
    {
       fError( __LINE__, 0, "mq_open()");
+      return 0;
    }
 
 // create proxy for message queue
@@ -353,6 +484,7 @@ dispatcher::dispatcher( int argc, char** argv, int maxMessages)
    if (qproxy == QNX_ERROR)            // proxy fail
    {
       fError( __LINE__, 0, "qnx_proxy_attach()");
+      return 0;
    }
 
 // setup queue notify
@@ -361,6 +493,7 @@ dispatcher::dispatcher( int argc, char** argv, int maxMessages)
    if (mq_notify( mq, &qnotify) == MQ_ERROR) // notify fail
    {
       fError( __LINE__, 0, "mq_notify()");
+      return 0;
    }
    Trigger( qproxy);                   // avoid race condition, check queue
 
@@ -370,6 +503,7 @@ dispatcher::dispatcher( int argc, char** argv, int maxMessages)
    if (routerQueue == MQ_ERROR)        // open fail
    {
       fError( __LINE__, 0, "mq_open()");
+      return 0;
    }
 
 // clear message table
@@ -408,8 +542,11 @@ dispatcher::dispatcher( int argc, char** argv, int maxMessages)
       else                                   // all other errors
       {
          fError( __LINE__, errno, "mq_send()");
+         return 0;
       }
    }
+
+   return 1;
 };
 
 
@@ -418,6 +555,17 @@ dispatcher::dispatcher( int argc, char** argv, int maxMessages)
 // ERROR HANDLING:   none.
 
 dispatcher::~dispatcher()
+{
+   cleanup();
+}
+
+void dispatcher::cleanup()
+{
+   deregister();
+   dispatch=0;
+}
+
+void dispatcher::deregister()
 {
 // deregister this task with local router
    
@@ -458,7 +606,6 @@ dispatcher::~dispatcher()
       mq_close( mq);
       mq_unlink(queueName);
    }
-   dispatch=0;
 };
 
 
@@ -498,10 +645,10 @@ dispatcher::registerMessage( routeBuffer* m)
    }
    MSGHEADER* mhdr = (MSGHEADER*) m->message;
    unsigned short mid = mhdr->msgID;
-   if ((mid == FIRST_BUFFER_MESSAGE) || (mid >= focusInt32Msg::LAST_INT32_MESSAGE))
-   {
-      fError( __LINE__, mid, "message id");
-   }
+   // if ((mid == FIRST_BUFFER_MESSAGE) || (mid >= focusInt32Msg::LAST_INT32_MESSAGE))
+   // {
+      // fError( __LINE__, mid, "message id");
+   // }
 
 // add to linked list
 
@@ -560,10 +707,10 @@ dispatcher::deregisterMessage( routeBuffer* m)
    MSGHEADER* mhdr = (MSGHEADER*) m->message;
 
    unsigned short mid = mhdr->msgID;
-   if ((mid == FIRST_BUFFER_MESSAGE) || (mid >= focusInt32Msg::LAST_INT32_MESSAGE))
-   {
-      fError( __LINE__, mid, "message id");
-   }
+   // if ((mid == FIRST_BUFFER_MESSAGE) || (mid >= focusInt32Msg::LAST_INT32_MESSAGE))
+   // {
+      // fError( __LINE__, mid, "message id");
+   // }
    logData( __LINE__, mid, MSG_DELETE);
 
 // send message to router
@@ -654,51 +801,9 @@ dispatcher::send( routeBuffer* m)
 {
    if (m == NULL)                            // internal check
    {
-      fError( __LINE__, 0, "msg length");
+      fError( __LINE__, 0, "NULL msg ptr");
    }
-
-// range checks
-
-   MSGHEADER* mhdr = (MSGHEADER*) m->message;
-   unsigned short mid = mhdr->msgID;
-   if ((mid == FIRST_BUFFER_MESSAGE) || (mid >= focusInt32Msg::LAST_INT32_MESSAGE))
-   {
-      fError( __LINE__, mid, "message id");
-   }
-   logData( __LINE__, mid, MSG_SEND);
-   unsigned int mLen = mhdr->length;
-   if (mLen > BSIZE)
-   {
-      fError( __LINE__, mLen, "message length too large");
-   }
-
-
-// send message to router
-
-   mhdr->osCode = MSG_MULTICAST;             // tell router to multicast message
-   mhdr->taskPID = getpid();                 // task PID
-   mhdr->taskNID = getnid();                 // task NID
-   clock_gettime( CLOCK_REALTIME,            // get current time
-     &(mhdr->sendTime));
-   updateFocusMsgCRC( mhdr);                 // update CRC
-
-   unsigned short k = 0;
-
-// place message in router's input queue
-   mq_check(routerQueue);
-   while((mq_send( routerQueue, mhdr, mhdr->length, 0) == MQ_ERROR) &&
-         (taskRunning) )
-   {
-      if((errno==EINTR) && (k<RETRY_COUNT))  // signals
-      {
-         k++;                                // try again
-      }
-      else                                   // fatal error
-      {
-         fError( __LINE__, 0, "mq_send()");
-         break;
-      }
-   }
+   send_tcp( m->message );
 };
 
 // SPECIFICATION:    send message received from tcp/ip socket to router
@@ -720,17 +825,17 @@ dispatcher::send_tcp( void* m)
 {
    if (m == NULL)                            // internal check
    {
-      fError( __LINE__, 0, "msg length");
+      fError( __LINE__, 0, "NULL msg ptr");
    }
 
 // range checks
 
    MSGHEADER* mhdr = (MSGHEADER*) m;
    unsigned short mid = mhdr->msgID;
-   if ((mid == FIRST_BUFFER_MESSAGE) || (mid >= focusInt32Msg::LAST_INT32_MESSAGE))
-   {
-      fError( __LINE__, mid, "message id");
-   }
+   // if ((mid == FIRST_BUFFER_MESSAGE) || (mid >= focusInt32Msg::LAST_INT32_MESSAGE))
+   // {
+      // fError( __LINE__, mid, "message id");
+   // }
    logData( __LINE__, mid, MSG_SEND);
    unsigned int mLen = mhdr->length;
    if (mLen > BSIZE)
@@ -839,7 +944,7 @@ dispatcher::clearTimerEntry( pid_t proxy)
 // ERROR HANDLING:   _FATAL_ERROR.
 
 void
-dispatcher::setTimerEntry( pid_t proxy, class focusTimerMsg* tmsg)
+dispatcher::setTimerEntry( pid_t proxy, class timerMsg* tmsg)
 {
       timerEntry* t = new timerEntry;
       if (t == NULL)
@@ -900,7 +1005,7 @@ dispatcher::dispatchLoop()
       }
    }
 
-   delete this;
+   deregister();
 }
 
 // SPECIFICATION:    trace message events, sends a message to router

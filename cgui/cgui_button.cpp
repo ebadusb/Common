@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.1  2004/10/22 20:16:19Z  rm10919
+ *  Initial revision
  *
  */
 
@@ -14,22 +16,13 @@
 #include "cgui_button.h"
 #include "cgui_bitmap_info.h"
 
-//
-// Just a temporary include to test until bitmaps are available!
-#include "cgui_rectangle.h"
-
-//CGUIRegion * buttonRegion = new CGUIRegion(0,0,200,400);
-//CGUIRectangle * buttonRect;
-
-//
-// The end of testing extras!
 
 // CONSTRUCTOR
 CGUIButton::CGUIButton  (CGUIDisplay        & display,                // reference to a cguidisplay object for display context
                          CGUIWindow         * parent,                 // pointer to a parent window
                          ButtonData         & buttonData,             // reference to button data for bitmaps, text and behavior
                          Message<long>      * pressEventObject = NULL,// ptr to int message object to output when button is pressed and released
-                         // can be NULL to indicate no message is output
+                                                                      // can be NULL to indicate no message is output
                          Message<long>      * audioMessage = NULL,    // ptr to audio message to send when button is pressed
                          DataLog_Level      * buttonLevel = NULL,     // datalog level object used to log button press events
                          bool                 enabled = true,         // button will be constructed as enabled unless specified here
@@ -73,12 +66,6 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       addObjectToFront(_pressedBitmap);
    }
 
-//   if (buttonData.releasedBitmapId)
-//   {
-//      _releasedBitmap = new CGUIBitmap (display, CGUIRegion(0,0,0,0), *buttonData.releasedBitmapId);
-//      addObjectToFront(_releasedBitmap);
-//   }
-
    if (buttonData.enabledTextItem)
    {
       _enabledText = new CGUIText(display, this, buttonData.enabledTextItem, buttonData.enabledTextStyle);
@@ -111,42 +98,38 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _pressedText = NULL;
    }
 
-//   if (buttonData.releasedTextItem)
-//   {
-//      _releasedText = new CGUIText(display, this, buttonData.releasedTextItem, buttonData.releasedTextStyle);
-//      _releasedText->setCaptureBackgroundColor();
-//      _releasedText->setVisible(false);
-//   }
-//   else
-//   {
-//      _releasedText = NULL;
-//   }
-
    WIN_ATTRIB winAttrib = WIN_ATTRIB_NO_INPUT|WIN_ATTRIB_VISIBLE;
    assert(parent);
    attach(parent, winAttrib);
 
    winCbAdd(_id, MSG_PTR_BTN1_DOWN, 0, &CGUIWindow::uglPointerCallback, UGL_NULL);
    winCbAdd(_id, MSG_PTR_BTN1_UP, 0, &CGUIWindow::uglPointerCallback, UGL_NULL);
+
+   if (pressEventObject)
+   {
+      _pressEventMessageEnabled = true;
+      _buttonMessagePointer = pressEventObject;
+
+   }
+   else
+   {
+      _pressEventMessageEnabled = false;
+      _releasedEventMessageEnabled = false;
+      _buttonMessagePointer = NULL;
+   }
+
 }
 
 // DESTRUCTOR
 CGUIButton::~CGUIButton ()
 {
-//   delete _enabledTextStyle;
-//   delete _disabledTextStyle;
-//   delete _pressedTextStyle;
-//   delete _releasedTextStyle;
-
    delete _enabledText;
    delete _disabledText;
    delete _pressedText;
-//   delete _releasedText;
 
    delete _enabledBitmap;
    delete _disabledBitmap;
    delete _pressedBitmap;
-//   delete _releasedBitmap;
 
    delete _buttonMessagePointer;
    delete _audioMessagePointer;
@@ -171,7 +154,6 @@ void CGUIButton::enable(void)
 
       if (_disabledText) _disabledText->setVisible(false);
       if (_pressedText)  _pressedText->setVisible(false);
-//      if (_releasedText) _releasedText->setVisible(false);
 
       if (_enabledText)
       {
@@ -197,7 +179,6 @@ void CGUIButton::disable()
 
       if (_enabledText)  _enabledText->setVisible(false);
       if (_pressedText)  _pressedText->setVisible(false);
-//      if (_releasedText) _releasedText->setVisible(false);
 
       if (_disabledText)
       {
@@ -229,32 +210,46 @@ bool CGUIButton::isVisible() const
 // methods provided below.  
 // NULL removes a previously set message from being sent.
 // There can be only one pressed message per button.  The message is automatically enabled after this call.
-void CGUIButton::setMessage (Message<long>* newEventMsg)
+void CGUIButton::setMessage (Message<long>* newEventMessage)
 {
+   if (newEventMessage)
+   {
+      _buttonMessagePointer = newEventMessage;
+      _pressEventMessageEnabled = true;
+   }
+   else
+   {
+      _buttonMessagePointer = NULL;
+      _pressEventMessageEnabled = false;
+   }
 }
 
 //ENABLE PRESSED MESSAGE
 // Enables a message sent on button press.
 void CGUIButton::enablePressedMessage()
 {
+   _pressEventMessageEnabled = true;
 }
 
 //DISABLE PRESSED MESSAGE
 // Disables message sent on button press.
 void CGUIButton::disablePressedMessage()
 {
+   _pressEventMessageEnabled = false;
 }
 
 //ENABLE RELEASED MESSAGE
 // Enables message sent on button release.
 void CGUIButton::enableReleasedMessage()
 {
+   _releasedEventMessageEnabled = true;
 }
 
 //DISABLE RELEASED MESSAGE
 // Disables message sent on button release
 void CGUIButton::disableReleasedMessage()
 {
+   _releasedEventMessageEnabled = false;
 }
 
 //SET PRESSED CALLBACK
@@ -324,6 +319,10 @@ void CGUIButton::pointerEvent (const PointerEvent & event) // event structure re
             _CBOnPressed();
          }
 
+         if (_pressEventMessageEnabled)
+         {
+            _buttonMessagePointer->send(PointerEvent::ButtonPress);
+         }
       }
       else if (event.eventType == PointerEvent::ButtonRelease)
       {
@@ -337,9 +336,6 @@ void CGUIButton::pointerEvent (const PointerEvent & event) // event structure re
                doOnRelease();
             }
          }
-         // Do the callback thing here.
-//         _cb();
-
          if (_behaviorType == RaiseAfterCallback)
          {
             doOnEnable();
@@ -348,6 +344,11 @@ void CGUIButton::pointerEvent (const PointerEvent & event) // event structure re
             {
                _CBOnReleased();
             }
+         }
+
+         if (_releasedEventMessageEnabled)
+         {
+            _buttonMessagePointer->send(PointerEvent::ButtonRelease);
          }
       }
    }
@@ -389,20 +390,6 @@ void CGUIButton::setPressedBitmap (CGUIBitmapInfo *pressedBitmapId) // ptr to bi
    }
 }
 
-// SET RELEASED BITMAP
-// Loads a new pressed bitmap object for the button.
-//void CGUIButton::setReleasedBitmap (CGUIBitmapInfo *releasedBitmapId) // ptr to bitmap object to display when button is pressed
-//{
-//   if (releasedBitmapId)
-//   {
-//      _releasedBitmap = new CGUIBitmap (_display, CGUIRegion(0,0,0,0), *releasedBitmapId);
-//      if (_releasedText)
-//      {
-//         _releasedText->setCaptureBackgroundColor();
-//      }
-//   }
-//}
-
 // ENABLE AUDIO
 // Enable the audio feedback when the button is pressed.
 void CGUIButton::enableAudio()
@@ -419,6 +406,14 @@ void CGUIButton::disableAudio()
 // set the audio associated with a button press.
 void CGUIButton::setAudio (Message<long> *audioObject)
 {
+   if (audioObject)
+   {
+      _audioMessagePointer = audioObject;
+   }
+   else
+   {
+      _audioMessagePointer = NULL;
+   }
 }
 
 // SET TEXT
@@ -438,7 +433,6 @@ void CGUIButton::setText (const char * string = NULL, TextItem * textItem = NULL
          _enabledText->setText(string);
       }      
    }
-
    if (textItem)
    {
       if (_enabledText)
@@ -507,23 +501,6 @@ void CGUIButton::setPressedText (const char * string)
    }
 }
 
-//void CGUIButton::setReleasedText (const char * string)
-//{
-//   if (string)
-//   {
-//      if (_releasedText)
-//      {
-//         _releasedText->setText(string);
-//      }
-//      else
-//      {
-//         _releasedText = new CGUIText(_display, this);
-//         _releasedText->setText(string);
-//         _releasedText->setVisible(false);
-//      }
-//   }
-//}
-
 // SET TEXTSTYLE
 // Set/change the style of the text associated with 
 // this button in ALL states.  This is a pass-thru to the 
@@ -533,13 +510,11 @@ void CGUIButton::setTextStyle (CGUIText::StylingRecord * textStylingRecord) // s
    if (_enabledText)  _enabledText->setStylingRecord(textStylingRecord);
    if (_disabledText) _disabledText->setStylingRecord(textStylingRecord);
    if (_pressedText)  _pressedText->setStylingRecord(textStylingRecord);
-//   if (_releasedText) _releasedText->setStylingRecord(textStylingRecord);
 }
 
 // SET ENABLED TEXTSTYLE 
 // SET DISABLED TEXTSTYLE
 // SET PRESSED TEXTSTYLE
-// SET RELEASED TEXTSTYLE
 // set/change the style of text associated with this button for each of the four states that the button
 // can be in.  Note these call does nothing if there is no text associated with the button.
 // They will work if the text is disabled.
@@ -557,11 +532,6 @@ void CGUIButton::setPressedTextStyle (CGUIText::StylingRecord * pressedTextStyli
 {
    if (_pressedText)  _pressedText->setStylingRecord(pressedTextStylingRecord);
 }
-
-//void CGUIButton::setReleasedTextStyle (CGUIText::StylingRecord * releasedTextStylingRecord)
-//{
-//   if (_releasedText) _releasedText->setStylingRecord(releasedTextStylingRecord);
-//}
 
 // SET ICON
 // Set an icon to be associated with the button. 
@@ -596,10 +566,7 @@ void CGUIButton::setIcon (CGUIBitmapInfo * iconId,  // ptr to bitmap object for 
       {
          _iconPointer->setRegion(CGUIRegion(x, y, 0, 0));
       }
-//      if (_enabled && !_pressed)
-//      {
       addObjectToFront(_iconPointer);
-//      }
       _iconPointer->setVisible(visible);
    }
 }
@@ -646,7 +613,6 @@ void CGUIButton::doOnPress()
 
          if (_enabledText)  _enabledText->setVisible(false);
          if (_disabledText) _disabledText->setVisible(false);
-//         if (_releasedText) _releasedText->setVisible(false);
 
       }
       invalidateObjectRegion(_enabledBitmap);
@@ -677,7 +643,6 @@ void CGUIButton::doOnRelease()
          _enabledText->setCaptureBackgroundColor();
          _enabledText->setVisible(true);
 
-//         if (_enabledText)  _enabledText->setVisible(false);
          if (_disabledText) _disabledText->setVisible(false);
          if (_pressedText) _pressedText->setVisible(false);
 
@@ -713,8 +678,6 @@ void CGUIButton::doOnEnable()
 
          if (_disabledText) _disabledText->setVisible(false);
          if (_pressedText)  _pressedText->setVisible(false);
-//         if (_releasedText) _releasedText->setVisible(false);
-
       }
 
       invalidateObjectRegion(_enabledBitmap);
@@ -748,7 +711,6 @@ void CGUIButton::doOnDisable()
 
          _enabledText->setVisible(false);
          _pressedText->setVisible(false);
-//         _releasedText->setVisible(false);
       }
 
       invalidateObjectRegion(_enabledBitmap);

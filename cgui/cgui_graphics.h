@@ -3,6 +3,7 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.13 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.h $
+ * Revision 1.4  2004/10/07 22:47:02Z  cf10242
  * Revision 1.3  2004/10/07 18:52:19Z  cf10242
  * Revision 1.2  2004/09/30 17:00:52Z  cf10242
  * Correct for initial make to work
@@ -60,6 +61,7 @@ typedef UGL_DDB_ID   CGUIBitmapId;
 //
 typedef UGL_WCHAR StringChar;
 
+enum {MAX_FONTS = 256};
 
 class DataItemBase
 {
@@ -115,8 +117,8 @@ public:
    //
    const StringChar * getText(LanguageId languageId = currentLanguage);
 
-   void setText(const char id);
-   void setText(StringChar * string, LanguageId = currentLanguage);
+   void setText(const char * string, LanguageId = currentLanguage);
+   void setText(const StringChar * texString, LanguageId = currentLanguage);
 
    LanguageId getLanguageId(void){ return _languageId;}
 
@@ -152,6 +154,9 @@ class CGUIWindow;
 class CGUIDisplay
 {
 public:
+   
+   CGUIFontId     _font[MAX_FONTS];
+                     
    CGUIDisplay(void);
    virtual ~CGUIDisplay();
 

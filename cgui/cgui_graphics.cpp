@@ -3,6 +3,8 @@
  *
  * $Header: L:/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.8 2004/10/29 15:11:14Z rm10919 Exp cf10242 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.7  2004/10/22 20:14:34Z  rm10919
+ * CGUIButton updates and changes.
  * Revision 1.6  2004/10/07 22:47:02Z  cf10242
  * Revision 1.5  2004/10/07 18:52:19Z  cf10242
  * Revision 1.4  2004/09/30 19:47:27Z  jl11312
@@ -69,7 +71,7 @@ CGUIDisplay::CGUIDisplay(void)
    winAttach(_uglRootWindow, UGL_NULL_ID, UGL_NULL_ID);
 
    uglDriverFind(UGL_FONT_ENGINE_TYPE, 0, (UGL_UINT32 *)&_uglFontDriver);
-    
+
    cursorInit();
 }
 
@@ -232,29 +234,70 @@ TextItem::~ TextItem()
    delete _string;
 }
 
-const StringChar * TextItem::getText(LanguageId languageId = currentLanguage)
+void TextItem::setText(const char * string, LanguageId = currentLanguage)
 {
-   const StringChar * string;
-   StringChar * stringNonsense=NULL;
-
-   string = (StringChar *) "\x41\x00\x63\x00\x63\x00\x65\x00\x73\x00" "\x73\x00\x20\x00\x50\x00\x72\x00\x65\x00" "\x73\x00\x73\x00\x75\x00\x72\x00\x65\x00\x00";
+   int stringLength = 0;
 
    if (string)
    {
-      int length = 0;
-      while (string[length] != '\0')
+      if (_id)
       {
-         length += 1;
+         while (string[stringLength] != '\0')
+         {
+            stringLength++;
+         }
+
+         _string = new StringChar[stringLength + 1];  
+
+         for (int i=0; i<=stringLength; i++)
+         {
+            _string[i] = string[i];
+         }
       }
-
-      stringNonsense = new UGL_WCHAR [length+1];
-      memcpy(stringNonsense, string, length * sizeof(StringChar));
    }
-   
-   _languageId = languageId;
-   _string = stringNonsense;
+}
 
-   return stringNonsense;
+void TextItem::setText(const StringChar * string, LanguageId = currentLanguage)
+{
+   int stringLength = 0;
+
+   if (_id)
+   {
+      while (string[stringLength])
+      {
+         stringLength += 1;
+      }
+      _string = new StringChar[stringLength+1];
+      memcpy(_string, string, stringLength * sizeof(StringChar));
+   }
+}
+
+const StringChar * TextItem::getText(LanguageId languageId = currentLanguage)
+{
+//   const StringChar * string;
+//   StringChar * stringNonsense=NULL;
+
+//   string = (StringChar *) "\x41\x00\x63\x00\x63\x00\x65\x00\x73\x00" "\x73\x00\x20\x00\x50\x00\x72\x00\x65\x00" "\x73\x00\x73\x00\x75\x00\x72\x00\x65\x00\x00";
+
+//   if (string)
+//   {
+//      int length = 0;
+//      while (string[length] != '\0')
+//      {
+//         length += 1;
+//      }
+
+//      stringNonsense = new UGL_WCHAR [length+1];
+//      memcpy(stringNonsense, string, length * sizeof(StringChar));
+//   }
+   if (_string)
+   {
+      return  _string;
+   }
+   else
+   {
+      return NULL;
+   }
 }
 
 

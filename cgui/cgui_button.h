@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.3  2004/10/22 20:14:34Z  rm10919
+ *  CGUIButton updates and changes.
  *  Revision 1.2  2004/09/30 17:00:52Z  cf10242
  *  Correct for initial make to work
  *  Revision 1.1  2004/09/20 18:18:04Z  rm10919
@@ -66,54 +68,43 @@ public:
       TextItem       * pressedTextItem;  // label text used in pressed state
       CGUIText::StylingRecord * pressedTextStyle; // label text styling information in pressed state
 
-//      CGUIBitmapInfo * releasedBitmapId; // released state bitmap id
-//      TextItem       * releasedTextItem; // label text used in released state
-//      CGUIText::StylingRecord * releasedTextStyle;  // label text styling information in released state
-
       ButtonBehavior type;               // button behavior  
    };
 
 
 protected:
-   Message<long>           *_buttonMessagePointer;        // used to communicate a message to other tasks when a button is pressed and released
-   bool                     _enabled;                 // current enabled/disabled state
+   Message<long>           *_buttonMessagePointer; // used to communicate a message to other tasks when a button is pressed and released
+   bool                     _enabled;              // current enabled/disabled state
    
-   CGUIText                *_enabledText;       // ptr to current text object
-   CGUIBitmap              *_enabledBitmap;     // ptr to enabled bitmap object
-//   CGUIText::StylingRecord *_enabledTextStyle;  // text styling record when button is enabled
+   CGUIText                *_enabledText;          // ptr to current text object
+   CGUIBitmap              *_enabledBitmap;        // ptr to enabled bitmap object
    
-   CGUIText                *_disabledText;      // ptr to disabled text object
-   CGUIBitmap              *_disabledBitmap;    // ptr to disabled bitmap object
-//   CGUIText::StylingRecord *_disabledTextStyle;        // text styling record when button is disabled
+   CGUIText                *_disabledText;         // ptr to disabled text object
+   CGUIBitmap              *_disabledBitmap;       // ptr to disabled bitmap object
    
-   CGUIText                *_pressedText;         // ptr to pressed text object
-   CGUIBitmap              *_pressedBitmap;    // ptr to pressed bitmap object
-//   CGUIText::StylingRecord *_pressedTextStyle;        // text styling record when button is pressed
+   CGUIText                *_pressedText;          // ptr to pressed text object
+   CGUIBitmap              *_pressedBitmap;        // ptr to pressed bitmap object
    
-//   CGUIText                *_releasedText;        // ptr to released text object
-//   CGUIBitmap              *_releasedBitmap;   // ptr to released bitmap object
-//   CGUIText::StylingRecord *_releasedTextStyle;       // text styling record when button is released
+   Message<long>           *_audioMessagePointer;  // ptr to audio message to send when button is pressed
+   CallbackBase             _CBOnPressed;          // callback object to use when button is pressed
+   CallbackBase             _CBOnReleased;         // callback object to use when button is released
    
-   Message<long>           *_audioMessagePointer;         // ptr to audio message to send when button is pressed
-   CallbackBase             _CBOnPressed;             // callback object to use when button is pressed
-   CallbackBase             _CBOnReleased;            // callback object to use when button is released
+   bool                     _pressEventMessageEnabled;   // flag is true if message is sent on press of button
+   bool                     _releasedEventMessageEnabled;// flag is true if message is sent on release of button
+   bool                     _pressedCBEnabled;     // flag is true if callback is made on button press
+   bool                     _releasedCBEnabled;    // flag is true is callbacl is made on button release
    
-   bool                     _pressEventMessageEnabled;    // flag is true if message is sent on press of button
-   bool                     _releasedEventMessageEnabled; // flag is true if message is sent on release of button
-   bool                     _pressedCBEnabled;        // flag is true if callback is made on button press
-   bool                     _releasedCBEnabled;       // flag is true is callbacl is made on button release
-   
-   CGUIBitmap              *_iconPointer;             // ptr to the icon bitmap object
+   CGUIBitmap              *_iconPointer;          // ptr to the icon bitmap object
 
-   ButtonBehavior           _behaviorType;            // how does button behave when pressed
+   ButtonBehavior           _behaviorType;         // how does button behave when pressed
    
-   DataLog_Level           *_btnDataLogLevel;         // level at which to log button press events
+   DataLog_Level           *_btnDataLogLevel;      // level at which to log button press events
 
 public:
    // CONSTRUCTOR
    CGUIButton  (CGUIDisplay   & display,                 // reference to a cguidisplay object for display context
                 CGUIWindow    * parent,                  // pointer to a parent window
-                ButtonData    & buttonData,           // reference to button data for bitmaps, text and behavoir
+                ButtonData    & buttonData,              // reference to button data for bitmaps, text and behavoir
                 Message<long> * pressEventObject = NULL, // ptr to int message object to output when button is pressed and released
                                                          // can be NULL to indicate no message is output
                 Message<long> * audioMsg = NULL,         // ptr to audio message to send when button is pressed
@@ -155,7 +146,7 @@ public:
    // methods provided below.  
    // NULL removes a previously set message from being sent.
    // There can be only one pressed message per button.  The message is automatically enabled after this call.
-   void setMessage (Message<long>* newEventMsg);
+   void setMessage (Message<long>* newEventMessage);
 
    //ENABLE PRESSED MESSAGE
    // enables a message sent on button press
@@ -221,10 +212,6 @@ public:
    // loads a new pressed bitmap object for the button
    void setPressedBitmap(CGUIBitmapInfo *pressedBitmapInfo); // ptr to bitmap object to display when button is pressed
 
-   // SET RELEASED BITMAP
-   // loads a new pressed bitmap object for the button
-//   void setReleasedBitmap(CGUIBitmapInfo *releasedBitmapInfo); // ptr to bitmap object to display when button is pressed
-
    // AUDIO METHODS //
 
    // ENABLE AUDIO
@@ -249,7 +236,6 @@ public:
    void setEnabledText(const char * string);
    void setDisabledText(const char * string);
    void setPressedText(const char * string);
-//   void setReleasedText(const char * string);
 
    // SET TEXTSTYLE
    // set/change the style of the text associated with this button in ALL states.  This is a pass-thru to the 
@@ -267,8 +253,6 @@ public:
    void setDisabledTextStyle(CGUIText::StylingRecord * disabledTextStylingRecord); //	style record with appropriate features set
 
    void setPressedTextStyle(CGUIText::StylingRecord * pressedTextStylingRecord); // style record with appropriate features set
-
-//   void setReleasedTextStyle(CGUIText::StylingRecord * releasedTextStylingRecord); // style record with appropriate features set
 
    // ICON METHODS //
 

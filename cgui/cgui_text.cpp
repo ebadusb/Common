@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.2  2004/10/22 20:14:34Z  rm10919
+ * CGUIButton updates and changes.
  * Revision 1.1  2004/09/20 18:18:08Z  rm10919
  * Initial revision
  *
@@ -138,6 +140,7 @@ void CGUIText::setLanguage(LanguageId configLanguage)
 void CGUIText::setStylingRecord (StylingRecord * stylingRecord)
 {
    _stylingRecord = * stylingRecord;
+   _requestedRegion = stylingRecord->region;
    computeTextRegion();
    _owner->invalidateObjectRegion(this);
 }
@@ -157,7 +160,7 @@ void CGUIText::setText(TextItem * textItem)
       }
       else
       {
-         _textString = new StringChar[1];
+          _textString = new StringChar[1];
          *_textString =  null_char;
       }
    }

@@ -75,7 +75,7 @@ protected:
    virtual void draw(UGL_GC_ID gc);
 
 private:
-   virtual bool clipSiblings(void) const { return true;}
+   virtual bool clipSiblings(void) const { return false;}
 
 private:
 	CGUIRegion _region;

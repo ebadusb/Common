@@ -3,6 +3,8 @@
 # Makefile - makefile for router library
 #
 # $Log: makefile.vx $
+# Revision 1.2  2002/05/24 20:48:08  ms10234
+# added messagesystem.cpp
 # Revision 1.1  2002/05/24 16:02:57  ms10234
 # Initial revision
 # Revision 1.2  2002/04/30 20:06:19  rm70006
@@ -18,6 +20,7 @@ all: check_opt_change lib
 # style) directory separators if they are needed.
 #
 MAINDIR=..
+COMDIR=$(MAINDIR)
 include $(MAINDIR)/makefile.vxc
 
 #
@@ -25,7 +28,7 @@ include $(MAINDIR)/makefile.vxc
 # to be compiled for the library
 #
 LIB_C_FILES   = 
-LIB_CXX_FILES = dispatcher.cpp messagebase.cpp messagesystem.cpp msgcrc.cpp router.cpp timermessage.cpp
+LIB_CXX_FILES = dispatcher.cpp messagebase.cpp messagesystem.cpp msgcrc.cpp router.cpp timermessage.cpp msgsystimer.cpp
 LIB_S_FILES =
 
 #

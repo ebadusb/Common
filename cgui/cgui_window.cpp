@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.9 2005/03/02 01:37:51Z cf10242 Exp psanusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.8  2005/02/21 17:17:13Z  cf10242
+ * IT 133 - delete all allocated memory to avoid unrecovered memory
  * Revision 1.7  2005/02/07 18:53:55Z  rm10919
  * Fix screen size references to be generic.
  * Revision 1.6  2005/01/03 20:40:55Z  cf10242
@@ -64,6 +66,7 @@ CGUIWindow::~CGUIWindow()
    // this reference will no longer be valid.
    //
 
+	/*
    list<CGUIWindowObject *>::iterator objIter;
    for (objIter = _clippedObjects.begin(); objIter != _clippedObjects.end(); ++objIter)
    {
@@ -74,7 +77,7 @@ CGUIWindow::~CGUIWindow()
    {
       (*objIter)->_owner = NULL;
    }
-
+	*/
    //
    // Delete the underlying UGL resources for this window.
    //
@@ -541,7 +544,7 @@ void CGUIWindow::drawObjects(UGL_GC_ID gc)
    for (objIter = _clippedObjects.begin(); objIter != _clippedObjects.end(); ++objIter)
    {
       CGUIWindowObject * obj = *objIter;
-      if (obj && obj->_visible)
+      if (obj && obj->_visible && obj->_owner)
       {
          obj->draw(gc);
 

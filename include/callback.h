@@ -11,12 +11,12 @@
 #define __CALLBACK_H__
 
 
-class Callback
+class CallbackBase
 {
 public:
-   // pointer to a member function of Callback class
+   // pointer to a member function of CallbackBase class
    // that takes no arguments
-   typedef void (Callback::*MemFncPtr)();
+   typedef void (CallbackBase::*MemFncPtr)();
 
    // pointer to a non-member function that takes no
    // arguments
@@ -24,31 +24,99 @@ public:
 
    // constructor that takes a pointer to a non member
    // function
-   Callback(FncPtr ff=0);
+   CallbackBase( FncPtr ff=0 ) :
+      _Ptr( 0 ),
+      _FncPtr( ff )
+   {
+   };
 
-   // constructor that takes a pointer to member function
-   //  ( The restriction on object pointers and function
-   //    pointers being associated with a known class is 
-   //    bypassed by using the elipsis notation )
-   Callback(void *pp, ...);
-     
    // destructor
-   ~Callback();
+   virtual ~CallbackBase() {};
 
    // copy constructor
-   Callback( const Callback &cb );
+   CallbackBase( const CallbackBase &cb ) :
+      _Ptr(cb._Ptr),
+      _MemFncPtr(cb._MemFncPtr),
+      _FncPtr(cb._FncPtr)
+   {
+   };
 
    // operator =
-   Callback &operator=( const Callback &cb );
+   CallbackBase &operator=( const CallbackBase &cb )
+   {
+      _Ptr = cb._Ptr;
+      _MemFncPtr = cb._MemFncPtr;
+      _FncPtr = cb._FncPtr;
+   
+      return *this;
+   };
 
    // function dispatch
-   virtual void operator()();
+   void operator()()
+   {
+      //
+      // If the object pointer variable is set ...
+      //
+      if (_Ptr)
+      {
+         // Call the member function ...
+         (_Ptr->*_MemFncPtr)();
+      }
+      //
+      // If the function pointer is set ...
+      //
+      else if (_FncPtr)
+      {
+         // Call the function ...
+         _FncPtr();
+      }
+      //
+      // If nothing has been set, then do nothing ...
+      //
+   };
+
+protected:
+
+   //
+   // Cannot be used outside of this class and its descendants...
+   CallbackBase( CallbackBase* ptr, MemFncPtr fptr ) : _Ptr( ptr ), _MemFncPtr( fptr ) {};
 
 private:
 
-   Callback *_Ptr;
+   CallbackBase *_Ptr;
    union { MemFncPtr _MemFncPtr; FncPtr _FncPtr; };
                                            
+};
+
+
+template < class CallbackClass > class Callback : public CallbackBase
+{
+private:
+
+   //
+   // Default Constructor
+   Callback() : CallbackBase() { };
+
+public:
+   // pointer to a member function of Callback class
+   // that takes no arguments
+   typedef void (CallbackClass::*TMemFncPtr)();
+
+   // constructor that takes a pointer to member function
+   Callback(CallbackClass *pp, TMemFncPtr ptr) : CallbackBase( (CallbackBase*)pp, (MemFncPtr)ptr ) { };
+     
+   // destructor
+   ~Callback() {};
+
+   // copy constructor
+   Callback( const Callback &cb ) : CallbackBase( cb ) { };
+
+   // operator =
+   Callback &operator=( const Callback &cb )
+   {
+      return CallbackBase::operator =( cb );
+   };
+
 };
 
 #endif

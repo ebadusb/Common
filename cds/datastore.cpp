@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.6  2002/07/16 22:22:13  rm70006
+ * HISTORY:    Fix problem with uninitialized variable.
  * HISTORY:    Revision 1.5  2002/07/16 21:02:44Z  rm70006
  * HISTORY:    Fix bug in check for multiple writers.
  * HISTORY:    Revision 1.4  2002/07/05 16:36:46Z  rm70006
@@ -140,6 +142,12 @@ DataStore::DataStore(char *name, Role role) :
    bool created;
 
    
+   // Create the Symbol table.
+   if (_datastoreTable == NULL)
+   {
+      _datastoreTable = symTblCreate(DATASTORE_SYMTBL_SIZE, false, memSysPartId);   // Create a symbol table that does NOT allow duplicate items.
+   }
+
    //
    // Keep track of how many writers there are.  There should only be 1.
    //
@@ -155,12 +163,6 @@ DataStore::DataStore(char *name, Role role) :
    {
 
       CheckForMultipleWriters();
-   }
-
-   // Create the Symbol table.
-   if (_datastoreTable == NULL)
-   {
-      _datastoreTable = symTblCreate(DATASTORE_SYMTBL_SIZE, false, memSysPartId);   // Create a symbol table that does NOT allow duplicate items.
    }
 
    //

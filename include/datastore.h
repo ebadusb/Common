@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.3  2002/07/02 19:29:37Z  rm70006
+ * HISTORY:    Made register virtual function for overriding by derived classes.
  * HISTORY:    Revision 1.2  2002/07/02 16:03:44Z  rm70006
  * HISTORY:    Added new non-write-restrictive class to CDS.
  * HISTORY:    Revision 1.1  2002/06/24 19:30:44Z  rm70006
@@ -160,7 +162,8 @@ enum BIND_ITEM_TYPE
    ITEM_READ_COUNT_SEMAPHORE,
    ITEM_WRITE_COUNT_SEMAPHORE,
    ITEM_SIGNAL_WRITE,
-   ITEM_READ_COUNT
+   ITEM_READ_COUNT,
+   ITEM_WRITER_DECLARED
 };
 
 class DataStore
@@ -206,6 +209,8 @@ protected:
 
    // List of PFR elements
    ELEMENT_LISTTYPE *_pfrList;
+   
+   bool *_writerDeclared;
    
 // Class Methods
 private:

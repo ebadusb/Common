@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.2  2002/06/24 20:37:26Z  rm70006
+ * HISTORY:    Make max number of symbols 512 from 128.
  * HISTORY:    Revision 1.1  2002/06/24 19:30:42Z  rm70006
  * HISTORY:    Initial revision
  * HISTORY:    Revision 1.4  2002/06/17 18:40:44Z  rm70006
@@ -339,13 +341,14 @@ template <class dataType> void RangedElement<dataType>::WriteSelf (ofstream &pfr
 const unsigned int SYM_NAME_SIZE = 200;
 
 
-const char DATASTORE_DATA_NAME[]    = "%s_ref_%d";
-const char DATASTORE_SPOOF_NAME[]   = "%s_spoof_%d";
-const char DATASTORE_LIST_NAME[]    = "_DataStore_%s_list";
-const char DATASTORE_READ_SEM[]     = "_DataStore_%s_readsem";
-const char DATASTORE_WRITE_SEM[]    = "_DataStore_%s_writesem";
-const char DATASTORE_SIGNAL_WRITE[] = "_DataStore_%s_signalwrite";
-const char DATASTORE_READ_COUNT[]   = "_DataStore_%s_readcount";
+const char DATASTORE_DATA_NAME[]       = "%s_ref_%d";
+const char DATASTORE_SPOOF_NAME[]      = "%s_spoof_%d";
+const char DATASTORE_LIST_NAME[]       = "_DataStore_%s_list";
+const char DATASTORE_READ_SEM[]        = "_DataStore_%s_readsem";
+const char DATASTORE_WRITE_SEM[]       = "_DataStore_%s_writesem";
+const char DATASTORE_SIGNAL_WRITE[]    = "_DataStore_%s_signalwrite";
+const char DATASTORE_READ_COUNT[]      = "_DataStore_%s_readcount";
+const char DATASTORE_WRITER_DECLARED[] = "_DataStore_%s_writer_declared";
 
 const int DATASTORE_SYMTBL_SIZE = 9;
 
@@ -393,6 +396,10 @@ template <class T> void DataStore::BindItem(T** dataPtr, BIND_ITEM_TYPE item, bo
    case ITEM_READ_COUNT:
       sprintf(nameKey, DATASTORE_READ_COUNT, _name.c_str());
       break;
+   
+   case ITEM_WRITER_DECLARED:
+      sprintf(nameKey, DATASTORE_WRITER_DECLARED, _name.c_str());
+      break;
    }
 
    // Search for Symbol.
@@ -430,4 +437,3 @@ template <class T> void DataStore::BindItem(T** dataPtr, BIND_ITEM_TYPE item, bo
       created = true;
    }
 }
-

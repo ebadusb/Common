@@ -5,6 +5,8 @@
 * build_bitmap_info file.
 *
 * $Log: cgui_bitmap_info.cpp $
+* Revision 1.2  2004/11/11 17:44:38Z  cf10242
+* Size of bitmap change to unsigned long to handle large bitmaps.
 * Revision 1.1  2004/10/14 14:26:53Z  cf10242
 * Initial revision
 *
@@ -29,13 +31,9 @@ CGUIBitmapInfo::CGUIBitmapInfo(char * fileName) :	_myHeight (0),
 // Uncompress the data loaded into the object at construction and create a UGL bitmap.
 void CGUIBitmapInfo::createDisplay (CGUIDisplay & dispObj)
 {
-	// if bitmap is already loaded, just increment loadCount and pass back 
-	// already created ugl id
-	if(_loadCount > 0)
-	{
-		_loadCount += 1;
-	}
-	else
+	// load bitmap if not already loaded.  Should only occur for first time bitmap info is referenced
+	// inside of cgui_bitmap object.
+	if(_loadCount == 0)
 	{
 		// bitmap not loaded yet
 		unsigned long   bmpSize = _myHeight * _myWidth * sizeof(unsigned short);   // the USHORT is for RGB565 representation of color for bmp
@@ -81,18 +79,15 @@ void CGUIBitmapInfo::createDisplay (CGUIDisplay & dispObj)
 		   uglBitmapSizeGet(_myId, &width, &height);
 			_myWidth = width;
 			_myHeight = height;
+			_loadCount = 1;
 		}
 	}
 }
 
 void CGUIBitmapInfo::removeDisplay(CGUIDisplay & dispObj)
 {
-	if (_loadCount > 0)
-	{
-		_loadCount -= 1;
-	}
 
-	if (_loadCount == 0 && _myId != UGL_NULL_ID)
+	if (_loadCount > 0 && _myId != UGL_NULL_ID)
 	{
 		UGL_DEVICE_ID display = dispObj.display();
 		uglBitmapDestroy(display, _myId);

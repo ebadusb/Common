@@ -4,6 +4,8 @@
 *  of the bitmap information and do the actual display of the graphics.
 *
 * $Log: cgui_bitmap.cpp $
+* Revision 1.2  2004/11/18 22:34:09Z  rm10919
+* Naming conventions.
 * Revision 1.1  2004/10/14 14:30:04Z  cf10242
 * Initial revision
  */
@@ -32,7 +34,6 @@ CGUIBitmap::~CGUIBitmap()
       _owner = NULL;
    }
 
-   _bitmapObject.removeDisplay(_display);
 }
 
 void CGUIBitmap::setRegion(const CGUIRegion & newRegion)

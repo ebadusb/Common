@@ -3,6 +3,8 @@
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.9  2002/08/15 20:51:32  jl11312
+# - modified to use new application build templates
 # Revision 1.8  2002/07/19 16:56:06  jl11312
 # - removed datalog library from common.out
 # Revision 1.7  2002/07/09 16:25:10  ms10234
@@ -34,7 +36,8 @@ include $(MAINDIR)/makefile.vxc
 
 INCLUDED_LIBS = $(MAINDIR)\socket++\lib\libsocket++.a $(MAINDIR)\router\lib\librouter.a \
                 $(MAINDIR)\softcrc\lib\libsoftcrc.a $(MAINDIR)\clocks\lib\libclocks.a \
-                $(MAINDIR)\cds\lib\libcds.a
+                $(MAINDIR)\cds\lib\libcds.a \
+		$(MAINDIR)\cmdline\lib\libcmdline.a
 
 .PHONY: libs
 libs:
@@ -44,6 +47,7 @@ libs:
 	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd clocks && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd cds && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
+	@cd cmdline && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 
 #
 # The following should define the location of the resulting application.  Note

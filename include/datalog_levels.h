@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_levels.h 1.5 2003/04/25 17:25:02Z jl11312 Exp ms10234 $
  * $Log: datalog_levels.h $
+ * Revision 1.3  2003/04/11 15:27:11Z  jl11312
+ * - added support for pre-initialized critical levels and handles
  * Revision 1.2  2003/03/27 16:27:44Z  jl11312
  * - allow disabling datalog levels by default
  * Revision 1.1  2003/03/27 15:48:00Z  jl11312
@@ -49,6 +51,11 @@ LOG_DEF DataLog_Level	log_level_cds_spoof_info;
 LOG_DEF DataLog_Level	log_level_cds_spoof_error;
 LOG_DEF DataLog_Level	log_level_socket_info;
 LOG_DEF DataLog_Level	log_level_socket_error;
+LOG_DEF DataLog_Level	log_level_checkself_info;
+LOG_DEF DataLog_Level	log_level_checkself_error;
+LOG_DEF DataLog_Level	log_level_spoofer_info;
+LOG_DEF DataLog_Level	log_level_spoofer_error;
+
 
 #endif /* ifdef __cplusplus */
 
@@ -77,6 +84,10 @@ LOG_DEF DataLog_Handle	log_handle_cds_spoof_info;
 LOG_DEF DataLog_Handle	log_handle_cds_spoof_error;
 LOG_DEF DataLog_Handle	log_handle_socket_info;
 LOG_DEF DataLog_Handle	log_handle_socket_error;
+LOG_DEF DataLog_Handle	log_handle_checkself_info;
+LOG_DEF DataLog_Handle	log_handle_checkself_error;
+LOG_DEF DataLog_Handle	log_handle_spoofer_info;
+LOG_DEF DataLog_Handle	log_handle_spoofer_error;
 
 #ifdef DATALOG_LEVELS_INIT_TABLE
 
@@ -114,6 +125,10 @@ static DataLog_InitTable	initTable[] =
 	{ &log_level_cds_spoof_error, &log_handle_cds_spoof_error, "cds_spoof_error", true },
 	{ &log_level_socket_info, &log_handle_socket_info, "socket_info", true },
 	{ &log_level_socket_error, &log_handle_socket_error, "socket_error", true },
+	{ &log_level_checkself_error, &log_handle_checkself_error, "checkself_error", true },
+	{ &log_level_checkself_info, &log_handle_checkself_info, "checkself_info", true },
+	{ &log_level_spoofer_error, &log_handle_spoofer_error, "spoofer_error", true },
+	{ &log_level_spoofer_info, &log_handle_spoofer_info, "spoofer_info", true },
 };
 
 #endif /* ifdef DATALOG_LEVELS_INIT_TABLE */

@@ -17,11 +17,13 @@ public:
    // pointer to a member function of CallbackBase class
    // that takes no arguments
    typedef void (CallbackBase::*MemFncPtrVoid)();
+   //  ... function that takes one void* argument
    typedef void (CallbackBase::*MemFncPtrData)( void* );
 
    // pointer to a non-member function that takes no
    // arguments
    typedef void (*FncPtrVoid)();
+   //  ... function that takes one void* argument
    typedef void (*FncPtrData)( void* );
 
    // constructor that takes a pointer to a non member
@@ -35,7 +37,7 @@ public:
    };
 
    // constructor that takes a pointer to a non member
-   // function taking a Message ref.
+   // function taking a void* and the data to be sent.
    CallbackBase( FncPtrData ff, void *data=0 ) :
       _Ptr( 0 ),
       _FncPtrVoid( 0 ),
@@ -102,6 +104,7 @@ public:
       // If nothing has been set, then do nothing ...
       //
    };
+   // ...call the function with the specified data.
    void operator()( void* d )
    {
       //
@@ -110,7 +113,10 @@ public:
       if (_Ptr)
       {
          // Call the member function ...
-         (_Ptr->*_MemFncPtrData)( d );
+         if ( _MemFncPtrData )
+         {
+            (_Ptr->*_MemFncPtrData)( d );
+         }
       }
       //
       // If the function pointer is set ...
@@ -158,9 +164,10 @@ public:
    typedef void (CallbackClass::*TMemFncPtrVoid)();
    typedef void (CallbackClass::*TMemFncPtrData)( void* );
 
-   // constructor that takes a pointer to member function
+   // constructor that takes a pointer to member function that takes no arguments
    Callback(CallbackClass *pp, TMemFncPtrVoid ptr) 
    : CallbackBase( (CallbackBase*)pp, (MemFncPtrVoid)ptr ){ };
+   // constructor that takes a pointer to member function that takes a void* argument
    Callback(CallbackClass *pp, TMemFncPtrData ptr, void *data=0 ) 
    : CallbackBase( (CallbackBase*)pp, (MemFncPtrData)ptr, data ) { };
      

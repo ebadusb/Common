@@ -9,6 +9,7 @@
 #include <vxWorks.h>
 #include <taskHookLib.h>
 
+#include "auxclock.h"
 #include "error.h"
 #include "msgsystimer.h"
 
@@ -17,6 +18,7 @@ const struct timespec MsgSysTimer::RETRY_DELAY={ 1 /* seconds */, 0 /*nanosecond
 
 WIND_TCB    *MsgSysTimer::_TheTimerTid=0;
 MsgSysTimer *MsgSysTimer::_TheTimer=0;
+int MsgSysTimer::_ReadyToReceiveTickMsg=0;
 
 
 int MsgSysTimer::MsgSysTimer_main()
@@ -91,7 +93,7 @@ bool MsgSysTimer::init()
       nanosleep( &MsgSysTimer::RETRY_DELAY, 0 );
    }
    while (    _TimerMQ == (mqd_t)ERROR 
-           && retries++ < MAX_NUM_RETRIES );
+           && ++retries < MAX_NUM_RETRIES );
 
    if ( _TimerMQ == (mqd_t)ERROR )
    {
@@ -100,6 +102,9 @@ bool MsgSysTimer::init()
       _FATAL_ERROR( __FILE__, __LINE__, "Timer message queue open failed" );
       return false;
    }
+   //
+   // I'm now ready to receive a tick count message ...
+   _ReadyToReceiveTickMsg=1;
 
    //
    // Open the router's queue ...
@@ -110,7 +115,7 @@ bool MsgSysTimer::init()
       nanosleep( &MsgSysTimer::RETRY_DELAY, 0 );
    } 
    while (    _RouterMQ == (mqd_t)ERROR 
-           && retries++ < MAX_NUM_RETRIES );
+           && ++retries < MAX_NUM_RETRIES );
 
    if ( _RouterMQ == (mqd_t)ERROR )
    {
@@ -120,11 +125,9 @@ bool MsgSysTimer::init()
       return false;
    }
 
-
    //
    // Initialize the ISR routine ...
-//    extraAuxClockInit(  10 /* tick rate to notify me every 10ms */ );
-
+   auxClockMsgPktEnable( 10 /* tick rate to notify me every 10ms */, "timertask", &MsgSysTimer::_ReadyToReceiveTickMsg );
 
    //
    // Set the static pointer to ensure we only init once ...
@@ -180,6 +183,36 @@ void MsgSysTimer::maintainTimers()
 
 void MsgSysTimer::dump( ostream &outs )
 {
+   outs << "??????????????????????? MsgSysTimer DUMP ??????????????????????????" << endl;
+   outs << " TickCount: " << _TickCount << endl;
+   outs << " TimerMQueue: " << hex << (long)_TimerMQ << endl;
+   outs << " RouterMQueue: " << hex << (long)_RouterMQ << endl;
+   outs << " StopLoop: " << _StopLoop << endl;
+
+   outs << " Timer Message Map: size " << _TimerMsgMap.size() << endl;
+   map< unsigned long, MapEntry* >::iterator miter;
+   for ( miter  = _TimerMsgMap.begin() ;
+         miter != _TimerMsgMap.end() ;
+         miter++ )
+   {
+      outs << "  Mid " << (*miter).first << " interval: " << ((*miter).second)->_Interval 
+                       << hex << " message_pckt: " << ((*miter).second)->_TimerMessage << endl;
+      if ( ((*miter).second)->_TimerMessage )
+         ((*miter).second)->_TimerMessage->dump( outs );
+   }
+
+   outs << " PriorityQueue: size " << _TimerQueue.size() << endl;
+   outs << "  top: tick_count " << _TimerQueue.top()._ExpirationTickCount << endl;
+   outs << "       map_entry " << hex << _TimerQueue.top()._MapEntryPtr;
+   if ( _TimerQueue.top()._MapEntryPtr )
+   {
+      outs << " : interval " << dec << _TimerQueue.top()._MapEntryPtr->_Interval << " ";
+      outs << " : message_pckt " << hex << _TimerQueue.top()._MapEntryPtr->_TimerMessage << endl;
+      if ( _TimerQueue.top()._MapEntryPtr->_TimerMessage )
+         _TimerQueue.top()._MapEntryPtr->_TimerMessage->dump( outs );
+   }
+
+   outs << "???????????????????????????????????????????????????????????????????" << endl;
 }
 
 void MsgSysTimer::processMessage( const MessagePacket &mp )
@@ -191,11 +224,15 @@ void MsgSysTimer::processMessage( const MessagePacket &mp )
    unsigned long interval;
    switch ( mp.msgData().osCode() )
    {
+   case MessageData::TASK_DEREGISTER:
+      deregisterTimersOfTask( mp.msgData().taskId() );
+      break;
    case MessageData::TIME_UPDATE:
       memmove( (char *) &tc , 
                (char *) mp.msgData().msg(), 
                sizeof( unsigned long long ) );
       updateTime( tc );
+      _ReadyToReceiveTickMsg=1;
       break;
    case MessageData::MESSAGE_MULTICAST:
    case MessageData::MESSAGE_MULTICAST_LOCAL:
@@ -213,6 +250,10 @@ void MsgSysTimer::processMessage( const MessagePacket &mp )
       _FATAL_ERROR( __FILE__, __LINE__, "Unknown OSCode in message packet" );
       break;
    }
+
+   //
+   // Check the overrun counter to see if I'm behind on tick counts...
+   //  ( Log the result if I am behind )
 }
 
 void MsgSysTimer::updateTime( const unsigned long long tickCount )

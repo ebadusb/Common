@@ -29,7 +29,6 @@ TimerMessage :: ~TimerMessage()
 bool TimerMessage :: init( unsigned long intrvl, const CallbackBase &cb, TimerState armTimer )
 {
    bool status = MessageBase::init( cb, MessageBase::SNDRCV_RECEIVE_ONLY );
-   MessageSystem::MsgSystem()->dispatcher().registerMessage( MessageBase::msgId(), *this );
 
    if ( armTimer == ARMED )
       interval( intrvl );
@@ -52,6 +51,13 @@ void TimerMessage :: armTimer( TimerState arm )
    //
    // Notify the timer task ...
    //  ( send the timer the new interval )
+   MessagePacket mp = *( _PacketList.front() );
+   mp.msgData().msg( (const unsigned char*) &intrvl, sizeof( unsigned long ) );
+   clock_gettime( CLOCK_REALTIME, &_SentTime );
+   mp.msgData().sendTime( _SentTime );
+   mp.updateCRC();
+
+   MessageSystem::MsgSystem()->dispatcher().sendTimerMessage( mp );
 }
 
 
@@ -69,7 +75,6 @@ void TimerMessage :: deregisterTimer()
    MessageSystem::MsgSystem()->dispatcher().deregisterMessage( MessageBase::msgId(), *this );
 }
 
-#include <iostream.h>
 const char *TimerMessage::genMsgName() 
 {
    char buffer[13];

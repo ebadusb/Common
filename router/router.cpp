@@ -5,14 +5,19 @@
  *
  */
 
+#include <stdio.h>
 #include <vxWorks.h>
 #include <taskHookLib.h>
 
+#include "error.h"
+#include "messagesystem.h"
 #include "router.h"
+#include "tcpconnect.h"
 
 const unsigned int Router::MAX_NUM_RETRIES=1;
 const struct timespec Router::RETRY_DELAY={ 1 /* seconds */, 0 /*nanoseconds*/ };
 const unsigned int Router::DEFAULT_Q_SIZE=100;
+WIND_TCB *Router::_TheRouterTid=0;
 Router *Router::_TheRouter=0;
 
 int Router::Router_main()
@@ -28,15 +33,36 @@ int Router::Router_main()
    return OK;
 }
 
+WIND_TCB *Router::globalRouterTid()
+{
+   return _TheRouterTid;
+}
+
 Router *Router::globalRouter()
 {
    return _TheRouter;
 }
 
+int Router::taskCreateHook( WIND_TCB *pTcb )
+{
+   MessageSystem::MsgSystem( 0 );
+
+   return 1;
+}
+
 int Router::taskDeleteHook( WIND_TCB *pTcb )
 {
+   if ( _TheRouterTid == pTcb )
+   {
+      delete _TheRouter; 
+      _TheRouter = 0;
+      _TheRouterTid = 0;
+   }
+
    if ( _TheRouter )
+   {
       _TheRouter->deregisterTask( (unsigned long) pTcb );
+   }
    
    return 1;
 }
@@ -47,12 +73,9 @@ Router::Router()
    _MessageTaskMap(),
    _TaskQueueMap(),
    _InetGatewayMap(),
+   _SpooferMsgMap(),
    _StopLoop( false )
 {
-   _MsgIntegrityMap.clear();
-   _MessageTaskMap.clear();
-   _TaskQueueMap.clear();
-   _InetGatewayMap.clear();
 }
 
 Router::~Router()
@@ -67,8 +90,9 @@ bool Router::init()
       return false;
 
    //
-   // Add the task delete hook to catch all task deletion and
-   //  keep the task lists up to date ...
+   // Add the task create to initialize tasks correctly and delete hooks 
+   //  to catch all task deletion and keep the task lists up to date ...
+   taskCreateHookAdd( (FUNCPTR) &Router::taskCreateHook );
    taskDeleteHookAdd( (FUNCPTR) &Router::taskDeleteHook );
 
    struct mq_attr attr;                        // message queue attributes 
@@ -84,11 +108,13 @@ bool Router::init()
    if ( _RouterQueue == (mqd_t)ERROR )
       //
       // Error ...
+      _FATAL_ERROR( __FILE__, __LINE__, "Router message queue open failed" );
       return false;
 
    //
    // Set the static pointer to ensure we only init once ...
    _TheRouter = this;
+   _TheRouterTid = taskTcb( 0 );
    return true;
 }
 
@@ -99,7 +125,7 @@ void Router::dispatchMessages()
 
    int size=0;
    char buffer[ sizeof( MessagePacket ) ];
-   while ( _StopLoop == false )
+   do
    {
       //
       // Read the queue entry ...
@@ -110,6 +136,7 @@ void Router::dispatchMessages()
       {
          //
          // Error ...
+         _FATAL_ERROR( __FILE__, __LINE__, "Dispatching message=%lx - message queue receive failed" );
       }
 
       //
@@ -121,61 +148,66 @@ void Router::dispatchMessages()
       {
          //
          // Error ...
-         cout << "CRC Invalid for MsgId " << mp.msgData().msgId() << endl;
+         char buffer[256];
+         unsigned long crc = mp.crc();
+         mp.updateCRC();
+         sprintf( buffer,"Dispatching message - message CRC validation failed for MsgId=%lx, CRC=%lx and should be %lx",
+                  mp.msgData().msgId(), crc, mp.crc() );
+         _FATAL_ERROR( __FILE__, __LINE__, buffer );
       }  
 
       processMessage( mp );
 
-   }
+   } while ( _StopLoop == false );
 
 }
 
-void Router::dump()
+void Router::dump( ostream &outs )
 {
-   cout << "------------------------- Router DUMP -----------------------------" << endl;
-   cout << " RouterQueue: " << hex << (long)_RouterQueue << endl;
+   outs << "------------------------- Router DUMP -----------------------------" << endl;
+   outs << " RouterQueue: " << hex << (long)_RouterQueue << endl;
 
-   cout << " Message Integrity Map: size " << _MsgIntegrityMap.size() << endl;
+   outs << " Message Integrity Map: size " << _MsgIntegrityMap.size() << endl;
    map< unsigned long, string >::iterator miiter;                                 // _MsgIntegrityMap;
    for ( miiter  = _MsgIntegrityMap.begin() ;
          miiter != _MsgIntegrityMap.end() ;
          miiter++ )
    {
-      cout << "  Mid " << (*miiter).first << " " << (*miiter).second << endl;
+      outs << "  Mid " << (*miiter).first << " " << (*miiter).second << endl;
    }
-   cout << " Message Task Map: size " << _MessageTaskMap.size() << endl;
+   outs << " Message Task Map: size " << _MessageTaskMap.size() << endl;
    map< unsigned long, map< unsigned long, unsigned char > >::iterator mtiter;    // _MessageTaskMap;
    map< unsigned long, unsigned char >::iterator triter;                          
    for ( mtiter  = _MessageTaskMap.begin() ;
          mtiter != _MessageTaskMap.end() ;
          mtiter++ )
    {
-      cout << "  Mid " << (*mtiter).first << endl;
+      outs << "  Mid " << (*mtiter).first << endl;
       for ( triter  = ((*mtiter).second).begin() ;
             triter != ((*mtiter).second).end() ;
             triter++ )
       {
-         cout << "    Tid " << dec << (*triter).first << " #regs " << (int)(*triter).second << endl;
+         outs << "    Tid " << dec << (*triter).first << " #regs " << (int)(*triter).second << endl;
       }
    }
-   cout << " Task Queue Map: size " << _TaskQueueMap.size() << endl;
+   outs << " Task Queue Map: size " << _TaskQueueMap.size() << endl;
    map< unsigned long, mqd_t >::iterator tqiter;                                  // _TaskQueueMap;
    for ( tqiter  = _TaskQueueMap.begin() ;
          tqiter != _TaskQueueMap.end() ;
          tqiter++ )
    {
-      cout << "  Tid " << dec << (*tqiter).first << " " << (long)(*tqiter).second << endl;
+      outs << "  Tid " << dec << (*tqiter).first << " " << (long)(*tqiter).second << endl;
    }
-   cout << " Inet Gateway Map: size " << _InetGatewayMap.size() << endl;
+   outs << " Inet Gateway Map: size " << _InetGatewayMap.size() << endl;
    map< unsigned long, sockinetbuf* >::iterator igiter;                            // _InetGatewayMap;
    for ( igiter  = _InetGatewayMap.begin() ;
          igiter != _InetGatewayMap.end() ;
          igiter++ )
    {
-      cout << "  Address " << (*igiter).first << endl;
+      outs << "  Address " << (*igiter).first << endl;
    }
-   cout << " StopLoop " << _StopLoop << endl;
-   cout << "-------------------------------------------------------------------" << endl;
+   outs << " StopLoop " << _StopLoop << endl;
+   outs << "-------------------------------------------------------------------" << endl;
 
 }
 
@@ -193,7 +225,7 @@ void Router::processMessage( MessagePacket &mp )
       deregisterTask( mp.msgData().taskId() );
       break;
    case MessageData::MESSAGE_NAME_REGISTER:
-      checkMessageId( mp.msgData().msgId() );
+      checkMessageId( mp.msgData().msgId(), (const char *)( mp.msgData().msg() ) );
       break;
    case MessageData::MESSAGE_REGISTER:
       checkMessageId( mp.msgData().msgId(), (const char *)( mp.msgData().msg() ) );
@@ -204,7 +236,7 @@ void Router::processMessage( MessagePacket &mp )
       deregisterMessage( mp.msgData().msgId(), mp.msgData().taskId() );
       break;
    case MessageData::GATEWAY_CONNECT:
-      connectWithGateway( mp.msgData().nodeId() );
+      connectWithGateway( mp );
       break;
    case MessageData::GATEWAY_DISCONNECT:
       disconnectWithGateway( mp.msgData().nodeId() );
@@ -215,38 +247,83 @@ void Router::processMessage( MessagePacket &mp )
       break;
    case MessageData::MESSAGE_MULTICAST:
    case MessageData::MESSAGE_MULTICAST_LOCAL:
+   case MessageData::SPOOFED_MESSAGE:
       checkMessageId( mp.msgData().msgId() );
       sendMessage( mp );
       break;
    default:
+      _FATAL_ERROR( __FILE__, __LINE__, "Unknown OSCode in message packet" );
       break;
    }
 
 
 }
 
-void Router::connectWithGateway( unsigned long address )
+void Router::connectWithGateway( const MessagePacket &mp )
 {
    //
-   // Try to connect ...
+   // Find gateway in list ...
+   map< unsigned long, sockinetbuf* >::iterator sockiter;
+   sockiter = _InetGatewayMap.find( mp.msgData().nodeId() );
 
    //
-   // If connected, add to list ...
-
+   // If not found ...
    //
-   // If not connected, add message to the queue to try again ...
+   if ( sockiter == _InetGatewayMap.end() )
+   {
+      //
+      // Try to connect ...
+      sockinetbuf *socketbuffer = tcpConnect( mp.msgData().nodeId(), 
+                                              222 /*port*/, 
+                                              250 /*timeout in milliseconds*/ );
+
+      //
+      // If connected, add to list ...
+      if (    socketbuffer != (sockinetbuf*)ERROR 
+           && socketbuffer != 0 )
+      {
+         _InetGatewayMap[ mp.msgData().nodeId() ] = socketbuffer;
+      }
+      //
+      // If not connected, add message to the queue to try again ...
+      else
+      {
+         sendMessage( mp, _RouterQueue, taskIdSelf() );
+      }
+   }
+   else
+   {
+      //
+      // ... error, the gateway has already established a connection
+      //
+      // Error ...
+      char buffer[256];
+      sprintf( buffer,"Connect with gateway=%lx - already connected", mp.msgData().nodeId() );
+      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+   }
 }
 
 void Router::disconnectWithGateway( unsigned long address )
 {
    //
    // Find gateway in list ...
+   map< unsigned long, sockinetbuf* >::iterator sockiter;
+   sockiter = _InetGatewayMap.find( address );
 
    //
    // If found ...
    //
-   //    disconnect the socket interface
-   //    remove the entry from the list
+   if ( sockiter != _InetGatewayMap.end() )
+   {
+      //
+      // disconnect the socket interface
+      ((sockinetbuf*)(*sockiter).second)->close();
+      delete (*sockiter).second;
+
+      //
+      // remove the entry from the list
+      _InetGatewayMap.erase( sockiter );
+   }
 }
 
 void Router::registerTask( unsigned long tId, const char *qName )
@@ -281,7 +358,9 @@ void Router::registerTask( unsigned long tId, const char *qName )
          //  before connecting to the router.
          //
          // Error ...
-         cout << " ERROR " << endl;
+         char buffer[256];
+         sprintf( buffer,"Register task=%lx - message queue open failed", tId );
+         _FATAL_ERROR( __FILE__, __LINE__, buffer );
       }
    }
 
@@ -344,7 +423,10 @@ void Router::checkMessageId( unsigned long msgId, const char *mname )
       {
          //
          // Error ...
-         cout << "Message ID Integrity Check Failure" << endl;
+         char buffer[256];
+         sprintf( buffer,"Check message Id - Message name=%s to Id=%lx integrity check failed",
+                  mname, msgId );
+         _FATAL_ERROR( __FILE__, __LINE__, buffer );
       }
    }
    //
@@ -372,7 +454,9 @@ void Router::checkMessageId( unsigned long msgId )
    {
       //
       // Error ...
-      cout << "MsgId " << msgId << " : Message ID Integrity Check Failure" << endl;
+      char buffer[256];
+      sprintf( buffer,"Check message Id - Message Id=%lx unregistered use in message system", msgId );
+      _FATAL_ERROR( __FILE__, __LINE__, buffer );
    }
 }
 
@@ -426,8 +510,16 @@ void Router::registerMessage( unsigned long msgId, unsigned long tId )
    }
 }
 
+void Router::registerSpooferMessage( unsigned long msgId, unsigned long tId )
+{
+   //
+   // Add the message Id to the map ...
+   _SpooferMsgMap[ msgId ] = tId;
+}
+
 void Router::deregisterMessage( unsigned long msgId, unsigned long tId )
 {
+
    //
    // Decrement the task registrations from the message's task list ...
    //  remove the task if the number of registrations for the task goes
@@ -466,11 +558,14 @@ void Router::deregisterMessage( unsigned long msgId, unsigned long tId )
 
 }
 
-void Router::sendMessage( MessagePacket &mp )
+void Router::deregisterSpooferMessage( unsigned long msgId)
+{
+}
+
+void Router::sendMessage( const MessagePacket &mp )
 {
    //
    // Distribute the message to the local tasks
-   unsigned int retries;
    unsigned long msgId = mp.msgData().msgId();
 
    //
@@ -498,50 +593,136 @@ void Router::sendMessage( MessagePacket &mp )
          {
             //
             // Error ...
+            char buffer[256];
+            sprintf( buffer,"Sending message=%lx - Task Id=%lx not found in task list",
+                     mp.msgData().msgId(), (*titer).first );
+            _FATAL_ERROR( __FILE__, __LINE__, buffer );
          }
          //
          // If the task was found to be registered ...
          else
          {
-            //
-            // Check the task's queue to see if it is full or not ...
-            mq_attr qattributes;
-            if (    mq_getattr( (*tqiter).second, &qattributes ) == ERROR
-                 || qattributes.mq_curmsgs >= qattributes.mq_maxmsg )
-            {
-               //
-               // The task's queue is full!
-               //
-               // Error ...
-            }
-
-            //
-            // Send message to the task ...
-            retries=0;
-            while (    mq_send( (*tqiter).second , &mp, sizeof( MessagePacket ), 0 ) == ERROR 
-                    && retries++ < MAX_NUM_RETRIES ) nanosleep( &Router::RETRY_DELAY, 0 );
-            if ( retries == MAX_NUM_RETRIES )
-            {
-               //
-               // Error ...
-            }
+            sendMessage( mp, (*tqiter).second, (*tqiter).first );
          }
 
       }
    }
 
-
+   //
    // ... and if the message isn't supposed to be local, distribute
    //  the message over the socket connections to the gateways...
    //
+   sendMessageToGateways( mp );
 }
+
+void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned long tId )
+{
+   //
+   // Check the task's queue to see if it is full or not ...
+   mq_attr qattributes;
+   if (    mq_getattr( mqueue, &qattributes ) == ERROR
+        || qattributes.mq_curmsgs >= qattributes.mq_maxmsg )
+   {
+      //
+      // The task's queue is full!
+      //
+      // Error ...
+      char buffer[256];
+      sprintf( buffer,"Sending message=%lx - Task Id=%lx queue full (%d messages)",
+               mp.msgData().msgId(), tId, qattributes.mq_curmsgs );
+      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+   }
+
+   //
+   // Send message to the task ...
+   unsigned int retries=0;
+   while (    mq_send( mqueue , &mp, sizeof( MessagePacket ), 0 ) == ERROR 
+           && retries++ < MAX_NUM_RETRIES ) nanosleep( &Router::RETRY_DELAY, 0 );
+   if ( retries == MAX_NUM_RETRIES )
+   {
+      //
+      // Error ...
+      char buffer[256];
+      sprintf( buffer,"Sending message=%lx - Task Id=%lx send failed",
+               mp.msgData().msgId(), tId );
+      _FATAL_ERROR( __FILE__, __LINE__, buffer );
+   }
+}
+
+void Router::sendMessageToGateways( const MessagePacket &mp )
+{
+   if ( mp.msgData().osCode() == MessageData::MESSAGE_MULTICAST)
+   {
+      map< unsigned long, sockinetbuf* >::iterator sockiter;
+      for ( sockiter  = _InetGatewayMap.begin() ;
+            sockiter != _InetGatewayMap.end() ;
+            sockiter++ )
+      {
+         unsigned int retries=0;
+         while (    ((*sockiter).second)->send( &mp, sizeof( MessagePacket ), 0) == ERROR 
+                 && retries++ < MAX_NUM_RETRIES ) nanosleep( &Router::RETRY_DELAY, 0 );
+         if ( retries == MAX_NUM_RETRIES )
+         {
+            //
+            // Error ...
+            char buffer[256];
+            sprintf( buffer,"Sending message=%lx - Gateway=%s (%ld) send failed",
+                     mp.msgData().msgId(), 
+                     ((sockinetbuf*)(*sockiter).second)->peerhost(), 
+                     (*sockiter).first );
+            _FATAL_ERROR( __FILE__, __LINE__, buffer );
+         }
+      }
+   }
+}
+
+void Router::sendMessageToSpoofer( const MessagePacket &mp )
+{
+   /*
+   if ( _SpooferQueue != (mqd_t)0 )
+   {
+      //
+      // Check the task's queue to see if it is full or not ...
+      mq_attr qattributes;
+      if ( mq_getattr( _SpooferQueue, &qattributes ) == ERROR
+           || qattributes.mq_curmsgs >= qattributes.mq_maxmsg )
+      {
+         //
+         // The spoofer's queue is full!
+         //
+         // Error ...
+         char buffer[256];
+         sprintf( buffer,"",);
+         _FATAL_ERROR( __FILE__, __LINE__, buffer );
+      }
+
+      //
+      // Send message to the task ...
+      unsigned int retries=0;
+      while ( mq_send( _SpooferQueue , &mp, sizeof( MessagePacket ), 0 ) == ERROR 
+              && retries++ < MAX_NUM_RETRIES ) nanosleep( &Router::RETRY_DELAY, 0 );
+      if ( retries == MAX_NUM_RETRIES )
+      {
+         //
+         // Error ...
+         char buffer[256];
+         sprintf( buffer,"",);
+         _FATAL_ERROR( __FILE__, __LINE__, buffer );
+      }
+   }
+   */
+}
+
 
 void Router::shutdown()
 {
    //
    // Close my queue ...
-   mq_close( _RouterQueue );
-   _RouterQueue = (mqd_t)0;
+   if ( _RouterQueue != (mqd_t)0 )
+   {
+      mq_close( _RouterQueue );
+      _RouterQueue = (mqd_t)0;
+   }
 
    //
    // Close the other queues ...
@@ -552,6 +733,18 @@ void Router::shutdown()
    {
       mq_close( (*qiter).second );
       (*qiter).second = (mqd_t)0;
+   }
+
+   //
+   // Close the socket connections ...
+   map< unsigned long, sockinetbuf* >::iterator sockiter;
+   for ( sockiter = _InetGatewayMap.begin() ;
+         sockiter != _InetGatewayMap.end() ;
+         sockiter++ )
+   {
+      ((sockinetbuf*)(*sockiter).second)->close();
+      delete (*sockiter).second;
+      (*sockiter).second = 0;
    }
 }
 
@@ -569,7 +762,9 @@ void Router::cleanup()
    _MessageTaskMap.clear();
    _TaskQueueMap.clear();
    _InetGatewayMap.clear();
+   _SpooferMsgMap.clear();
 
    _TheRouter = 0;
+   _TheRouterTid = 0;
 }
 

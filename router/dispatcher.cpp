@@ -5,7 +5,7 @@
  *
  */
 
-
+#include "error.h"
 #include "dispatcher.h"
 
 const unsigned int Dispatcher::MAX_NUM_RETRIES=1;
@@ -16,7 +16,6 @@ Dispatcher :: Dispatcher( ) :
 _Blocking( true ),
 _StopLoop( false )
 {
-   cleanup();
 }
 
 Dispatcher :: ~Dispatcher()
@@ -28,9 +27,12 @@ Dispatcher :: ~Dispatcher()
 void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool block )
 {
    if ( !qname )
+   {
       //
       // Error ...
+      _FATAL_ERROR( __FILE__, __LINE__, "Message queue name not provided" );
       return;
+   }
 
    struct timespec ts;
    clock_gettime( CLOCK_REALTIME, &ts );
@@ -50,32 +52,59 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
    //
    // Open the message queue for read-only ...
    unsigned int retries=0;
-   _MyQueue = (mqd_t)ERROR;
-   while (    _MyQueue == (mqd_t)ERROR 
-           && retries++ < MAX_NUM_RETRIES )
+   do
    {
       _MyQueue = mq_open( qname, O_RDONLY | O_CREAT, 0666, &attr);
       nanosleep( &Dispatcher::RETRY_DELAY, 0 );
    }
+   while (    _MyQueue == (mqd_t)ERROR 
+           && retries++ < MAX_NUM_RETRIES );
+
    if ( _MyQueue == (mqd_t)ERROR )
+   {
       //
       // Error ...
+      _FATAL_ERROR( __FILE__, __LINE__, "Message queue open failed" );
       return;
+   }
 
    //
    // Open the router's queue ...
    retries=0;
-   _RQueue = (mqd_t)ERROR;
-   while (    _RQueue == (mqd_t)ERROR 
-           && retries++ < 15 )
+   do
    {
       _RQueue = mq_open( "router", O_WRONLY );
       nanosleep( &Dispatcher::RETRY_DELAY, 0 );
-   }
+   } 
+   while (    _RQueue == (mqd_t)ERROR 
+           && retries++ < MAX_NUM_RETRIES );
+
    if ( _RQueue == (mqd_t)ERROR )
+   {
       //
       // Error ...
+      _FATAL_ERROR( __FILE__, __LINE__, "Router message queue open failed" );
       return;
+   }
+
+   //
+   // open the timer task's queue ...
+   retries=0;
+   do
+   {
+      _TimerQueue = mq_open( "timertask", O_WRONLY );
+      nanosleep( &Dispatcher::RETRY_DELAY, 0 );
+   } 
+   while (    _TimerQueue == (mqd_t)ERROR 
+           && retries++ < MAX_NUM_RETRIES );
+
+   if ( _TimerQueue == (mqd_t)ERROR )
+   {
+      //
+      // Error ...
+      _FATAL_ERROR( __FILE__, __LINE__, "Timer task message queue open failed" );
+      return;
+   }
 
    //
    // Register this task ...
@@ -96,14 +125,7 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
 
    //
    // Send register message to router ...
-   retries=0;
-   while (    mq_send( _RQueue, &mp, sizeof( MessagePacket ), 0 ) == ERROR 
-           && retries++ < MAX_NUM_RETRIES ) 
-      nanosleep( &Dispatcher::RETRY_DELAY, 0 );
-   if ( retries == MAX_NUM_RETRIES )
-      //
-      // Error ...
-      return;
+   send( mp );
 
 }
 
@@ -116,9 +138,30 @@ void Dispatcher :: send( const MessagePacket &mp )
            && retries++ < MAX_NUM_RETRIES )
       nanosleep( &Dispatcher::RETRY_DELAY, 0 );
    if ( retries == MAX_NUM_RETRIES )
+   {
       //
       // Error ...
+      _FATAL_ERROR( __FILE__, __LINE__, "Router message queue send failed" );
       return;
+   }
+
+}
+
+void Dispatcher :: sendTimerMessage( const MessagePacket &mp )
+{
+   //
+   // Send message packet to timer task ...
+   unsigned int retries=0;
+   while (    mq_send( _TimerQueue, &mp, sizeof( MessagePacket ), 0 ) == ERROR 
+           && retries++ < MAX_NUM_RETRIES )
+      nanosleep( &Dispatcher::RETRY_DELAY, 0 );
+   if ( retries == MAX_NUM_RETRIES )
+   {
+      //
+      // Error ...
+      _FATAL_ERROR( __FILE__, __LINE__, "Timer message queue send failed" );
+      return;
+   }
 
 }
 
@@ -132,7 +175,7 @@ int Dispatcher :: dispatchMessages()
    {
       MessagePacket mp;
       unsigned int retries=0;
-      while (    ( size = mq_receive( _MyQueue, &mp, sizeof( MessagePacket ), 0 ) ) != ERROR 
+      while (    ( size = mq_receive( _MyQueue, &mp, sizeof( MessagePacket ), 0 ) ) == ERROR 
               && retries++ < MAX_NUM_RETRIES );
       if ( size != ERROR )
       {
@@ -141,11 +184,16 @@ int Dispatcher :: dispatchMessages()
       else
       {
          if ( errno == EAGAIN )
+         {
             continue;
+         }
          else
+         {
             //
             // Error ...
+            _FATAL_ERROR( __FILE__, __LINE__, "Message queue receive failed" );
             return ERROR;
+         }
       }
 
    } while ( _StopLoop == false );
@@ -275,9 +323,17 @@ void Dispatcher :: processMessage( MessagePacket &mp )
             ((MessageBase*)(*siter))->notify( mp );
    }
    else
+   {
       //
       // Error ...
+      char buffer[256];
+      unsigned long crc = mp.crc();
+      mp.updateCRC();
+      sprintf( buffer, "Message CRC validation failed for MsgId=%lx, CRC=%lx and should be %lx",
+               mp.msgData().msgId(), crc, mp.crc() );
+      _FATAL_ERROR( __FILE__, __LINE__, buffer );
       return;
+   }
 }
 
 void Dispatcher :: shutdown()
@@ -309,20 +365,20 @@ void Dispatcher :: shutdown()
    mp.updateCRC();
 
    //
-   // Send register message to router ...
-   unsigned int retries=0;
-   while (    mq_send( _RQueue, &mp, sizeof( MessagePacket ), 0 ) == ERROR 
-           && retries++ < MAX_NUM_RETRIES )
-      nanosleep( &Dispatcher::RETRY_DELAY, 0 );
-   if ( retries == MAX_NUM_RETRIES )
-      //
-      // Error ...
-      return;
+   // Send deregister message to router ...
+   send( mp );
+   sendTimerMessage( mp );
 
    //
    // Close the router's queue ...
    mq_close( _RQueue );
    _RQueue = (mqd_t)0;
+
+   //
+   // Close the timer task's queue ...
+   mq_close( _TimerQueue );
+   _TimerQueue = (mqd_t)0;
+
 }
 
 void Dispatcher :: cleanup()

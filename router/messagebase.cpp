@@ -284,6 +284,11 @@ bool MessageBase::notify( const MessagePacket &mp )
          // Application error ...
          return false;
       }
+      //
+      // Put the header info into myself ...
+      _NodeId = mp.msgData().nodeId();
+      _TaskId = mp.msgData().taskId();
+      _SentTime = mp.msgData().sendTime();
 
       //
       // and notify the application ...

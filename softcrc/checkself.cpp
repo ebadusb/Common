@@ -6,6 +6,8 @@
  * CHANGELOG:
  * $Header: I:/BCT_Development/vxWorks/Common/softcrc/rcs/checkself.cpp 1.10 2003/06/17 18:57:13Z td07711 Exp td07711 $
  * $Log: checkself.cpp $
+ * Revision 1.7  2003/03/06 01:41:00Z  td07711
+ * changed into sent to datalog
  * Revision 1.6  2003/03/03 19:19:36Z  td07711
  * safety stderr getting lost, use datalog directly instead
  * Revision 1.5  2003/02/26 23:03:53Z  td07711
@@ -103,7 +105,8 @@ int checkself( char* startSymbol, char* endSymbol, const char* filename)
        //
        if( (outfile = fopen( filename, "w" )) == 0 )
        {
-	  log( __FILE__, __LINE__ ) << "ERROR fopen failed to create " << filename << endmsg;
+	  log( __FILE__, __LINE__ ) << "ERROR fopen failed to create " << filename 
+	      << hex << ", errno=0x" << errno << endmsg;
 	  return -1;
        }
 

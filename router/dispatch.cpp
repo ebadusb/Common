@@ -3,6 +3,9 @@
  *
  * $Header: Y:/BCT_Development/Common/ROUTER/rcs/DISPATCH.CPP 1.6 1999/09/30 04:02:15 BS04481 Exp MS10234 $
  * $Log: dispatch.cpp $
+ * Revision 1.3  1999/06/02 16:23:34  BS04481
+ * Re-institute the changes that were put into revision 36 of this file
+ * before it was moved to common project (as rev 35).  
  * Revision 1.2  1999/05/31 20:35:02  BS04481
  * Remove unused MSGHEADER structure from messages. 
  * Decrease maximum message size.  Add new version of 
@@ -96,6 +99,12 @@
 #include "mq_check.h"
 
 
+//
+// This flag has been added for the special case when the
+//  dispatcher's signal handler receives a signal, but the
+//  dispatch ptr == NULL.  
+//
+volatile unsigned char prematureSignal=1;
 
 // SPECIFICATION:    signal handler, causes program to stop
 //                   Parameter:
@@ -105,10 +114,11 @@
 
 void signalHandler( int signum)
 {
+   prematureSignal=0;
    if ( dispatch ) 
    {
-      dispatch->taskRunning = 0;             // clear running flag
-      dispatch->signalNumber = signum;       // save signal
+      dispatch->taskRunning = 0;                     // clear running flag
+      dispatch->signalNumber = signum;               // save signal
    }
 };
 
@@ -845,6 +855,11 @@ dispatcher::setTimerEntry( pid_t proxy, class focusTimerMsg* tmsg)
 void
 dispatcher::dispatchLoop()
 {
+   //
+   // Both must be set to '1' to get taskRunning set to '1'
+   //
+   taskRunning &= prematureSignal;
+
    pid_t       pid;                          // msg received from pid
    char        msg[BSIZE];                   // buffer for messages
 

@@ -11,6 +11,9 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.10  2002/09/04 18:33:24Z  rm70006
+ * HISTORY:    Added missing destructor for SingleWriteDataStore.
+ * HISTORY:    Added code to SingleWriteDataStore to allow writer to be created and deleted as many times as needed.  Check now ensures only one at a time, not one ever.
  * HISTORY:    Revision 1.9  2002/09/03 14:36:19Z  rm70006
  * HISTORY:    Added new SingleWrite class.
  * HISTORY:    Revision 1.8  2002/08/23 14:55:08Z  rm70006
@@ -517,16 +520,19 @@ SingleWriteDataStore::~SingleWriteDataStore()
 //
 void SingleWriteDataStore::CheckForMultipleWriters()
 {
-   // The base implementation of DataStore fatal errors when multiple writers are declared.
-   if (*_writerDeclared)
+   if (GetRole() == ROLE_RW)
    {
-      // This is an error.
-      DataLog(*_fatal) << "Error.  Multiple Writers Declared for CDS " << Name() << ".  Abort!!!!!!" << endmsg;
-      _FATAL_ERROR(__FILE__, __LINE__, "Datastore multiple writers");
-      return;
+      // The base implementation of DataStore fatal errors when multiple writers are declared.
+      if (*_writerDeclared)
+      {
+         // This is an error.
+         DataLog(*_fatal) << "Error.  Multiple Writers Declared for CDS " << Name() << ".  Abort!!!!!!" << endmsg;
+         _FATAL_ERROR(__FILE__, __LINE__, "Datastore multiple writers");
+         return;
+      }
+      else
+         *_writerDeclared = true;
    }
-   else
-      *_writerDeclared = true;
 }
 
 

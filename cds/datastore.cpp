@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.21  2002/11/18 18:29:10  jl11312
+ * HISTORY:    - modifications to improve compile speed, reduce inline function sizes
  * HISTORY:    Revision 1.20  2002/11/06 15:43:56  rm70006
  * HISTORY:    Remove unnecessary new's.
  * HISTORY:    remove inline functions to fix compiler bug.
@@ -177,9 +179,10 @@ void DataStore::CreateSymbolTableEntry()
                        << ".  Errno " << errnoMsg << "." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "_mutexSemaphore could not be created.");
    }
-   else
+	else if (_logging)
+	{
       DataLog(_debug) << "_mutexSemaphore value(" << hex << _handle->_mutexSemaphore << dec << ")." << endmsg;
-
+	}
 
    // Create the semaphore.
    _handle->_readSemaphore = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
@@ -191,9 +194,10 @@ void DataStore::CreateSymbolTableEntry()
                           << ".  Errno " << errnoMsg << "." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "_readSemaphore could not be created.");
    }
-   else
+	else if (_logging)
+	{
       DataLog(_debug) << "_readSemaphore value(" << hex << _handle->_readSemaphore << dec << ")." << endmsg;
-
+   }
    
    // Create the semaphore.
    _handle->_writeSemaphore = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
@@ -205,9 +209,10 @@ void DataStore::CreateSymbolTableEntry()
                        << ".  Errno " << errnoMsg << "." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "_writeSemaphore could not be created.");
    }
-   else
+	else if (_logging)
+	{
       DataLog(_debug) << "_writeSemaphore value(" << hex << _handle->_writeSemaphore << dec << ")." << endmsg;
-
+   }
 
    //
    // Create symbol names for mutex control flags and assign their values to the member variables.

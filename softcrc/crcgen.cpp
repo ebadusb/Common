@@ -200,6 +200,8 @@ int file_crcgen32 (const char *filename, unsigned long *pcrc)
    if (inStream.fail())
    {
       inStream.close();
+      DataLog_Critical	critical;
+      DataLog(critical) << "Couldn't open file " << filename << " (" << errnoMsg <<")" << endmsg;
       return -1;
    }
    

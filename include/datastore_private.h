@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.10  2002/09/19 16:05:18Z  rm70006
+ * HISTORY:    Added fast get for large datastore items.
  * HISTORY:    Revision 1.9  2002/09/18 22:13:24Z  rm70006
  * HISTORY:    Change Get and Set to have built in locking.
  * HISTORY:    Revision 1.8  2002/09/13 20:09:05Z  rm70006
@@ -72,7 +74,10 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
       *dataPtr = (T *)valPtr;
       created = false;
 
-      //DataLog(*(ds->_debug)) << "Attaching item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
+      if (ds->is_logging())
+      {
+         DataLog(*(ds->_debug)) << "Attaching item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
+      }
    }
    else
    {
@@ -82,7 +87,10 @@ template <class T> void BindItem(DataStore *ds, T **dataPtr, BIND_ITEM_TYPE item
       // add to symbol table
       status = symAdd(DataStore::getTable(), (char *)nameKey.c_str(), (char *)*dataPtr, N_DATA, item);
 
-      //DataLog(*(ds->_debug)) << "Creating item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
+      if (ds->is_logging())
+      {
+         DataLog(*(ds->_debug)) << "Creating item " << nameKey.c_str() << ", address " << dataPtr << ", " << *dataPtr << endmsg;
+      }
 
       if (status == ERROR)
       {
@@ -186,6 +194,12 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, R
 //
 template <class dataType> inline void BaseElement<dataType>::Get(dataType *item) const
 {
+   if (_ds == 0)
+   {
+      DataLog(*(_ds->_fatal)) << "BaseElement: Element Failed to register in CDS " << _ds->Name() << "." << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");
+   }
+
    _ds->Lock();
 
    // If calling instance is spoofer or no spoof has been registered, return real value
@@ -207,6 +221,13 @@ template <class dataType> inline void BaseElement<dataType>::Get(dataType *item)
 #define NOLOCK_FASTGET(T)                                                                  \
 template<> inline void BaseElement<T>::Get(T *item) const                                  \
 {                                                                                          \
+   if (_ds == 0)                                                                           \
+   {                                                                                       \
+      DataLog(*(_ds->_fatal)) << "BaseElement: Element Failed to register in CDS "         \
+                              << _ds->Name() << "." << endmsg;                             \
+      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");        \
+   }                                                                                       \
+                                                                                           \
    /* If calling instance is spoofer or no spoof has been registered, return real value */ \
    if ( (_role == ROLE_SPOOFER) || (*_fp == NULL) )                                        \
    {                                                                                       \
@@ -238,6 +259,13 @@ NOLOCK_FASTGET(double);
 //
 template <class dataType> inline dataType BaseElement<dataType>::Get() const
 {
+
+   if (_ds == 0)
+   {
+      DataLog(*(_ds->_fatal)) << "BaseElement: Element Failed to register in CDS " << _ds->Name() << "." << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");
+   }
+
    // If calling instance is spoofer or no spoof has been registered, return real value
    if ( (_role == ROLE_SPOOFER) || (*_fp == NULL) )
    {
@@ -262,6 +290,13 @@ template <class dataType> inline dataType BaseElement<dataType>::Get() const
 #define NOLOCK_GET(T)                                                                      \
 template<> inline T BaseElement<T>::Get() const                                            \
 {                                                                                          \
+   if (_ds == 0)                                                                           \
+   {                                                                                       \
+      DataLog(*(_ds->_fatal)) << "BaseElement: Element Failed to register in CDS "         \
+                              << _ds->Name() << "." << endmsg;                             \
+      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");        \
+   }                                                                                       \
+                                                                                           \
    /* If calling instance is spoofer or no spoof has been registered, return real value */ \
    if ( (_role == ROLE_SPOOFER) || (*_fp == NULL) )                                        \
    {                                                                                       \
@@ -296,6 +331,12 @@ NOLOCK_GET(double);
 //
 template <class dataType> inline bool BaseElement<dataType>::Set(const dataType &data)
 {
+   if (_ds == 0)
+   {
+      DataLog(*(_ds->_fatal)) << "BaseElement: Element Failed to register in CDS " << _ds->Name() << "." << endmsg;
+      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");
+   }
+
    if (_role != ROLE_RO)
    {
       _ds->Lock(); 
@@ -315,23 +356,30 @@ template <class dataType> inline bool BaseElement<dataType>::Set(const dataType 
 
 
 
-#define NOLOCK_SET(T)                                                             \
-template<> inline bool BaseElement<T>::Set(const T &data)                         \
-{                                                                                 \
-   if (_role != ROLE_RO)                                                          \
-   {                                                                              \
-      *_data = data;                                                              \
-                                                                                  \
-      return true;                                                                \
-   }                                                                              \
-   else                                                                           \
-   {                                                                              \
-      /* Log Fatal Error */                                                       \
-      DataLog(*(_ds->_fatal)) << "BaseElement: Set Failed in " << _ds->Name() \
-                              << ".  Role is RO." << endmsg;                      \
-      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");                            \
-      return false;                                                               \
-   }                                                                              \
+#define NOLOCK_SET(T)                                                                \
+template<> inline bool BaseElement<T>::Set(const T &data)                            \
+{                                                                                    \
+   if (_ds == 0)                                                                     \
+   {                                                                                 \
+      DataLog(*(_ds->_fatal)) << "BaseElement: Element Failed to register in CDS "   \
+                              << _ds->Name() << "." << endmsg;                       \
+      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");  \
+   }                                                                                 \
+                                                                                     \
+   if (_role != ROLE_RO)                                                             \
+   {                                                                                 \
+      *_data = data;                                                                 \
+                                                                                     \
+      return true;                                                                   \
+   }                                                                                 \
+   else                                                                              \
+   {                                                                                 \
+      /* Log Fatal Error */                                                          \
+      DataLog(*(_ds->_fatal)) << "BaseElement: Set Failed in " << _ds->Name()        \
+                              << ".  Role is RO." << endmsg;                         \
+      _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR");                               \
+      return false;                                                                  \
+   }                                                                                 \
 }
 
 
@@ -355,6 +403,7 @@ template <class dataType> void BaseElement<dataType>::ReadSelf (ifstream &pfrfil
 {
    pfrfile.read(_data, sizeof(dataType));
    //pfrfile >> _data;
+   
    //DataLog(_ds->*_debug) << "Reading value " << *_data << ", size " << sizeof(dataType) << endmsg;
 
    if (!pfrfile.good())
@@ -373,6 +422,7 @@ template <class dataType> void BaseElement<dataType>::ReadSelf (ifstream &pfrfil
 template <class dataType> void BaseElement<dataType>::WriteSelf (ofstream &pfrfile)
 {
    //DataLog(_ds->*_debug) << "Writing value " << *_data << ", size " << sizeof(dataType) << endmsg;
+
    pfrfile.write(_data, sizeof(dataType));
    //pfrfile << _data;
 
@@ -500,21 +550,3 @@ const char DATASTORE_WRITER_DECLARED[]   = "_DataStore_%s_writer_declared";
 const int DATASTORE_SYMTBL_SIZE = 9;
 
 
-/*
-//
-// Debug routine to dump symbol table entry
-//
-BOOL DumpEntry(char *name, int val, SYM_TYPE type, int arg, UINT16 group)
-{
-   cout << "Symbol " << name << ", val " << val << ", type " << type
-        << ", group " << group << endl;
-
-   return true;
-}
-
-
-void dump_datastore_table ()
-{
-   symEach (DataStore::getTable(), DumpEntry, 0);
-}
-*/

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.28 2003/12/09 14:15:02Z jl11312 Exp rm70006 $
  * $Log: datalog.h $
+ * Revision 1.24  2003/08/25 21:11:24Z  jl11312
+ * - removed obsolete function prototypes
  * Revision 1.23  2003/06/18 18:55:43Z  jl11312
  * - handle both SIGINT and SIGQUIT
  * Revision 1.22  2003/02/28 22:10:15Z  jl11312
@@ -432,6 +434,8 @@ protected:
 
 	State _state;	
 	int _outputFD;
+	DataLog_SignalInfo * _outputSignal;
+	DataLog_SignalInfo * _dataLostSignal;
 };
 
 #include "zlib.h"

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.16 2003/10/03 12:32:57Z jl11312 Exp rm70006 $
  * $Log: datalog_port.h $
+ * Revision 1.15  2003/04/29 17:06:56Z  jl11312
+ * - added function to get FILE pointer for console output
  * Revision 1.14  2003/03/27 15:47:36Z  jl11312
  * - added support for new data log levels
  * Revision 1.13  2003/02/25 20:40:11Z  jl11312
@@ -213,9 +215,11 @@ void datalog_ReleaseAccess(DataLog_Lock lock);
  *	Signal related functions
  */
 #ifdef __cplusplus
-bool datalog_WaitSignal(const char * signalName, long milliSeconds);
-void datalog_SendSignal(const char * signalName);
-void datalog_SetupPeriodicSignal(const char * signalName, long milliSeconds);
+struct DataLog_SignalInfo;
+DataLog_SignalInfo * datalog_CreateSignal(const char * signalName);
+bool datalog_WaitSignal(DataLog_SignalInfo * signal, long milliSeconds);
+void datalog_SendSignal(DataLog_SignalInfo * signal);
+void datalog_SetupPeriodicSignal(DataLog_SignalInfo * signal, long milliSeconds);
 #endif /* ifdef __cplusplus */
 
 /*

@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 2002 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.10 2002/12/16 18:30:25Z jl11312 Exp ms10234 $
+ * $Header: Q:/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.14 2004/01/26 18:56:15Z jl11312 Exp jd11007 $
  * $Log: auxclock.cpp $
+ * Revision 1.10  2002/12/16 18:30:25Z  jl11312
+ * - optimized low-level timer related functions
  * Revision 1.9  2002/12/13 20:47:45  pn02526
  * Reinstate iand revise Semaphore handling in order to facillitate optimizing hardware driver tasks.
  * Revision 1.8  2002/09/25 11:11:18  jl11312
@@ -56,6 +58,9 @@
 
 /* Free-running counters */
 static volatile rawTime auxClockTime;
+
+/* Initialization time */
+static struct timespec auxClockInitTime;
 
 /* Nanosecond counter/accumulator increment */
 static unsigned long auxClockNanoSecPerTick;
@@ -158,6 +163,7 @@ void auxClockInit()
 		auxClockNanoSecPerTick = 1000000000/auxClockRateGet();
 
 		extraAuxClockConnect( (FUNCPTR) &auxClockISR, 0x2BADDEED );
+      clock_gettime( CLOCK_REALTIME, &auxClockInitTime );
 
 		auxClockInitDone = true;
    }
@@ -172,6 +178,12 @@ void auxClockTimeGet(rawTime * current)
       memcpy((void *)current, (void *)&auxClockTime, sizeof(rawTime));
    }
    while ( current->nanosec != auxClockTime.nanosec );
+}
+
+/* Get the current value of the time when the auxClockInit function was called. */
+void auxClockInitTimeGet(struct timespec * initTime)
+{
+   memcpy((void *)initTime, (void *)&auxClockInitTime, sizeof(timespec));
 }
 
 /* Enable the auxClock semaphore to toggle every given number of microseconds. */

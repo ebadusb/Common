@@ -41,6 +41,14 @@ void SpooferMessageSystem :: despoofMessage( MessageBase &mb )
    ((SpooferDispatcher*)_Dispatcher)->despoofMessage( mb );
 }
 
+SpooferDispatcher &SpooferMessageSystem::spooferDispatcher() 
+{ 
+   if ( !_Dispatcher )
+      _FATAL_ERROR( __FILE__, __LINE__, "SpooferDispatcher not created" );
+
+   return *((SpooferDispatcher*)_Dispatcher);
+}
+
 void SpooferMessageSystem::createDispatcher()
 {
    if ( _Dispatcher )

@@ -9,6 +9,8 @@
  * ABSTRACT:   COBE BCT common shared definitions 
  *
  * $Log: COMMONDEFS.H $:
+ * Revision 1.1  1999/05/24 23:26:19  TD10216:
+ * Initial revision:
  *
  */
 
@@ -22,7 +24,8 @@ typedef int iBool;
 enum CONFIG_UPDATE_RESPONSES
 {
    RUN_INIT_UPDATE_COMPLETE,
-   CONFIG_FILE_UPDATE_COMPLETE
+   CONFIG_FILE_UPDATE_COMPLETE,
+   RUN_INIT_UPDATE_FAILED,
 };
 
 // for an2_broadcast - All of these except BroadcastMain must be

@@ -8,12 +8,21 @@
 #include <vxWorks.h>
 
 #include "datalog.h"
+#include "datalog_levels.h"
 #include "dispatcher.h"
 #include "error.h"
 #include "messagesystemconstant.h"
 
 
 Dispatcher :: Dispatcher( ) :
+_MyQueue( 0 ),
+_RQueue( 0 ),
+_TimerQueue( 0 ),
+_MessageHighWaterMark( 0 ),
+_NumMessages( 0 ),
+_MessageHighWaterMarkPerPeriod( 0 ),
+_PrevMessageHighWaterMarkPerPeriod( 0 ),
+_MessageMap( ),
 _Blocking( true ),
 _StopLoop( false )
 {
@@ -151,7 +160,7 @@ int Dispatcher :: dispatchMessages()
       retries=0;
       while (    ( size = mq_receive( _MyQueue, &mp, sizeof( MessagePacket ), 0 ) ) == ERROR 
               && (_Blocking || errno != EAGAIN ) 
-              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
+              && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
       if ( size != ERROR )
       {
          processMessage( mp );
@@ -170,6 +179,31 @@ int Dispatcher :: dispatchMessages()
             return ERROR;
          }
       }
+
+      //
+      // Check the task's queue to see if we went over the high-water mark ...
+      mq_attr qattributes;
+      mq_getattr( _MyQueue, &qattributes );
+      if ( qattributes.mq_curmsgs > _MessageHighWaterMark )
+      {
+         _MessageHighWaterMark = _MessageHighWaterMarkPerPeriod = qattributes.mq_curmsgs;
+         DataLog( log_level_message_system_info ) << "mqueue max: " << _MessageHighWaterMark << "/" << qattributes.mq_maxmsg << endmsg;
+      }
+      else 
+      {
+         if ( qattributes.mq_curmsgs > _MessageHighWaterMarkPerPeriod )
+            _MessageHighWaterMarkPerPeriod = qattributes.mq_curmsgs;
+
+         if ( ( _NumMessages % ( MessageSystemConstant::MESSAGES_BETWEEN_LOG * qattributes.mq_maxmsg ) ) == 0 )
+         {
+            if ( _MessageHighWaterMarkPerPeriod != _PrevMessageHighWaterMarkPerPeriod )
+               DataLog( log_level_message_system_info ) << "mqueue max per period: " << _MessageHighWaterMarkPerPeriod << "/" << qattributes.mq_maxmsg << endmsg;
+            _PrevMessageHighWaterMarkPerPeriod = _MessageHighWaterMarkPerPeriod;
+            _MessageHighWaterMarkPerPeriod = 0;
+         }
+      }
+
+      _NumMessages++;
 
    } while ( _StopLoop == false );
 

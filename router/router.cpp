@@ -80,6 +80,10 @@ void Router::datalogErrorHandler( const char * file, int line,
 
 Router::Router()
 :  _RouterQueue( 0 ),
+   _MessageHighWaterMark( 0 ),
+   _NumMessages( 0 ),
+   _MessageHighWaterMarkPerPeriod( 0 ),
+   _PrevMessageHighWaterMarkPerPeriod( 0 ),
    _TimerQueue( 0 ),
    _MsgIntegrityMap(),
    _MsgToGatewaySynchMap(),
@@ -226,6 +230,31 @@ void Router::dispatchMessages()
       }  
 
       processMessage( mp, priority );
+
+      //
+      // Check the task's queue to see if we went over the high-water mark ...
+      mq_attr qattributes;
+      mq_getattr( _RouterQueue, &qattributes );
+      if ( qattributes.mq_curmsgs > _MessageHighWaterMark )
+      {
+         _MessageHighWaterMark = _MessageHighWaterMarkPerPeriod = qattributes.mq_curmsgs;
+         DataLog( log_level_message_system_info ) << "mqueue max: " << _MessageHighWaterMark << "/" << qattributes.mq_maxmsg << endmsg;
+      }
+      else 
+      {
+         if ( qattributes.mq_curmsgs > _MessageHighWaterMarkPerPeriod )
+            _MessageHighWaterMarkPerPeriod = qattributes.mq_curmsgs;
+
+         if ( ( _NumMessages % ( MessageSystemConstant::MESSAGES_BETWEEN_LOG * qattributes.mq_maxmsg ) ) == 0 )
+         {
+            if ( _MessageHighWaterMarkPerPeriod != _PrevMessageHighWaterMarkPerPeriod )
+               DataLog( log_level_message_system_info ) << "mqueue max per period: " << _MessageHighWaterMarkPerPeriod << "/" << qattributes.mq_maxmsg << endmsg;
+            _PrevMessageHighWaterMarkPerPeriod = _MessageHighWaterMarkPerPeriod;
+            _MessageHighWaterMarkPerPeriod = 0;
+         }
+      }
+
+      _NumMessages++;
 
    } while ( _StopLoop == false );
 

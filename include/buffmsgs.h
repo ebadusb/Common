@@ -3,6 +3,8 @@
  *
  * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/BUFFMSGS.H 1.4 1999/07/26 15:38:48 BS04481 Exp TD10216 $
  * $Log: BUFFMSGS.H $
+ * Revision 1.3  1999/07/23 01:37:15  BS04481
+ * Add BasinTempStatus message
  * Revision 1.2  1999/06/30 20:35:41  TD10216
  * IT3908
  * Revision 1.1  1999/05/24 23:26:16  TD10216
@@ -317,6 +319,7 @@ MsgStructMapEntry MsgStructMap[LAST_BUFFER_MESSAGE+1] =
 	{ AlarmLogRequest, "GUI_Alarm_struct" },
 	{ TcpgateRegistration, "TCPGate_Reg_ReqStruct" },
 	{ ModifyProduct, "ModifyProductStruct" },
+   { BasinTempStatus, "basinTemp" },
 
 	// don't change this entry
 	{ LAST_BUFFER_MESSAGE, NULL }

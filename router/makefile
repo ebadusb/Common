@@ -114,9 +114,9 @@ phdspat.o:../include/dispatch.hpp
 phdspat.o:../include/intmsgs.h
 phdspat.o:../include/msg.hpp
 phdspat.o:../include/msghdr.h
+phdspat.o:../include/phdspat.hpp
 phdspat.o:../include/sinver.h
 phdspat.o:phdspat.cpp
-phdspat.o:phdspat.hpp
 spoofdsp.o:../include/buffmsg.hpp
 spoofdsp.o:../include/buffmsgs.h
 spoofdsp.o:../include/crc.h

@@ -27,7 +27,9 @@ MessageBase::MessageBase( ) :
    _NodeId( 0 ),
    _TaskId( 0 ),
    _MessageName(),
-   _PacketList()
+   _PacketList(),
+   _InUse( false ),
+   _DeleteMe( false )
 {
 }
 
@@ -187,7 +189,7 @@ void MessageBase::send()
       list< MessagePacket* >::iterator pckt;
       for ( pckt  = _PacketList.begin();
             pckt != _PacketList.end() ;
-            pckt++ ) 
+            ++pckt ) 
       {
          //
          // Set the sent time, task, and node in the message packets ...
@@ -255,7 +257,7 @@ long MessageBase::latency() const
    if ( diffTime.tv_nsec >= 1000000000 )
    {
       diffTime.tv_nsec -= 1000000000;
-      diffTime.tv_sec++;
+      ++diffTime.tv_sec;
    }
 
    //
@@ -265,7 +267,7 @@ long MessageBase::latency() const
    if ( diffTime.tv_nsec < 0 )
    {
       diffTime.tv_nsec += 1000000000;
-      diffTime.tv_sec--;
+      --diffTime.tv_sec;
    }
    msecs = diffTime.tv_sec*1000;
    msecs += diffTime.tv_nsec/1000000; 
@@ -286,12 +288,25 @@ void MessageBase::dump( DataLog_Stream &outs )
    list< MessagePacket* >::iterator pckt;
    for ( pckt  = _PacketList.begin() ;
          pckt != _PacketList.end() ;
-         pckt++ ) 
+         ++pckt ) 
    {
-      outs << "pckt#" << i++ << endmsg;
+      outs << "pckt#" << ++i << endmsg;
       (*pckt)->dump( outs );
    }
    outs << "===================================================================" << endmsg;
+}
+
+void MessageBase::operator delete( void *me )
+{
+   MessageBase *t = (MessageBase*)me;
+   if ( t->_InUse )
+   {
+      t->_DeleteMe = true;
+   }
+   else
+   {
+      ::delete me; 
+   }
 }
 
 void MessageBase::postConstructInit()
@@ -315,7 +330,7 @@ bool MessageBase::init( )
    _TaskId = taskIdSelf();
    _NodeId = 0;
 
-   for ( unsigned long i=0 ; i<numPackets ; i++ )
+   for ( unsigned long i=0 ; i<numPackets ; ++i )
    {
       //
       // Only one packet needed ...
@@ -373,7 +388,7 @@ bool MessageBase::notify( const MessagePacket &mp, const CallbackBase &cb )
    list< MessagePacket* >::iterator pckt;
    for ( pckt  = _PacketList.begin();
          pckt != _PacketList.end() ;
-         pckt++ ) 
+         ++pckt ) 
    {
       if ( (*pckt)->unopened() == false ) // message packet has not came in yet 
       {
@@ -406,9 +421,11 @@ bool MessageBase::notify( const MessagePacket &mp, const CallbackBase &cb )
       _TaskId = mp.msgData().taskId();
       _SentTime = mp.msgData().sendTime();
 
+      _InUse = true;
       //
       // and notify the application ...
       cb();
+      _InUse = false;
    }
 
    return true;
@@ -419,7 +436,7 @@ bool MessageBase :: findAndCopy( const MessagePacket &mp )
    list< MessagePacket* >::iterator pckt;
    for ( pckt  = _PacketList.begin();
          pckt != _PacketList.end() ;
-         pckt++ ) 
+         ++pckt ) 
    {
       if ( (**pckt) == mp )
       {
@@ -458,7 +475,7 @@ void MessageBase::cleanup()
    list< MessagePacket* >::iterator pckt;
    for ( pckt  = _PacketList.begin();
          pckt != _PacketList.end() ;
-         pckt++ ) 
+         ++pckt ) 
    {
       delete (*pckt);
    }

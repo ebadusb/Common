@@ -3,6 +3,8 @@
  *
  * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/COMMON.H 1.2 1999/07/09 15:24:25 BS04481 Exp BS04481 $
  * $Log: COMMON.H $
+ * Revision 1.1  1999/05/24 23:26:18  TD10216
+ * Initial revision
  * Revision 1.7  1999/03/24 21:50:38  BS04481
  * Change hardware version information to provide base version of
  * hardware plus computer type, board rev and FPGA revision byte.
@@ -61,6 +63,7 @@ enum BOOL
 inline void Outp( long address, unsigned char data, BOOL read)
 {
    unsigned char read_back;
+   char eString[256];
 
    outp(address,data);
 
@@ -69,7 +72,11 @@ inline void Outp( long address, unsigned char data, BOOL read)
       read_back = (unsigned char)inp(address);
       if(data != read_back)
       {
-         _FATAL_ERROR_DRV( __FILE__, __LINE__, TRACE_CTL_DRV, address, "Read back Mismatch?!?");
+         sprintf(eString,"Read back Mismatch!?!  Addr: 0x%x, ExpData: 0x%x, ActData: 0x%x"
+                 , address
+                 , data
+                 , read_back);
+         _FATAL_ERROR_DRV( __FILE__, __LINE__, TRACE_CTL_DRV, address, eString);
       }
    }
 }
@@ -86,13 +93,18 @@ inline void Outpw( long address, long data, BOOL read)
    long read_back;
 
    outpw(address,data);
+   char eString[256];
 
    if (read == TRUE)
    {
       read_back = inpw(address);
       if(data != read_back)
       {
-         _FATAL_ERROR_DRV( __FILE__, __LINE__, TRACE_CTL_DRV, address, "Read back Mismatch?!?");
+         sprintf(eString,"Read back Mismatch!?!  Addr: 0x%x, ExpData: 0x%x, ActData: 0x%x"
+                 , address
+                 , data
+                 , read_back);
+         _FATAL_ERROR_DRV( __FILE__, __LINE__, TRACE_CTL_DRV, address, eString);
       }
    }
 }

@@ -35,6 +35,7 @@ TimerMessage :: ~TimerMessage()
 bool TimerMessage :: init( unsigned long intrvl, const CallbackBase &cb, TimerState armTimer )
 {
    bool status = MessageBase::init( cb, MessageBase::SNDRCV_LOCAL );
+   _DisarmedCallback = cb;
 
    if ( armTimer == ARMED )
       interval( intrvl );
@@ -63,6 +64,11 @@ void TimerMessage :: armTimer( TimerState arm )
    if ( arm == DISARMED )
       intrvl = 0;
 
+   if ( _TimerArmed == DISARMED )
+      _VirtualNotify = CallbackBase();
+   else
+      _VirtualNotify = _DisarmedCallback;
+   
    //
    // Notify the timer task ...
    //  ( send the timer the new interval )

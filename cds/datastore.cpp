@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.9  2002/09/03 14:36:19Z  rm70006
+ * HISTORY:    Added new SingleWrite class.
  * HISTORY:    Revision 1.8  2002/08/23 14:55:08Z  rm70006
  * HISTORY:    Changed binditem to work with 486 compiler bug
  * HISTORY:    Revision 1.7  2002/07/17 14:03:22Z  sb07663
@@ -479,7 +481,7 @@ void DataStore::GetSymbolName(string &s, const BIND_ITEM_TYPE item)
 
 
 //
-// MultWriteDataStrore
+// SingleWriteDataStrore
 //
 
 
@@ -492,6 +494,20 @@ SingleWriteDataStore::SingleWriteDataStore(char * name, Role role) :
 {
    // Ensure no multiple writers
    CheckForMultipleWriters();
+}
+
+
+
+//
+// Class Destructor
+//
+SingleWriteDataStore::~SingleWriteDataStore()
+{
+   if (GetRole() == ROLE_RW)
+   {
+      *_writerDeclared = false;
+      DataLog(*_debug) << "Writer exited for CDS " << Name() << "." << endmsg;
+   }
 }
 
 
@@ -534,20 +550,8 @@ MultWriteDataStore::MultWriteDataStore(char * name, Role role) :
 
 
 //
-// Base Destructor
+// Class Destructor
 // 
 MultWriteDataStore::~MultWriteDataStore()
 {
 }
-
-
-
-// Turn on for testing.  Remove when real one is developed
-#if 0
-#include <assert.h>
-void _FATAL_ERROR(char* file, int line, char* eString)
-{
-   cout << "FATAL_ERROR: " << file << ":" << line << " - " << eString << endl;
-   assert(0);
-}
-#endif

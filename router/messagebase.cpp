@@ -47,6 +47,8 @@ bool MessageBase::init( const SendType st )
       cleanup();
       return init();
    }
+   else
+      _FATAL_ERROR( __FILE__, __LINE__, "Message system not initialized" );
    return false;
 }
 
@@ -62,6 +64,8 @@ bool MessageBase::init( const CallbackBase &cb, const SendReceiveType st )
       cleanup();
       return init();
    }
+   else
+      _FATAL_ERROR( __FILE__, __LINE__, "Message system not initialized" );
    return false;
 }
 
@@ -93,6 +97,8 @@ void MessageBase::registerMsg( const CallbackBase &cb )
       // Send the message ...
       if ( MessageSystem::MsgSystem() )
          MessageSystem::MsgSystem()->dispatcher().registerMessage( *this, regPckt );
+      else
+         _FATAL_ERROR( __FILE__, __LINE__, "Message system not initialized" );
 
       _RegisteredFlag = true;
    }
@@ -130,6 +136,8 @@ void MessageBase::deregisterMsg( )
    // Send the message ...
    if ( MessageSystem::MsgSystem() )
       MessageSystem::MsgSystem()->dispatcher().deregisterMessage( *this, regPckt );
+   else
+      _FATAL_ERROR( __FILE__, __LINE__, "Message system not initialized" );
 
    _RegisteredFlag = false;
 }
@@ -155,6 +163,8 @@ void MessageBase::send()
          MessageSystem::MsgSystem()->dispatcher().send( *(*pckt) );
       }
    }
+   else
+      _FATAL_ERROR( __FILE__, __LINE__, "Message system not initialized" );
 }
 
 unsigned long MessageBase::msgId() const

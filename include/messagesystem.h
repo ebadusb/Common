@@ -10,16 +10,13 @@
 #ifndef _MESSAGE_SYSTEM_H_
 #define _MESSAGE_SYSTEM_H_
 
+#include <map>
+
 #include "dispatcher.h"
+#include "messagesystemconstant.h"
 
 class MessageSystem
 {
-public:
-
-   //
-   // default Q size
-   const unsigned int DEFAULT_Q_SIZE=30;
-
 public:
    //
    // Static method to gain access to the message system pointer
@@ -50,10 +47,10 @@ public:
 
    //
    // Initialize the message system
-   bool initBlocking( const unsigned int qSize=DEFAULT_Q_SIZE ); // uses default task name
-   bool initBlocking( const char *qname, const unsigned int qSize=DEFAULT_Q_SIZE );
-   bool initNonBlock( const unsigned int qSize=DEFAULT_Q_SIZE ); // uses default task name
-   bool initNonBlock( const char *qname, const unsigned int qSize=DEFAULT_Q_SIZE );
+   bool initBlocking( const unsigned int qSize=MessageSystemConstant::DEFAULT_Q_SIZE ); // uses default task name
+   bool initBlocking( const char *qname, const unsigned int qSize=MessageSystemConstant::DEFAULT_Q_SIZE );
+   bool initNonBlock( const unsigned int qSize=MessageSystemConstant::DEFAULT_Q_SIZE ); // uses default task name
+   bool initNonBlock( const char *qname, const unsigned int qSize=MessageSystemConstant::DEFAULT_Q_SIZE );
 
    //
    // Go into the message loop, or try to receive a message in the message

@@ -22,19 +22,6 @@
 class MsgSysTimer
 {
 public:
-   //
-   // Number of retries for all system operations before we consider the
-   //  failure an error
-   static const unsigned int MAX_NUM_RETRIES;
-   //
-   // Time delay between retries ...
-   static const struct timespec RETRY_DELAY;
-   //
-   // Default priority of timer message notifications ( 1-31, regular message priority
-   //  is defined in the Dispatcher ) ...
-   static const int DEFAULT_TIMER_MESSAGE_PRIORITY;
-
-public:
 
    //
    // This function will act as the main entry point for the message system timer task.  

@@ -19,25 +19,10 @@
 #include <string.h>
 
 #include "messagebase.h"
-#include "timermessage.h"
+#include "messagepacket.h"
 
 class Dispatcher
 {
-public:        
-   
-   //
-   // Number of retries before error for messaging operations ...
-   static const unsigned int MAX_NUM_RETRIES;
-   //
-   // Time delay between retries ...
-   static const struct timespec RETRY_DELAY;
-   //
-   // Maximum message queue size
-   static const unsigned int MAX_MESSAGE_QUEUE_SIZE;
-   //
-   // Default priority of messages ( 1-31 )
-   static const int DEFAULT_MESSAGE_PRIORITY;
-
 public:
 
    Dispatcher( );

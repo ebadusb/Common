@@ -15,6 +15,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "messagesystemconstant.h"
 #include "msgcrc.h"
 
 
@@ -22,15 +23,6 @@ class MessageData
 {
 public:
    
-   //
-   //
-   //  This size MUST be (divisible by 4) - 1 .  (e.g. only change this number in
-   //  +/- increments of 4 bytes).  Choosing non-word-sized messages will cause
-   //  the sizeof() operator to return the wrong value for this class, resulting
-   //  in a crc mismatch of the message data.
-   //
-   const int MAX_MESSAGE_SIZE = 127;
-
    enum OperationType
    {
       TASK_REGISTER,                            // register task with router
@@ -73,7 +65,7 @@ public:
          seqNum(       d.seqNum() );
          totalNum(     d.totalNum() );
          packetLength( d.packetLength() );
-         msg(          d.msg(), MAX_MESSAGE_SIZE );
+         msg(          d.msg(), MessageSystemConstant::MAX_MESSAGE_SIZE );
       }
       return *this;
    }
@@ -140,9 +132,13 @@ public:
    //
    void msg( const unsigned char * v, const int length ) 
    {
-      memset( _Msg, 0, MAX_MESSAGE_SIZE + 1 ); 
+      memset( _Msg, 0, MessageSystemConstant::MAX_MESSAGE_SIZE + 1 ); 
       if ( length > 0 && v != 0 )
-         memmove( (void*) _Msg , (void*) v , ( length > MAX_MESSAGE_SIZE ? MAX_MESSAGE_SIZE : length ) ); 
+         memmove( (void*) _Msg , (void*) v , 
+                  ( length > MessageSystemConstant::MAX_MESSAGE_SIZE ? 
+                                          MessageSystemConstant::MAX_MESSAGE_SIZE : 
+                                          length ) 
+                ); 
    }
    const unsigned char *msg() const { return _Msg;} 
 
@@ -156,26 +152,24 @@ public:
       outs << "Tid: " << hex << _TaskId << " Time: " << dec << _SendTime.tv_sec << " " << _SendTime.tv_nsec << " ";
       outs << "Seq: " << _SeqNum << " Tot: " << _TotNum << " ";
       outs << "PcktLngth: " << _PacketLength << " Msg: " << _Msg << endl;
-      outs << "Msg: "; for (int i=0;i<MAX_MESSAGE_SIZE+1;i++) outs << hex << (int)((unsigned char)(*(_Msg+i))) << " "; outs << endl;
+      outs << "Msg: "; for (int i=0;i<MessageSystemConstant::MAX_MESSAGE_SIZE+1;i++) 
+                          outs << hex << (int)((unsigned char)(*(_Msg+i))) << " "; outs << endl;
       outs << "###################################################################" << endl;
    }
 
 protected:
 
-   //  Order from "largest" to "smallest" to avoid OS fillin for boundaries.  The
-   //  total header size MUST be a multiple of four bytes or the sizeof operator
-   //  will fail for this class, resulting in a crc mismatch of the message data.
-   //
-   unsigned long   _MsgId;                        // hashed message id
-   unsigned long   _NodeId;                       // node ID number
-   unsigned long   _TaskId;                       // task PID number
-   struct timespec _SendTime;                     // time message sent
-   OperationType   _OSCode;                       // os message code
-   unsigned short  _SeqNum;                       // For big messages, sequence of total parts of the message
-   unsigned short  _TotNum;                       //   ... Total number of parts to the message
-   unsigned short  _PacketLength;                 // total length of data in this packet
-   unsigned short  _Length;                       // total message data length, bytes
-   unsigned char   _Msg[MAX_MESSAGE_SIZE+1];      // Message data 
+   unsigned long   _MsgId __attribute__ ((packed));         // hashed message id
+   unsigned long   _NodeId __attribute__ ((packed));        // node ID number
+   unsigned long   _TaskId __attribute__ ((packed));        // task PID number
+   struct timespec _SendTime __attribute__ ((packed));      // time message sent
+   OperationType   _OSCode __attribute__ ((packed));        // os message code
+   unsigned short  _SeqNum __attribute__ ((packed));        // For big messages, sequence of total parts of the message
+   unsigned short  _TotNum __attribute__ ((packed));        //   ... Total number of parts to the message
+   unsigned short  _PacketLength __attribute__ ((packed));  // total length of data in this packet
+   unsigned short  _Length __attribute__ ((packed));        // total message data length, bytes
+   unsigned char   _Msg[MessageSystemConstant::MAX_MESSAGE_SIZE+1]  // Message data 
+                                  __attribute__ ((packed));
 
 };
 

@@ -12,12 +12,13 @@
 #include <list>
 #include <string>
 
-#include "messagepacket.h"
 #include "callback.h"
 #include "crcgen.h"
+#include "messagepacket.h"
 
 class MessageBase 
 {
+public:
    friend class Dispatcher;
 public:
 

@@ -18,6 +18,7 @@
 #include <net/uio.h>
 #include <sys/socket.h>
 #include <sys/times.h>
+#include <netinet/tcp.h>
 
 #ifndef _G_config_h
 // non libg++ or g++ compilation
@@ -109,6 +110,7 @@ public:
       so_acceptconn  = SO_ACCEPTCONN,
       so_reuseaddr   = SO_REUSEADDR,
       so_keepalive   = SO_KEEPALIVE,
+      so_nodelay     = TCP_NODELAY,
       so_dontroute   = SO_DONTROUTE,
       so_broadcast   = SO_BROADCAST,
       so_useloopback = SO_USELOOPBACK,
@@ -268,6 +270,7 @@ public:
    int        debug   (int opt= -1) const;
    int        reuseaddr (int opt= -1) const;
    int        keepalive (int opt= -1) const;
+   int        nodelay (int opt= -1) const;
    int        dontroute (int opt= -1) const;
    int        broadcast (int opt= -1) const;
    int        oobinline (int opt= -1) const;

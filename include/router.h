@@ -28,21 +28,6 @@ class Router
 {
 public:
    //
-   // Number of retries for all system operations before we consider the
-   //  failure an error
-   static const unsigned int MAX_NUM_RETRIES;
-   //
-   // Time delay between retries ...
-   static const struct timespec RETRY_DELAY;
-   //
-   // default Q size
-   static const unsigned int DEFAULT_Q_SIZE;
-   //
-   // Gateway connection delay time in milliseconds
-   static const unsigned int CONNECT_DELAY; 
-
-public:
-   //
    // This function will act as the main entry point for the router task.  This
    //  function will create the Router object.  When this function exits, the router
    //  task will also be considered as exitted.

@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/Common/router/rcs/dispatch.cpp 1.11 2001/05/24 22:41:08 jl11312 Exp jl11312 $
+ * $Header: K:/BCT_Development/Common/router/rcs/dispatch.cpp 1.11 2001/05/24 22:41:08 jl11312 Exp $
  * $Log: dispatch.cpp $
+ * Revision 1.11  2001/05/24 22:41:08  jl11312
+ * - initialize msg buffer before Receive() to correct operation of sin ver command (IT 5135)
  * Revision 1.10  2001/05/11 19:55:22  jl11312
  * - added test to skip attempt to deregister messages which were never registered
  * Revision 1.9  2000/12/14 23:53:02  ms10234
@@ -509,10 +511,23 @@ int dispatcher::init( int argc, char** argv, int maxMessages )
 
 // open router queue for write access
 
-   routerQueue = mq_open( argv[1], O_WRONLY, 0, 0);
+   int  routerQueueRetry = 0; 
+   routerQueue = MQ_ERROR;
+
+   while ( routerQueue == MQ_ERROR &&
+           routerQueueRetry < 5 )
+   {
+      routerQueue = mq_open( argv[1], O_WRONLY, 0, 0);
+      if (routerQueue == MQ_ERROR)        // open fail
+      {
+         routerQueueRetry += 1;
+         sleep(2);
+      }
+   }
+
    if (routerQueue == MQ_ERROR)        // open fail
    {
-      fError( __LINE__, 0, "mq_open()");
+      fError( __LINE__, errno, "mq_open()");
       return 0;
    }
 

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/readdir_stat.c 1.2 2003/09/16 22:17:50Z jl11312 Exp jl11312 $
  * $Log: readdir_stat.c $
+ * Revision 1.1  2003/09/05 21:37:52Z  jl11312
+ * Initial revision
  *
  */
 
@@ -23,9 +25,13 @@ struct dirent * readdir_stat(DIR * pDir, struct stat * pStat)
 
 	STATUS status;
 	resFd.pFileHdl = &resHdl;
+	resFd.pVolDesc = pFd->pVolDesc;
 	status = (*pDirDesc->readDir)(pFd, pDir, &resFd);
 
    bzero ((char *) pStat, sizeof (struct stat));
+
+   /* Fill in modified date and time */
+   pVolDesc->pDirDesc->dateGet( &resFd, pStat );
 
    pStat->st_dev = (u_long) pVolDesc; /* device ID = DEV_HDR addr */
    pStat->st_nlink = 1;		/* always only one link */
@@ -49,10 +55,7 @@ struct dirent * readdir_stat(DIR * pDir, struct stat * pStat)
 		pStat->st_mode |= S_IFREG;	/*  it is a regular file */
 	}
     
-   /* Fill in modified date and time */
-   pVolDesc->pDirDesc->dateGet( pFd, pStat );
-
-	return (status == OK) ? &pDir->dd_dirent : NULL;
+   return (status == OK) ? &pDir->dd_dirent : NULL;
 }
 
 

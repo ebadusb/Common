@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_buffer.cpp 1.5 2003/01/31 19:52:49 jl11312 Exp jl11312 $
  * $Log: datalog_buffer.cpp $
+ * Revision 1.3  2002/09/23 13:55:15  jl11312
+ * - removed obsolete UnterminatedStreamOutput error
  * Revision 1.2  2002/09/19 21:25:58  jl11312
  * - modified stream functions to not reset stream state when two stream writes occur without endmsg in between
  * - added errnoMsg manipulator function
@@ -180,6 +182,7 @@ DataLog_OutputBuffer::DataLog_OutputBuffer(size_t size)
 
 	_streamWriteInProgress = false;
 	_streamWriteReleasedToApp = false;
+	_streamWriteAllowRestart = false;
 
 #ifdef DATALOG_MULTITHREADED
 	_writeLock = datalog_CreateLock();
@@ -199,7 +202,8 @@ DataLog_OutputBuffer::~DataLog_OutputBuffer()
 	{
 		lockWriteAccess();
 
-		if ( _streamWriteInProgress && _streamWriteReleasedToApp )
+		if ( (_streamWriteInProgress && _streamWriteReleasedToApp) ||
+			  (_streamWriteAllowRestart && _writeStream->pcount() > _streamWriteRestartPos) )
 		{
 			streamWriteComplete();
 		}
@@ -269,6 +273,7 @@ DataLog_Stream & DataLog_OutputBuffer::streamWriteStart(NotifyStreamWriteComplet
 
 	_streamWriteInProgress = true;
 	_streamWriteReleasedToApp = false;
+	_streamWriteAllowRestart = false;
 	_streamWriteCompleteCallBack = callBack;
 	_streamWriteCompleteCallBackArgSize = callBackArgSize;
 
@@ -294,6 +299,9 @@ void DataLog_OutputBuffer::streamWriteReleaseToApp(void)
 {
 	lockWriteAccess();
 	_streamWriteReleasedToApp = true;
+
+	_streamWriteAllowRestart = true;
+	_streamWriteRestartPos = _writeStream->pcount();
 	releaseWriteAccess();
 }
 
@@ -302,10 +310,12 @@ size_t DataLog_OutputBuffer::streamWriteComplete(void)
 	size_t	result = 0;
 
 	lockWriteAccess();
-	if ( !_streamWriteInProgress )
+	if ( !_streamWriteInProgress && !_streamWriteAllowRestart )
 	{
 		//
-		//	There is an internal problem with the use of the stream interface.
+		//	There is an internal problem with the use of the stream interface, or
+		// an application has saved and re-used a data log stream reference which
+		// is no longer valid.
 		//
 		DataLog_CommonData  common;
 		common.setTaskError(DataLog_InternalWriteError, __FILE__, __LINE__);
@@ -335,7 +345,7 @@ size_t DataLog_OutputBuffer::streamWriteComplete(void)
 		DataLog_BufferData * startData = ((DataLog_BufferData *)(_writeStream->str())) + _streamWriteCompleteCallBackArgSize;
 		size_t dataLen = _writeStream->pcount()*sizeof(char) - _streamWriteCompleteCallBackArgSize;
 
-		if ( _streamWriteReleasedToApp )
+		if ( _streamWriteReleasedToApp || _streamWriteAllowRestart )
 		{
 			//
 			//	For application writes, we don't know the length of the app
@@ -364,6 +374,7 @@ size_t DataLog_OutputBuffer::streamWriteComplete(void)
 			result = write(startData, dataLen);
 		}
 
+		_writeStream->seekp(_streamWriteRestartPos);
 		_writeStream->freeze(0);
 	}
 

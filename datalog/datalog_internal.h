@@ -3,6 +3,9 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.10 2003/10/03 12:35:02Z jl11312 Exp jl11312 $
  * $Log: datalog_internal.h $
+ * Revision 1.5  2002/09/19 21:25:59  jl11312
+ * - modified stream functions to not reset stream state when two stream writes occur without endmsg in between
+ * - added errnoMsg manipulator function
  * Revision 1.4  2002/08/28 14:37:07  jl11312
  * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.3  2002/08/22 20:19:11  jl11312
@@ -128,8 +131,15 @@ protected:
 	size_t _streamWriteCompleteCallBackArgSize;
 
 private:
-	bool	_streamWriteInProgress;
-	bool	_streamWriteReleasedToApp;
+	bool	_streamWriteInProgress;			// stream write interface to buffer is in use
+	bool	_streamWriteReleasedToApp;		// a reference to the internal stream used for the stream write interface
+													//  is in use by application code (i.e. outside direct control of the
+													//  datalog sub-system).
+ 
+	bool	_streamWriteAllowRestart;		// application code has completed a stream write operation, but may still
+													//  hold a reference to the internal stream, and may perform additional
+													//  stream write operations.
+	size_t	_streamWriteRestartPos;		// stream write position for application write restart
 	
 #ifdef DATALOG_MULTITHREADED
 	DataLog_Lock _writeLock;

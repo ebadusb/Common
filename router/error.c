@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/error.c 1.7 2001/05/11 19:56:17 jl11312 Exp jl11312 $
  * $Log: error.c $
+ * Revision 1.1  1999/05/24 23:29:33  TD10216
+ * Initial revision
  * Revision 1.19  1998/10/23 21:04:22  bs04481
  * Lower the priority of the drivers after they call fatal error.  This
  * allows the router time to get a hold of the drivers and kill them.
@@ -192,6 +194,26 @@ _LOG_ERROR( char* file, int line, trace_codes_t code, int usercode, char* eStrin
 
    // display on console for debug
    printf("%s @ %d, errno=%d, usercode=%d, %s\n", file, line, errno, usercode, eString);
+}
+
+
+// SPECIFICATION:    Logs to trace buffer.  No display to screen.
+//                   Parameters:
+//                   line - source code line number
+//                   error - error string
+// NOTE: this function is really a misnomer.  It logs any string to tracelog, not just errors.
+//
+// ERROR HANDLING:   none.
+void
+_LOG_ERROR_NO_DISPLAY( char* file, int line, trace_codes_t code, int usercode, char* eString)
+{
+   static char eBuff[ERROR_SIZE];                             // fixed length error buffer
+
+   sprintf(eBuff, "%.25s %.270s", file, eString);
+
+   // send to trace log
+   Trace3b( code, _TRACE_SEVERE, line, errno, usercode, strlen( eBuff) + 1, eBuff);
+
 }
 
 

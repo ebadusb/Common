@@ -30,6 +30,9 @@ public:
                                     DataLog_ErrorType error, 
                                     const char * msg, 
                                     int continuable );
+
+   static void signalHandler( int signal );
+
 private:
 
    //

@@ -3,6 +3,8 @@
 # Makefile.rules - common makefile rules for vxWorks
 #
 # $Log: makefile.rules $
+# Revision 1.4  2002/08/28 16:46:13  sb07663
+# added rule to create a bin/.o file from a .cpp
 # Revision 1.3  2002/05/16 17:39:03  jl11312
 # - changed assembly source from .S to .s
 # Revision 1.2  2002/04/19 17:28:54  jl11312
@@ -36,7 +38,7 @@ $(CPU)/%.o:%.s
 	@rm -f $(CPU)/$(notdir $(subst .c,.o,$<))
 	@rm -f $@.tmp
 	@$(CC) -M $(CPPFLAGS) $< >$@.tmp
-	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .c,.o,$(subst /,\/,$(CPU)/$<)) $(subst /,\/,$@) : /g" < $@.tmp > $@
+	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .c,.o,$(subst /,\/,$(CPU)/$(notdir $<))) $(subst /,\/,$@) : /g" < $@.tmp > $@
 	@rm -f $@.tmp
 
 .dfile/%.d:%.cpp
@@ -45,7 +47,7 @@ $(CPU)/%.o:%.s
 	@rm -f $(CPU)/$(notdir $(subst .cpp,.o,$<))
 	@rm -f $@.tmp
 	@$(CC) -M $(CPPFLAGS) $< >$@.tmp
-	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .cpp,.o,$(subst /,\/,$(CPU)/$<)) $(subst /,\/,$@) : /g" < $@.tmp > $@
+	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .cpp,.o,$(subst /,\/,$(CPU)/$(notdir $<))) $(subst /,\/,$@) : /g" < $@.tmp > $@
 	@rm -f $@.tmp
 
 .dfile/%.d:%.S
@@ -54,7 +56,7 @@ $(CPU)/%.o:%.s
 	@rm -f $(CPU)/$(notdir $(subst .S,.o,$<))
 	@rm -f $@.tmp
 	@$(CC) -M $(CPPFLAGS) $< >$@.tmp
-	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .S,.o,$(subst /,\/,$(CPU)/$<)) $(subst /,\/,$@) : /g" < $@.tmp > $@
+	@sed -e "1s/$(subst .d,\.o,$(@F))[ :]*/\$(subst .S,.o,$(subst /,\/,$(CPU)/$(notdir $<))) $(subst /,\/,$@) : /g" < $@.tmp > $@
 	@rm -f $@.tmp
 
 endif

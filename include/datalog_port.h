@@ -3,6 +3,10 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.16 2003/10/03 12:32:57Z jl11312 Exp rm70006 $
  * $Log: datalog_port.h $
+ * Revision 1.11  2003/02/06 20:42:04  jl11312
+ * - added support for binary record type
+ * - added support for symbolic node names in networked configurations
+ * - enabled compression/encryption of log files
  * Revision 1.10  2002/09/23 13:54:46  jl11312
  * - added access function for current log file name
  * Revision 1.9  2002/08/28 14:36:40  jl11312
@@ -99,6 +103,15 @@ DataLog_ErrorInformation	datalog_ErrorInformation[DataLog_LastError] =
  */
 #ifdef VXWORKS
 
+#include <vxWorks.h>
+
+/*
+ *	Network related definitions (needed only if platform supports network
+ * connections to data log system).
+ */
+#define DATALOG_NETWORK_SUPPORT
+typedef unsigned long	DataLog_NodeID;
+
 /*
  *	Platform specific data types
  */
@@ -107,7 +120,7 @@ typedef unsigned short DataLog_UINT16;
 typedef unsigned long DataLog_UINT32;
 
 /*
- *	internal ID related definitions (used for ID information in log files)
+ *	Internal ID related definitions (used for ID information in log files)
  */
 typedef unsigned short DataLog_InternalID;
 #define DATALOG_NULL_ID 0
@@ -151,13 +164,6 @@ typedef SEM_ID	DataLog_Lock;
 #define	DataLog_Map		map
 #endif /* ifdef __cplusplus */
 
-/*
- *	Network related definitions
- */
-#ifndef DATALOG_NO_NETWORK_SUPPORT
-typedef unsigned long	DataLog_NodeID;
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
-
 #else /* ifdef VXWORKS */
 #error "Unknown platform"
 #endif /* ifdef VXWORKS */
@@ -190,9 +196,9 @@ void datalog_ReleaseAccess(DataLog_Lock lock);
  *	Signal related functions
  */
 #ifdef __cplusplus
-bool datalog_WaitSignal(const char * signalName, double seconds);
+bool datalog_WaitSignal(const char * signalName, long milliSeconds);
 void datalog_SendSignal(const char * signalName);
-void datalog_SetupPeriodicSignal(const char * signalName, double seconds);
+void datalog_SetupPeriodicSignal(const char * signalName, long milliSeconds);
 #endif /* ifdef __cplusplus */
 
 /*
@@ -202,10 +208,10 @@ void datalog_StartLocalOutputTask(const char * platformName, const char * nodeNa
 void datalog_StartNetworkOutputTask(long connectTimeout, const char * nodeName);
 void datalog_StartPeriodicLogTask(DataLog_SetHandle set);
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 void datalog_StartNetworkTask(void);
 void datalog_StartNetworkClientTask(int clientSocket, struct sockaddr_in * clientAddr);
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 /*
  *	Time stamp related functions.  Note that the related structures
@@ -233,9 +239,9 @@ void datalog_GetTimeStamp(DataLog_TimeStamp * stamp);
 void datalog_TaskCreated(DataLog_TaskID taskID);
 void datalog_TaskDeleted(DataLog_TaskID taskID);
 
-#ifndef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 DataLog_NodeID datalog_NodeID(void);
-#endif /* ifndef DATALOG_NO_NETWORK_SUPPORT */
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 #ifdef __cplusplus
 }; // extern "C"

@@ -3,6 +3,10 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.19  2003/02/06 20:42:01  jl11312
+ * - added support for binary record type
+ * - added support for symbolic node names in networked configurations
+ * - enabled compression/encryption of log files
  * Revision 1.18  2003/01/31 19:52:03  jl11312
  * - new stream format for datalog
  * Revision 1.17  2002/10/28 14:33:07  jl11312
@@ -84,20 +88,16 @@ extern "C" {
 /*
  * Data log initialization routines
  */
-#ifdef DATALOG_NO_NETWORK_SUPPORT
+#ifdef DATALOG_NETWORK_SUPPORT
 
-DataLog_Result datalog_Init(const char * logPath, const char * platformName);
+DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * nodeName);
+DataLog_Result datalog_InitNet(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * ipAddress, int port, long connectTimeout, const char * nodeName);
 
-#else /* ifdef DATALOG_NO_NETWORK_SUPPORT */
+#else /* ifdef DATALOG_NETWORK_SUPPORT */
 
-DataLog_Result datalog_Init(const char * logPath, const char * platformName, const char * nodeName);
-DataLog_Result datalog_InitNet(const char * ipAddress, int port, long connectTimeout, const char * nodeName);
+DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName);
 
-#endif /* ifdef DATALOG_NO_NETWORK_SUPPORT */
-
-DataLog_Result datalog_SetDefaultTraceBufferSize(size_t size);
-DataLog_Result datalog_SetDefaultIntBufferSize(size_t size);
-DataLog_Result datalog_SetDefaultCriticalBufferSize(size_t size);
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 typedef DataLog_BufferData * DataLog_EncryptFunc(DataLog_BufferData * input, size_t inputLength, size_t * outputLength);
 DataLog_Result datalog_SetEncryptFunc(DataLog_EncryptFunc * func);
@@ -108,8 +108,7 @@ DataLog_Result datalog_GetCurrentLogFileName(char * fileName, int bufferLength);
  * Data log handle routines
  */
 DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * handle);
-DataLog_Result datalog_CreateIntLevel(const char * levelName, DataLog_Handle * handle);
-DataLog_Handle datalog_GetCriticalHandle(void);
+DataLog_Result datalog_CreateCriticalLevel(DataLog_Handle * handle);
 DataLog_Result	datalog_SetDefaultLevel(DataLog_Handle handle);
 
 /*
@@ -138,8 +137,8 @@ void datalog_AddLongFunc(DataLog_SetHandle handle, long (* func)(void *), void *
 void datalog_AddDoubleFunc(DataLog_SetHandle handle, double (* func)(void *), void * arg, const char * key, const char * description);
 void datalog_AddCharPtrFunc(DataLog_SetHandle handle, const char * (* func)(void *), void * arg, const char * key, const char * description);
 
-DataLog_Result datalog_GetPeriodicOutputInterval(DataLog_SetHandle handle, double * seconds);
-DataLog_Result datalog_SetPeriodicOutputInterval(DataLog_SetHandle handle, double seconds);
+DataLog_Result datalog_GetPeriodicOutputInterval(DataLog_SetHandle handle, long * milliSeconds);
+DataLog_Result datalog_SetPeriodicOutputInterval(DataLog_SetHandle handle, long milliSeconds);
 DataLog_Result datalog_ForcePeriodicOutput(DataLog_SetHandle handle);
 DataLog_Result datalog_DisablePeriodicOutput(DataLog_SetHandle handle);
 DataLog_Result datalog_EnablePeriodicOutput(DataLog_SetHandle handle);
@@ -161,9 +160,27 @@ typedef void DataLog_TaskErrorHandler(const char * file, int line, DataLog_Error
 DataLog_Result datalog_GetTaskErrorHandler(DataLog_TaskID task, DataLog_TaskErrorHandler ** func);
 DataLog_Result datalog_SetTaskErrorHandler(DataLog_TaskID task, DataLog_TaskErrorHandler * func);
 
-DataLog_Result datalog_GetBytesBuffered(size_t * byteCount);
-DataLog_Result datalog_GetBytesWritten(size_t * byteCount);
-DataLog_Result datalog_GetBytesMissed(size_t * byteCount);
+/*
+ * statistics interface
+ */
+unsigned long datalog_GetFreeBufferBytes(void);
+unsigned long datalog_GetTraceBufferBytes(void);
+unsigned long datalog_GetCriticalBufferBytes(void);
+
+unsigned long datalog_GetTraceWrittenBytes(void);
+unsigned long datalog_GetTraceMissedBytes(void);
+unsigned long datalog_GetCriticalWrittenBytes(void);
+unsigned long datalog_GetCriticalMissedBytes(void);
+
+#ifdef DATALOG_BUFFER_STATISTICS
+unsigned long datalog_GetMinFreeBufferBytes(void);
+unsigned long datalog_GetMaxTraceBufferBytes(void);
+unsigned long datalog_GetMaxCriticalBufferBytes(void);
+
+unsigned long datalog_GetAvgFreeBufferBytes(void);
+unsigned long datalog_GetAvgTraceBufferBytes(void);
+unsigned long datalog_GetAvgCriticalBufferBytes(void);
+#endif /* ifdef DATALOG_BUFFER_STATISTICS */
 
 #ifdef __cplusplus
 }; // extern "C"
@@ -186,6 +203,19 @@ DataLog_Result datalog_GetBytesMissed(size_t * byteCount);
 class DataLog_Stream;
 typedef DataLog_Stream & (* DataLog_StreamManip)(DataLog_Stream &);
 
+struct DataLog_Buffer;
+typedef DataLog_SharedPtr(DataLog_Buffer)	DataLog_BufferPtr;
+
+struct DataLog_BufferChain
+{
+	DataLog_BufferPtr _head;
+	DataLog_BufferPtr _tail;
+	unsigned long _missedBytes;
+	unsigned long _reserveBuffers;
+
+	DataLog_BufferChain(void) { _head = _tail = NULL; _missedBytes = 0; _reserveBuffers = 0; }
+};
+
 class DataLog_StreamIManip
 {
 	int _value;
@@ -203,16 +233,15 @@ inline DataLog_Stream & operator << (DataLog_Stream & stream, const DataLog_Stre
 	return (*manip._func)(stream, manip._value); 
 }
 
+struct DataLog_StreamOutputRecord;
 class DataLog_Stream
 {
-	friend class DataLog_OutputBuffer;
-	friend class DataLog_CriticalBuffer;
+	friend class DataLog_Level;
+	friend void datalog_TaskCreated(DataLog_TaskID taskID);
 	friend DataLog_Stream & endmsg(DataLog_Stream & stream);
 
 public:
 	virtual ~DataLog_Stream();
-
-//	DataLog_Stream & write(const void * data, size_t size) 	{ writeStringArg(String, data, size); return *this; }
 
 	DataLog_Stream & operator << (char c);
 	DataLog_Stream & operator << (signed char c) { return operator<< ((char)c); }
@@ -262,17 +291,14 @@ public:
 	void precision(unsigned int precSetting) { _precision = precSetting; _precisionChanged = true; }
 
 protected:
-	DataLog_Stream(DataLog_OutputBuffer * output);
+	DataLog_Stream(const DataLog_Level & level);
+	void writeStart(DataLog_StreamOutputRecord * record, const char * fileName);
+	void writeComplete(void);
+
 	void setLogOutput(DataLog_EnabledType logOutput) { _logOutput = logOutput; }
 	void setConsoleOutput(DataLog_ConsoleEnabledType consoleOutput) { _consoleOutput = consoleOutput; }
 
-	void rawWrite(const void * data, size_t size);
-
-	size_t pcount(void) { return _bufferPos; }
-	void clear(void) { _bufferPos = 0; _fail = false; _flagsChanged = false; _precisionChanged = false; }
-	void seekp(size_t pos) { _bufferPos = (pos < _bufferSize) ? pos : _bufferSize; }
-	const void * data(void) { return _buffer; }
-	bool fail(void) { bool retVal = _fail; _fail = false; return retVal; }
+	void clear(void) { _flagsChanged = false; _precisionChanged = false; }
 
 	DataLog_UINT16 getFlags(void) { return _flags; }
 	DataLog_UINT8	getPrecision(void) { return _precision; }
@@ -294,6 +320,7 @@ private:
 		PrecisionSetting = 101
 	};
 
+	void setupOutputChain(void);
 	void writeArg(ArgumentType type, const void * data, DataLog_UINT16 size);
 	void writeStringArg(ArgumentType type, const void * data, DataLog_UINT16 size);
 	void printLong(long val);
@@ -301,18 +328,17 @@ private:
 	void printDouble(double val);
 
 private:
-	DataLog_OutputBuffer * _output;
+	DataLog_BufferChain _outputChain;
+	DataLog_BufferChain _headerChain;
+	bool _critical;
+	unsigned long _reserveBuffers;
+
 	DataLog_EnabledType _logOutput;
 	DataLog_ConsoleEnabledType _consoleOutput;
 
-	size_t _bufferSize;
-	size_t _bufferPos;
-	DataLog_UINT16 _flags;
-	DataLog_UINT8  _precision; 
-	bool _fail;
-	bool _flagsChanged, _precisionChanged;
-	
-	DataLog_BufferData * _buffer;
+	DataLog_UINT16 _flags, _initialFlags;
+	DataLog_UINT8  _precision, _initialPrecision;
+	bool _flagsChanged, _precisionChanged; 
 };
 
 /*
@@ -355,7 +381,7 @@ public:
 
 	DataLog_Stream & operator()(const char * fileName, int lineNumber);
 
-	DataLog_Handle getHandle(void) { return _handle; }
+	DataLog_Handle getHandle(void) const { return _handle; }
 	DataLog_Result setHandle(DataLog_Handle handle) { _handle = handle; return DataLog_OK; }
 	DataLog_Result setAsDefault(void);
 
@@ -386,8 +412,10 @@ public:
 	void exit(int code);
 
 protected:
-	virtual void handleBufferSizeChange(size_t size) = 0;
+	virtual void startOutputRecord(void) = 0;
 	virtual void writeOutputRecord(DataLog_BufferData * buffer, size_t size) = 0;
+	virtual void endOutputRecord(void) = 0;
+
 	virtual void shutdown(void) = 0;
 	virtual void flushOutput(void) { }
 
@@ -411,8 +439,9 @@ public:
 	virtual ~DataLog_LocalOutputTask() {}
 
 protected:
-	virtual void handleBufferSizeChange(size_t size);
+	virtual void startOutputRecord(void);
 	virtual void writeOutputRecord(DataLog_BufferData * buffer, size_t size);
+	virtual void endOutputRecord(void);
 	virtual void shutdown(void);
 	virtual void flushOutput(void);
 
@@ -430,8 +459,9 @@ public:
 	virtual ~DataLog_NetworkOutputTask() {}
 
 protected:
-	virtual void handleBufferSizeChange(size_t size);
+	virtual void startOutputRecord(void);
 	virtual void writeOutputRecord(DataLog_BufferData * buffer, size_t size);
+	virtual void endOutputRecord(void);
 	virtual void shutdown(void);
 
 	void writeLogFileNetworkHeader(const char * nodeName);
@@ -480,7 +510,6 @@ private:
 	int  _port; 
 };
 
-class DataLog_ClientBuffer;
 struct DataLog_NetworkPacket;
 class DataLog_NetworkClientTask
 {
@@ -490,9 +519,6 @@ public:
 
 	int main(void);
 	void exit(int code);
-
-public:
-	enum { MaxDataSize = 1024 };
 
 private:
 	void handlePacket(const DataLog_NetworkPacket & packet);
@@ -504,8 +530,8 @@ private:
 	int _clientSocket;
 	char	_asciiAddr[INET_ADDR_LEN];
 
-	DataLog_ClientBuffer * _clientBuffer;
-	DataLog_BufferData _tempBuffer[MaxDataSize];
+	DataLog_BufferChain _dataChain;
+	DataLog_BufferData * _tempBuffer;
 
 	enum State { WaitStart, WaitEnd };
 	State	_state;
@@ -515,8 +541,6 @@ private:
 };
 
 #endif /* ifdef __cplusplus */
-
-#include "datalog_private.h"
 
 #endif /* ifndef _DATALOG_INCLUDE */
 

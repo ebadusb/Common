@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.4  2002/07/05 16:36:46Z  rm70006
+ * HISTORY:    Added destructor.
  * HISTORY:    Revision 1.3  2002/07/02 16:00:20Z  rm70006
  * HISTORY:    Added new non-write-restrictive class to CDS.
  * HISTORY:    Revision 1.2  2002/07/01 16:38:41Z  sb07663
@@ -214,6 +216,14 @@ DataStore::DataStore(char *name, Role role) :
    {
       *_readCount = 0;
    }
+   
+   BindItem(&_writerDeclared, ITEM_WRITER_DECLARED, created);
+   
+   // If the symbol doesn't exist, initialize it (first time).
+   if (created)
+   {
+      *_writerDeclared = false;
+   }
 }
 
 
@@ -233,10 +243,8 @@ DataStore::~DataStore()
 //
 void DataStore::CheckForMultipleWriters()
 {
-   static bool _writerDeclared = false;
-   
    // The base implementation of DataStore fatal errors when multiple writers are declared.
-   if (_writerDeclared)
+   if (*_writerDeclared)
    {
       // This is an error.
       DataLog(_fatal) << "Error.  Multiple Writers Declared for CDS " << _name << ".  Abort!!!!!!" << endmsg;
@@ -244,7 +252,7 @@ void DataStore::CheckForMultipleWriters()
       return;
    }
    else
-      _writerDeclared = true;
+      *_writerDeclared = true;
 }
 
 

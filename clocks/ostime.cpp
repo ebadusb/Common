@@ -3,6 +3,9 @@
  *
  * $Header: //Bctquad3/HOME/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.8 2001/04/05 14:16:14 jl11312 Exp pn02526 $
  * $Log: ostime.cpp $
+ * Revision 1.3  1999/09/30 04:08:00  BS04481
+ * Remove message send and receive functions from the driver 
+ * service loop. 
  * Revision 1.2  1999/09/23 00:30:16  BS04481
  * Change snapshot to an inline function and call from the howLong
  * functions.
@@ -42,7 +45,9 @@
 const int TICKTIME=2;                  // our ticksize is set to 2 in the sysinit
 
 // SPECIFICATION:    osTime constructor.
-//                   Sets up pointer to kernel's time-tick space
+//                   Sets up pointer to kernel's time-tick space and
+//                   initializes time counter to indicate no time set
+//                   in progress
 //
 // ERROR HANDLING:   none.
 
@@ -84,8 +89,6 @@ osTime::~osTime()
 
 // SPECIFICATION:    snapshotTime.
 //                   osTime method to get time from the kernel.
-//                   Will delay for a tick while getting time.
-//                   Sets _lastTime member for reference later.
 //
 // ERROR HANDLING:   none.
 
@@ -103,7 +106,7 @@ osTime::snapshotTime(timeFromTick* now)
 
 
 // SPECIFICATION:    whatTimeIsIt.
-//                   Supplies time as it was on the last snap shot
+//                   Just like snapshotTime except not inline
 //
 // ERROR HANDLING:   none.
 
@@ -122,9 +125,8 @@ osTime::whatTimeIsIt(timeFromTick* now)
 
 // SPECIFICATION:    howLongAndUpdate.
 //                   Sets time in the then structure to time 
-//                   as it was on the last snap shot.
 //                   Returns delta between previous then value
-//                   and last snapshot.
+//                   and now.
 //
 // ERROR HANDLING:   none.
 
@@ -147,9 +149,8 @@ osTime::howLongAndUpdate(timeFromTick* then)
 
 // SPECIFICATION:    howLongMicroAndUpdate.
 //                   Sets time in the then structure to time 
-//                   as it was on the last snap shot.
 //                   Returns delta in microseconds between previous 
-//                   then value and last snapshot.
+//                   then and now.
 //
 // ERROR HANDLING:   none.
 
@@ -173,7 +174,7 @@ osTime::howLongMicroAndUpdate(timeFromTick* then)
 
 // SPECIFICATION:    howLong.
 //                   Returns delta between then value
-//                   and last snapshot.
+//                   and now.
 //
 // ERROR HANDLING:   none.
 
@@ -193,7 +194,7 @@ osTime::howLong(timeFromTick then)
 
 // SPECIFICATION:    howLongMicro.
 //                   Returns delta in microseconds between then value
-//                   and last snapshot.
+//                   and now.
 //
 // ERROR HANDLING:   none.
 
@@ -210,6 +211,8 @@ osTime::howLongMicro(timeFromTick then)
 
    return(delta);
 };
+
+
 // SPECIFICATION:    delayTime.
 //                   osTime method to delay without using a kernel call.
 //                   Use sparingly as this holds the processor for the
@@ -236,6 +239,29 @@ osTime::delayTime(int deltaTime)
 };
 
 
+// SPECIFICATION:    getTimeCounter.
+//                   returns current value of timeCounter which is 
+//                   non-zero if a time set operation is in progress
+//
+// ERROR HANDLING:   none.
 
+int
+osTime::getTimeCounter(void)
+{
+   return(*_timeCounter);
+};
+
+// SPECIFICATION:    countDown.
+//                   counts down timeCounter.  When timeCounter hits
+//                   zero (or is ordered to zero), the soft watchdogs
+//                   are re-enabled.
+//
+// ERROR HANDLING:   none.
+
+void
+osTime::countDown(void)
+{
+   *_timeCounter -= 1;
+}
 
 

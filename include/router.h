@@ -217,6 +217,7 @@ protected:
    //  router will open a queue for each task as a write only queue.  The task must create
    //  the queue before registering itself with the router.
    map< unsigned long, mqd_t >                                  _TaskQueueMap;
+   map< unsigned long, bool >                                   _TaskQueueActiveMap;
    //
    // This structure will map the message Ids with the set of gateways that are registered
    //  to receive that specific message.  A message will not be passed along to a gateway

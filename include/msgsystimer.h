@@ -166,6 +166,7 @@ private:
    //  router will open a queue for each task as a write only queue.  The task must create
    //  the queue before registering itself with the router.
    map< unsigned long, mqd_t >                                  _TaskQueueMap;
+   map< unsigned long, bool >                                   _TaskQueueActiveMap;
 
    mqd_t _TimerMQ;
 

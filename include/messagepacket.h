@@ -28,6 +28,8 @@ public:
    {
       TASK_REGISTER,                            // register task with router
       TASK_DEREGISTER,                          // deregister task with router
+      ENABLE_MESSAGE_QUEUE,                     // call to enable the task to start receiving messages
+      DISABLE_MESSAGE_QUEUE,                    // call to disable the task's ability to receive messages
       MESSAGE_NAME_REGISTER,                    // register message name with router
       MESSAGE_REGISTER,                         // register message with router
       MESSAGE_DEREGISTER,                       // deregister message with router

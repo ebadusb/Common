@@ -1,8 +1,11 @@
-# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/makefile.flags 1.9 2003/02/25 14:59:40Z jl11312 Exp ms10234 $
+# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.flags 1.10 2003/03/12 15:53:41Z ms10234 Exp jl11312 $
 #
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags $
+# Revision 1.9  2003/02/25 14:59:40Z  jl11312
+# - modified optimization settings for SIMNT and I80486 builds
+# - added BUILD_OPTIONS setting
 # Revision 1.8  2002/11/27 15:00:35  jl11312
 # - changed simulator build to use -O1 instead of -O2 to avoid compiler problems
 # Revision 1.7  2002/08/15 20:23:17  jl11312
@@ -86,7 +89,7 @@ CXX = cc386 -c
 AR = ar386
 LD = ld386
 NM = nm386 -g
-GREP = grep -m
+GREP = grep -h
 MUNCH = wtxtcl $(WIND_BASE)/host/src/hutils/munch.tcl -asm 386
 
 ifndef ARCH_FLAGS
@@ -127,7 +130,7 @@ CXX = ccsimpc -c
 AR = arsimpc
 LD = ldsimpc
 NM = nmsimpc -g
-GREP = grep -m
+GREP = grep -h
 MUNCH = wtxtcl $(WIND_BASE)/host/src/hutils/munch.tcl -asm simpc
 
 ifndef ARCH_FLAGS

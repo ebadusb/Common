@@ -3,6 +3,8 @@
  *
  * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_time_date.cpp 1.7 2007/01/29 09:08:39 rm10919 Exp pn02526 $
  * $Log: cgui_time_date.cpp $
+ * Revision 1.2  2005/01/03 20:40:54Z  cf10242
+ * add defensive coding to catch gui crashes
  * Revision 1.1  2004/11/03 17:44:11Z  rm10919
  * Initial revision
  *
@@ -44,10 +46,10 @@ void CGUITimeDate::update()
 {
    unsigned int attribute;
 
-   static char dateString[20];
-   static char  timeString[20];
+   char dateString[20];
+   char  timeString[20];
    
-   time_t currentdate = time(0);
+   time_t currentdate = time(NULL);
    struct tm   local_tm;
 
    localtime_r(&currentdate, &local_tm);
@@ -134,7 +136,7 @@ void CGUITimeDate::update()
                setText(timeString);
                break;
             
-            caseTWO_LINE_DATE_TIME:
+            case TWO_LINE_DATE_TIME:
                strcat(dateString, "\n");
                strcat(dateString, timeString);
                setText(dateString);

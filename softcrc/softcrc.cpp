@@ -7,6 +7,8 @@
  * CHANGELOG:
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.cpp 1.6 2002/09/20 19:30:23Z td07711 Exp rm70006 $
  * $Log: softcrc.cpp $
+ * Revision 1.5  2002/09/19 22:34:44  td07711
+ * port to vxworks
  * Revision 1.4  2000/12/08 01:54:04  ms10234
  * IT4896 - A maximum length was placed on all string operations to prevent
  * overflows from a non-terminated string.  The root path for ignore files was
@@ -115,7 +117,7 @@ char* UsageText = "\
    -limit <value> - limits subdirectory nesting, default=10\n\
    -quiet - suppresses output to stderr and stdout, same as -verbose 0\n\
    -update <filename> - saves calculated CRC, default is no update\n\
-   -symlink - follow symlinks, default is to ignore\n\
+   -symlink - follow symlinks, default is to ignore (NOT APPLICABLE in vxworks)\n\
    -travfs - follow symlinks across filesystems, default is not to\n\
    -verbose <value> - verbosity of CRC output\n\
                       0 - suppresses all output to stdout and stderr\n\
@@ -137,10 +139,10 @@ char* UsageText = "\
 //
 // Globals
 //
-static char* Filelist[FILELIST_MAX+1];       // filelist to parse for files to compute CRC over
-static char* Rootdirlist[FILELIST_MAX+1];    // Rootdirlist to parse for chroots to compute CRC over
-static char* UpdateFile = 0;      // filename to update with new CRC
-static char* VerifyFile = 0;      // filename holding expected CRC
+static const char* Filelist[FILELIST_MAX+1];       // filelist to parse for files to compute CRC over
+static const char* Rootdirlist[FILELIST_MAX+1];    // Rootdirlist to parse for chroots to compute CRC over
+static const char* UpdateFile = 0;      // filename to update with new CRC
+static const char* VerifyFile = 0;      // filename holding expected CRC
 static unsigned long InitCRC = INITCRC_DEFAULT;  // initial CRC value
 static int Verbosity = VERBOSE_DEFAULT;          // verbosity of output
 static int Debug = 0;                             // flag to enable debug msgs
@@ -149,7 +151,7 @@ static int TraverseFileSystems = 0;  // flag to enable following symlinks across
 static int SubdirLimit = LIMIT_DEFAULT;    // subdirectory recursion limit
 static int ReadbufSize = READBUF_DEFAULT;  // size of read buffer
 static unsigned char* Readbuf = 0;        // address of read buffer, initialized with malloc
-static char* Rootdir = 0;       // prefix to added to absolute pathnames in filelist
+static const char* Rootdir = 0;       // prefix to added to absolute pathnames in filelist
 
 struct node {
    char* string;
@@ -328,10 +330,10 @@ int softcrc(const char* options)
 //   validates arguments
 //   implements -update restrictions
 // ERROR HANDLING: gives usage message and exits -1 (255)
-void parseCmdline(int argc, char** argv)
+void parseCmdline(int argc, const char** argv)
 {
    int n = argc;
-   char** parg = argv;
+   const char** parg = argv;
    char buf[BUF_SIZE];
    int i_filelists = 0;
    int i_rootdirlists = 0;

@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.5  2002/08/29 18:08:23Z  rm70006
+ * HISTORY:    fixed bug in RangeElement::Set routine.
  * HISTORY:    Revision 1.4  2002/08/23 14:53:51Z  rm70006
  * HISTORY:    changed binditem to work with 486 compiler bug
  * HISTORY:    Revision 1.3  2002/07/16 21:05:05Z  rm70006
@@ -158,11 +160,8 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, R
          _ds->AddElement(this);
       }
 
-      // Initialize Element if able
-      if (_role == ROLE_RW)
-      {
-         Set(initValue);
-      }
+      // First datastore initializes the element
+      Set(initValue);
    }
 
    // Bind the spoof fp to the DataStore symbol table entry.

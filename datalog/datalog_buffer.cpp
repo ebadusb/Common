@@ -3,6 +3,9 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_buffer.cpp 1.5 2003/01/31 19:52:49 jl11312 Exp jl11312 $
  * $Log: datalog_buffer.cpp $
+ * Revision 1.2  2002/09/19 21:25:58  jl11312
+ * - modified stream functions to not reset stream state when two stream writes occur without endmsg in between
+ * - added errnoMsg manipulator function
  * Revision 1.1  2002/08/15 21:20:59  jl11312
  * Initial revision
  * Revision 1.4  2002/07/18 21:20:29  jl11312
@@ -257,25 +260,11 @@ DataLog_Stream & DataLog_OutputBuffer::streamWriteStart(NotifyStreamWriteComplet
 
 	if ( _streamWriteInProgress )
 	{
+		//
+		// Shouldn't be in this function is a stream write is already in progress
+		//
 		DataLog_CommonData	common;
-
-		if ( _streamWriteReleasedToApp )
-		{
-			//
-			// Application code must have a stream output statement with no endmsg.  Handle
-			// as if endmsg is called now, immediately before the current output statement.
-			//
-			streamWriteComplete();
-			common.setTaskError(DataLog_UnterminatedStreamOutput, __FILE__, __LINE__);
-		}
-		else
-		{
-			//
-			// If not a result of unterminated stream output, then there must
-			// be an internal problem with the use of the stream interface.
-			//
-			common.setTaskError(DataLog_InternalWriteError, __FILE__, __LINE__);
-		}
+		common.setTaskError(DataLog_InternalWriteError, __FILE__, __LINE__);
 	}
 
 	_streamWriteInProgress = true;

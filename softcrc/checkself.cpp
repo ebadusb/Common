@@ -6,6 +6,8 @@
  * CHANGELOG:
  * $Header: I:/BCT_Development/vxWorks/Common/softcrc/rcs/checkself.cpp 1.10 2003/06/17 18:57:13Z td07711 Exp td07711 $
  * $Log: checkself.cpp $
+ * Revision 1.10  2003/06/17 18:57:13Z  td07711
+ * accomodate noncontiguous text/data segments.
  * Revision 1.9  2003/04/11 23:00:36Z  td07711
  * use checkself log levels
  * Revision 1.8  2003/03/12 01:59:42Z  td07711
@@ -79,9 +81,11 @@ int checkself( char* textSymbol, char* dataSymbol, const char* outfile, const ch
 	return -1;
     }
     struct exec aoutHeader;
-    if( read( outFD, (char*)&aoutHeader, sizeof( aoutHeader ) ) != sizeof( aoutHeader ) )
+    int numbytes = read( outFD, (char*)&aoutHeader, sizeof( aoutHeader ) );
+    if( numbytes != sizeof( aoutHeader ) )
     {
-	DataLog( log_level_checkself_error ) << "failed to read aoutHeader for " << outfile << endmsg;
+	DataLog( log_level_checkself_error ) << "failed to read aoutHeader for " << outfile
+	    << ", numbytes=" << numbytes << "errno=0x" << hex << errno << endmsg;
 	close( outFD );
 	return -1;
     }
@@ -94,7 +98,7 @@ int checkself( char* textSymbol, char* dataSymbol, const char* outfile, const ch
 
     if( textSymbol )
     {
-	DataLog( log_level_checkself_info ) << hex << textSymbol << " address=0x" << textAddress
+	DataLog( log_level_checkself_info ) << hex << textSymbol << " address=0x" << (unsigned long)textAddress
 	    << " size=0x" << aoutHeader.a_text << endmsg;
 
 	if( crcgen32( &calc_crc, (const unsigned char*)textAddress, aoutHeader.a_text ) == -1 )

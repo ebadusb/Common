@@ -220,9 +220,9 @@ bool MessageBase::init( )
       MessagePacket *mp = new MessagePacket();
 
       if ( _DistributionType == SNDRCV_LOCAL )
-         mp->msgData().osCode( MessageData::MESSAGE_MULTICAST_LOCAL );
+         mp->msgData().osCode( MessageData::DISTRIBUTE_LOCALLY );
       else if ( _DistributionType == SNDRCV_GLOBAL )
-         mp->msgData().osCode( MessageData::MESSAGE_MULTICAST );
+         mp->msgData().osCode( MessageData::DISTRIBUTE_GLOBALLY );
       mp->msgData().msgId( _MsgId );
       mp->msgData().msgLength( dataSize );
       mp->msgData().nodeId( _NodeId );

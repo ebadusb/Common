@@ -377,6 +377,15 @@ bool MessageBase :: findAndCopy( const MessagePacket &mp )
          (**pckt) = mp;
          if ( (*pckt)->validCRC() == false )
          {
+            //
+            // Error ...
+            unsigned long crc = (*pckt)->crc();
+            (*pckt)->updateCRC();
+            DataLog_Critical criticalLog;
+            DataLog(criticalLog) << "Message CRC validation failed for MsgId=" << hex << (*pckt)->msgData().msgId() 
+                                 << ", CRC=" << crc << " and should be " <<  (*pckt)->crc() << endmsg;
+            _FATAL_ERROR( __FILE__, __LINE__, "CRC check failed" );
+            (*pckt)->dump(cerr);
             return false;
          }
 

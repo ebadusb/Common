@@ -13,6 +13,7 @@
 #include "datalog.h"
 #include "messagesystemconstant.h"
 #include "msgcrc.h"
+#include <iomanip>
 
 
 MessageData::MessageData()
@@ -33,27 +34,28 @@ MessageData &MessageData::operator=( const MessageData &d )
 {
    if ( &d != this )
    {
-      osCode(       d.osCode() );
-      msgId(        d.msgId() );
-      msgLength(    d.msgLength() );
-      nodeId(       d.nodeId() );
-      taskId(       d.taskId() );
-      sendTime(     d.sendTime() );
-      seqNum(       d.seqNum() );
-      totalNum(     d.totalNum() );
-      packetLength( d.packetLength() );
-      msg(          d.msg(), d.packetLength() );
+      netSequenceNum(  d.netSequenceNum() );
+      osCode(          d.osCode() );
+      msgId(           d.msgId() );
+      msgLength(       d.msgLength() );
+      nodeId(          d.nodeId() );
+      taskId(          d.taskId() );
+      sendTime(        d.sendTime() );
+      seqNum(          d.seqNum() );
+      totalNum(        d.totalNum() );
+      packetLength(    d.packetLength() );
+      msg(             d.msg(), d.packetLength() );
    }
    return *this;
 }
 
 bool MessageData::operator==( const MessageData &d ) const
 {
-   if ( msgId()        == d.msgId() 
-        && msgLength()    == d.msgLength() 
-        && seqNum()       == d.seqNum()
-        && totalNum()     == d.totalNum()
-        && packetLength() == d.packetLength()
+   if (    msgId()          == d.msgId() 
+        && msgLength()      == d.msgLength() 
+        && seqNum()         == d.seqNum()
+        && totalNum()       == d.totalNum()
+        && packetLength()   == d.packetLength()
       )
    {
       return true;
@@ -89,15 +91,13 @@ unsigned short MessageData::sizeOfData() const
 
 void MessageData::dump( ostream &outs )
 {
+   outs << "NetSeqNum: " << _NetSequenceNum << " ";
    outs << "OSCode: " << _OSCode << " MsgId: " << hex << _MsgId << dec << " ";
    outs << "Length: " << _Length << " Node: " << hex << _NodeId << " ";
    outs << "Tid: " << hex << _TaskId << " Time: " << dec << _SendTime.tv_sec << " " << _SendTime.tv_nsec << " ";
    outs << "Seq: " << _SeqNum << " Tot: " << _TotNum << " ";
-   outs << "PcktLngth: " << _PacketLength << endmsg;
-   outs << " MsgId: " << hex << _MsgId << dec << " (cont.) Msg: " << _Msg << endmsg;
-   outs << " MsgId: " << hex << _MsgId << dec << " (cont.) Msg: "; 
-   for ( int i=0;i<MessageSystemConstant::MAX_MESSAGE_SIZE+1;i++ )
-      outs << hex << (int)((unsigned char)(*(_Msg+i))) << " "; outs << endmsg;
+   outs << "PcktLngth: " << _PacketLength << endl;
+   outs << " MsgId: " << hex << _MsgId << dec << " (cont.) Msg: " << _Msg << endl;
 }
 
 MessagePacket::MessagePacket() : _MessageData(), _CRC( 0 ), _Unopened( false )
@@ -179,6 +179,10 @@ bool MessagePacket::validCRC() const
 void MessagePacket::dump( ostream &outs )
 {
    _MessageData.dump( outs );
-   outs << "MessagePacket:: CRC: " << hex << _CRC << dec << " Unopened: " << _Unopened << endmsg;
+   outs << "RawMsgData: "; 
+   unsigned char *tPtr = (unsigned char*)&_MessageData;
+   for ( int i=0;i<sizeof( MessageData );i++ )                          
+      outs << setw(2) << setfill('0') << hex << (int)tPtr[i]; outs << endl;
+   outs << "MessagePacket:: CRC: " << hex << _CRC << dec << " Unopened: " << _Unopened << endl;
 }
 

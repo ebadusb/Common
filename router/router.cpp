@@ -8,8 +8,10 @@
 #include <vxWorks.h>
 
 #include <errnoLib.h>
+#include <ioLib.h>
 #include <stdio.h>
 #include <taskHookLib.h>
+#include <netinet/tcp.h>
 
 #include "datalog.h"
 #include "error.h"
@@ -18,7 +20,6 @@
 #include "messagesystemconstant.h"
 #include "router.h"
 #include "systemoverrides.h"
-#include "tcpconnect.h"
 
 
 WIND_TCB *Router::_TheRouterTid=0;
@@ -80,12 +81,14 @@ Router::Router()
 :  _RouterQueue( 0 ),
    _TimerQueue( 0 ),
    _MsgIntegrityMap(),
+   _MsgToGatewaySynchMap(),
    _MessageTaskMap(),
    _TaskQueueMap(),
    _InetGatewayMap(),
-   _GatewayConnAtmptMap(),
+   _GatewayConnSynchedMap(),
    _SpooferMsgMap(),
-   _StopLoop( false )
+   _StopLoop( false ),
+   _NetSequenceNum( 0 )
 {
 }
 
@@ -217,6 +220,7 @@ void Router::dispatchMessages()
                               << hex << mp.msgData().msgId() 
                               << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ")" 
                               << ", CRC=" << crc << " and should be " << mp.crc() << endmsg;
+         mp.dump( cerr );
          _FATAL_ERROR( __FILE__, __LINE__, "CRC check failed" );
       }  
 
@@ -251,6 +255,20 @@ void Router::dump( DataLog_Stream &outs )
          miiter++ )
    {
       outs << "  Mid " << hex << (*miiter).first << " " << (*miiter).second << endl;
+   }
+   outs << " Message to Gateway Synch Map: size " << dec << _MsgToGatewaySynchMap.size() << endl;
+   map< unsigned long, set< unsigned long > >::iterator mtogiter;                                 // _MsgToGatewaySynchMap;
+   for ( mtogiter  = _MsgToGatewaySynchMap.begin() ;
+         mtogiter != _MsgToGatewaySynchMap.end() ;
+         mtogiter++ )
+   {
+      outs << "  Mid " << hex << (*mtogiter).first;
+      set< unsigned long >::iterator gateiter;
+      for ( gateiter  = ((*mtogiter).second).begin() ;
+            gateiter != ((*mtogiter).second).end() ;
+            gateiter++ )
+         outs << " " << (*miiter).second;
+      outs << endl;
    }
    outs << " Message Task Map: size " << _MessageTaskMap.size() << endl;
    map< unsigned long, map< unsigned long, unsigned char > >::iterator mtiter;    // _MessageTaskMap;
@@ -296,17 +314,17 @@ void Router::dump( DataLog_Stream &outs )
       }
    }
    outs << " Inet Gateway Map: size " << dec << _InetGatewayMap.size() << endl;
-   map< unsigned long, sockinetbuf* >::iterator igiter;                            // _InetGatewayMap;
+   map< unsigned long, int >::iterator igiter;                            // _InetGatewayMap;
    for ( igiter  = _InetGatewayMap.begin() ;
          igiter != _InetGatewayMap.end() ;
          igiter++ )
    {
-      outs << "  Address " << hex << (*igiter).first << endl;
+      outs << "  Address " << hex << (*igiter).first << " sock " << (*igiter).second << endl;
    }
-   outs << " Gateway Connection Attempts Map: size " << dec << _GatewayConnAtmptMap.size() << endl;
-   map< unsigned long, unsigned int >::iterator gcaiter;                           // _GatewayConnAtmptMap;
-   for ( gcaiter  = _GatewayConnAtmptMap.begin() ;
-         gcaiter != _GatewayConnAtmptMap.end() ;
+   outs << " Gateway Connection Attempts Map: size " << dec << _GatewayConnSynchedMap.size() << endl;
+   map< unsigned long, Router::GatewaySynched >::iterator gcaiter;        // _GatewayConnSynchedMap;
+   for ( gcaiter  = _GatewayConnSynchedMap.begin() ;
+         gcaiter != _GatewayConnSynchedMap.end() ;
          gcaiter++ )
    {
       outs << "  Address " << hex << (*gcaiter).first << " conn attempts: " << (*gcaiter).second << endl;
@@ -366,7 +384,7 @@ bool Router::initGateways()
    
          //
          // Send the message packet to connect to the gateways ...
-         unsigned long timeDelay = ( MessageSystemConstant::CONNECT_DELAY * 4 );
+         unsigned long timeDelay = ( MessageSystemConstant::CONNECT_RETRY_DELAY );
          unsigned long timerMsgId;
          crcgen32( &timerMsgId, (const unsigned char*)gateName, strlen( gateName ) );
          checkMessageId( timerMsgId, gateName );
@@ -383,7 +401,7 @@ bool Router::initGateways()
                            sizeof( unsigned long ) );
          mp.updateCRC();
          sendMessage( mp, _TimerQueue, taskIdSelf(), MessageSystemConstant::GATEWAY_CONNECT_PRIORITY );
-         _GatewayConnAtmptMap[ netAddress ] = 0;
+         _GatewayConnSynchedMap[ netAddress ] = Router::Incomplete;
 
       }
    }
@@ -393,6 +411,7 @@ bool Router::initGateways()
 
 void Router::processMessage( MessagePacket &mp, int priority )
 {
+   DataLog_Critical criticalLog;
    //
    // Determine what type of message this is ...
    //
@@ -430,8 +449,14 @@ void Router::processMessage( MessagePacket &mp, int priority )
       disconnectWithGateway( mp.msgData().nodeId() );
       break;
    case MessageData::GATEWAY_MESSAGE_SYNCH:
-      checkMessageId( mp.msgData().msgId() );
-      synchUpRemoteNode( mp );
+      synchUpRemoteNode( mp.msgData().nodeId() );
+      break;
+   case MessageData::GATEWAY_MESSAGE_SYNCH_COMPLETE:
+      DataLog(criticalLog) << "Gateway message synch complete for node=" << hex << mp.msgData().nodeId() << endmsg;
+      if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::LocalComplete )
+         _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::Synched;
+      else if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::Incomplete )
+         _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::RemoteComplete;
       break;
    case MessageData::SPOOF_MSG_REGISTER:
       checkMessageId( mp.msgData().msgId(), (const char *)( mp.msgData().msg() ) );
@@ -457,9 +482,11 @@ void Router::processMessage( MessagePacket &mp, int priority )
 
 void Router::connectWithGateway( const MessagePacket &mp )
 {
+   DataLog_Critical elog;
+
    //
    // Find gateway in list ...
-   map< unsigned long, sockinetbuf* >::iterator sockiter;
+   map< unsigned long, int >::iterator sockiter;
    sockiter = _InetGatewayMap.find( mp.msgData().nodeId() );
 
    //
@@ -469,26 +496,46 @@ void Router::connectWithGateway( const MessagePacket &mp )
    {
       //
       // Try to connect ...
-      sockinetbuf *socketbuffer = new sockinetbuf( sockbuf::sock_stream );
-      if ( !socketbuffer )
+      int sock = socket(AF_INET, SOCK_STREAM, 0);
+      if ( sock == ERROR )
       {
          _FATAL_ERROR( __FILE__, __LINE__,"Create socket buffer failed");
          return;
       }
+
+      //
+      //
+      int optval=16384; // Set the size of the send buffer to 16
+      if ( setsockopt( sock, SOL_SOCKET, SO_SNDBUF, (char*)&optval, sizeof(optval) ) == ERROR )
+      {
+         //
+         // Error ...
+         DataLog_Critical criticalLog;
+         DataLog(criticalLog) << "Gateway::init : socket set send buffer size option SO_SNDBUF failed, error->" << strerror( errnoGet() ) << endmsg;
+         _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket set option failed" );
+         return;
+      }
+
    
-      struct timeval tv;
-      tv.tv_sec = 0;
-      tv.tv_usec = MessageSystemConstant::CONNECT_DELAY * 1000 /* milliseconds to microseconds */;
-      short port = getGatewayPort();
-      int status = socketbuffer->connectWithTimeout( ntohl( mp.msgData().nodeId() ), port, &tv );
+      sockaddr_in	addr;
+      memset(&addr, 0, sizeof(addr));
+      addr.sin_family = AF_INET;
+      addr.sin_addr.s_addr = mp.msgData().nodeId();
+      addr.sin_port = htons( getGatewayPort() );
+
+      struct timeval timeout;
+      timeout.tv_sec = 0;
+      timeout.tv_usec = MessageSystemConstant::CONNECT_DELAY * 1000 /* milliseconds to microseconds */;
+      int status = connectWithTimeout( sock, (sockaddr *)&addr, sizeof(addr), &timeout); 
 
       //
       // If connected, add to list ...
-      if ( status == 0 )
+      if ( status != ERROR )
       {
-         socketbuffer->keepalive( 1 );
-         socketbuffer->nodelay( 1 );
-         _InetGatewayMap[ mp.msgData().nodeId() ] = socketbuffer;
+         optval=1;
+         setsockopt( sock, SOL_SOCKET, SO_KEEPALIVE, (char*)&optval, sizeof(optval) );
+         setsockopt( sock, IPPROTO_TCP, TCP_NODELAY, (char*)&optval, sizeof(optval) );
+         _InetGatewayMap[ mp.msgData().nodeId() ] = sock;
 
          //
          // Stop my notification timer ...
@@ -500,39 +547,15 @@ void Router::connectWithGateway( const MessagePacket &mp )
 
          //
          // Synch up the remote node's message list ...
-         //  ( Start with the first message in the list )
-         map< unsigned long, string >::iterator miter;
-         miter = _MsgIntegrityMap.begin();
-
-         //
-         // If any message found ...
-         if ( miter != _MsgIntegrityMap.end() )
-         {
-            newMP.msgData().msgId( (*miter).first );
-            synchUpRemoteNode( newMP );
-         }
+         synchUpRemoteNode( mp.msgData().nodeId() );
       }
       else 
       {
          //
-         // Increment the connection attempts flag for this gatway ...
-         _GatewayConnAtmptMap[ mp.msgData().nodeId() ]++;
-
-#ifndef SIMNT
-         //
-         // Log the connection failure after every 20 attempts ...
-         if ( _GatewayConnAtmptMap[ mp.msgData().nodeId() ]%20 == 0 )
-         {
-            DataLog_Level elog( LOG_ERROR );
-            DataLog( elog ) << "Connect with gateway=" << hex << mp.msgData().nodeId() 
-                                 << " failed with error-" << strerror( status ) << endmsg;
-         }
-#endif
-
-         //
-         // ... give back my socket memory.
-         delete socketbuffer;
+         // Close the created socked
+         close( sock );
       }
+
    }
    else
    {
@@ -550,7 +573,7 @@ void Router::disconnectWithGateway( unsigned long address )
 {
    //
    // Find gateway in list ...
-   map< unsigned long, sockinetbuf* >::iterator sockiter;
+   map< unsigned long, int >::iterator sockiter;
    sockiter = _InetGatewayMap.find( address );
 
    //
@@ -560,8 +583,7 @@ void Router::disconnectWithGateway( unsigned long address )
    {
       //
       // disconnect the socket interface
-      ((sockinetbuf*)(*sockiter).second)->close();
-      delete (*sockiter).second;
+      close((*sockiter).second);
 
       //
       // remove the entry from the list
@@ -701,7 +723,12 @@ void Router::checkMessageId( unsigned long msgId, const char *mname )
       //
       //    add the message Id and the message name to the list...
       //
-      _MsgIntegrityMap[ msgId ] = mname;
+      _MsgIntegrityMap[ msgId ]      = mname;
+
+      //
+      // Create an entry to synchronize with the other gateways ...
+      set< unsigned long > gSet;
+      _MsgToGatewaySynchMap[ msgId ] = gSet;
    } 
 
 }
@@ -1028,9 +1055,9 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
       DataLog_Level logError( LOG_ERROR );
       dumpQueue( tId, mqueue, DataLog( logError ) );
 
-#if !( BUILD_TYPE==DEBUG ) && !( CPU==SIMNT )
+#if !( BUILD_TYPE==DEBUG ) 
       _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
-#endif // #if CPU!=SIMNT && BUILD_TYPE!=DEBUG
+#endif // #if BUILD_TYPE!=DEBUG
 
    }
 
@@ -1066,11 +1093,11 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
              || mpConst.msgData().osCode() == MessageData::SPOOFED_GLOBALLY
              || mpConst.msgData().osCode() == MessageData::MESSAGE_NAME_REGISTER
              || mpConst.msgData().osCode() == MessageData::MESSAGE_REGISTER
-             || mpConst.msgData().osCode() == MessageData::MESSAGE_DEREGISTER )
+             || mpConst.msgData().osCode() == MessageData::MESSAGE_DEREGISTER 
+             || mpConst.msgData().osCode() == MessageData::GATEWAY_MESSAGE_SYNCH_COMPLETE )
         && mpConst.msgData().nodeId() == 0 )
    {
-      map< unsigned long, sockinetbuf* >::iterator sockiter;
-
+      map< unsigned long, int >::iterator sockiter;
       //
       // Send message packets with these osCodes to the nodes which have
       //  subscribers for this message packet's message Id ...
@@ -1079,7 +1106,6 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
       {
          map< unsigned long, set< unsigned long > >::iterator mgiter;
          mgiter = _MessageGatewayMap.find( mpConst.msgData().msgId() );
-   
          if ( mgiter != _MessageGatewayMap.end() )
          {
             set< unsigned long >::iterator gatewayiter;
@@ -1087,13 +1113,12 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
                   gatewayiter != (*mgiter).second.end() ;
                   gatewayiter++ )
             {
-   
                sockiter = _InetGatewayMap.find( (*gatewayiter) );
                if ( sockiter != _InetGatewayMap.end() )
                {
                   //
                   // Send the message to the gateway ...
-                  sendMessageToGateway( ((*sockiter).second), mpConst );
+                  sendMessageToGateway( ((*sockiter).first), mpConst );
                }
                else
                {
@@ -1101,7 +1126,6 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
                   // Error ...
                   DataLog_Critical criticalLog;
                   DataLog(criticalLog) << "Gateway not found=" << hex << (*gatewayiter) << " - Gateway registered for a message, but no active connection" << endmsg;
-                  _FATAL_ERROR( __FILE__, __LINE__, "Gateway lookup failed" );
                }
             }
          }
@@ -1115,40 +1139,87 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
                sockiter++ )
          {
             //
+            // Save the fact that we registered this message with this node ...
+            if (    mpConst.msgData().osCode() == MessageData::MESSAGE_NAME_REGISTER
+                 || mpConst.msgData().osCode() == MessageData::MESSAGE_REGISTER )
+            {
+               _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ].insert( (*sockiter).first );
+            }
+
+            //
             // Send the message to the gateway ...
-            sendMessageToGateway( ((*sockiter).second), mpConst );
+            sendMessageToGateway( ((*sockiter).first), mpConst );
          }
       }
    } 
+   else if (    (    mpConst.msgData().osCode() == MessageData::MESSAGE_NAME_REGISTER
+                  || mpConst.msgData().osCode() == MessageData::MESSAGE_REGISTER )
+             && mpConst.msgData().nodeId() != 0 )
+   {
+      _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ].insert( mpConst.msgData().nodeId() );
+   }
 }
 
-void Router::sendMessageToGateway( sockinetbuf *sockbuffer, const MessagePacket &mpConst )
+void Router::sendMessageToGateway( unsigned long nodeId, const MessagePacket &mpConst )
 {
-   MessagePacket mp( mpConst );
-   //
-   // Assign the message packet this nodes network address
-   mp.msgData().nodeId( getNetworkAddress() );
-   mp.updateCRC();
+   if (    mpConst.msgData().osCode() != MessageData::MESSAGE_REGISTER
+        && mpConst.msgData().osCode() != MessageData::MESSAGE_NAME_REGISTER 
+        && mpConst.msgData().osCode() != MessageData::GATEWAY_MESSAGE_SYNCH_COMPLETE )
+   {
+      if ( _GatewayConnSynchedMap[ nodeId ] != Router::Synched )
+         return;
+   }
+   else if (    mpConst.msgData().osCode() == MessageData::MESSAGE_REGISTER
+             && mpConst.msgData().osCode() == MessageData::MESSAGE_NAME_REGISTER )
+   {
+      if ( _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ].find( nodeId ) == 
+                             _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ].end() )
+         return;
+   }
 
-   unsigned int retries=0;
-   while (    sockbuffer->send( &mp, sizeof( MessagePacket ), 0) == ERROR 
-           && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
-      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
-   if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )
+   int sock = _InetGatewayMap[ nodeId ];
+   if ( sock != ERROR )
+   {
+      MessagePacket mp( mpConst );
+      //
+      // Assign the message packet this nodes network address
+      mp.msgData().netSequenceNum( _NetSequenceNum++ );
+      mp.msgData().nodeId( getNetworkAddress() );
+      mp.updateCRC();
+   
+      int len = sizeof( mp );
+      int wlen=0;
+	   char * cbuf = (char *)&mp;
+      while ( len > 0 )
+      {
+         int wval;
+         if ( ( wval = send( sock, &cbuf[wlen], len, 0 ) ) == ERROR )
+         {
+            //
+            // Error ...
+            int errorNo = errno;
+            DataLog_Critical criticalLog;
+            DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+                                 << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
+                                 << " - Gateway=" << nodeId << " send failed" 
+                                 << ", (" << strerror( errorNo ) << ")"
+                                 << endmsg;
+            _FATAL_ERROR( __FILE__, __LINE__, "socket send failed" );
+         }
+   
+         len -= wval;
+         wlen += wval;
+      }
+   }
+   else
    {
       //
-      // Error ...
-      int errorNo = errno;
+      // Error ...                                                               
       DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
-                           << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
-                           << " - Gateway=" << sockbuffer->peerhost() 
-                           << " (" << mp.msgData().nodeId() << ") send failed" 
-                           << ", (" << strerror( errorNo ) << ")"
-                           << endmsg;
-      _FATAL_ERROR( __FILE__, __LINE__, "socket send failed" );
+      DataLog(criticalLog) << "Error sending to gateway=" << hex << nodeId
+                           << ", TCP socket not found." << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "Gateway send failed" );
    }
-   sockbuffer->flush_all();
 }
 
 bool Router::sendMessageToSpoofer( const MessagePacket &mp, int priority )
@@ -1192,41 +1263,50 @@ bool Router::sendMessageToSpoofer( const MessagePacket &mp, int priority )
    return false;
 }
 
-void Router::synchUpRemoteNode( const MessagePacket &mpConst )
+void Router::synchUpRemoteNode( unsigned long nodeId )
 {
-   MessagePacket mp( mpConst );
-   sockinetbuf *sock = _InetGatewayMap[ mp.msgData().nodeId() ];
-   if ( sock )
+   //
+   // Find the first message in the list that has not 
+   //  been synched yet.  Synchronize that message and
+   //  send a message to myself to do that again.
+   map< unsigned long, set< unsigned long > >::iterator mtogiter;
+   for ( mtogiter  = _MsgToGatewaySynchMap.begin() ;
+         mtogiter != _MsgToGatewaySynchMap.end() ;
+         mtogiter++ )
    {
-      synchUpRemoteNode( sock, mp.msgData().msgId() );
-
-      //
-      // Send myself an mqueue message to continue to synch 
-      //  with the next message in the list ...
-      map< unsigned long, string >::iterator miter;
-      miter = _MsgIntegrityMap.find( mp.msgData().msgId() );
-      miter++;
-      if ( miter != _MsgIntegrityMap.end() )
+      set< unsigned long >::iterator giter;
+      giter = ((*mtogiter).second).find( nodeId );
+      if ( giter == ((*mtogiter).second).end() )
       {
+         synchUpRemoteNode( nodeId, (*mtogiter).first );
+         ((*mtogiter).second).insert( nodeId );
+
+         MessagePacket mp;
          mp.msgData().osCode( MessageData::GATEWAY_MESSAGE_SYNCH );
-         mp.msgData().msgId( (*miter).first );
+         mp.msgData().msgId( 0 );
+         mp.msgData().nodeId( nodeId );
          mp.updateCRC();
 
          sendMessage( mp, _RouterQueue, taskIdSelf(), MessageSystemConstant::REMOTE_NODE_SYNCH_PRIORITY );
+         return;
       }
    }
-   else
-   {
-      //
-      // Error ...                                                               
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Error synching gateway=" << hex << mp.msgData().nodeId() 
-                           << ", TCP socket not found." << endmsg;
-      _FATAL_ERROR( __FILE__, __LINE__, "Gateway synch failed" );
-   }
+
+   if ( _GatewayConnSynchedMap[ nodeId ] == Router::RemoteComplete )
+      _GatewayConnSynchedMap[ nodeId ] = Router::Synched;
+   else if ( _GatewayConnSynchedMap[ nodeId ] == Router::Incomplete )
+      _GatewayConnSynchedMap[ nodeId ] = Router::LocalComplete;
+
+   //
+   // Send the message to say that my side of the message synching is complete ...
+   MessagePacket mp;
+   mp.msgData().osCode( MessageData::GATEWAY_MESSAGE_SYNCH_COMPLETE );
+   mp.msgData().msgId( 0 );
+
+   sendMessageToGateway( nodeId, mp );
 }
 
-void Router::synchUpRemoteNode( sockinetbuf *sockbuffer, unsigned long msgId )
+void Router::synchUpRemoteNode( unsigned long nodeId, unsigned long msgId )
 {
    //
    // Send given msgId message to the remote node ...
@@ -1256,7 +1336,7 @@ void Router::synchUpRemoteNode( sockinetbuf *sockbuffer, unsigned long msgId )
    
       //
       // Send the packet to the remote gateway ...
-      sendMessageToGateway( sockbuffer, mp );
+      sendMessageToGateway( nodeId, mp );
    }
 }
 
@@ -1298,7 +1378,7 @@ void Router::dumpQueue( unsigned long tId, mqd_t mqueue, DataLog_Stream &out )
    while ( mq_receive( mqueue, &buffer, sizeof( MessagePacket ), &priority ) != ERROR )
    {
 
-#if !( BUILD_TYPE==DEBUG ) && !( CPU==SIMNT )
+#if !( BUILD_TYPE==DEBUG )
       //
       // Format the data ...
       MessagePacket mp;
@@ -1314,7 +1394,7 @@ void Router::dumpQueue( unsigned long tId, mqd_t mqueue, DataLog_Stream &out )
          out << hex << (int)(unsigned char)buffer[i] << " "; 
       }
       out << endmsg;
-#endif // #if BUILD_TYPE!=DEBUG && CPU!=SIMNT
+#endif // #if BUILD_TYPE!=DEBUG 
 
    }
    mq_setattr( mqueue, &old_attr, 0 );
@@ -1348,14 +1428,13 @@ void Router::shutdown()
 
    //
    // Close the socket connections ...
-   map< unsigned long, sockinetbuf* >::iterator sockiter;
+   map< unsigned long, int >::iterator sockiter;
    for ( sockiter = _InetGatewayMap.begin() ;
          sockiter != _InetGatewayMap.end() ;
          sockiter++ )
    {
-      ((sockinetbuf*)(*sockiter).second)->close();
-      delete (*sockiter).second;
-      (*sockiter).second = 0;
+      close((*sockiter).second);
+      (*sockiter).second = ERROR;
    }
 }
 
@@ -1370,6 +1449,7 @@ void Router::cleanup()
    //  ( no dynamic memory was created, so doing
    //    a clear will clean the map fine )
    _MsgIntegrityMap.clear();
+   _MsgToGatewaySynchMap.clear();
    _MessageTaskMap.clear();
    _TaskQueueMap.clear();
    _MessageGatewayMap.clear();

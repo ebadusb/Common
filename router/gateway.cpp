@@ -8,10 +8,12 @@
  
 #include <vxWorks.h>
 
-#include <stdlib.h>
 #include <errnoLib.h>
+#include <ioLib.h>
+#include <stdlib.h>
 #include <time.h>
 #include <taskHookLib.h>
+#include <netinet/tcp.h>
 
 #include "datalog.h"
 #include "error.h"
@@ -44,8 +46,7 @@ void Gateway::datalogErrorHandler( const char * file, int line,
 }
 
 Gateway::Gateway()
-:  _ServerSocket( sockbuf::sock_stream ),
-   _ClientSocket( ),
+:  _ClientSocket( 0 ),
    _RouterQueue( 0 )
 {
 }
@@ -58,6 +59,8 @@ Gateway::~Gateway()
 
 bool Gateway::init( short port )
 {
+   DataLog_Critical criticalLog;
+
    //
    // Install the datalog error handler ...
    datalog_SetTaskErrorHandler( taskIdSelf(), &Gateway::datalogErrorHandler );
@@ -73,29 +76,90 @@ bool Gateway::init( short port )
    {
       //
       // Error ...
+      DataLog(criticalLog) << "Gateway::init : router mq_open failed, error->" << strerror( errnoGet() ) << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Router message queue open failed" );
       return false;
    }
 
-
-   if ( _ServerSocket.bind( INADDR_ANY, port ) != 0 )
+	int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+   if ( serverSocket == ERROR )
    {
       //
       // Error ...
+      DataLog(criticalLog) << "Gateway::init : socket create failed, error->" << strerror( errnoGet() ) << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket create failed" );
+      return false;
+   }
+
+   sockaddr_in	addr;
+	memset(&addr , 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = htons(port);
+
+   if ( bind( serverSocket, (sockaddr *)&addr, sizeof(addr) ) == ERROR )
+   {
+      //
+      // Error ...
+      DataLog(criticalLog) << "Gateway::init : socket bind failed, error->" << strerror( errnoGet() ) << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket bind failed" );
       return false;
    }
 
-   _ServerSocket.listen();
-   if ( ( _ClientSocket = _ServerSocket.accept() ) == ERROR )
+	struct sockaddr_in	clientAddr;
+	int 	clientAddrSize = sizeof(clientAddr);
+
+   if ( listen( serverSocket, 0 ) == ERROR )
    {
       //
       // Error ...
+      DataLog(criticalLog) << "Gateway::init : socket listen failed, error->" << strerror( errnoGet() ) << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket listen failed" );
+      return false;
+   }
+
+   if ( ( _ClientSocket = accept( serverSocket, (sockaddr*)&clientAddr, &clientAddrSize) ) == ERROR )
+   {
+      //
+      // Error ...
+      DataLog(criticalLog) << "Gateway::init : socket accept failed, error->" << strerror( errnoGet() ) << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket accept failed" );
       return false;
    }
-   _ClientSocket.keepalive( 1 );
-   _ClientSocket.nodelay( 1 );
+
+   //
+   //
+   int optval=16384; // Set the size of the receive buffer to 16
+   if ( setsockopt( _ClientSocket, SOL_SOCKET, SO_RCVBUF, (char*)&optval, sizeof(optval) ) == ERROR )
+   {
+      //
+      // Error ...
+      DataLog(criticalLog) << "Gateway::init : socket set receive buffer size option SO_RCVBUF failed, error->" << strerror( errnoGet() ) << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket set option failed" );
+      return false;
+   }
+
+   optval=1;
+   if ( setsockopt( _ClientSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&optval, sizeof(optval) ) == ERROR )
+   {
+      //
+      // Error ...
+      DataLog(criticalLog) << "Gateway::init : socket set option SO_KEEPALIVE failed, error->" << strerror( errnoGet() ) << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket set option failed" );
+      return false;
+   }
+   if ( setsockopt( _ClientSocket, IPPROTO_TCP, TCP_NODELAY, (char*)&optval, sizeof(optval) ) == ERROR )
+   {
+      //
+      // Error ...
+      DataLog(criticalLog) << "Gateway::init : socket set option TCP_NODELAY failed, error->" << strerror( errnoGet() ) << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket set option failed" );
+      return false;
+   }
+
+   //
+   // Close the server socket ...
+   close( serverSocket );
 
    return true;
 }
@@ -109,7 +173,7 @@ void Gateway::receiveLoop()
 		int	  total_byte_count = 0;
 		while ( total_byte_count < sizeof(MessagePacket) )
 		{
-			int byte_count = _ClientSocket.recv( &mpBuff[total_byte_count], sizeof( MessagePacket ) - total_byte_count, 0 );
+			int byte_count = recv( _ClientSocket, &mpBuff[total_byte_count], sizeof( MessagePacket ) - total_byte_count, 0 );
 
 			if ( byte_count == ERROR )
 			{
@@ -135,7 +199,6 @@ void Gateway::receiveLoop()
       // Send the message packet to the router ...
       //
       sendMsgToRouter( mp );
-      
    }
    while ( true );
 }
@@ -183,7 +246,7 @@ void Gateway::shutdown()
 {
    //
    // Close the socket ...
-   _ServerSocket.shutdown(sockbuf::shut_readwrite);
+   close( _ClientSocket );
 
    //
    // Close the router's queue ...

@@ -3,6 +3,9 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.9 2003/04/29 17:07:54Z jl11312 Exp jl11312 $
  * $Log: datalog_message_stream.cpp $
+ * Revision 1.4  2002/09/19 21:25:59  jl11312
+ * - modified stream functions to not reset stream state when two stream writes occur without endmsg in between
+ * - added errnoMsg manipulator function
  * Revision 1.3  2002/08/28 14:37:08  jl11312
  * - changed handling of critical output to avoid problem with handles referencing deleted tasks
  * Revision 1.2  2002/08/15 20:53:56  jl11312
@@ -343,10 +346,9 @@ ostream & endmsg(ostream & stream)
 	return stream;
 }
 
-ostream & errnoMsg(ostream & stream)
+ostream & omanip_errnoMsg(ostream & stream, int errnoParam)
 {
 	bool	decodeOK = false; 
-	int	errnoCopy = errno;
 
 	if ( statSymTbl != NULL )
 	{
@@ -354,9 +356,9 @@ ostream & errnoMsg(ostream & stream)
 		char  	errName[MAX_SYS_SYM_LEN+1];
 		int		errValue;
 
-		if ( symFindByValue(statSymTbl, errnoCopy, errName, &errValue, &type) == OK )
+		if ( symFindByValue(statSymTbl, errnoParam, errName, &errValue, &type) == OK )
 		{
-			if ( errValue == errnoCopy )
+			if ( errValue == errnoParam )
 			{
 				stream << errName;
 				decodeOK = true;
@@ -366,7 +368,7 @@ ostream & errnoMsg(ostream & stream)
 
 	if ( !decodeOK )
 	{
-		stream << "errno=" << errnoCopy;
+		stream << "errno=" << errnoParam;
 	}
 
 	return stream;

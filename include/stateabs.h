@@ -82,7 +82,10 @@ public:
    //   return (0,99] -- exit code
    //   return NO_TRANSITION -- state is not finished processing
    //
-   virtual int transitionStatus() { return NO_TRANSITION; };
+   //  _TransitionStatus can be set by the user to return the 
+   //   transtion value.
+   //
+   virtual int transitionStatus() { return _TransitionStatus; };
 
    //
    // Function to test whether this state has met its requirements
@@ -151,7 +154,7 @@ public:
    void maintainHistory( int f ) { _MaintainHistoryFlag = f; };
    const int maintainHistory() const { return _MaintainHistoryFlag; };
 
-   virtual StateAbs *clone() const = 0;
+   virtual StateAbs *clone() const { return 0; };
 
 protected:
 
@@ -231,6 +234,12 @@ protected:
    //  by a logical operation
    //
    TransComplex             _Transition;
+
+   //
+   // Flag, which can be set by the user, to cause a transition
+   //  for this state.
+   //
+   int                      _TransitionStatus;
 
    //
    // This is the state which maintains ownership of this

@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.5  2004/11/01 17:27:22Z  cf10242
+ *  Change TextItem to CGUITextItem
  *  Revision 1.4  2004/10/29 15:11:13Z  rm10919
  *  Revision 1.3  2004/10/22 20:14:34Z  rm10919
  *  CGUIButton updates and changes.
@@ -231,12 +233,15 @@ public:
 
    // SET TEXT
    // set the text associated with the button.  
-//   void setText(CGUIText *textid); // ptr to a text object associated with the button
-   void setText(const char * string = NULL, CGUITextItem * CGUITextItem = NULL); // ptr to a text object associated with the button
+   void setText(CGUITextItem * textItem = NULL); // ptr to a text object associated with the button
+   void setText(const char * string = NULL); // ptr to a text object associated with the button
   
-   void setEnabledText(const char * string);
-   void setDisabledText(const char * string);
-   void setPressedText(const char * string);
+   void setEnabledText(CGUITextItem * textItem = NULL);
+   void setEnabledText(const char * string = NULL);
+   void setDisabledText(CGUITextItem * textItem = NULL);
+   void setDisabledText(const char * string = NULL);
+   void setPressedText(CGUITextItem * textItem = NULL);
+   void setPressedText(const char * string = NULL);
 
    // SET TEXTSTYLE
    // set/change the style of the text associated with this button in ALL states.  This is a pass-thru to the 

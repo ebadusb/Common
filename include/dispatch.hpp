@@ -1,10 +1,8 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Y:/BCT_Development/Common/INCLUDE/rcs/DISPATCH.HPP 1.7 2000/05/31 17:14:59 BD10648 Exp ms10234 $
+ * $Header: M:/BCT_Development/vxWorks/Common/include/rcs/dispatch.hpp 1.12 2000/12/14 23:53:47 ms10234 Exp sb07663 $
  * $Log: dispatch.hpp $
- * Revision 1.6  2000/05/26 19:37:23  BS04481
- * Add no_bounce version of routeBuffer when enums are ints.
  * Revision 1.5  2000/03/07 00:30:05  BD10648
  * Default Queue size reduced in conjunction with increased message size.
  * Revision 1.4  1999/09/30 04:02:12  BS04481
@@ -80,11 +78,14 @@
 #include <string.h>
 #include <sys/types.h>
 #include "msghdr.h"
+#include "callback.h"
 
 // forward references
 
 class dispatcher;
 class focusTimerMsg;
+
+extern dispatcher *dispatch;
 
 // public structures, enums, and data
 
@@ -117,6 +118,7 @@ class routeBuffer
    friend class msglog;                            // tracks msg traffic
 
    public:
+      routeBuffer( );
       routeBuffer( void** msg,                     // pointer to msg pointer
                    unsigned short msgLength,       // message length
                    unsigned short id);             // message id
@@ -128,15 +130,14 @@ class routeBuffer
       routeBuffer( void** msg,                     // pointer to msg pointer
                    unsigned short msgLength,       // message length
                    int id)             // message id
-     { routeBuffer(msg,msgLength,(unsigned short) id); }
-     
-     routeBuffer( void** msg,                     // pointer to msg pointer
-                  unsigned short msgLength,       // message length
-                  int id,              // message id
-                  bounce_t bounce);               // handling of message back to originator
-     { routeBuffer(msg,msgLength,(unsigned short) id, bounce_t bounce); }
+	  { routeBuffer(msg,msgLength,(unsigned short) id); }
 #endif
+      int init( void **msg,
+                        unsigned short msgLength,
+                        unsigned short id,
+                        bounce_t bounce=(bounce_t)MESSAGE_REGISTER);
       virtual ~routeBuffer();
+      void deregister();
 
       virtual void notify();
       void send();
@@ -145,11 +146,62 @@ class routeBuffer
                       nid_t& nid,                  // sending nid
                       struct timespec& sendTime);  // time msg sent
 
+      // Set the virtual notify function by
+      //   using the Callback constructor and passing the
+      //   this pointer along with a member function that
+      //   matches the definition inside the Callback class
+      void virtualNotify( Callback cb ) { _VirtualNotify = cb; };
+   
+   protected:
+
+      int safeCopy( void *m1, const void *m2, size_t size ) const;
+      void cleanup();
+
+   protected:
+      
+      // This will call a user specified member function of any
+      //  type of class.
+      Callback _VirtualNotify;
+                                                 
    private:
       routeBuffer( routeBuffer const &);           // not implemented
       routeBuffer& operator= (routeBuffer const&); // not implemented
       unsigned short _msgID;                       // message id
       void*    message;                            // storage allocated here!
+};
+
+
+class timerMsg
+{
+   public:
+      timerMsg();              // default constructor
+      timerMsg( unsigned long interval);
+      int init( unsigned long interval );
+      virtual ~timerMsg();
+      void deregister();
+      virtual void notify();
+      void interval( unsigned long interval);
+
+      // Set the virtual timeout function by
+      //   using the Callback constructor and passing the
+      //   this pointer along with a member function that
+      //   matches the definition inside the Callback class
+      void virtualTimeout( Callback cb ) { _VirtualTimeout = cb; };
+   
+   protected:
+
+      void cleanup();
+
+      // This will call a user specified member function of any
+      //  type of class.
+      Callback _VirtualTimeout;
+                                           
+   private:
+      timerMsg( timerMsg const &);
+      timerMsg& operator=( timerMsg const &);
+
+      timer_t timerID;              // timer number
+      pid_t   proxy;                // proxy
 };
 
 /*
@@ -165,19 +217,23 @@ class dispatcher
    public:
 
 // class members
-
+      dispatcher( );
       dispatcher( int argc,                        // command line arg count
                   char** argv,                     // command line arguments
                   int maxMessages=DEFAULT_Q_SIZE); // max size of queue
+      int init( int argc,
+                        char **argv,
+                        int maxMessages=DEFAULT_Q_SIZE);
       virtual ~dispatcher();
+      void deregister();
 
-      virtual void registerMessage( routeBuffer*);         // used by msg constructor
-      virtual void deregisterMessage( routeBuffer*);       // used by msg destructor
-      virtual void send( routeBuffer*);                    // send message
+      void registerMessage( routeBuffer*);         // used by msg constructor
+      void deregisterMessage( routeBuffer*);       // used by msg destructor
+      void send( routeBuffer*);                    // send message
 
       void clearTimerEntry( pid_t proxy);          // used by timer destructor
       void setTimerEntry( pid_t proxy,             // used by timer constructor
-                          focusTimerMsg* tm);      // pointer to timer msg
+                          timerMsg* tm);           // pointer to timer msg
 
       virtual void dispatchLoop();                 // dispatch loop
 
@@ -185,7 +241,7 @@ class dispatcher
                                                    // dispatchLoop to exit
       void trace( unsigned short msgID);           // trace message events
 
-     // 12/02/96 msm method added for an2 support 
+	  // 12/02/96 msm method added for an2 support 
       void send_tcp( void* );                       // tcp/ip send message for AN2 Beta 2.3
  
       char *programName( void);                    // return program name (argv[0])
@@ -193,6 +249,7 @@ class dispatcher
       int   iExist;                                // 1=active, 0=inactive
 
    protected:
+      void cleanup();
       friend int input_funct( void*, pid_t, void*, size_t);    // photon hook
       virtual void processMessage( pid_t pid);     // used by dispatchers
                                                    // to process msgs
@@ -258,10 +315,11 @@ class dispatcher
          unsigned short    length;                 // total length
          unsigned long     CRC;                    // CRC
          pid_t             proxy;                  // timer proxy
-         class focusTimerMsg* tm;                  // timer message
+         class timerMsg*   tm;                     // timer message
          timerEntry*       next;                   // next on chain
       };
       timerEntry* timerList;                       // timer list
 };
+
 
 #endif

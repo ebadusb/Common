@@ -9,6 +9,7 @@
 
 #include <vxWorks.h>
 
+#include "error.h"
 #include "messagebase.h"
 #include "messagesystem.h"
 #include "messagesystemconstant.h"

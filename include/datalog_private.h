@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_private.h 1.2 2002/11/14 15:53:13Z jl11312 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_private.h 1.2 2002/11/14 15:53:13Z jl11312 Exp $
  * $Log: datalog_private.h $
+ * Revision 1.2  2002/11/14 15:53:13Z  jl11312
+ * - added templates for periodic logging through member functions
  * Revision 1.1  2002/08/15 21:03:18  jl11312
  * Initial revision
  *
@@ -195,12 +197,6 @@ template<class Arg> inline DataLog_Result datalog_AddFunc(DataLog_SetHandle hand
 template <class T> class DataLog_PeriodicItemStringMemberFunc : public DataLog_PeriodicItemBase
 {
 public:
-	DataLog_PeriodicItemStringMemberFunc(DataLog_SetHandle set, T * obj, DataLog_CharPtr (T::* func)(void), const char * key, const char * description, const char * format)
-		: DataLog_PeriodicItemBase(set, DataLog_PeriodicItemBase::BUFFER_SIZE_INC, key, description, format), _obj(obj), _func(func) { }
-
-	DataLog_PeriodicItemStringMemberFunc(DataLog_SetHandle set, T * obj, DataLog_ConstCharPtr (T::* func)(void), const char * key, const char * description, const char * format)
-		: DataLog_PeriodicItemBase(set, DataLog_PeriodicItemBase::BUFFER_SIZE_INC, key, description, format), _obj(obj), _func(func) { }
-
 	DataLog_PeriodicItemStringMemberFunc(DataLog_SetHandle set, T * obj, DataLog_CharPtr (T::* func)(void) const, const char * key, const char * description, const char * format)
 		: DataLog_PeriodicItemBase(set, DataLog_PeriodicItemBase::BUFFER_SIZE_INC, key, description, format), _obj(obj), _func(func) { }
 
@@ -211,7 +207,7 @@ public:
 
 private:
 	T * _obj;
-	DataLog_ConstCharPtr (T::* _func)(void);
+	DataLog_ConstCharPtr (T::* _func)(void) const;
 };
 
 template<class T> inline DataLog_Result datalog_AddMemberFunc(DataLog_SetHandle handle, T * obj, DataLog_CharPtr (T::* func)(void), const char * key, const char * description, const char * format)

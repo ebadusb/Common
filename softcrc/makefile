@@ -1,6 +1,6 @@
 #
 # PURPOSE: builds COBE BCT common crc utilities
-# $Header: Y:/BCT_Development/Common/SOFTCRC/rcs/MAKEFILE 1.3 1999/06/07 22:25:47 TD10216 Exp MS10234 $
+# $Header: Y:/BCT_Development/Common/SOFTCRC/rcs/MAKEFILE 1.4 2000/05/12 20:21:02 MS10234 Exp MS10234 $
 # NB:Do NOT save & try to run this file with DOS CR/LFs
 # Set MKS option Configuration->Personal->Checkout->UNIX
 # symptom:cant open ../commonrules.mk
@@ -42,7 +42,7 @@ $(LIBDIR)/$(CRC_LIB):$(LIBOBJS)
 	$(LIB_BLD_CMD) $(LIBDIR)/$(CRC_LIB) +$(LIBOBJS)
 
 $(SOFTCRC): cobecrc.o $(LIBDIR)/$(CRC_LIB) $(LIBDIR)/routerf.lib
-		$(LD) -o $(SOFTCRC) $(LDFLAGS) cobecrc.o -lcrc.lib -lrouterf.lib
+		$(LD) -o $(SOFTCRC)  -g3 -L$(LIBDIR) $(Offsetmacro) $(Stackmacro) cobecrc.o -lcrc.lib -lrouterf.lib
 
 cobecrc.o: softcrc.cpp softcrc.h 
 		$(CPP) $(CFLAGS) -DRESTRICT_TO_COBE softcrc.cpp

@@ -3,6 +3,8 @@
 # Makefile - makefile for socket++ library
 #
 # $Log: makefile.vx $
+# Revision 1.3  2002/05/01 15:51:45  rm70006
+# Fix makefile to look for .h files in common/include.
 # Revision 1.2  2002/04/30 20:06:19Z  rm70006
 # Something goofy happened.  the upper level make file got checked in it's place.
 #
@@ -14,17 +16,17 @@
 all: check_opt_change lib
 
 #
+# Define include directories needed for apps built in this directory
+#
+ADDN_INCDIR = -I../include
+
+#
 # MAINDIR should be set to the relative path from this makefile directory
 # to the base trima project directory.  MAINDIR must use \ (DOS/Windows
 # style) directory separators if they are needed.
 #
 MAINDIR = ..
 include $(MAINDIR)/makefile.vxc
-
-#
-# Define include directories needed for apps built in this directory
-#
-ADDN_INCDIR = -I../include
 
 #
 # The following should define all of the source files of each type

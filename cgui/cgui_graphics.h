@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.13 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.h $
+ * Revision 1.1  2004/09/20 18:18:06Z  rm10919
+ * Initial revision
  *
  */
 
@@ -244,7 +246,7 @@ public:
    void horizShift(short horizShift) { x+=horizShift;}
    void vertShift (short vertShift)  { y+=vertShift;}
 
-   void convertToUglRect(UGL_RECT & rect) const;
+   void convertToUGLRect(UGL_RECT & rect) const;
 };
 #endif /* #ifndef _CGUI_GRAPHICS_INCLUDE */
 

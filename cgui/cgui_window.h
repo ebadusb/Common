@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.h 1.6 2005/02/21 17:17:13Z cf10242 Exp psanusb $
  * $Log: cgui_window.h $
+ * Revision 1.1  2004/09/20 18:18:10Z  rm10919
+ * Initial revision
  *
  */
 

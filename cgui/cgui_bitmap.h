@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap.h 1.4 2004/11/18 22:34:09Z rm10919 Exp wms10235 $
  * $Log: cgui_bitmap.h $
+ * Revision 1.1  2004/09/20 18:18:12Z  rm10919
+ * Initial revision
  *
  */
 

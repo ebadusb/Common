@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.1  2004/09/20 18:18:04Z  rm10919
+ *  Initial revision
  *
  */
 #ifndef _CGUI_BUTTON_INCLUDE

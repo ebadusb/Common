@@ -3,6 +3,8 @@
  *
  * $Header: L:/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.8 2004/10/29 15:11:14Z rm10919 Exp cf10242 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.2  2004/09/28 19:47:27Z  rm10919
+ * Missed naming changes to CGUI.
  * Revision 1.1  2004/09/20 18:18:05Z  rm10919
  * Initial revision
  *
@@ -394,7 +396,7 @@ void CGUIDisplay::getCursorPos(int &x, int &y)
 }
 
 
-void OSRegion::convertToUglRect(UGL_RECT & rect) const
+void CGUIRegion::convertToUGLRect(UGL_RECT & rect) const
 {
    rect.left = x;
    rect.top = y;
@@ -424,7 +426,7 @@ TextItem::~ TextItem()
 const StringChar * TextItem::getText(LanguageId languageId = currentLanguage)
 {
    const StringChar * string;
-   StringChar * stringNonsense;
+   StringChar * stringNonsense=NULL;
 
    string = (StringChar *) "\x41\x00\x63\x00\x63\x00\x65\x00\x73\x00" "\x73\x00\x20\x00\x50\x00\x72\x00\x65\x00" "\x73\x00\x73\x00\x75\x00\x72\x00\x65\x00\x00";
 

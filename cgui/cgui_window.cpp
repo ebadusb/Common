@@ -3,13 +3,15 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.9 2005/03/02 01:37:51Z cf10242 Exp psanusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.1  2004/09/20 18:18:09Z  rm10919
+ * Initial revision
  *
  */
 
 #include <vxWorks.h>
 #include "cgui_graphics.h"
 #include "cgui_window.h"
-#include "cgui_windowobject.h"
+#include "cgui_window_object.h"
 
 
 CGUIWindow::CGUIWindow(CGUIDisplay & display)

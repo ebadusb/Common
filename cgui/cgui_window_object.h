@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window_object.h 1.6 2008/11/06 22:24:17Z rm10919 Exp wms10235 $
  * $Log: cgui_window_object.h $
+ * Revision 1.2  2004/09/30 16:17:24Z  jl11312
+ * - corrected typo
  * Revision 1.1  2004/09/20 18:18:12Z  rm10919
  * Initial revision
  *

@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.3 2004/09/30 17:00:52Z cf10242 Exp rm10919 $
  * $Log: cgui_text.h $
+ * Revision 1.2  2004/09/28 19:47:27Z  rm10919
+ * Missed naming changes to CGUI.
  * Revision 1.1  2004/09/20 18:18:09Z  rm10919
  * Initial revision
  *
@@ -82,7 +84,7 @@ public:
    //
    // Constructors
    //
-   CGIText(CGUIDisplay & display);
+   CGUIText(CGUIDisplay & display);
    CGUIText(CGUIDisplay & display, CGUIWindow * parent, TextItem * textItem, StylingRecord * stylingRecord = NULL);
    CGUIText(CGUIDisplay & display, CGUIWindow * parent, TextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL);
 
@@ -171,7 +173,7 @@ public:
    // calling each individual method.
    //
    void setStylingRecord(StylingRecord * stylingRecord);
-   StylingRecord * getStylingRecord(void) { return * _sytlingRecord;}
+   void getStylingRecord(StylingRecord copyofStylingRecord) { copyofStylingRecord = _stylingRecord;};
 
    //
    // SET_TEXT

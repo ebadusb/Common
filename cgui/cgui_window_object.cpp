@@ -3,19 +3,21 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window_object.cpp 1.5 2005/03/02 01:37:51Z cf10242 Exp jl11312 $
  * $Log: cgui_window_object.cpp $
+ * Revision 1.1  2004/09/20 18:18:11Z  rm10919
+ * Initial revision
  * Initial revision
  *
  */
 
 #include <vxWorks.h>
 #include "cgui_graphics.h"
-#include "cgui_windowobject.h"
+#include "cgui_window_object.h"
 #include "cgui_window.h"
 
 CGUIWindowObject::CGUIWindowObject(CGUIDisplay & display)
 : _display(display)
 {
-   initializedata();
+   initializeData();
 }
 
 CGUIWindowObject::CGUIWindowObject(CGUIDisplay & display, const CGUIRegion & region)

@@ -3,6 +3,8 @@
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.20  2004/01/26 18:55:55Z  jl11312
+# - modifications for building under Tornado 2.2
 # Revision 1.19  2003/11/13 14:04:13Z  jl11312
 # - added drivers directory
 # Revision 1.18  2003/05/15 15:29:26Z  ms10234
@@ -59,6 +61,8 @@ ifeq ($(VXWORKS_VERSION),5.4)
   ifeq ($(CPU),I80486)
     DIR_LIST += drivers
   endif
+else
+  DIR_LIST += cgui
 endif
 
 .PHONY: libs

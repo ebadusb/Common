@@ -3,6 +3,11 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/router.c 1.11 2001/05/11 19:57:01 jl11312 Exp jl11312 $
  * $Log: router.c $
+ * Revision 1.7  1999/09/09 22:40:56  BS04481
+ * Removed PROC_SHUTDOWN message send from the end of the
+ * generalized shutdown function.   This message was introduced
+ * in the last rev and is now removed.
+ * 
  * Revision 1.6  1999/08/31 17:55:29  BS04481
  * Remove trima-specific code.  Make into a module to be linked
  * later with machine-specific code.  Add processor shutdown for
@@ -681,9 +686,11 @@ void shutdown(void)
    msg.zero[1] = 0;
    errno = 0;
 
-   delay(600);
+   // if we can't get a machine specific shutdown, do a generic one
+   // but wait a while for the machine specific first.
+   delay(3000);
 // send message to proc, if this fails, keep  going anyway
-//   Send( PROC_PID, &msg, &reply, sizeof( msg), sizeof(reply));
+   Send( PROC_PID, &msg, &reply, sizeof( msg), sizeof(reply));
    
 }
 

@@ -1,6 +1,6 @@
 #
 # PURPOSE: builds COBE BCT common crc utilities
-# $Header: I:/BCT_Development/Common/softcrc/rcs/makefile 1.5 2000/05/26 21:29:29 MS10234 Exp rm70006 $
+# $Header: I:/BCT_Development/Common/softcrc/rcs/makefile 1.6 2001/08/02 17:47:14 rm70006 Exp rm70006 $
 # NB:Do NOT save & try to run this file with DOS CR/LFs
 # Set MKS option Configuration->Personal->Checkout->UNIX
 # symptom:cant open ../commonrules.mk
@@ -62,7 +62,7 @@ crcgen.o: crcgen.cpp
 checkself.o: checkself.cpp checkself.h
 		$(CPP) $(CFLAGS) checkself.cpp
 
-crcfunctions.o: crcfunctions.cpp
+crcfunctions.o: crcfunctions.cpp ../include/crcfunctions.h ../include/crc.h
 		$(CPP) $(CFLAGS) ./crcfunctions.cpp
 
 OBJS=$(LIBOBJS) $(FAKEOBJS)

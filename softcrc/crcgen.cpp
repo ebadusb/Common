@@ -9,6 +9,10 @@
 
 #include "crcgen.h"
 
+#include <fstream.h>
+#include <stdio.h>
+#include <errno.h>
+
 /*****************************************************************/
 /*                                                               */
 /* CRC LOOKUP TABLE                                              */
@@ -30,6 +34,10 @@
 /*****************************************************************/
 
 #define TABLE_SIZE 256
+
+// Note:  256 is an arbitrary number
+#define MAXBUFFERLENGTH 256
+
 
 static
 unsigned long  crctable[TABLE_SIZE] =
@@ -122,3 +130,55 @@ int crcgen32(unsigned long* pcrc, char* pdata, long length)
 }
 
 
+
+
+
+// file_crcgen32() generates a 32bit CRC over the contents of a file.
+// inputs:
+//    filename - filename (plus path) to be crc'ed.  file must obviously exist.
+//    pcrc - ptr to initial crc value, the crc value is modified as each byte of input data
+//           is read.
+// outputs:
+//    *pcrc is updated with new crc value
+//    returns 0 if success
+//    returns -1 if failed
+int file_crcgen32 (const char *filename, unsigned long *pcrc)
+{
+   char buffer[MAXBUFFERLENGTH];
+   int count;
+   int totalBytesRead = 0;
+
+   ifstream inStream (filename, ios::in + ios::binary + ios::nocreate);
+
+   if (inStream.fail())
+   {
+      inStream.close();
+      return -1;
+   }
+   
+   // Start at the beginning of the stream.
+   inStream.seekg(0);
+   
+   // Read in the stream on block at a time.
+   do
+   {
+      inStream.read (buffer, MAXBUFFERLENGTH);
+      count = inStream.gcount();
+      totalBytesRead += count;
+
+      // There is something goofy with this stream class.  Fail bit is triggered
+      // on the reading of the end of a file.  Don't know what causes it, but
+      // ignore fail status.
+      if (inStream.bad())
+      {
+         sprintf (buffer, "Stream read failed (%d, %d) (%x).", count, totalBytesRead, inStream.rdstate());
+         inStream.close();
+         return -1;
+      }
+      
+      int status = crcgen32 (pcrc, buffer, count);
+   
+   } while ( count == MAXBUFFERLENGTH );
+
+   return 0;
+}

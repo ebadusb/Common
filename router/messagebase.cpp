@@ -97,11 +97,12 @@ void MessageBase::registerMsg( const CallbackBase &cb )
       //
       // Send the message ...
       if ( MessageSystem::MsgSystem() )
+      {
          MessageSystem::MsgSystem()->dispatcher().registerMessage( *this, regPckt );
+         _RegisteredFlag = true;
+      }
       else
          _FATAL_ERROR( __FILE__, __LINE__, "Message system not initialized" );
-
-      _RegisteredFlag = true;
    }
 }
 
@@ -136,11 +137,13 @@ void MessageBase::deregisterMsg( )
    //
    // Send the message ...
    if ( MessageSystem::MsgSystem() )
+   {
       MessageSystem::MsgSystem()->dispatcher().deregisterMessage( *this, regPckt );
+      _RegisteredFlag = false;
+   }
    else
       _FATAL_ERROR( __FILE__, __LINE__, "Message system not initialized" );
 
-   _RegisteredFlag = false;
 }
 
 void MessageBase::send()

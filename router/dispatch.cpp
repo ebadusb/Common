@@ -1,8 +1,13 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/DISPATCH.CPP 1.2 1999/05/31 20:35:02 BS04481 Exp BS04481 $
+ * $Header: Y:/BCT_Development/Common/ROUTER/rcs/DISPATCH.CPP 1.6 1999/09/30 04:02:15 BS04481 Exp MS10234 $
  * $Log: dispatch.cpp $
+ * Revision 1.2  1999/05/31 20:35:02  BS04481
+ * Remove unused MSGHEADER structure from messages. 
+ * Decrease maximum message size.  Add new version of 
+ * focusBufferMsg and focusInt32Msg that do not bounce the message
+ * back to the originator.  All changes to increase free memory.
  * Revision 1.1  1999/05/24 23:29:31  TD10216
  * Initial revision
  * Revision 1.35  1999/03/24 21:50:48  BS04481
@@ -100,8 +105,11 @@
 
 void signalHandler( int signum)
 {
-   dispatch->taskRunning = 0;             // clear running flag
-   dispatch->signalNumber = signum;       // save signal
+   if ( dispatch ) 
+   {
+      dispatch->taskRunning = 0;             // clear running flag
+      dispatch->signalNumber = signum;       // save signal
+   }
 };
 
 
@@ -119,9 +127,8 @@ routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short i
 {
 
 // range checks
-   if (dispatch->iExist == 1)
+   if ( dispatch ) 
    {
-
       if (msgLength < sizeof( MSGHEADER))
       {
          dispatch->fError( __LINE__, 0, "message length");
@@ -167,11 +174,10 @@ routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short i
 routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short id, bounce_t bounce) :
    _msgID( id)
 {
-   if (dispatch->iExist == 1)
-   {
 
 // range checks
-
+   if ( dispatch ) 
+   {
       if (msgLength < sizeof( MSGHEADER))
       {
          dispatch->fError( __LINE__, 0, "message length");
@@ -211,11 +217,9 @@ routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short i
 
 routeBuffer::~routeBuffer()
 {
-   if (dispatch->iExist == 1)
-   {
+   if ( dispatch ) 
       dispatch->deregisterMessage( this);    // remove this message
-      delete [] message;                     // delete storage
-   }
+   delete [] message;                     // delete storage
 };
 
 
@@ -233,7 +237,7 @@ virtual void routeBuffer::notify()
 
 void routeBuffer::send()
 {
-   if (dispatch->iExist == 1)
+   if ( dispatch ) 
       dispatch->send( this);                 // send message to router
 };
 
@@ -391,7 +395,6 @@ dispatcher::dispatcher( int argc, char** argv, int maxMessages)
          fError( __LINE__, errno, "mq_send()");
       }
    }
-   iExist=1;
 };
 
 
@@ -404,7 +407,6 @@ dispatcher::~dispatcher()
 // deregister this task with local router
    
    mq_highWater();
-   iExist=0;
    if (signalNumber != SIGPWR)
    {
       TASKLIST tl;
@@ -441,6 +443,7 @@ dispatcher::~dispatcher()
       mq_close( mq);
       mq_unlink(queueName);
    }
+   dispatch=0;
 };
 
 
@@ -497,7 +500,6 @@ dispatcher::registerMessage( routeBuffer* m)
 
 // send message to router
 
-//   mhdr->osCode = MESSAGE_REGISTER;          // tell router to add message
    mhdr->taskPID = getpid();                 // task PID
    mhdr->taskNID = getnid();                 // task NID
    clock_gettime( CLOCK_REALTIME,            // get current time
@@ -509,7 +511,7 @@ dispatcher::registerMessage( routeBuffer* m)
 // place message in router's input queue
    mq_check(routerQueue);
    while((mq_send( routerQueue, mhdr, mhdr->length, 0) == MQ_ERROR) &&
-         (taskRunning) && (iExist))
+         (taskRunning) )
    {
       if((errno==EINTR) && (k<RETRY_COUNT))  // signals
       {
@@ -563,7 +565,7 @@ dispatcher::deregisterMessage( routeBuffer* m)
 // place message in router's input queue
    mq_check(routerQueue);
    while((mq_send( routerQueue, mhdr, mhdr->length, 0) == MQ_ERROR) &&
-         (taskRunning) && (iExist) )
+         (taskRunning) )
    {
       if((errno==EINTR) && (k<MQ_ERROR))     // signals
       {
@@ -662,7 +664,7 @@ dispatcher::send( routeBuffer* m)
 // place message in router's input queue
    mq_check(routerQueue);
    while((mq_send( routerQueue, mhdr, mhdr->length, 0) == MQ_ERROR) &&
-         (taskRunning) && (iExist))
+         (taskRunning) )
    {
       if((errno==EINTR) && (k<RETRY_COUNT))  // signals
       {
@@ -727,7 +729,7 @@ dispatcher::send_tcp( void* m)
 // place message in router's input queue
    mq_check(routerQueue);
    while((mq_send( routerQueue, mhdr, mhdr->length, 0) == MQ_ERROR) &&
-         (taskRunning) && (iExist) )
+         (taskRunning) )
    {
       if((errno==EINTR) && (k<RETRY_COUNT))  // signals
       {
@@ -771,8 +773,6 @@ dispatcher::logData( long line, long msgID, long code)
 void
 dispatcher::clearTimerEntry( pid_t proxy)
 {
-   if (iExist)
-   {
       timerEntry* t;                            // next pointer
       timerEntry* oneBack;                      // one back
 
@@ -805,7 +805,6 @@ dispatcher::clearTimerEntry( pid_t proxy)
             t = t->next;
          }
       }
-   }
 };
 
 
@@ -819,8 +818,6 @@ dispatcher::clearTimerEntry( pid_t proxy)
 void
 dispatcher::setTimerEntry( pid_t proxy, class focusTimerMsg* tmsg)
 {
-   if (iExist)
-   {
       timerEntry* t = new timerEntry;
       if (t == NULL)
       {
@@ -838,7 +835,6 @@ dispatcher::setTimerEntry( pid_t proxy, class focusTimerMsg* tmsg)
       t->next = timerList;                      // insert on front
       updateFocusMsgCRC( t);                    // update CRC
       timerList = t;                            // add to front
-   }
 };
 
 
@@ -920,8 +916,6 @@ dispatcher::processMessage( pid_t pid)
    timerEntry* t;                               // timer pointer
    char msg[BSIZE];                             // message buffer
 
-   if (iExist)
-   {
 // check for timers
 
       if (pid != qproxy)                           // if not queue proxy, try timers
@@ -1014,6 +1008,5 @@ dispatcher::processMessage( pid_t pid)
             }                                      // end if mq_receive
          }                                         // end while taskRunning
       }                                            // end pid test
-   }
 };
 

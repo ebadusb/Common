@@ -167,7 +167,7 @@ void Gateway::sendMsgToRouter( const MessagePacket &mp )
    //
    // Send message packet to router ...
    unsigned int retries=0;
-   while (    mq_send( _RouterQueue, &mp, sizeof( MessagePacket ), 0 ) == ERROR 
+   while (    mq_send( _RouterQueue, &mp, sizeof( MessagePacket ), MessageSystemConstant::GATEWAY_MESSAGE_PRIORITY ) == ERROR 
            && retries++ < MessageSystemConstant::MAX_NUM_RETRIES )
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    if ( retries == MessageSystemConstant::MAX_NUM_RETRIES )

@@ -382,7 +382,7 @@ bool Router::initGateways()
          mp.msgData().msg( (unsigned char*)&timeDelay, 
                            sizeof( unsigned long ) );
          mp.updateCRC();
-         sendMessage( mp, _TimerQueue, taskIdSelf(), 0 );
+         sendMessage( mp, _TimerQueue, taskIdSelf(), MessageSystemConstant::GATEWAY_CONNECT_PRIORITY );
          _GatewayConnAtmptMap[ netAddress ] = 0;
 
       }
@@ -496,7 +496,7 @@ void Router::connectWithGateway( const MessagePacket &mp )
          MessagePacket newMP( mp );
          newMP.msgData().msg( (unsigned char*)&interval, sizeof( unsigned long ) ); 
          newMP.updateCRC();
-         sendMessage( newMP, _TimerQueue, taskIdSelf(), 0 );
+         sendMessage( newMP, _TimerQueue, taskIdSelf(), MessageSystemConstant::GATEWAY_CONNECT_PRIORITY );
 
          //
          // Synch up the remote node's message list ...
@@ -1212,7 +1212,7 @@ void Router::synchUpRemoteNode( const MessagePacket &mpConst )
          mp.msgData().msgId( (*miter).first );
          mp.updateCRC();
 
-         sendMessage( mp, _RouterQueue, taskIdSelf(), 1 );
+         sendMessage( mp, _RouterQueue, taskIdSelf(), MessageSystemConstant::REMOTE_NODE_SYNCH_PRIORITY );
       }
    }
    else

@@ -176,6 +176,11 @@ public:
    typedef void (CallbackClass::*TMemFncPtrVoid)();
    typedef void (CallbackClass::*TMemFncPtrData)( void* );
 
+   // pointer to a static member function of Callback class
+   // that takes no arguments
+   typedef void ( *TMemFncPtrVoidS)();
+   typedef void ( *TMemFncPtrDataS)( void* );
+   
    // constructor that takes a pointer to member function that takes no arguments
    Callback(CallbackClass *pp, TMemFncPtrVoid ptr) 
    : CallbackBase( (CallbackBase*)pp, (MemFncPtrVoid)ptr ){ };
@@ -183,6 +188,13 @@ public:
    Callback(CallbackClass *pp, TMemFncPtrData ptr, void *data=0 ) 
    : CallbackBase( (CallbackBase*)pp, (MemFncPtrData)ptr, data ) { };
      
+   // constructor that takes a pointer to a static member function that takes no arguments
+   Callback( TMemFncPtrVoidS ptr) 
+   : CallbackBase( (FncPtrVoid)ptr ){ };
+   // constructor that takes a pointer to a static member function that takes a void* argument
+   Callback( TMemFncPtrDataS ptr, void *data=0 ) 
+   : CallbackBase( (FncPtrData)ptr, data ) { };
+   
    // destructor
    ~Callback() {};
 

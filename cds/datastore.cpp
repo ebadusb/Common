@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.26  2003/07/11 21:21:37Z  ms10234
+ * HISTORY:    5829 - Speed improvements for PFR
  * HISTORY:    Revision 1.25  2003/07/08 22:16:03Z  ms10234
  * HISTORY:    5829 - Changes for PFR
  * HISTORY:    Revision 1.24  2003/06/19 18:39:06Z  ms10234
@@ -215,6 +217,8 @@ void DataStore::CreateSymbolTableEntry()
 }
 
 
+static SEM_ID 	datastoreInitSem = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+
 DataStore::DataStore(const char *name, Role role) :
    _handle( 0 ),
    _role(role),
@@ -242,6 +246,8 @@ DataStore::DataStore(const char *name, Role role) :
    event_type = DS_CREATE_EVENT;
    wvEvent(event_type, (char *)_name.c_str(), _name.length());
 #endif
+
+   semTake( datastoreInitSem, WAIT_FOREVER );
 
    // Create the Symbol table.
    if (_datastoreTable == NULL)
@@ -271,6 +277,8 @@ DataStore::DataStore(const char *name, Role role) :
 
       DataLog(log_level_cds_debug) << "First instance of " << _name << " created.  Saving datastore." << endmsg;
    }
+
+   semGive( datastoreInitSem );
 
 #if EVENT_TRACE == 1
    wvEvent(++event_type, (char *)_name.c_str(), _name.length());

@@ -273,17 +273,17 @@ void Router::dump( DataLog_Stream &outs )
    outs << endmsg;
    outs << " Message to Gateway Synch Map: size " << dec << _MsgToGatewaySynchMap.size();
    outs << endmsg;
-   map< unsigned long, set< unsigned long > >::iterator mtogiter;                                 // _MsgToGatewaySynchMap;
+   map< unsigned long, map< unsigned long, MessageSynchStatus > >::iterator mtogiter;  // _MsgToGatewaySynchMap;
    for ( mtogiter  = _MsgToGatewaySynchMap.begin() ;
          mtogiter != _MsgToGatewaySynchMap.end() ;
          ++mtogiter )
    {
       outs << "  Mid " << hex << (*mtogiter).first;
-      set< unsigned long >::iterator gateiter;
+      map< unsigned long, MessageSynchStatus >::iterator gateiter;
       for ( gateiter  = ((*mtogiter).second).begin() ;
             gateiter != ((*mtogiter).second).end() ;
             ++gateiter )
-         outs << " " << (*gateiter);
+         outs << " " << (*gateiter).first << "-" << dec << (*gateiter).second;
       outs << endmsg;
    }
    outs << " Message Task Map: size " << _MessageTaskMap.size();
@@ -426,17 +426,17 @@ void Router::remoteMsgDump()
 {
    DataLog( log_level_router_info ) << " Message to Gateway Synch Map: size " << dec << _MsgToGatewaySynchMap.size();
    DataLog( log_level_router_info ) << endmsg;
-   map< unsigned long, set< unsigned long > >::iterator mtogiter;                                 // _MsgToGatewaySynchMap;
+   map< unsigned long, map< unsigned long, MessageSynchStatus > >::iterator mtogiter;  // _MsgToGatewaySynchMap;
    for ( mtogiter  = _MsgToGatewaySynchMap.begin() ;
          mtogiter != _MsgToGatewaySynchMap.end() ;
          ++mtogiter )
    {
       DataLog( log_level_router_info ) << "  Mid " << hex << (*mtogiter).first;
-      set< unsigned long >::iterator gateiter;
+      map< unsigned long, MessageSynchStatus >::iterator gateiter;
       for ( gateiter  = ((*mtogiter).second).begin() ;
             gateiter != ((*mtogiter).second).end() ;
-            gateiter++ )
-         DataLog( log_level_router_info ) << " " << (*gateiter);
+            ++gateiter )
+         DataLog( log_level_router_info ) << " " << hex << (*gateiter).first << "-" << dec << (*gateiter).second;
       DataLog( log_level_router_info ) << endmsg;
    }
    DataLog( log_level_router_info ) << " Message Gateway Map: size " << dec << _MessageGatewayMap.size();
@@ -513,7 +513,7 @@ bool Router::initGateways()
          }
    
          _InetGatewayMap[ netAddress ] = sock;
-         _GatewayConnSynchedMap[ netAddress ] = Router::NoConn;
+         _GatewayConnSynchedMap[ netAddress ] = Router::NotConn;
 
       }
    }
@@ -568,28 +568,17 @@ void Router::processMessage( MessagePacket &mp, int priority )
       disconnectWithGateway( mp.msgData().nodeId() );
       break;
    case MessageData::GATEWAY_MESSAGE_SYNCH_BEGIN:
-      if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::NoConn )
-         _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::Connected;
-      else if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::Connected )
-      {
-         _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::Inprogress;
-         synchUpRemoteNode( mp.msgData().nodeId() );
-      }
-      DataLog( log_level_router_info ) << "Gateway (" << hex << mp.msgData().nodeId()
-                    << ") connection status : " << dec << gatewayConnStatus( mp.msgData().nodeId() )
-                    << endmsg;
+      _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = 
+                    (Router::GatewaySynched)( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] | Router::RemoteRouterConnected );
+      gatewayConnStatus( DataLog( log_level_router_info ), mp.msgData().nodeId() );
       break;
    case MessageData::GATEWAY_MESSAGE_SYNCH:
       synchUpRemoteNode( mp.msgData().nodeId() );
       break;
    case MessageData::GATEWAY_MESSAGE_SYNCH_COMPLETE:
-      if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::LocalComplete )
-         _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::Synched;
-      else if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::Inprogress )
-         _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::RemoteComplete;
-      DataLog( log_level_router_info ) << "Gateway (" << hex << mp.msgData().nodeId()
-                    << ") synchronization status : " << dec << gatewayConnStatus( mp.msgData().nodeId() ) 
-                    << endmsg;
+      _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = 
+                    (Router::GatewaySynched)( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] | Router::RemoteConnAndSynched );
+      gatewayConnStatus( DataLog( log_level_router_info ), mp.msgData().nodeId() );
       break;
    case MessageData::SPOOF_MSG_REGISTER:
       checkMessageId( mp.msgData().msgId(), (const char *)( mp.msgData().msg() ) );
@@ -640,13 +629,9 @@ void Router::connectWithGateway( const MessagePacket &mp )
 
       //
       // Synch up with the remote node ...
-      if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::NoConn )
-         _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::Connected;
-      else if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::Connected )
-      {
-         _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::Inprogress;
-         synchUpRemoteNode( mp.msgData().nodeId() );
-      }
+      _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = 
+              (Router::GatewaySynched)( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] | Router::LocalRouterConnected );
+      synchUpRemoteNode( mp.msgData().nodeId() );
 
       //
       // Notify the other node that we are connected ...
@@ -654,9 +639,7 @@ void Router::connectWithGateway( const MessagePacket &mp )
       newMP.msgData().osCode( MessageData::GATEWAY_MESSAGE_SYNCH_BEGIN );
       sendMessageToGateway( mp.msgData().nodeId(), newMP );
 
-      DataLog( log_level_router_info ) << "Gateway (" << hex << mp.msgData().nodeId()
-                       << ") connection status : " << dec << gatewayConnStatus( mp.msgData().nodeId() )
-                       << endmsg;
+      gatewayConnStatus( DataLog( log_level_router_info ), mp.msgData().nodeId() );
 
    }
    else
@@ -828,8 +811,8 @@ void Router::checkMessageId( unsigned long msgId, const char *mname )
 
       //
       // Create an entry to synchronize with the other gateways ...
-      set< unsigned long > gSet;
-      _MsgToGatewaySynchMap[ msgId ] = gSet;
+      map< unsigned long, MessageSynchStatus > gMap;
+      _MsgToGatewaySynchMap[ msgId ] = gMap;
    } 
 
 }
@@ -1246,20 +1229,33 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
          {
             //
             // Check for socket connection status.
-            if (    _GatewayConnSynchedMap[ (*sockiter).first ] != Router::NoConn 
+            if (    _GatewayConnSynchedMap[ (*sockiter).first ] != Router::NotConn 
                  && (*sockiter).second != ERROR )
             {
                //
                // Save the fact that we registered this message with this node ...
-               if (    mpConst.msgData().osCode() == MessageData::MESSAGE_NAME_REGISTER
-                    || mpConst.msgData().osCode() == MessageData::MESSAGE_REGISTER )
+               bool sendMessage = false;
+               if (    mpConst.msgData().osCode() == MessageData::MESSAGE_NAME_REGISTER )
                {
-                  _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ].insert( (*sockiter).first );
+                  if ( ( _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ] )[ mpConst.msgData().nodeId() ] == Router::MsgNoSynch )
+                  {
+                     sendMessage = true;
+                  }
+                  ( _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ] )[ mpConst.msgData().nodeId() ] = (MessageSynchStatus)
+                       ( ( _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ] )[ mpConst.msgData().nodeId() ] | Router::MsgNameSynch );
+               }
+               else if ( mpConst.msgData().osCode() == MessageData::MESSAGE_REGISTER )
+               {
+                  sendMessage = true;
+                  ( _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ] )[ (*sockiter).first ] = Router::MsgRegisterSynch;
                }
    
-               //
-               // Send the message to the gateway ...
-               sendMessageToGateway( ((*sockiter).first), mpConst );
+               if ( sendMessage ) 
+               {
+                  //
+                  // Send the message to the gateway ...
+                  sendMessageToGateway( ((*sockiter).first), mpConst );
+               }
             }
          }
       }
@@ -1268,15 +1264,8 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
                   || mpConst.msgData().osCode() == MessageData::MESSAGE_REGISTER )
              && mpConst.msgData().nodeId() != 0 )
    {
-      //
-      // Try to find the message Id in the message/task map ...
-      map< unsigned long, map< unsigned long, unsigned char > >::iterator mtiter;
-      mtiter = _MessageTaskMap.find( mpConst.msgData().msgId() );
-      
-      //
-      // If message found , but not tasks ...
-      if ( mtiter == _MessageTaskMap.end() )
-         _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ].insert( mpConst.msgData().nodeId() );
+      ( _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ] )[ mpConst.msgData().nodeId() ] = (MessageSynchStatus)
+             ( ( _MsgToGatewaySynchMap[ mpConst.msgData().msgId() ] )[ mpConst.msgData().nodeId() ] | Router::MsgNameSynch );
    }
 }
 
@@ -1386,18 +1375,13 @@ void Router::synchUpRemoteNode( unsigned long nodeId )
    // Find the first message in the list that has not 
    //  been synched yet.  Synchronize that message and
    //  send a message to myself to do that again.
-   map< unsigned long, set< unsigned long > >::iterator mtogiter;
+   map< unsigned long, map< unsigned long, MessageSynchStatus > >::iterator mtogiter;
    for ( mtogiter  = _MsgToGatewaySynchMap.begin() ;
          mtogiter != _MsgToGatewaySynchMap.end() ;
          ++mtogiter )
    {
-      set< unsigned long >::iterator giter;
-      giter = ((*mtogiter).second).find( nodeId );
-      if ( giter == ((*mtogiter).second).end() )
+      if ( synchUpRemoteNode( nodeId, (*mtogiter).first, (*mtogiter).second ) )
       {
-         synchUpRemoteNode( nodeId, (*mtogiter).first );
-         ((*mtogiter).second).insert( nodeId );
-
          MessagePacket mp;
          mp.msgData().osCode( MessageData::GATEWAY_MESSAGE_SYNCH );
          mp.msgData().msgId( 0 );
@@ -1409,78 +1393,121 @@ void Router::synchUpRemoteNode( unsigned long nodeId )
       }
    }
 
-   if ( _GatewayConnSynchedMap[ nodeId ] == Router::RemoteComplete )
-      _GatewayConnSynchedMap[ nodeId ] = Router::Synched;
-   else if ( _GatewayConnSynchedMap[ nodeId ] == Router::Inprogress )
-      _GatewayConnSynchedMap[ nodeId ] = Router::LocalComplete;
+   _GatewayConnSynchedMap[ nodeId ] = 
+                        (Router::GatewaySynched)( _GatewayConnSynchedMap[ nodeId ] | Router::LocalConnAndSynched );
 
    //
    // Send the message to say that my side of the message synching is complete ...
    MessagePacket mp;
    mp.msgData().osCode( MessageData::GATEWAY_MESSAGE_SYNCH_COMPLETE );
    mp.msgData().msgId( 0 );
-   DataLog( log_level_router_info ) << "Gateway (" << hex << nodeId
-                 << ") synchronization status : " << dec << gatewayConnStatus( nodeId )
-                 << endmsg;
+   sendMessageToGateway( nodeId, mp );
 
-   sendMessageToGateway( nodeId, mp );
-   sendMessageToGateway( nodeId, mp );
+   gatewayConnStatus( DataLog( log_level_router_info ), nodeId );
 }
 
-void Router::synchUpRemoteNode( unsigned long nodeId, unsigned long msgId )
+bool Router::synchUpRemoteNode( unsigned long nodeId, unsigned long msgId, map< unsigned long, MessageSynchStatus > &gStatusMap )
 {
-   //
-   // Send given msgId message to the remote node ...
-   //
-   map< unsigned long, map< unsigned long, unsigned char > >::iterator mtiter;
-   map< unsigned long, string >::iterator miter;
-
-   //
-   // Find the message Id in the list ...
-   miter = _MsgIntegrityMap.find( msgId );
-   if ( miter != _MsgIntegrityMap.end() )
+   map< unsigned long, MessageSynchStatus >::iterator giter;
+   giter = gStatusMap.find( nodeId );
+   if ( giter == gStatusMap.end() )
    {
-      MessagePacket mp;
-      mp.msgData().msgId( (*miter).first );
-      mp.msgData().msg( (unsigned char*)((*miter).second.c_str()), (int)((*miter).second.length()) );
-   
-      //
-      // Try to find the message Id in the message/task map ...
-      mtiter = _MessageTaskMap.find( (*miter).first );
-      
-      //
-      // If message found ...
-      if ( mtiter != _MessageTaskMap.end() )
-         mp.msgData().osCode( MessageData::MESSAGE_REGISTER );
-      else
-         mp.msgData().osCode( MessageData::MESSAGE_NAME_REGISTER );
-   
-      //
-      // Send the packet to the remote gateway ...
-      sendMessageToGateway( nodeId, mp );
+      gStatusMap[ nodeId ] = Router::MsgNoSynch;
+      giter = gStatusMap.find( nodeId );
    }
+
+   if ( (*giter).second != Router::MsgRegisterSynch )
+   {
+      //
+      // Send given msgId message to the remote node ...
+      //
+      map< unsigned long, map< unsigned long, unsigned char > >::iterator mtiter;
+      map< unsigned long, string >::iterator miter;
+   
+      //
+      // Find the message Id in the list ...
+      miter = _MsgIntegrityMap.find( msgId );
+      if ( miter != _MsgIntegrityMap.end() )
+      {
+         MessagePacket mp;
+         mp.msgData().msgId( (*miter).first );
+         mp.msgData().msg( (unsigned char*)((*miter).second.c_str()), (int)((*miter).second.length()) );
+      
+         //
+         // Try to find the message Id in the message/task map ...
+         mtiter = _MessageTaskMap.find( (*miter).first );
+         
+         //
+         // If message found ...
+         bool INeedToSendIt = false;
+         if ( mtiter != _MessageTaskMap.end() )
+         {
+            mp.msgData().osCode( MessageData::MESSAGE_REGISTER );
+            (*giter).second = Router::MsgRegisterSynch;
+            INeedToSendIt = true;
+         }
+         else
+         {
+            if ( (*giter).second == Router::MsgNoSynch )
+            {
+               (*giter).second = Router::MsgNameSynch;
+               INeedToSendIt = true;
+            }
+            mp.msgData().osCode( MessageData::MESSAGE_NAME_REGISTER );
+         }
+      
+         if ( INeedToSendIt )
+         {
+            //
+            // Send the packet to the remote gateway ...
+            sendMessageToGateway( nodeId, mp );
+            return true;
+         }
+      }
+   }
+   return false;
 }
 
-const char *Router::gatewayConnStatus( unsigned long nodeId )
+void Router::gatewayConnStatus( DataLog_Stream &outs, unsigned long nodeId )
 {
+   const char *message;
    GatewaySynched status = _GatewayConnSynchedMap[ nodeId ];
    switch ( status )
    {
-      case Router::NoConn :
-         return "Not Connected";
-      case Router::Connected :
-         return "One-way connection established";
-      case Router::Inprogress :
-         return "Fully connected, synchronization in progress";
-      case Router::LocalComplete :
-         return "Local messages have been synchronized with the remote node";
-      case Router::RemoteComplete :
-         return "Remote messages have been synchronized";
+      case Router::NotConn :
+         message = "Not Connected";
+         break;
+      case Router::LocalRouterConnected :
+         message = "Local connection established, No Remote connection";
+         break;
+      case Router::RemoteRouterConnected :
+         message = "Remote connection established, No Local connection";
+         break;
+      case Router::LocalAndRemoteConnected :
+         message = "Fully connected, synchronization in progress";
+         break;
+      case Router::LocalConnAndSynched :
+         message = "Local messages have been synchronized, No Remote connection";
+         break;
+      case Router::LocalSynchRemoteConn :
+         message = "Local messages have been synchronized, Remote connection established";
+         break;
+      case Router::RemoteConnAndSynched :
+         message = "Remote messages have been synchronized, No Local connection";
+         break;
+      case Router::RemoteSynchLocalConn :
+         message = "Remote messages have been synchronized, Local connection established";
+         break;
       case Router::Synched :
-         return "Local and Remote synchronizations complete";
+         message = "Local and Remote synchronizations complete";
+         break;
+      case Router::LocalRouterSynched:
+      case Router::RemoteRouterSynched:
       default :
-         return "Status unknown";
+         message = "Unknown";
+         break;
    };
+   outs << "Gateway (" << hex << nodeId << ") connection status : " << dec << message << "(" <<  status << ")" << endmsg;
 }
 
 

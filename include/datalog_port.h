@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.16 2003/10/03 12:32:57Z jl11312 Exp rm70006 $
  * $Log: datalog_port.h $
+ * Revision 1.6  2002/07/18 21:20:05  jl11312
+ * - added support for default log levels
  * Revision 1.5  2002/07/17 20:31:51  jl11312
  * - initial datalog implementation (no support for periodic logging)
  * Revision 1.4  2002/06/04 20:23:48  jl11312
@@ -32,15 +34,18 @@ typedef enum
 	DataLog_BadNetworkClientData,
 	DataLog_MultipleInitialization,
 	DataLog_NoSuchTask,
-	DataLog_NoSuchTaskFatal,
 	DataLog_InvalidHandle,
 	DataLog_LevelNotInitialized,
 	DataLog_CriticalBufferMissing,
 	DataLog_LevelConstructorFailed,
 	DataLog_OpenOutputFileFailed,
 	DataLog_LevelRecordWriteFailed,
+	DataLog_PeriodicSetRecordWriteFailed,
+	DataLog_PeriodicItemRecordWriteFailed,
 	DataLog_PrintFormatError,
 	DataLog_InternalWriteError,
+	DataLog_PeriodicWriteError,
+	DataLog_UnterminatedStreamOutput,
 
 	DataLog_LastError				/* must be last entry */
 } DataLog_ErrorType;
@@ -54,21 +59,27 @@ typedef struct
 	int _continuable;
 } DataLog_ErrorInformation;
 
+//
+// Error messages and continuable flag for each datalog error type
+//
 DataLog_ErrorInformation	datalog_ErrorInformation[DataLog_LastError] =
 {
 	{ DataLog_NoError, "no error", 1 },
 	{ DataLog_BadNetworkClientData, "bad network client data", 1 },
 	{ DataLog_MultipleInitialization, "multiple initialization", 1 },
-	{ DataLog_NoSuchTask, "no such task", 1 },
-	{ DataLog_NoSuchTaskFatal, "no such task - fatal", 0 },
+	{ DataLog_NoSuchTask, "no such task", 0 },
 	{ DataLog_InvalidHandle, "invalid handle", 1 },
 	{ DataLog_LevelNotInitialized, "level not initialized", 1 },
 	{ DataLog_CriticalBufferMissing, "critical buffer missing", 0 },
 	{ DataLog_LevelConstructorFailed, "level constructor failed", 0 },
 	{ DataLog_OpenOutputFileFailed, "open output file failed", 0 },
 	{ DataLog_LevelRecordWriteFailed, "level record write failed", 1 },
+	{ DataLog_PeriodicSetRecordWriteFailed, "periodic set record write failed", 1 },
+	{ DataLog_PeriodicItemRecordWriteFailed, "periodic item record write failed", 1 },
 	{ DataLog_PrintFormatError, "print format error", 1 },
-	{ DataLog_InternalWriteError, "internal write error", 1 }
+	{ DataLog_InternalWriteError, "internal write error", 1 },
+	{ DataLog_PeriodicWriteError, "periodic write error", 1 },
+	{ DataLog_UnterminatedStreamOutput, "unterminated stream output", 1 }
 };
 
 #endif /* ifdef DATALOG_DECLARE_ERROR_INFORMATION */
@@ -84,7 +95,13 @@ DataLog_ErrorInformation	datalog_ErrorInformation[DataLog_LastError] =
 typedef unsigned char DataLog_UINT8;
 typedef unsigned short DataLog_UINT16;
 typedef unsigned long DataLog_UINT32;
- 
+
+/*
+ *	internal ID related definitions (used for ID information in log files)
+ */
+typedef unsigned short DataLog_InternalID;
+#define DATALOG_NULL_ID 0
+
 /*
  *	Task related definitions
  */
@@ -165,22 +182,14 @@ void datalog_ReleaseAccess(DataLog_Lock lock);
 #ifdef __cplusplus
 bool datalog_WaitSignal(const char * signalName, double seconds);
 void datalog_SendSignal(const char * signalName);
-#endif /* ifdef __cplusplus */
-
-/*
- *	Comman data area related functions
- */
-#ifdef __cplusplus
-class DataLog_CommonData;
-DataLog_SharedPtr(DataLog_CommonData) datalog_GetCommonDataPtr(void);
-void datalog_SetCommonDataPtr(DataLog_SharedPtr(DataLog_CommonData) ptr);
-bool datalog_StartInitialization(void);
+void datalog_SetupPeriodicSignal(const char * signalName, double seconds);
 #endif /* ifdef __cplusplus */
 
 /*
  *	Data log task related functions
  */
 void datalog_StartOutputTask(const char * platformName);
+void datalog_StartPeriodicLogTask(DataLog_SetHandle set);
 
 /*
  *	Time stamp related functions.  Note that the related structures

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.10  2002/07/18 21:20:05  jl11312
+ * - added support for default log levels
  * Revision 1.9  2002/07/17 20:31:51  jl11312
  * - initial datalog implementation (no support for periodic logging)
  * Revision 1.8  2002/06/04 20:23:48  jl11312
@@ -31,7 +33,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "datalog_port.h"
 
 /*
  *	Version information
@@ -46,12 +47,14 @@ typedef enum { DataLog_OK, DataLog_Error } DataLog_Result;
 typedef enum { DataLog_LogEnabled, DataLog_LogDisabled } DataLog_EnabledType;
 typedef enum { DataLog_ConsoleEnabled, DataLog_ConsoleDisabled } DataLog_ConsoleEnabledType;
 
-typedef DataLog_SharedPtr(struct DataLog_HandleInfo)	DataLog_Handle;
-typedef DataLog_SharedPtr(struct DataLog_SetInfo)		DataLog_SetHandle;
+typedef struct DataLog_HandleInfo *	DataLog_Handle;
+typedef struct DataLog_SetInfo *		DataLog_SetHandle;
 
-#define DATALOG_NULL_HANDLE DATALOG_NULL_SHARED_PTR
-#define DATALOG_NULL_SET_HANDLE DATALOG_NULL_SHARED_PTR
+#define DATALOG_NULL_HANDLE NULL
+#define DATALOG_NULL_SET_HANDLE NULL
  
+#include "datalog_port.h"
+
 /*
  * C/C++ functions
  */
@@ -69,7 +72,7 @@ DataLog_Result datalog_SetDefaultTraceBufferSize(size_t size);
 DataLog_Result datalog_SetDefaultIntBufferSize(size_t size);
 DataLog_Result datalog_SetDefaultCriticalBufferSize(size_t size);
 
-typedef DataLog_SharedPtr(DataLog_BufferData) DataLog_EncryptFunc(DataLog_SharedPtr(DataLog_BufferData) input, size_t inputLength, size_t * outputLength);
+typedef DataLog_BufferData * DataLog_EncryptFunc(DataLog_BufferData input, size_t inputLength, size_t * outputLength);
 DataLog_Result datalog_SetEncryptFunc(DataLog_EncryptFunc * func);
 
 /*
@@ -78,7 +81,6 @@ DataLog_Result datalog_SetEncryptFunc(DataLog_EncryptFunc * func);
 DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * handle);
 DataLog_Result datalog_CreateIntLevel(const char * levelName, DataLog_Handle * handle);
 DataLog_Handle datalog_GetCriticalHandle(void);
-DataLog_Result datalog_GetDefaultLevel(DataLog_Handle * handle);
 DataLog_Result	datalog_SetDefaultLevel(DataLog_Handle handle);
 
 /*
@@ -110,6 +112,8 @@ void datalog_AddCharPtrFunc(DataLog_SetHandle handle, const char * (* func)(void
 DataLog_Result datalog_GetPeriodicOutputInterval(DataLog_SetHandle handle, double * seconds);
 DataLog_Result datalog_SetPeriodicOutputInterval(DataLog_SetHandle handle, double seconds);
 DataLog_Result datalog_ForcePeriodicOutput(DataLog_SetHandle handle);
+DataLog_Result datalog_DisablePeriodicOutput(DataLog_SetHandle handle);
+DataLog_Result datalog_EnablePeriodicOutput(DataLog_SetHandle handle);
 
 /*
  * error interface
@@ -142,9 +146,11 @@ class DataLog_OutputBuffer;
 class DataLog_Stream : public ostrstream
 {
 	friend class DataLog_OutputBuffer;
+	friend class DataLog_CriticalBuffer;
 	friend ostream & endmsg(ostream & stream);
 
 private:
+	DataLog_Stream(DataLog_OutputBuffer * output);
 	DataLog_Stream(DataLog_BufferData * buffer, size_t bufferSize, DataLog_OutputBuffer * output);
 	virtual ~DataLog_Stream() {}
 
@@ -190,48 +196,6 @@ public:
 #define DataLog(instance) (instance)(__FILE__, __LINE__)
 #define DataLog_Default datalog_GetDefaultStream(__FILE__, __LINE__)
 
-template<class Value> inline DataLog_Result datalog_AddRef(DataLog_SetHandle handle, const Value& ref, const char * key, const char * description)
-   {
-      printf("datalog_AddRef key = %s, description = %s\n", key, description);
-      return DataLog_OK;
-   }
-
-template<class Value, class Arg> inline DataLog_Result datalog_AddFunc(DataLog_SetHandle handle, Value (* func)(const Arg& arg), const Arg& arg, const char * key, const char * description)
-   {
-      printf("datalog_AddFunc key = %s, description = %s\n", key, description);
-      return DataLog_OK;
-   }
-
-/*
- * Specialized templates are defined for char pointers to allow them to be
- * handled correctly
- */
-typedef char * DataLog_CharPtr;
-template<> inline DataLog_Result datalog_AddRef<DataLog_CharPtr>(DataLog_SetHandle handle, const DataLog_CharPtr& ref, const char * key, const char * description)
-   {
-      printf("datalog_AddRef(char *) key = %s, description = %s\n", key, description);
-      return DataLog_OK;
-   }
-
-template<class Arg> inline DataLog_Result datalog_AddFunc(DataLog_SetHandle handle, DataLog_CharPtr (* func)(const Arg& arg), const Arg& arg, const char * key, const char * description)
-   {
-      printf("datalog_AddFunc(char *) key = %s, description = %s\n", key, description);
-      return DataLog_OK;
-   }
-
-typedef const char * DataLog_ConstCharPtr;
-template<> inline DataLog_Result datalog_AddRef<DataLog_ConstCharPtr>(DataLog_SetHandle handle, const DataLog_ConstCharPtr& ref, const char * key, const char * description)
-   {
-      printf("datalog_AddRef(const char *) key = %s, description = %s\n", key, description);
-      return DataLog_OK;
-   }
-
-template<class Arg> inline DataLog_Result datalog_AddFunc(DataLog_SetHandle handle, DataLog_ConstCharPtr (* func)(const Arg& arg), const Arg& arg, const char * key, const char * description)
-   {
-      printf("datalog_AddFunc(const char *) key = %s, description = %s\n", key, description);
-      return DataLog_OK;
-   }
-
 class DataLog_OutputTask
 {
 public:
@@ -257,9 +221,33 @@ private:
 	bool _isExiting;
 	int  _exitCode;
 	int _outputFile;
-	DataLog_SharedPtr(DataLog_CommonData) _common;
+};
+
+class DataLog_PeriodicTask
+{
+public:
+	DataLog_PeriodicTask(DataLog_SetHandle set);
+	virtual ~DataLog_PeriodicTask() {}
+
+	int main(void);
+	void pause(void) { _isRunning = false; }
+	void resume(void) { _isRunning = true; }
+	void exit(int code);
+
+private:
+	void shutdown(void);
+
+private:
+	bool _isRunning;
+	bool _isExiting;
+	int  _exitCode;
+
+	DataLog_SetHandle	_set;
 };
 
 #endif /* ifdef __cplusplus */
+
+#include "datalog_private.h"
+
 #endif /* ifndef _DATALOG_INCLUDE */
 

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_levels.h 1.5 2003/04/25 17:25:02Z jl11312 Exp ms10234 $
  * $Log: datalog_levels.h $
+ * Revision 1.2  2003/03/27 16:27:44Z  jl11312
+ * - allow disabling datalog levels by default
  * Revision 1.1  2003/03/27 15:48:00Z  jl11312
  * Initial revision
  */
@@ -22,6 +24,7 @@
 //
 // DataLog_Level class only supported in C++
 //
+LOG_DEF DataLog_Level	log_level_critical;
 LOG_DEF DataLog_Level	log_level_message_system_timer_info;
 LOG_DEF DataLog_Level	log_level_message_system_timer_error;
 LOG_DEF DataLog_Level	log_level_router_info;
@@ -49,6 +52,7 @@ LOG_DEF DataLog_Level	log_level_socket_error;
 
 #endif /* ifdef __cplusplus */
 
+LOG_DEF DataLog_Handle  log_handle_critical;
 LOG_DEF DataLog_Handle	log_handle_message_system_timer_info;
 LOG_DEF DataLog_Handle	log_handle_message_system_timer_error;
 LOG_DEF DataLog_Handle	log_handle_router_info;

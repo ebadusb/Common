@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_init.cpp 1.8 2003/04/11 15:26:11Z jl11312 Exp jl11312 $
  * $Log: datalog_init.cpp $
+ * Revision 1.7  2003/03/27 16:26:59Z  jl11312
+ * - added support for new datalog levels
  * Revision 1.6  2003/02/25 20:43:02Z  jl11312
  * - added support for logging platform specific information in log header
  * Revision 1.5  2003/02/25 16:10:11  jl11312
@@ -29,6 +31,9 @@
 
 static void datalog_InitLevels(void)
 {
+	datalog_CreateCriticalLevel(&log_handle_critical);
+	log_level_critical.setHandle(log_handle_critical);
+
 	for (int level=0; level<sizeof(initTable)/sizeof(initTable[0]); level+=1)
 	{
 		datalog_CreateLevel(initTable[level].name, initTable[level].handle);

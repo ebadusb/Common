@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.3  2002/07/02 16:00:20Z  rm70006
+ * HISTORY:    Added new non-write-restrictive class to CDS.
  * HISTORY:    Revision 1.2  2002/07/01 16:38:41Z  sb07663
  * HISTORY:    More descriptive logs and fatal errors
  * HISTORY:    Revision 1.1  2002/06/24 20:33:48  rm70006
@@ -439,6 +441,17 @@ MultWriteDataStore::MultWriteDataStore(char * name, Role role) :
 }
 
 
+
+//
+// Base Destructor
+// 
+MultWriteDataStore::~MultWriteDataStore()
+{
+}
+
+
+
+// Turn on for testing.  Remove when real one is developed
 #if 0
 #include <assert.h>
 void _FATAL_ERROR(char* file, int line, char* eString)

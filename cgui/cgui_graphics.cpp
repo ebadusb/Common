@@ -3,6 +3,8 @@
  *
  * $Header: L:/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.8 2004/10/29 15:11:14Z rm10919 Exp cf10242 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.3  2004/09/30 17:00:53Z  cf10242
+ * Correct for initial make to work
  * Revision 1.2  2004/09/28 19:47:27Z  rm10919
  * Missed naming changes to CGUI.
  * Revision 1.1  2004/09/20 18:18:05Z  rm10919
@@ -18,6 +20,8 @@
 #include "cgui_graphics.h"
 #include "cgui_window.h"
 //#include "datalogger.h"
+
+BITMAP_DATA_ENTRY bitmap_data_table[BITMAP_ID_COUNT];
 
 CGUIDisplay::CGUIDisplay(void)
 {

@@ -3,6 +3,8 @@
 # Makefile - makefile for clocks library
 #
 # $Log: makefile.vx $
+# Revision 1.2  2002/06/18 10:51:20  jl11312
+# - removed unecessary additional include directory
 # Revision 1.1  2002/06/18 16:24:29  pn02526
 # Initial revision
 #
@@ -29,7 +31,7 @@ include $(MAINDIR)/makefile.vxc
 # to be compiled for the library
 #
 LIB_C_FILES   = 
-LIB_CXX_FILES = auxclock.cpp
+LIB_CXX_FILES = auxclock.cpp ostime.cpp
 LIB_S_FILES =
 
 #

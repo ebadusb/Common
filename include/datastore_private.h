@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.11  2002/09/24 16:47:18Z  rm70006
+ * HISTORY:    Add extra debugging ability.
  * HISTORY:    Revision 1.10  2002/09/19 16:05:18Z  rm70006
  * HISTORY:    Added fast get for large datastore items.
  * HISTORY:    Revision 1.9  2002/09/18 22:13:24Z  rm70006
@@ -196,7 +198,6 @@ template <class dataType> inline void BaseElement<dataType>::Get(dataType *item)
 {
    if (_ds == 0)
    {
-      DataLog(*(_ds->_fatal)) << "BaseElement: Element Failed to register in CDS " << _ds->Name() << "." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");
    }
 
@@ -223,8 +224,6 @@ template<> inline void BaseElement<T>::Get(T *item) const                       
 {                                                                                          \
    if (_ds == 0)                                                                           \
    {                                                                                       \
-      DataLog(*(_ds->_fatal)) << "BaseElement: Element Failed to register in CDS "         \
-                              << _ds->Name() << "." << endmsg;                             \
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");        \
    }                                                                                       \
                                                                                            \
@@ -262,7 +261,6 @@ template <class dataType> inline dataType BaseElement<dataType>::Get() const
 
    if (_ds == 0)
    {
-      DataLog(*(_ds->_fatal)) << "BaseElement: Element Failed to register in CDS " << _ds->Name() << "." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");
    }
 
@@ -292,8 +290,6 @@ template<> inline T BaseElement<T>::Get() const                                 
 {                                                                                          \
    if (_ds == 0)                                                                           \
    {                                                                                       \
-      DataLog(*(_ds->_fatal)) << "BaseElement: Element Failed to register in CDS "         \
-                              << _ds->Name() << "." << endmsg;                             \
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");        \
    }                                                                                       \
                                                                                            \
@@ -333,7 +329,6 @@ template <class dataType> inline bool BaseElement<dataType>::Set(const dataType 
 {
    if (_ds == 0)
    {
-      DataLog(*(_ds->_fatal)) << "BaseElement: Element Failed to register in CDS " << _ds->Name() << "." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");
    }
 
@@ -361,8 +356,6 @@ template<> inline bool BaseElement<T>::Set(const T &data)                       
 {                                                                                    \
    if (_ds == 0)                                                                     \
    {                                                                                 \
-      DataLog(*(_ds->_fatal)) << "BaseElement: Element Failed to register in CDS "   \
-                              << _ds->Name() << "." << endmsg;                       \
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");  \
    }                                                                                 \
                                                                                      \

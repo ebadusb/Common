@@ -12,6 +12,8 @@
  *
  * $Header: I:/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.h 1.3 2000/12/08 23:22:55 td07711 Exp td07711 $
  * $Log: softcrc.h $
+ * Revision 1.2  2000/06/07 22:05:09  bd10648
+ * Moved CRC seed out of this file into common crcgen.h
  * Revision 1.1  1999/05/24 23:32:04  TD10216
  * Initial revision
  * Revision 1.6  1998/11/03 02:54:30  TM02109
@@ -42,7 +44,7 @@
  #define FILELIST_MAX 10
 
  // buffer sizes
- #define BUF_SIZE       256     // error msg buffer
+ #define BUF_SIZE 600 // error msg buf must accomodate two 256char strings plus some
 
  // filelist keyword for ignoring specified pathname
  //  ex:  IGNORE /focus  ignores /focus directory

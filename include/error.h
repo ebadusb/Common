@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/error.h 1.11 2002/10/29 21:19:03Z jl11312 Exp ms10234 $
  * $Log: error.h $
+ * Revision 1.10  2002/06/10 21:37:03  ms10234
+ * Added default error logging levels
  * Revision 1.9  2002/06/07 21:42:04  jl11312
  * - added routine for chaining to fatal error handler
  * Revision 1.8  2002/03/20 15:16:21  sb07663
@@ -82,7 +84,7 @@ extern "C" {
  * ERROR HANDLING:   none.
  */
 void
-_FATAL_ERROR(char* file, int line, char* eString);
+_FATAL_ERROR(const char * file, int line, const char * eString);
 
 /*
  * SPECIFICATION:		CHAIN_FATAL_ERROR_HANDLER

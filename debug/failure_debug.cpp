@@ -5,6 +5,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/debug/rcs/failure_debug.cpp 1.11 2004/02/24 22:31:40Z jl11312 Exp ms10234 $
  * $Log: failure_debug.cpp $
+ * Revision 1.3  2003/05/21 20:02:42Z  jl11312
+ * - enhanced memory protection (IT 6091)
  * Revision 1.2  2003/05/05 14:14:53Z  jl11312
  * - enabled message debug logging (IT 5915)
  * Revision 1.1  2003/02/28 22:07:52Z  jl11312
@@ -18,6 +20,7 @@
 #include <taskHookLib.h>
 
 #include "failure_debug.h"
+#include "task_start.h"
 
 // Local functions
 static void idleTask(void);

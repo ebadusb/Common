@@ -3,6 +3,8 @@
  * PURPOSE: used to parse options from command line or elsewhere
  * CHANGELOG:
  *   $Log: optionparser.h $
+ *   Revision 1.1  2002/09/18 23:31:10  td07711
+ *   Initial revision
  *   Revision 6.2  2002/05/01 18:04:44  td07711
  *   vxworks port
  *   Revision 6.1  2002/04/30 22:17:22  td07711
@@ -21,15 +23,13 @@
 #ifndef OptionParser_HPP // prevents multiple inclusion
 #define OptionParser_HPP
 
-
-
-// forward declarations
-class Usage;
+#include "usage.h"
 
 
 // CLASSNAME: OptionParser
 // RESPONSIBILITIES:
-//   1. Used to parse argc, argv style command line
+//   1. Used to parse argc, argv style command line,
+//      also can split a single string of space delimited tokens into argc argv
 //   2. makes a local copy of the command line upon construction
 //   3. provides a parse function whose signature defines keyword being
 //      looked for, and the location and data type of where it's value
@@ -39,47 +39,82 @@ class Usage;
 //   6. provides a done function that checks for any unparsed items remaining
 //   7. errors result in an error message and exit
 //   8. performs range checking on int and float values
-//   9. does not allow copying or assignment
+//   9. assigns default values to option variables
+//   10. builds a usage error message, displayed if usage error detected
 // COLLABORATIONS:
-//   1. Uses Logging macros defined in Logger.hpp
+//   1. contains a Usage class to hold usage info
 class OptionParser
 {
     public:
 
-        OptionParser(int argc, char** argv, Usage& usage); // unix and nt compatible
-        OptionParser(const char* options, Usage& usage);  // vxworks compatible
+        OptionParser(const char* programName, const char* comment);
         ~OptionParser();
 
-        // keyword/value options
-        void parse(char* keyword, char* comment,
-                   int* pStorage, int def, int min, int max); // int value
-        void parse(char* keyword, char* comment,
-                   float* pStorage, float def, float min, float max);
-        void parse(char* keyword, char* comment,
-                   double* pStorage, double def, double min, double max);
-        void parse(char* keyword, char* comment, char** pStorage, char* def); // string value
-        void parse(char* keyword, char* comment, bool* pStorage); // parses keyword flag
+        void init(int argc, const char** argv); // unix and nt 
+        void init(const char* options); // vxworks
+
+        // 
+        // getArgv() and getArgc() return argc argv containing unparsed data,
+        // parse() functions remove parsed data from argc argv
+        //
+        const char** getArgv() { return _argv; };
+        int getArgc() { return _argc; };
+
+        void done(); // usage error and exit if unparsed items remaining
+   
+        //
+        // parse functions for keyword and keyword value pairs
+        //
+
+        // int
+        void parse(const char* keyword, const char* comment, int* pStorage, 
+                   int def, int min, int max); // int value
         
-        // positional options
-        void parse(char* comment,
-                   int* pStorage, int def, int min, int max); // int value
-        void parse(char* comment,
-                   float* pStorage, float def, float min, float max);
-        void parse(char* comment,
-                   double* pStorage, double def, double min, double max);
-        void parse(char* comment, char** pStorage, char* def); // string value
+        // float
+        void parse(const char* keyword, const char* comment, float* pStorage, 
+                   float def, float min, float max);
+
+        // double float
+        void parse(const char* keyword, const char* comment, double* pStorage, 
+                   double def, double min, double max);
         
-        void done(); // checks for trash remaining on command line
+        // char* string
+        void parse(const char* keyword, const char* comment, const char** pStorage, 
+                   const char* def);
+
+        // bool keyword flag
+        void parse(const char* keyword, const char* comment, bool* pStorage); 
+        
+        //
+        // parse functions for positional (i.e. no keyword) data
+        //
+        
+        // int
+        void parse(const char* comment, int* pStorage, 
+                   int def, int min, int max);
+
+        // float
+        void parse(const char* comment, float* pStorage, 
+                   float def, float min, float max);
+
+        // double
+        void parse(const char* comment, double* pStorage, 
+                   double def, double min, double max);
+
+        // char* string
+        void parse(const char* comment, const char** pStorage, const char* def);
+        
 
     protected:
 
-        int _argc;
-        char** _argv;
-        void remove_token(int i);
-        Usage& _usage;
-        char* _options; // storage for option args
 
     private:
+
+        int _argc;
+        const char** _argv;
+        void remove_token(int i);
+        Usage _usage;
+        char* _options; // storage for option args
 
         OptionParser(); // catch unauthorized use
         OptionParser(const OptionParser&); // catch unauthorized use 

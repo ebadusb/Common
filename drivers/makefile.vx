@@ -1,0 +1,59 @@
+# @(#) $Header$
+#
+# Makefile - makefile for trima standard drivers
+#
+# $Log$
+#
+
+ifeq ($(BUILD_TYPE),CLEAN)
+.PHONY: all
+all: clean
+else
+.PHONY: all
+all: check_opt_change drivers wrappers
+endif
+
+#
+# MAINDIR should be set to the relative path from this makefile directory
+# to the base trima project directory.  MAINDIR must use \ (DOS/Windows
+# style) directory separators if they are needed.
+#
+MAINDIR = ..
+COMDIR = $(MAINDIR)
+include $(MAINDIR)/makefile.vxc
+
+DRIVER_LIST = esmc_image.s ene_image.s
+ADDN_CLEAN = $(DRIVER_LIST)
+
+.PHONY: drivers
+drivers: $(DRIVER_LIST)
+
+esmc_image.s : $(WIND_BASE)/target/lib/objI80486gnuvx/if_esmc.o
+	binToAsm $(WIND_BASE)/target/lib/objI80486gnuvx/if_esmc.o > esmc_image.s
+
+ene_image.s : $(WIND_BASE)/target/lib/objI80486gnuvx/if_ene.o
+	binToAsm $(WIND_BASE)/target/lib/objI80486gnuvx/if_ene.o > ene_image.s
+
+ 
+#
+# Driver the output modules for the drivers
+#
+APP_NAME := net_esmc
+net_esmc_dir = bin
+net_esmc_s_files = esmc_image.s
+net_esmc_c_files = net_esmc.c
+include $(MAINDIR)/makefile.process_app
+
+APP_NAME := net_ene
+net_ene_dir = bin
+net_ene_s_files = ene_image.s
+net_ene_c_files = net_ene.c
+include $(MAINDIR)/makefile.process_app
+
+wrappers : $(APP_LIST)
+
+#
+# This is the standard makefile for Trima applications
+#
+include $(MAINDIR)/makefile.build_apps
+

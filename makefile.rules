@@ -3,18 +3,23 @@
 # Makefile.rules - common makefile rules for vxWorks
 #
 # $Log: makefile.rules $
+# Revision 1.1  2002/04/18 14:27:47  jl11312
+# Initial revision
 #
 
 ifndef MAKEFILE_RULES_INCLUDED
 MAKEFILE_RULES_INCLUDED := 1
 
 $(CPU)/%.o:%.c
+	@if not exist $(CPU) mkdir $(CPU)
 	$(CC) $(CCFLAGS) $< -o $@
 
 $(CPU)/%.o:%.cpp
+	@if not exist $(CPU) mkdir $(CPU)
 	$(CXX) $(CXXFLAGS) $< -o $@
 
 $(CPU)/%.o:%.S
+	@if not exist $(CPU) mkdir $(CPU)
 	$(AS) $(ASFLAGS) $< -o $@
 
 .dfile/%.d:%.c

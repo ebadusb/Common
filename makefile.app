@@ -3,6 +3,9 @@
 # Makefile.app - common makefile for vxWorks applications
 #
 # $Log: makefile.app $
+# Revision 1.2  2002/04/19 12:59:58  jl11312
+# - modifications so that makefiles can either directly include makefile.app (for building a single app)
+#   or invoke in recursively (for building multiple apps)
 # Revision 1.1  2002/04/18 14:27:47  jl11312
 # Initial revision
 #
@@ -58,7 +61,7 @@ APP_OBJS := $(addprefix $(CPU)/, $(notdir $(APP_C_FILES:.c=.o))) \
 #
 MAP_OPT :=
 
-$(APP_DIR)/$(APP_NAME) : output_dir $(APP_OBJS) $(APP_LIBS)
+$(APP_DIR)/$(APP_NAME) : $(APP_OBJS) $(APP_LIBS)
 	@echo Building $(APP_DIR)/$(APP_NAME)
 	@if not exist $(APP_DIR) mkdir $(APP_DIR)
 	rm -f $@ $(CPU)/.ctdt.c $(CPU)/.ctdt.o $(CPU)/.partialImage.o
@@ -66,10 +69,6 @@ $(APP_DIR)/$(APP_NAME) : output_dir $(APP_OBJS) $(APP_LIBS)
 	$(NM) $(CPU)/.partialImage.o | $(MUNCH) > $(CPU)/.ctdt.c
 	$(CC) -fdollars-in-identifiers $(CXXFLAGS) $(CPU)/.ctdt.c -o $(CPU)/.ctdt.o
 	$(LD) $(LDFLAGS) $(LD_ARCH_RELOC) $(MAP_OPT) $(CPU)/.partialImage.o $(CPU)/.ctdt.o -o $@
-
-.PHONY: output_dir
-output_dir:
-	@if not exist $(CPU) mkdir $(CPU)
 
 ifndef FORCE_REBUILD
  ifneq ($(strip $(APP_C_FILES)),)

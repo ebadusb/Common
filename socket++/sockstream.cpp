@@ -431,11 +431,12 @@ int sockbuf::write(const void* buf, int len)
 {
    if(stmo != -1 && is_writeready (stmo)==0) return 0;
 
+	char * cbuf = (char *)buf;
    int wlen=0;
    while(len>0)
    {
       int  wval;
-      if((wval = ::write (rep->sock, (char*) buf, len)) == -1)
+      if((wval = ::write (rep->sock, &cbuf[wlen], len)) == -1)
       {
          error ("sockbuf::write");
          return wval;
@@ -450,11 +451,12 @@ int sockbuf::send (const void* buf, int len, int msgf)
 {
    if(stmo != -1 && is_writeready (stmo)==0) return 0;
 
+	char * cbuf = (char *)buf;
    int wlen=0;
    while(len>0)
    {
       int  wval;
-      if((wval = ::send (rep->sock, (char*) buf, len, msgf)) == -1)
+      if((wval = ::send (rep->sock, &cbuf[wlen], len, msgf)) == -1)
       {
          error ("sockbuf::send");
          return wval;
@@ -469,11 +471,12 @@ int sockbuf::sendto (sockAddr& sa, const void* buf, int len, int msgf)
 {
    if(stmo != -1 && is_writeready (stmo)==0) return 0;
 
+	char * cbuf = (char *)buf;
    int wlen=0;
    while(len>0)
    {
       int  wval;
-      if((wval = ::sendto (rep->sock, (char*) buf, len,
+      if((wval = ::sendto (rep->sock, &cbuf[wlen], len,
                            msgf, sa.addr (), sa.size())) == -1)
       {
          error ("sockbuf::sendto");

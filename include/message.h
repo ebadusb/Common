@@ -141,7 +141,7 @@ template < class T >
 const char *Message<T>::genMsgName() 
 {
    _MessageName = typeid( *this ).name();
-   return (const char*)_MessageName.data();
+   return (const char*)_MessageName.c_str();
 }
 
 template < class T >

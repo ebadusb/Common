@@ -53,7 +53,7 @@ void TimerMessage :: armTimer( TimerState arm )
    {
       postConstructInit();
       DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Message Id " << hex << _MsgId << " ( " << _MessageName.data() << " ) not initialized for sending" << endmsg;
+      DataLog(criticalLog) << "Message Id " << hex << _MsgId << " ( " << _MessageName.c_str() << " ) not initialized for sending" << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Message usage error" );
       return;
    }
@@ -118,5 +118,5 @@ const char *TimerMessage::genMsgName()
    buffer[20] = '\0';
    _MessageName = buffer;
 
-   return (const char *)_MessageName.data();
+   return (const char *)_MessageName.c_str();
 }

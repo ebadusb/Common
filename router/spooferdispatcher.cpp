@@ -73,7 +73,7 @@ void SpooferDispatcher :: spoofMessage( MessageBase &mb, const CallbackBase &cb 
    spoofmp.msgData().seqNum( 1 );
    spoofmp.msgData().totalNum( 1 );
    spoofmp.msgData().packetLength( len );
-   spoofmp.msgData().msg( (const unsigned char *)mb.messageName().data(), len );
+   spoofmp.msgData().msg( (const unsigned char *)mb.messageName().c_str(), len );
    spoofmp.updateCRC();
    send( spoofmp );
 }
@@ -119,7 +119,7 @@ void SpooferDispatcher :: despoofMessage( MessageBase &mb )
    spoofmp.msgData().seqNum( 1 );
    spoofmp.msgData().totalNum( 1 );
    spoofmp.msgData().packetLength( len );
-   spoofmp.msgData().msg( (const unsigned char *)mb.messageName().data(), len );
+   spoofmp.msgData().msg( (const unsigned char *)mb.messageName().c_str(), len );
    spoofmp.updateCRC();
    send( spoofmp );
 }

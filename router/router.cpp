@@ -853,7 +853,7 @@ void Router::deregisterMessage( unsigned long msgId, unsigned long tId )
          mp.msgData().osCode( MessageData::MESSAGE_DEREGISTER );
          mp.msgData().msgId( msgId );
          string messageName( _MsgIntegrityMap[ msgId ] );
-         mp.msgData().msg( (const unsigned char *)messageName.data(), messageName.length() );
+         mp.msgData().msg( (const unsigned char *)messageName.c_str(), messageName.length() );
 
          sendMessageToGateways( mp ); 
       }
@@ -958,7 +958,9 @@ void Router::sendMessage( const MessagePacket &mp, int priority )
             //
             // Error ...
             DataLog_Critical criticalLog;
-            DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() << "- Task Id=" << (*titer).first << " not found in task list" << endmsg;
+            DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+                                 << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
+                                 << "- Task Id=" << (*titer).first << " not found in task list" << endmsg;
             _FATAL_ERROR( __FILE__, __LINE__, "Task lookup failed" );
          }
          //
@@ -992,15 +994,19 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
       // Error ...
       int errorNo = errnoGet();
       DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() << " - Task Id=" << tId 
+      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+                           << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
+                           << " - Task Id=" << tId 
                            << " queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
                            << ", (" << strerror( errorNo ) << ")"
                            << endmsg;
       DataLog_Level logError( LOG_ERROR );
       dumpQueue( tId, mqueue, DataLog( logError ) );
-#ifndef SIMNT
+
+#if !( BUILD_TYPE==DEBUG ) && !( CPU==SIMNT )
       _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
-#endif
+#endif // #if CPU!=SIMNT && BUILD_TYPE!=DEBUG
+
    }
 
    //
@@ -1016,6 +1022,7 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
       int errorNo = errnoGet();
       DataLog_Critical criticalLog;
       DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+                           << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
                            << " - Task Id=" << tId << " send failed" 
                            << ", (" << strerror( errorNo ) << ")"
                            << endmsg;
@@ -1107,6 +1114,7 @@ void Router::sendMessageToGateway( sockinetbuf *sockbuffer, const MessagePacket 
       int errorNo = errnoGet();
       DataLog_Critical criticalLog;
       DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+                           << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
                            << " - Gateway=" << sockbuffer->peerhost() 
                            << " (" << mp.msgData().nodeId() << ") send failed" 
                            << ", (" << strerror( errorNo ) << ")"
@@ -1137,7 +1145,9 @@ bool Router::sendMessageToSpoofer( const MessagePacket &mp, int priority )
                //
                // Error ...
                DataLog_Critical criticalLog;
-               DataLog(criticalLog) << "Sending message=" << hex << (*mtiter).first << " - Spoofer Task Id=" << (*mtiter).second << " not found in task list" << endmsg;
+               DataLog(criticalLog) << "Sending message=" << hex << (*mtiter).first 
+                                    << "(" << _MsgIntegrityMap[ (*mtiter).first ].c_str() << ") " 
+                                    << " - Spoofer Task Id=" << (*mtiter).second << " not found in task list" << endmsg;
                _FATAL_ERROR( __FILE__, __LINE__, "Spoofer task lookup failed" );
                break;
             }
@@ -1227,13 +1237,15 @@ void Router::dumpQueue( unsigned long tId, mqd_t mqueue, ostream &out )
    // Read the queue entry ...
    while ( mq_receive( mqueue, &buffer, sizeof( MessagePacket ), &priority ) != ERROR )
    {
-#ifndef SIMNT
+
+#if !( BUILD_TYPE==DEBUG ) && !( CPU==SIMNT )
       //
       // Format the data ...
       MessagePacket mp;
       memmove( &mp, &buffer, sizeof( MessagePacket ) );
 
       out << " Message# " << dec << count << " priority " << priority << " msgId " << hex << mp.msgData().msgId()
+                                                                      << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
                                                                       << " p# "    << hex << mp.msgData().seqNum()
                                                                       << " tot# "  << hex << mp.msgData().totalNum()  
                                                                       << " msg -> ";
@@ -1242,7 +1254,8 @@ void Router::dumpQueue( unsigned long tId, mqd_t mqueue, ostream &out )
          out << hex << (int)(unsigned char)buffer[i] << " "; 
       }
       out << endmsg;
-#endif
+#endif // #if BUILD_TYPE!=DEBUG && CPU!=SIMNT
+
    }
    mq_setattr( mqueue, &old_attr, 0 );
 }

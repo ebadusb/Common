@@ -92,7 +92,7 @@ void MessageBase::registerMsg( const CallbackBase &cb )
       regPckt.msgData().seqNum( 1 );
       regPckt.msgData().totalNum( 1 );
       regPckt.msgData().packetLength( len );
-      regPckt.msgData().msg( (const unsigned char *)messageName().data(), len );
+      regPckt.msgData().msg( (const unsigned char *)messageName().c_str(), len );
       regPckt.updateCRC();
 
       //
@@ -128,7 +128,7 @@ void MessageBase::deregisterMsg( )
    regPckt.msgData().seqNum( 1 );
    regPckt.msgData().totalNum( 1 );
    regPckt.msgData().packetLength( len );
-   regPckt.msgData().msg( (const unsigned char *)messageName().data(), len );
+   regPckt.msgData().msg( (const unsigned char *)messageName().c_str(), len );
 
    if ( _RegisteredFlag == true )
       regPckt.msgData().osCode( MessageData::MESSAGE_DEREGISTER );
@@ -153,7 +153,7 @@ void MessageBase::send()
    {
       postConstructInit();
       DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Message Id " << hex << _MsgId << " ( " << _MessageName.data() << " ) not initialized for sending" << endmsg;
+      DataLog(criticalLog) << "Message Id " << hex << _MsgId << " ( " << _MessageName.c_str() << " ) not initialized for sending" << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "message usage error" );
       return;
    }
@@ -270,7 +270,7 @@ bool MessageBase::init( )
 unsigned long MessageBase::genMsgId()
 {
    unsigned long initcrc = 0;
-   if ( crcgen32( &initcrc,  (unsigned char *)messageName().data(), _MessageName.length() ) == 0 )
+   if ( crcgen32( &initcrc,  (unsigned char *)_MessageName.c_str(), _MessageName.length() ) == 0 )
       return ( _MsgId = initcrc );
 
    //

@@ -142,7 +142,7 @@ bool Router::init()
    //
    // Connect up with our timer task ...
    //  don't do anything else until we connnect.
-   while ( ( _TimerQueue = mq_open( "timertask", O_WRONLY ) ) == (mqd_t)ERROR ) 
+   while ( ( _TimerQueue = mq_open( "timertask", O_RDWR ) ) == (mqd_t)ERROR ) 
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
 
    //
@@ -188,7 +188,6 @@ void Router::dispatchMessages()
       while (    ( size = mq_receive( _RouterQueue, &buffer, sizeof( MessagePacket ), &priority ) ) == ERROR 
               && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) 
       {
-         cout << "mq_receive failure - sleep for 1 second" << endl;
          nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
       }
       if ( size == ERROR || size == 0 )
@@ -567,7 +566,7 @@ void Router::registerTask( unsigned long tId, const char *qName )
       //  so try to open the given queue ...
       mqd_t tQueue = (mqd_t)ERROR;
       unsigned int retries=0;
-      while ( ( tQueue = mq_open( qName, O_WRONLY ) ) == (mqd_t)ERROR 
+      while ( ( tQueue = mq_open( qName, O_RDWR ) ) == (mqd_t)ERROR 
               && retries++ < MessageSystemConstant::MAX_NUM_RETRIES ) nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
 
       //
@@ -1005,7 +1004,11 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
                            << " queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
                            << ", (" << strerror( errorNo ) << ")"
                            << endmsg;
+      DataLog_Level logError( LOG_ERROR );
+      dumpQueue( tId, mqueue, DataLog( logError ) );
+#ifndef SIMNT
       _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
+#endif
    }
 
    //
@@ -1214,6 +1217,42 @@ short Router::getGatewayPort()
          return (*paiter).first;
    }
    return 0;
+}
+
+
+void Router::dumpQueue( unsigned long tId, mqd_t mqueue, ostream &out )
+{
+   struct mq_attr old_attr;                                    // message queue attributes 
+   struct mq_attr attr;                                    // message queue attributes 
+   attr.mq_flags = O_NONBLOCK;
+   mq_setattr( mqueue, &attr, &old_attr );
+
+   char buffer[ sizeof(MessagePacket) ];
+   int count=0;
+   int priority;
+
+   //
+   // Read the queue entry ...
+   while ( mq_receive( mqueue, &buffer, sizeof( MessagePacket ), &priority ) != ERROR )
+   {
+#ifndef SIMNT
+      //
+      // Format the data ...
+      MessagePacket mp;
+      memmove( &mp, &buffer, sizeof( MessagePacket ) );
+
+      out << " Message# " << dec << count << " priority " << priority << " msgId " << hex << mp.msgData().msgId()
+                                                                      << " p# "    << hex << mp.msgData().seqNum()
+                                                                      << " tot# "  << hex << mp.msgData().totalNum()  
+                                                                      << " msg -> ";
+      for (int i=0;i<30;i++) 
+      {
+         out << hex << (int)(unsigned char)buffer[i] << " "; 
+      }
+      out << endmsg;
+#endif
+   }
+   mq_setattr( mqueue, &old_attr, 0 );
 }
 
 void Router::shutdown()

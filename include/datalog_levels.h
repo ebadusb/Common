@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_levels.h 1.5 2003/04/25 17:25:02Z jl11312 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_levels.h 1.6 2003/05/15 15:21:59Z ms10234 Exp ms10234 $
  * $Log: datalog_levels.h $
+ * Revision 1.5  2003/04/25 17:25:02Z  jl11312
+ * - undefined LOG_DEF after use
  * Revision 1.4  2003/04/11 22:40:52Z  td07711
  * add log levels for checkself_info, checkself_error, spoofer_info, spoofer_error.
  * Revision 1.3  2003/04/11 15:27:11Z  jl11312
@@ -55,6 +57,9 @@ LOG_DEF DataLog_Level	log_level_socket_info;
 LOG_DEF DataLog_Level	log_level_socket_error;
 LOG_DEF DataLog_Level	log_level_checkself_info;
 LOG_DEF DataLog_Level	log_level_checkself_error;
+LOG_DEF DataLog_Level	log_level_state_machine_info;
+LOG_DEF DataLog_Level	log_level_state_machine_debug;
+LOG_DEF DataLog_Level	log_level_state_machine_error;
 LOG_DEF DataLog_Level	log_level_spoofer_info;
 LOG_DEF DataLog_Level	log_level_spoofer_error;
 
@@ -88,6 +93,9 @@ LOG_DEF DataLog_Handle	log_handle_socket_info;
 LOG_DEF DataLog_Handle	log_handle_socket_error;
 LOG_DEF DataLog_Handle	log_handle_checkself_info;
 LOG_DEF DataLog_Handle	log_handle_checkself_error;
+LOG_DEF DataLog_Handle	log_handle_state_machine_info;
+LOG_DEF DataLog_Handle	log_handle_state_machine_debug;
+LOG_DEF DataLog_Handle	log_handle_state_machine_error;
 LOG_DEF DataLog_Handle	log_handle_spoofer_info;
 LOG_DEF DataLog_Handle	log_handle_spoofer_error;
 
@@ -129,6 +137,9 @@ static DataLog_InitTable	initTable[] =
 	{ &log_level_socket_error, &log_handle_socket_error, "socket_error", true },
 	{ &log_level_checkself_error, &log_handle_checkself_error, "checkself_error", true },
 	{ &log_level_checkself_info, &log_handle_checkself_info, "checkself_info", true },
+	{ &log_level_state_machine_error, &log_handle_state_machine_error, "state_machine_error", true },
+	{ &log_level_state_machine_debug, &log_handle_state_machine_debug, "state_machine_debug", true },
+	{ &log_level_state_machine_info, &log_handle_state_machine_info, "state_machine_info", true },
 	{ &log_level_spoofer_error, &log_handle_spoofer_error, "spoofer_error", true },
 	{ &log_level_spoofer_info, &log_handle_spoofer_info, "spoofer_info", true },
 };

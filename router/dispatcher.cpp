@@ -180,8 +180,8 @@ int Dispatcher :: dispatchMessages()
    {
       retries=0;
       while (    ( size = mq_receive( _MyQueue, &mp, sizeof( MessagePacket ), 0 ) ) == ERROR 
-              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES )
-         nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
+              && (_Blocking || errno != EAGAIN ) 
+              && retries++ < MessageSystemConstant::MAX_NUM_RETRIES );
       if ( size != ERROR )
       {
          processMessage( mp );

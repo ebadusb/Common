@@ -210,6 +210,11 @@ void MsgSysTimer::maintainTimers()
 
       processMessage( mp );
 
+//
+// Only do the overruns check on real hardware.  The simulator
+//  will never keep up, so don't waste logging messages on it.
+#ifndef SIMNT
+
       //
       // Check the overrun counter to see if I'm behind on time ...
       //  ( Log the result if I am behind )
@@ -219,6 +224,8 @@ void MsgSysTimer::maintainTimers()
          DataLog_Critical criticalLog;
          DataLog( criticalLog ) << "TimerOverruns: " << overruns  << endmsg;
       }
+
+#endif
 
    } while ( _StopLoop == false );
 
@@ -280,6 +287,7 @@ void MsgSysTimer::processMessage( const MessagePacket &mp )
       updateTime( usecs );
       _ReadyToReceiveTimeMsg=1;
       break;
+   case MessageData::GATEWAY_CONNECT:
    case MessageData::DISTRIBUTE_LOCALLY:
    case MessageData::DISTRIBUTE_GLOBALLY:
    case MessageData::SPOOFED_LOCALLY:
@@ -395,7 +403,7 @@ void MsgSysTimer::checkTimers()
    // Check the top of the priority queue for entries which
    //  have expired ...
    while (    !_TimerQueue.empty()
-           && _TimerQueue.top() <= _Time )
+           && _TimerQueue.top() <= _Time+5000 )
    {
       QueueEntry qe = _TimerQueue.top();
       _TimerQueue.pop();

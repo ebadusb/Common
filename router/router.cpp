@@ -85,10 +85,12 @@ void Router::datalogErrorHandler( const char * file, int line,
 
 Router::Router()
 :  _RouterQueue( 0 ),
+   _TimerQueue( 0 ),
    _MsgIntegrityMap(),
    _MessageTaskMap(),
    _TaskQueueMap(),
    _InetGatewayMap(),
+   _GatewayConnAtmptMap(),
    _SpooferMsgMap(),
    _StopLoop( false )
 {
@@ -133,9 +135,7 @@ bool Router::init()
       // Error ...
       int errorNo = errnoGet();
       DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Router message queue open failed" 
-                           << ", (" << strerror( errorNo ) << ")"
-                           << endmsg;
+      DataLog(criticalLog) << "Router message queue open failed" << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Router message queue open failed" );
       return false;
    }
@@ -148,6 +148,26 @@ bool Router::init()
       return false;
    }
 
+   //
+   // Connect up with our timer task ...
+   //  don't do anything else until we connnect.
+   while ( ( _TimerQueue = mq_open( "timertask", O_WRONLY ) ) == (mqd_t)ERROR ) 
+      nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
+
+   //
+   // If not opened ...
+   if ( _TimerQueue == (mqd_t)ERROR )
+   {
+      //
+      // ... error, the timer task should already have opened the queue
+      //  before connecting to the router.
+      //
+      // Error ...
+      DataLog_Level lglvl( LOG_ERROR );
+      DataLog(lglvl) << "Timer message queue open failed" << endmsg;
+      _FATAL_ERROR( __FILE__, __LINE__, "Timer message queue open failed" );
+      return false;
+   }
    //
    // Set the static pointer to ensure we only init once ...
    _TheRouter = this;
@@ -213,6 +233,7 @@ void Router::dump( ostream &outs )
 {
    outs << "------------------------- Router DUMP -----------------------------" << endl;
    outs << " RouterQueue: " << hex << (long)_RouterQueue << endl;
+   outs << " MsgSysTimerQueue: " << hex << (long)_TimerQueue << endl;
 
    outs << " Message Integrity Map: size " << dec << _MsgIntegrityMap.size() << endl;
    map< unsigned long, string >::iterator miiter;                                 // _MsgIntegrityMap;
@@ -286,7 +307,6 @@ bool Router::initGateways()
    //
    // Spawn all gateways and give myself messages informing me to connect
    //  to the gateways ...
-   short localport=0;
    short remoteport=0;
    unsigned long netAddress=0;
    char gateName[17];
@@ -299,20 +319,9 @@ bool Router::initGateways()
    getNetworkedNodes( portAddressMap );
 
    //
-   // Determine my connection port ...
-   for ( paiter = portAddressMap.begin() ;
-         paiter != portAddressMap.end() ;
-         paiter++ )
-   {
-      netAddress = (*paiter).second;
-      if ( netAddress == getNetworkAddress() )
-         localport = (*paiter).first;
-   }
-
-   //
    // Connect to the other nodes ...
    for ( paiter = portAddressMap.begin() ;
-         paiter != portAddressMap.end() && localport != 0 ;
+         paiter != portAddressMap.end() ;
          paiter++ )
    {
       netAddress = (*paiter).second;
@@ -344,9 +353,11 @@ bool Router::initGateways()
          mp.msgData().totalNum( 1 );
          mp.msgData().seqNum( 1 );
          mp.msgData().packetLength( sizeof( short ) );
-         mp.msgData().msg( (unsigned char*)&localport, sizeof( short ) );
+         mp.msgData().msg( (unsigned char*)&(MessageSystemConstant::CONNECT_DELAY), 
+                           sizeof( unsigned int ) );
          mp.updateCRC();
-         sendMessage( mp, _RouterQueue, taskIdSelf(), 0 );
+         sendMessage( mp, _TimerQueue, taskIdSelf(), 0 );
+         _GatewayConnAtmptMap[ netAddress ] = 0;
 
       }
    }
@@ -438,8 +449,7 @@ void Router::connectWithGateway( const MessagePacket &mp )
       struct timeval tv;
       tv.tv_sec = 0;
       tv.tv_usec = MessageSystemConstant::CONNECT_DELAY * 1000 /* milliseconds to microseconds */;
-      short port;
-      memmove( &port, mp.msgData().msg(), sizeof( short ) );
+      short port = getGatewayPort();
       int status = socketbuffer->connectWithTimeout( ntohl( mp.msgData().nodeId() ), port, &tv );
 
       //
@@ -453,22 +463,33 @@ void Router::connectWithGateway( const MessagePacket &mp )
          //
          // Synch up the remote node's message list ...
          synchUpRemoteNode( socketbuffer );
+
+         //
+         // Stop my notification timer ...
+         unsigned long interval=0;
+         MessagePacket newMP( mp );
+         newMP.msgData().msg( (unsigned char*)&interval, sizeof( unsigned long ) ); 
+         newMP.updateCRC();
+         sendMessage( newMP, _TimerQueue, taskIdSelf(), 0 );
       }
       else 
       {
          //
-         // If not connected, add message to the queue to try again ...
-         if ( status != ETIMEDOUT )
+         // Increment the connection attempts flag for this gatway ...
+         _GatewayConnAtmptMap[ mp.msgData().nodeId() ]++;
+
+         //
+         // Log the connection failure after every 20 attempts ...
+         if ( _GatewayConnAtmptMap[ mp.msgData().nodeId() ]%20 == 0 )
          {
-            //
-            // Nanosleep the same amount of time it would have been blocked
-            //  had it timed out instead of erroring.  This allows the system
-            //  some free processing time while giving the network time to
-            //  correct the problem before retrying.
-            struct timespec ts = { 0, MessageSystemConstant::CONNECT_DELAY * 1000000 /* milliseconds to nanoseconds */ };
-            nanosleep( &ts, 0 );
+            DataLog_Level elog( LOG_ERROR );
+            DataLog( elog ) << "Connect with gateway=" << hex << mp.msgData().nodeId() 
+                                 << " failed with error-" << strerror( status ) << endmsg;
          }
-         sendMessage( mp, _RouterQueue, taskIdSelf(), 0 );
+
+         //
+         // Start a timer to trigger a retry ...
+         sendMessage( mp, _TimerQueue, taskIdSelf(), 0 );
 
          //
          // ... give back my socket memory.
@@ -544,7 +565,6 @@ void Router::registerTask( unsigned long tId, const char *qName )
          // Error ...
          DataLog_Critical criticalLog;
          DataLog(criticalLog) << "Register task=" << hex << tId << " - message queue open failed" 
-                              << ", (" << strerror( (int)tQueue ) << ")" 
                               << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "mq_open failed" );
       }
@@ -576,7 +596,23 @@ void Router::deregisterTask( unsigned long tId )
             mtiter != _MessageTaskMap.end() ;
             mtiter++ )
       {
-         deregisterMessage( (*mtiter).first, tId );
+         //
+         //    find the task in the message's task list
+         map< unsigned long, unsigned char>::iterator titer;
+         titer = (*mtiter).second.find( tId );
+
+         //
+         // If task found ...
+         if ( titer != (*mtiter).second.end() )
+         {
+            //
+            // decrement the task's number of registrations
+            (*titer).second = 1;
+            
+            //
+            // deregister the message formerly ...
+            deregisterMessage( (*mtiter).first, tId );
+         }
       }
 
       //
@@ -1133,14 +1169,40 @@ void Router::synchUpRemoteNode( sockinetbuf *sockbuffer )
 
 }
 
+short Router::getGatewayPort()
+{
+   map< short, unsigned long > portAddressMap;
+   map< short, unsigned long >::iterator paiter;
+
+   //
+   // Get the map of network connections
+   getNetworkedNodes( portAddressMap );
+
+   //
+   // Determine my connection port ...
+   for ( paiter = portAddressMap.begin() ;
+         paiter != portAddressMap.end() ;
+         paiter++ )
+   {
+      if ( (*paiter).second == getNetworkAddress() )
+         return (*paiter).first;
+   }
+   return 0;
+}
+
 void Router::shutdown()
 {
    //
-   // Close my queue ...
+   // Close my queues ...
    if ( _RouterQueue != (mqd_t)0 )
    {
       mq_close( _RouterQueue );
       _RouterQueue = (mqd_t)0;
+   }
+   if ( _TimerQueue != (mqd_t)0 )
+   {
+      mq_close( _TimerQueue );
+      _TimerQueue = (mqd_t)0;
    }
 
    //

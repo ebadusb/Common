@@ -285,19 +285,17 @@ bool MessageBase::notify( const MessagePacket &mp )
 
 bool MessageBase::notify( const MessagePacket &mp, const CallbackBase &cb )
 {
-   list< MessagePacket* >::iterator pckt;
-   for ( pckt  = _PacketList.begin();
-         pckt != _PacketList.end() ;
-         pckt++ ) 
+   //
+   // Copy the message packet into the packet list ...
+   if ( findAndCopy( mp ) == false )
    {
-      if ( (**pckt) == mp )
-      {
-         (**pckt) = mp;
-         (*pckt)->unopened( true );
-      }
+      //
+      // Application error 
+      return false;
    }
 
    bool allMsgsIn = true;
+   list< MessagePacket* >::iterator pckt;
    for ( pckt  = _PacketList.begin();
          pckt != _PacketList.end() ;
          pckt++ ) 
@@ -314,12 +312,8 @@ bool MessageBase::notify( const MessagePacket &mp, const CallbackBase &cb )
    {
       //
       // Put the data into T ...
-      if ( retrieveMsgData() == false )
-      {
-         //
-         // Application error ...
-         return false;
-      }
+      retrieveMsgData();
+
       //
       // Put the header info into myself ...
       _NodeId = mp.msgData().nodeId();
@@ -331,6 +325,36 @@ bool MessageBase::notify( const MessagePacket &mp, const CallbackBase &cb )
       cb();
    }
 
+   return true;
+}
+
+bool MessageBase :: findAndCopy( const MessagePacket &mp )
+{
+   list< MessagePacket* >::iterator pckt;
+   for ( pckt  = _PacketList.begin();
+         pckt != _PacketList.end() ;
+         pckt++ ) 
+   {
+      if ( (**pckt) == mp )
+      {
+         MessageData::OperationType ot = (*pckt)->msgData().osCode(); 
+         (**pckt) = mp;
+         if ( (*pckt)->validCRC() == false )
+         {
+            return false;
+         }
+
+         //
+         // Preserve the distribution type ...
+         (*pckt)->msgData().osCode( ot );
+
+         //
+         // Set the message packet to unopened so that
+         //  we can determine the data has changed...
+         (*pckt)->unopened( true );
+         break;
+      }
+   }
    return true;
 }
 

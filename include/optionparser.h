@@ -3,6 +3,8 @@
  * PURPOSE: used to parse options from command line or elsewhere
  * CHANGELOG:
  *   $Log: optionparser.h $
+ *   Revision 1.3  2002/12/20 21:29:40Z  ms10234
+ *   Added support for sysinit programs and environ vars
  *   Revision 1.2  2002/09/19 20:10:32Z  td07711
  *   add public init() variants
  *   Revision 1.1  2002/09/18 23:31:10  td07711
@@ -39,7 +41,8 @@
 //   4. parses keyword value pairs where value can be int, float, or char* 
 //   5. parses keyword flags as a bool
 //   6. provides a done function that checks for any unparsed items remaining
-//   7. errors result in an error message and exit
+//   7. errors result in an error message and set error flag that can be checked
+//      with anyErrors()
 //   8. performs range checking on int and float values
 //   9. assigns default values to option variables
 //   10. builds a usage error message, displayed if usage error detected
@@ -63,7 +66,8 @@ class OptionParser
         const char** getArgv() { return _argv; };
         int getArgc() { return _argc; };
 
-        void done(); // usage error and exit if unparsed items remaining
+        void done(); // usage error if unparsed items remaining
+	bool anyErrors() { return _error; }; // true if were any errors
    
         //
         // parse functions for keyword and keyword value pairs
@@ -121,6 +125,7 @@ class OptionParser
         void remove_token(int i);
         Usage _usage;
         char* _options; // storage for option args
+	bool _error; // set true on parsing or range/check errors
 
         OptionParser(const OptionParser&); // catch unauthorized use 
         OptionParser& operator=(const OptionParser& rhs); // catch unauthorized use

@@ -1,6 +1,8 @@
 /*
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/link_element.h 1.1 2004/01/26 18:50:31Z jl11312 Exp jl11312 $
  * $Log: link_element.h $
+ * Revision 1.1  2004/01/26 18:50:31Z  jl11312
+ * Initial revision
  *
  */
 
@@ -40,6 +42,8 @@ public:
 	LinkElement ** top(void) { return _top; }
 	LinkElement * child(void) { return _child; }
 	LinkGroup * group(void) { return _group; }
+	unsigned int level(void) { return _level; }
+	LinkType linkType(void) { return _linkType; }
 
 protected:
 	// Constructor is protected, since it only makes sense for LinkElement

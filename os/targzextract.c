@@ -320,7 +320,7 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
    {
       fprintf( stdout, "we do not support links, %s\n", fn );
       if ( datalogRunning ) fprintf( stderr, "we do not support links, %s\n", fn );
-      return ERROR;
+      return OK;
    }
 
    /* Handle Regular File - calculate number of blocks */

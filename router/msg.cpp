@@ -3,6 +3,11 @@
  *
  * $Header: Z:/BCT_Development/Common/ROUTER/rcs/MSG.CPP 1.3 1999/06/02 16:24:42 BS04481 Exp MS10234 $
  * $Log: MSG.CPP $
+ * Revision 1.2  1999/05/31 20:35:07  BS04481
+ * Remove unused MSGHEADER structure from messages. 
+ * Decrease maximum message size.  Add new version of 
+ * focusBufferMsg and focusInt32Msg that do not bounce the message
+ * back to the originator.  All changes to increase free memory.
  * Revision 1.1  1999/05/24 23:29:46  TD10216
  * Initial revision
  * Revision 1.13  1999/04/03 14:53:15  TD10216
@@ -105,9 +110,12 @@ focusTimerMsg::focusTimerMsg( unsigned long tinterval)
 
 focusTimerMsg::~focusTimerMsg()
 {
-   timer_delete( timerID);                // remove QNX timer
-   qnx_proxy_detach( proxy);              // remove QNX proxy
-   dispatch->clearTimerEntry( proxy);     // clear dispatcher entry
+   if (dispatch)
+   {
+      timer_delete( timerID);                // remove QNX timer
+      qnx_proxy_detach( proxy);              // remove QNX proxy
+      dispatch->clearTimerEntry( proxy);     // clear dispatcher entry
+   }
 };
 
 // SPECIFICATION:    reset timer interval

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/dispatch.cpp 1.11 2001/05/24 22:41:08 jl11312 Exp jl11312 $
  * $Log: dispatch.cpp $
+ * Revision 1.8  2000/06/06 19:09:39  ms10234
+ * Removed message enumerations from the common project
  * Revision 1.7  2000/06/06 19:07:33  ms10234
  * Removed message enumerations from the common project.
  * Revision 1.6  1999/09/30 04:02:15  BS04481
@@ -140,13 +142,15 @@ void signalHandler( int signum)
 //
 // ERROR HANDLING:   _FATAL_ERROR.
 routeBuffer::routeBuffer( ) :
-_msgID( 0 )
+_msgID( 0 ),
+_LocalNodeOnly( 0 )
 {
 }
 
 
 routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short id) :
-   _msgID( id)
+   _msgID( id),
+_LocalNodeOnly( 0 )
 {
    init( msg, msgLength, id, (bounce_t)MESSAGE_REGISTER );
 }
@@ -163,7 +167,8 @@ routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short i
 //
 // ERROR HANDLING:   _FATAL_ERROR.
 routeBuffer::routeBuffer( void** msg, unsigned short msgLength, unsigned short id, bounce_t bounce) :
-   _msgID( id)
+   _msgID( id),
+_LocalNodeOnly( 0 )
 {
    init( msg, msgLength, id, bounce );
 }
@@ -196,6 +201,8 @@ int routeBuffer::init( void** msg,
       MSGHEADER * hdr = (MSGHEADER*) message;
       if (bounce == NO_BOUNCE)
          hdr->osCode = MESSAGE_REGISTER_NO_BOUNCE;        // router code
+      else if (bounce == NO_RECEIVE)
+         hdr->osCode = MESSAGE_REGISTER_NO_RECEIVE;        // router code
       else
          hdr->osCode = MESSAGE_REGISTER;                 // router code
       hdr->length = msgLength;               // total length, bytes
@@ -792,7 +799,7 @@ dispatcher::send( routeBuffer* m)
    {
       fError( __LINE__, 0, "NULL msg ptr");
    }
-   send_tcp( m->message );
+   send_tcp( m->message, m->local() );
 };
 
 // SPECIFICATION:    send message received from tcp/ip socket to router
@@ -810,7 +817,7 @@ dispatcher::send( routeBuffer* m)
 //
 
 void
-dispatcher::send_tcp( void* m)
+dispatcher::send_tcp( void* m, const int localSend )
 {
    if (m == NULL)                            // internal check
    {
@@ -830,7 +837,14 @@ dispatcher::send_tcp( void* m)
 
 
 // send message to router
-   mhdr->osCode = MSG_MULTICAST;             // tell router to multicast message
+   if ( localSend )
+   {
+      mhdr->osCode = MSG_MULTICAST_LOCAL;       // tell router to multicast message on the local node
+   }
+   else
+   {
+      mhdr->osCode = MSG_MULTICAST;             // tell router to multicast message
+   }
    mhdr->taskPID = getpid();                 // task PID
    mhdr->taskNID = getnid();                 // task NID
     clock_gettime( CLOCK_REALTIME,            // get current time

@@ -3,6 +3,9 @@
  *
  * $Header: M:/BCT_Development/vxWorks/Common/include/rcs/dispatch.hpp 1.12 2000/12/14 23:53:47 ms10234 Exp sb07663 $
  * $Log: dispatch.hpp $
+ * Revision 1.11  2000/10/27 14:45:02  bs04481
+ * Make timeDispatch a friend.  It is used by safety tasks that
+ * measure message delivery times.  
  * Revision 1.10  2000/07/19 19:49:14  td07711
  *   IT4736 - send(), registerMessage(), and deregisterMessage() all need to
  *   be virtual for spoofer to work.  
@@ -145,7 +148,7 @@ class routeBuffer
       int init( void **msg,
                         unsigned short msgLength,
                         unsigned short id,
-                        bounce_t bounce=(bounce_t)MESSAGE_REGISTER);
+                        bounce_t bounce=BOUNCE);
       virtual ~routeBuffer();
       void deregister();
 
@@ -162,6 +165,10 @@ class routeBuffer
       //   matches the definition inside the Callback class
       void virtualNotify( Callback cb ) { _VirtualNotify = cb; };
    
+      // Set/Get the local node only flag
+      void local( const int f ) { _LocalNodeOnly = f; };
+      const int local() const { return _LocalNodeOnly; };
+
    protected:
 
       int safeCopy( void *m1, const void *m2, size_t size ) const;
@@ -172,6 +179,10 @@ class routeBuffer
       // This will call a user specified member function of any
       //  type of class.
       Callback _VirtualNotify;
+
+      // Flag to signify we only want this message to be distributed on the local
+      //  node
+      int _LocalNodeOnly;
                                                  
    private:
       routeBuffer( routeBuffer const &);           // not implemented
@@ -252,7 +263,7 @@ class dispatcher
       void trace( unsigned short msgID);           // trace message events
 
      // 12/02/96 msm method added for an2 support 
-      void send_tcp( void* );                       // tcp/ip send message for AN2 Beta 2.3
+      void send_tcp( void* message, const int localSend ); // tcp/ip send message for AN2 Beta 2.3
  
       char *programName( void);                    // return program name (argv[0])
       void fError(int line, int usercode, char* msg); // fatal error handling

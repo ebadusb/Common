@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/HOME/BCT_Development/Common/include/rcs/msghdr.h 1.9 2001/09/21 17:35:18 ms10234 Exp ms10234 $
  * $Log: msghdr.h $
+ * Revision 1.6  2000/03/07 00:30:35  BD10648
+ * Increased message maximum size to 400
  * Revision 1.5  1999/09/24 19:33:21  TD10216
  * IT4371
  * Revision 1.4  1999/09/14 16:51:26  TD10216
@@ -83,7 +85,8 @@ typedef long         nid_t;            /* Used for network IDs         */
 enum BOUNCE_FLAG
 {
    BOUNCE=1,                                 // bounce message back to originator
-   NO_BOUNCE=2                               // originator does not want to see message
+   NO_BOUNCE=2,                              // originator does not want to see message
+   NO_RECEIVE=3,                             // originator does not want to see message
 };
 typedef enum BOUNCE_FLAG bounce_t;
 
@@ -111,8 +114,11 @@ enum OSCODE
    SPOOFED_MESSAGE,                    // spoofer has modified message
    SPOOFER_REGISTER,                   // register the spoofer task
    GATEWAY_REGISTER,                   // register a gateway task
-   MESSAGE_REGISTER_NO_BOUNCE          // register message with instructions not
-                                       // to bounce it back to the originator
+   MESSAGE_REGISTER_NO_BOUNCE,         // register message with instructions not
+                                       //  to bounce it back to the originator
+   MESSAGE_REGISTER_NO_RECEIVE,        // register message with instructions not
+                                       //  to receive this message
+   MSG_MULTICAST_LOCAL                 // distribute the message on the local node
 };
 
 //#ifdef WIN32

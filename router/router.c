@@ -3,6 +3,10 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/router.c 1.11 2001/05/11 19:57:01 jl11312 Exp jl11312 $
  * $Log: router.c $
+ * Revision 1.8  1999/09/24 22:36:07  BS04481
+ * Re-enable PROC_SHUTDOWN in generic shutdown but, this time,
+ * delay it by 3 seconds instead of 600ms.  This should give sufficient
+ * time for the machine specific shutdown to finish first.
  * Revision 1.7  1999/09/09 22:40:56  BS04481
  * Removed PROC_SHUTDOWN message send from the end of the
  * generalized shutdown function.   This message was introduced
@@ -257,7 +261,7 @@ void signalHandler( int signum)
 static
 void fatalError( int line, int code, char* err)
 {
-   static char rev[] = "$ProjectRevision: 5.14 $";     // rev code
+   static char rev[] = "$ProjectRevision: 5.33 $";     // rev code
    static char buf[ERROR_SIZE]; // static to avoid stack overflow
 
    sprintf(buf, "FATAL %.290s", err);
@@ -389,6 +393,7 @@ messageLoop(pid_t gatePID, char* ownPrefix)
                switch( msgHeader->osCode)
                {
                case MSG_MULTICAST:           // distribute message
+               case MSG_MULTICAST_LOCAL:
                   if( spoofMessage( (MSGHEADER*) msg) == 0)
                   {
                      distributeMessage( (MSGHEADER*) msg);
@@ -422,6 +427,9 @@ messageLoop(pid_t gatePID, char* ownPrefix)
                   break;
                case MESSAGE_REGISTER_NO_BOUNCE: // register message
                   messageRegister( msg, NO_BOUNCE);
+                  break;
+               case MESSAGE_REGISTER_NO_RECEIVE: // register message
+                  messageRegister( msg, NO_RECEIVE);
                   break;
                default:
                   fatalError( __LINE__, msgHeader->osCode, "bad message type");
@@ -458,33 +466,36 @@ distributeMessage( MSGHEADER* msg)
       fatalError( __LINE__, 0, "-msg NULL");
    }
 
-   // send to gateway
-   // gateway will not be enabled in the test mode where the
-   // second command line parameter (remote node) = running node number
-
-   if((msg->taskNID == getnid()) &&       // not from other gateway
-      (gatewayQueue != QNX_ERROR) &&      // and gateway active
-      (msg->osCode != SPOOFED_MESSAGE))
+   if ( msg->osCode != MSG_MULTICAST_LOCAL )
    {
-      k = 0;
+      // send to gateway
+      // gateway will not be enabled in the test mode where the
+      // second command line parameter (remote node) = running node number
 
-      // loop on send to recover from errors
-      mq_check(gatewayQueue);
-      while((mq_send( gatewayQueue, msg, msg->length, 0) == QNX_ERROR) &&
-            (taskRunning))
+      if ((msg->taskNID == getnid()) &&       // not from other gateway
+          (gatewayQueue != QNX_ERROR) &&      // and gateway active
+          (msg->osCode != SPOOFED_MESSAGE))
       {
-         if((errno==EINTR) && ( k<3 ))   // signals
+         k = 0;
+
+         // loop on send to recover from errors
+         mq_check(gatewayQueue);
+         while ((mq_send( gatewayQueue, msg, msg->length, 0) == QNX_ERROR) &&
+                (taskRunning))
          {
-            k++;
-         }
-         else
-         {
-            fatalError( __LINE__, errno, "mq_send() to gateway");
+            if ((errno==EINTR) && ( k<3 ))   // signals
+            {
+               k++;
+            }
+            else
+            {
+               fatalError( __LINE__, errno, "mq_send() to gateway");
+            }
          }
       }
-   }
 
-   processGateways( msg);
+      processGateways( msg );
+   }
 
    // loop thru tasks which are registered for this message
    t = messageLookupTable[msgID];
@@ -745,8 +756,10 @@ static void messageRegister( char* msg, bounce_t bounce)
                   ml->counter++;
                   found = 1;
 
-                  // if any instance is set to bounce, all will bounce
-                  if (ml->bounce == NO_BOUNCE)
+                  // if any instance is set to bounce or no receive, all will bounce
+                  if (    ml->bounce == NO_BOUNCE 
+                       || ml->bounce == NO_RECEIVE
+                     )
                      ml->bounce = bounce;
 
                   // update the CRC for this entry

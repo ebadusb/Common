@@ -17,14 +17,20 @@
 
 #ifndef __QNX__
 static const char cscapph_sccsid[] = "@(#)%M% %I% Amida S/W %G%";
-static const char cscapph_rcsid[] = "$Author: TD10216 $ $Id: CSCAPP.H 1.1 1999/06/30 20:28:42 TD10216 Exp TD10216 $";
+static const char cscapph_rcsid[] = "$Author: TD10216 $ $Id: CSCAPP.H 1.2 1999/07/24 21:07:24 TD10216 Exp TD10216 $";
 #endif
 
 #include <stdio.h>
 
+// for use with programs that work from makefiles
+enum { GOOD_MAKE_STATUS=0, BAD_MAKE_STATUS = -1 };
+
 #define HEADERSONLY 1
 class cscapp
 {
+	private:
+		static cscapp *This;
+		static double ParserCallback(char *VarName);
 	public:
 		cscapp(void);
 		~cscapp();
@@ -80,6 +86,10 @@ class cscapp
 		void findstring(char *p);
 		void findfile(char *p);
 		void findinclude(char *p);
+		int GetEnumValue(char *EnumName,FILE *FileName, int *rv);
+		int EvalExp(char *p, int *rv);
+		char *GetDefinitionLine(char *MemberTypeVarName, int *MemberType);
+		int GetDefinedValue(char *VariableName, int *rv);
 
 		int errorsfound(void);
 		void Seterrorsfound(int);

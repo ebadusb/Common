@@ -1,6 +1,6 @@
 #
 # PURPOSE: makefile for COBE BCT common router
-# $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/MAKEFILE 1.4 1999/06/07 22:25:39 TD10216 Exp TD10216 $
+# $Header: Z:/BCT_Development/Common/ROUTER/rcs/MAKEFILE 1.6 1999/08/31 17:53:06 BS04481 Exp MS10234 $
 # NB:Do NOT save & try to run this file with DOS CR/LFs
 # Set MKS option Configuration->Personal->Checkout->UNIX
 # symptom:cant open ../commonrules.mk
@@ -30,7 +30,7 @@ MQUEUE_LIB=/usr/lib/mqueue3r.lib
 
 CPPSRCS=tcp_gate.cpp \
 	msg.cpp new.cpp dispatch.cpp sinver.cpp phdspat.cpp spoofdsp.cpp \
-	DebugClass.cpp
+	DebugClass.cpp RegisterMsgs.cpp
 CPPOBJS=${CPPSRCS:.cpp=.o}
 
 CSRCS=gateway.c router.c pearlyg.c \
@@ -55,10 +55,10 @@ $(ROUTER): router.o $(LIBDIR)/$(ROUTERLIB)
 	$(LD) $(LDFLAGS) router.o $(ROUTERLIB) -o $(ROUTER)
 
 $(LIBDIR)/$(ROUTERLIB) : msg.o new.o dispatch.o crc.o sinver.o phdspat.o \
-		spoofdsp.o mq_check.o error.o DebugClass.o debug.o
+		spoofdsp.o mq_check.o error.o DebugClass.o debug.o RegisterMsgs.o
 		$(LIB_BLD_CMD) $(LIBDIR)/$(ROUTERLIB) +$(MQUEUE_LIB) +msg.o +new.o +dispatch.o +crc.o \
 		+sinver.o +phdspat.o +spoofdsp.o +mq_check.o +error.o \
-		+debug.o +DebugClass.o
+		+debug.o +DebugClass.o RegisterMsgs.o
 
 #
 # setup commonsharedtargets.mk
@@ -77,6 +77,8 @@ include $(COMMONSHAREDTARGETS)
 
 # NOTE: Do not edit below this line
 ## dependencies will be put after this line... ##
+tcp_gate.o:../include/PreRegisterMsgs.h
+tcp_gate.o:../include/RegisterMsgs.hpp
 tcp_gate.o:../include/an2msgs.h
 tcp_gate.o:../include/buffmsg.hpp
 tcp_gate.o:../include/buffmsgs.h
@@ -131,6 +133,19 @@ spoofdsp.o:spoofdsp.cpp
 DebugClass.o:../include/error.h
 DebugClass.o:Debug.hpp
 DebugClass.o:DebugClass.cpp
+RegisterMsgs.o:../include/RegisterMsgs.hpp
+RegisterMsgs.o:../include/an2msgs.h
+RegisterMsgs.o:../include/buffmsg.hpp
+RegisterMsgs.o:../include/buffmsgs.h
+RegisterMsgs.o:../include/crc.h
+RegisterMsgs.o:../include/dispatch.hpp
+RegisterMsgs.o:../include/error.h
+RegisterMsgs.o:../include/intmsgs.h
+RegisterMsgs.o:../include/msg.hpp
+RegisterMsgs.o:../include/msghdr.h
+RegisterMsgs.o:../include/reply.hpp
+RegisterMsgs.o:../include/sinver.h
+RegisterMsgs.o:RegisterMsgs.cpp
 gateway.o:../include/crc.h
 gateway.o:../include/error.h
 gateway.o:../include/msghdr.h

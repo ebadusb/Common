@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/TCP_GATE.CPP 1.2 1999/06/30 21:40:21 TD10216 Exp TD10216 $
+ * $Header: Z:/BCT_Development/Common/ROUTER/rcs/TCP_GATE.CPP 1.4 1999/08/10 00:09:03 TD10216 Exp MS10234 $
  * $Log: TCP_GATE.CPP $
+ * Revision 1.2  1999/06/30 21:40:21  TD10216
+ * IT3908
  * Revision 1.1  1999/05/24 23:29:22  TD10216
  * Initial revision
  * Revision 1.7  1998/09/17 18:35:28  TM02109
@@ -91,6 +93,7 @@
 #include "sinver.h"
 #include "an2msgs.h"
 #include "reply.hpp"
+#include "RegisterMsgs.hpp"
 
 #define Q_LENGTH 80			// queue name length
 #define MAX_MSGS 64			// max msgs in queue
@@ -115,6 +118,8 @@ static unsigned long ulFSIP;
 // Trima IP address
 static char *pFSIP;
 
+// Message Registration 
+static RegisterMsgs MsgRegistrar;
 // forward ref
 static void openGatewayQueue(  char* qname,
 										mqd_t* mq,
@@ -123,6 +128,12 @@ static void openGatewayQueue(  char* qname,
 static void openRouterQueue( char* qname, mqd_t* mqd);
 static void processGatewayQueue( mqd_t gq, struct sigevent* qnotify);
 
+
+// SPECIFICATION:   Read File to get pre-registered Everest messages
+//                  Parameter: none
+//
+// ERROR HANDLING:  none
+#include "PreRegisterMsgs.h"
 
 
 // SPECIFICATION:	signal handler, causes program to stop, called by QNX
@@ -148,132 +159,6 @@ static void fatalError( int line, int code, char* err)
 	mq_unlink( gatewayQueueName);						// remove it
 	close( sock);
 	_FATAL_ERROR( __FILE__, line, TRACE_GATEWAY, code, err);
-}
-
-
-// array just as large as # of buffmsgs and in same order
-// 0=not registered for, ~0=registered for
-// initialized by main, updated by RegisterMessages()
-// read by MessageRegistered()
-// both called from processGatewayQueue
-static short RegisteredMsgs[LAST_INT32_MESSAGE+1];
-
-
-// SPECIFICATION:	Add Messages to RegisteredMessages array
-//						parameter msg - a TCPGate_Reg_Msg
-//
-// ERROR HANDLING:	Calls fatalError().
-static void RegisterMessages(TCPGate_Reg_ReqMsg *msg)
-{
-	TCPGate_Reg_Struct *Reg_Struct = &msg->Msg_Struct.Reg_Struct;
-	int i;
-
-	_LOG_ERROR( __FILE__,__LINE__, TRACE_GATEWAY, 
-		Reg_Struct->count, "Registering 'user' number of messages" );
-	// register/de-register for ALL messages
-	// count == -1 -> register all messages
-	// count == 0  -> de-register all messages
-	if(Reg_Struct->count == -1 || Reg_Struct->count == 0)
-	{
-		short v = (Reg_Struct->count == -1) ? ~0 : 0;
-		if(!v)
-			_LOG_ERROR( __FILE__,__LINE__, TRACE_GATEWAY, 
-				v, "UnRegistering all messages" );
-		else
-			_LOG_ERROR( __FILE__,__LINE__, TRACE_GATEWAY, 
-				v, "Registering all messages" );
-		for(i = 0; i < LAST_INT32_MESSAGE; ++i)
-			RegisteredMsgs[i] = v;
-	}
-	else
-	// otherwise, step through the array
-	for(i = 0; i < Reg_Struct->count; ++i)
-	{
-		_LOG_ERROR( __FILE__,__LINE__, TRACE_GATEWAY, 
-			Reg_Struct->MsgIds[i], "Registering message" );
-		if(abs(Reg_Struct->MsgIds[i]) >= LAST_INT32_MESSAGE 
-		|| abs(Reg_Struct->MsgIds[i]) <= FIRST_BUFFER_MESSAGE)
-			_LOG_ERROR( __FILE__,__LINE__, TRACE_GATEWAY, 
-			Reg_Struct->MsgIds[i], "Attempt to Register Invalid MsgId" );
-		else
-			RegisteredMsgs[abs(Reg_Struct->MsgIds[i])] = 
-				(Reg_Struct->MsgIds[i] > 0) ? ~0 : 0;
-	}
-
-#if 0
-// from here
-	// register this message with the router
-	MSGHEADER h;
-
-	h.length = sizeof( MSGHEADER);			// total message length, bytes
-	h.taskPID = getpid();						// task PID number
-	h.taskNID = getnid();						// task NID
-	for(i = 0; i < Reg_Struct->count; ++i)
-	{
-	h.osCode = (Reg_Struct->MsgIds[i] > 0) 
-		?  MESSAGE_REGISTER : MESSAGE_DEREGISTER;
-	h.msgID = (short)abs(Reg_Struct->MsgIds[i]);
-	clock_gettime( CLOCK_REALTIME, &(h.sendTime));
-	updateFocusMsgCRC( &h);					// update CRC
-
-	// send message to local router to register
-	int k = 0;										// counter
-	while( (mq_send( routerQueue, &h, h.length, 0) == MQ_ERROR) )
-	{
-		if((errno==EINTR) && (k<RETRY_COUNT))  // signals
-		{
-			k++;
-		}
-		else											// all other errors
-		{
-			_LOG_ERROR( __FILE__, __LINE__, TRACE_DISPATCHER, errno, "Deregister:mq_send()");
-			break;
-		}
-	}
-}
-// to here
-#endif
-
-	// reply to AN2 host
-	UDP_Reply<SAN2ServiceRequestReply> * service_reply;
-	SAN2ServiceRequestReply request_reply;
-
-	// Create the reply class in order to set up the reply for request for servi
-	// HOST, PORT, STRUCTURE.
-	service_reply = new UDP_Reply<SAN2ServiceRequestReply>
-	( 
-		msg->Msg_Struct.host_struct.szAN2HostIP, 
-		msg->Msg_Struct.host_struct.szAN2HostPort, 
-		(unsigned short)AN2ServiceRequestReplyMsg
-	);
-	// Initalize the request reply structure.
-	request_reply.iAN2ServiceRequested =  REGISTER_TCP_MSGS;
-	request_reply.iFSHostPort = 0;
-	request_reply.iFSState = 0;
-	request_reply.iAN2ServiceRequestStatus = SERVICE_ALLOWED;
-	// Send the IP of the current current_server.
-	strcpy( request_reply.szFSHostIP, pFSIP );
-	// Send the reply.
-	service_reply->send_message( & request_reply );
-	delete service_reply;
-}
-
-
-// SPECIFICATION:	Determine if a message should be forwarded
-//						parameter msg - a valid focus MsgId
-//
-// ERROR HANDLING:	Calls fatalError().
-static int MessageRegistered(short msgID)
-{
-	if(msgID >= LAST_INT32_MESSAGE || msgID <= FIRST_BUFFER_MESSAGE
-	||(msgID >= LAST_BUFFER_MESSAGE && msgID <= FIRST_INT32_MESSAGE))
-	{
-		char eString[256];
-		sprintf(eString,"Unknown or Invalid MsgId %d range:(%d)-(%d)",
-			msgID,FIRST_BUFFER_MESSAGE,LAST_INT32_MESSAGE);
-		fatalError( __LINE__, msgID, eString );
-	}
-	return RegisteredMsgs[msgID];
 }
 
 
@@ -319,11 +204,10 @@ void main(int argc, char** argv)
 	openRouterQueue( argv[1], &routerQueue);
 
 	// initialize version detection
-
 	sinVerInitialize();
 
-	// initialize registered messages
-	memset( RegisteredMsgs, 0, sizeof( RegisteredMsgs ) );
+	// Get Pre-Registered Messages, dont get Registration messages
+	PreRegisterMsgs(0);
 
 	// loop processing messages
 	while(taskRunning)
@@ -560,34 +444,50 @@ static void processGatewayQueue( mqd_t gqd, struct sigevent* qnotify)
 	// loop getting messages
 	while ((mq_receive( gqd, msg, BSIZE, 0) != -1) && (taskRunning))
 	{
-		if(((MSGHEADER*)msg)->msgID == TcpgateRegistration)
+		// external message registration request
+		if((((MSGHEADER*)msg)->msgID) == TcpgateRegistration)
 		{
-			RegisterMessages( (TCPGate_Reg_ReqMsg *) msg );
+			MsgRegistrar.RegisterMessages( (TCPGate_Reg_ReqMsg *) msg,
+				RegisterMsgs::DoReply);
 			continue;
 		}
-
-		if(MessageRegistered(((MSGHEADER*)msg)->msgID))
+		switch(MsgRegistrar.MessageRegistered(((MSGHEADER*)msg)->msgID))
 		{
-			// time stamp message b4 send out to 
-			// allow for t-sync on external computer for
-			// msgs originating on differnet procesors
-			clock_gettime( CLOCK_REALTIME, &((MSGHEADER*)msg)->sendTime );
-			
-			// 06/30/97 msm
-			// rpl NID field with unsigned long rep of FS IP
-			((MSGHEADER*)msg)->taskNID = (long)ulFSIP;
-			((MSGHEADER*)msg)->taskPID = number_of_messages;
-	
-			if( sendto( sock, msg,
-									((MSGHEADER*)msg)->length,
-									0,
-									(struct sockaddr*) &server,
-									sizeof( server) ) < 0 )
-			{
-				fatalError( __LINE__, 0, "sending datagram message");
-			}
-			// Increment the number of messages sent out.
-			number_of_messages++;
+			// message is not registered for
+			case 0:	
+			break;
+			// known & registered for - relay it
+			case 1:
+				// time stamp message b4 send out to 
+				// allow for t-sync on external computer for
+				// msgs originating on differnet procesors
+				clock_gettime( CLOCK_REALTIME,
+					&((MSGHEADER*)msg)->sendTime );
+				
+				// 06/30/97 msm
+				// rpl NID field with unsigned long rep of FS IP
+				((MSGHEADER*)msg)->taskNID = (long)ulFSIP;
+				((MSGHEADER*)msg)->taskPID = number_of_messages;
+		
+				if( sendto( sock, msg,
+										((MSGHEADER*)msg)->length,
+										0,
+										(struct sockaddr*) &server,
+										sizeof( server) ) < 0 )
+				{
+					fatalError( __LINE__, 0, "sending datagram message");
+				}
+				// Increment the number of messages sent out.
+				number_of_messages++;
+			break;
+            case -1:        // Unknown Message Id received
+                fatalError( __LINE__, ((MSGHEADER*)msg)->msgID , 
+                    "Invalid Registration Msg Id Received ");
+            break;
+            default:        // Unknown return code received
+                fatalError( __LINE__, ((MSGHEADER*)msg)->msgID , 
+                    "Invalid Return Code Received from MessageRegistered");
+            break;
 		}
 	}
 }

@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/INTMSGS.H 1.2 1999/07/09 15:24:50 BS04481 Exp TD10216 $
+ * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/INTMSGS.H 1.5 2000/04/25 18:14:10 MS10234 Exp MS10234 $
  * $Log: INTMSGS.H $
+ * Revision 1.2  1999/07/09 15:24:50  BS04481
+ * Add messages for clock setting
  * Revision 1.1  1999/05/24 23:26:36  TD10216
  * Initial revision
  * Revision 1.5  1999/05/05 22:15:42  TW09453
@@ -126,6 +128,7 @@ enum INT32_MESSAGES
    OperatorSetIdentification,    // GUI       -> Procedure: relay operator's ID of a machine-unreadable set.
    DateTimeSet,                  // anyone -> time setting task.  Data is seconds since 1/1/1970 UTC.
    WatchdogControl,              // time setting task -> drivers.  Temporary override of watchdog.
+   ProductSelection,			 // proc->AP2 - Product Selection
 
 
    // NOTE: Block of last 255 Int32Msg IDs reserved for Spectra

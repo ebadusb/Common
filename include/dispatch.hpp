@@ -3,6 +3,8 @@
  *
  * $Header: M:/BCT_Development/vxWorks/Common/include/rcs/dispatch.hpp 1.12 2000/12/14 23:53:47 ms10234 Exp sb07663 $
  * $Log: dispatch.hpp $
+ * Revision 1.9  2000/06/26 18:52:05  ms10234
+ * Removed unimplemented private default constructor.
  * Revision 1.8  2000/06/06 19:02:01  ms10234
  * Removed message enums from the common project.  Default
  * constructors and initialization functions were added to make creation
@@ -231,9 +233,9 @@ class dispatcher
       virtual ~dispatcher();
       void deregister();
 
-      void registerMessage( routeBuffer*);         // used by msg constructor
-      void deregisterMessage( routeBuffer*);       // used by msg destructor
-      void send( routeBuffer*);                    // send message
+      virtual void registerMessage( routeBuffer*);         // used by msg constructor
+      virtual void deregisterMessage( routeBuffer*);       // used by msg destructor
+      virtual void send( routeBuffer*);                    // send message
 
       void clearTimerEntry( pid_t proxy);          // used by timer destructor
       void setTimerEntry( pid_t proxy,             // used by timer constructor

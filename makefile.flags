@@ -1,8 +1,10 @@
-# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.flags 1.10 2003/03/12 15:53:41Z ms10234 Exp jl11312 $
+# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.flags 1.11 2003/09/10 14:42:24Z jl11312 Exp jl11312 $
 #
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags $
+# Revision 1.10  2003/03/12 15:53:41Z  ms10234
+# changed grep command line options for new version
 # Revision 1.9  2003/02/25 14:59:40Z  jl11312
 # - modified optimization settings for SIMNT and I80486 builds
 # - added BUILD_OPTIONS setting
@@ -105,11 +107,11 @@ CPP_ARCH_FLAGS := $(ARCH_FLAGS)
 endif
 
 ifndef CC_ARCH_FLAGS
-CC_ARCH_FLAGS := $(ARCH_FLAGS) -fno-builtin -fno-defer-pop
+CC_ARCH_FLAGS := $(ARCH_FLAGS) -fno-builtin -fno-defer-pop -ffloat-store
 endif
 
 ifndef CXX_ARCH_FLAGS
-CXX_ARCH_FLAGS := $(ARCH_FLAGS) -Wstrict-prototypes -fno-builtin -fno-defer-pop
+CXX_ARCH_FLAGS := $(ARCH_FLAGS) -Wstrict-prototypes -fno-builtin -fno-defer-pop -ffloat-store
 endif
 
 ifndef LD_ARCH_FLAGS
@@ -146,11 +148,11 @@ CPP_ARCH_FLAGS := $(ARCH_FLAGS)
 endif
 
 ifndef CC_ARCH_FLAGS
-CC_ARCH_FLAGS := $(ARCH_FLAGS) -fno-builtin -fno-defer-pop
+CC_ARCH_FLAGS := $(ARCH_FLAGS) -fno-builtin -fno-defer-pop -ffloat-store
 endif
 
 ifndef CXX_ARCH_FLAGS
-CXX_ARCH_FLAGS := $(ARCH_FLAGS) -Wstrict-prototypes -fno-builtin -fno-defer-pop
+CXX_ARCH_FLAGS := $(ARCH_FLAGS) -Wstrict-prototypes -fno-builtin -fno-defer-pop -ffloat-store
 endif
 
 ifndef LD_ARCH_FLAGS

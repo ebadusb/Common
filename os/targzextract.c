@@ -59,6 +59,7 @@ tar is limited at 100 characters.
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ioLib.h>
 #include <sys/stat.h>
 
 #include <zlib.h>
@@ -247,7 +248,7 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
                    )
 {
    register int   rc;
-   FILE *  fd;
+   int     fd;
    int     sum = ERROR ;  /* checksum */
    int     size = 0 ;     /* file size in bytes */
    int     nblks = 0;     /* file size in TBLOCKs */
@@ -333,13 +334,15 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
    }
 
    /* Create file */
-   fd = fopen( fn, "w+" ) ;
-   if ( fd == NULL )
+   fd = open( fn, O_CREAT|O_RDWR, 0644);
+   if ( fd < 0 )
    {
       fprintf( stdout, "failed to create file %s, %s -- exiting!\n", fn, strerror(errno));
       if ( datalogRunning ) fprintf( stderr, "failed to create file %s, %s -- exiting!\n", fn, strerror(errno));
       return ERROR;
    }
+   /* Make files contiguous for faster loading */
+   ioctl( fd, FIOCONTIG, size );
 
    fprintf( stdout, "extracting file %s, size %d bytes, %d blocks\n", fn, size, nblks );
    if ( datalogRunning ) fprintf( stderr, "extracting file %s, size %d bytes, %d blocks\n", fn, size, nblks );
@@ -351,17 +354,17 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
       register int wc ;
 
       rc = tarRdBlks( pCtrl, &pBuf, nblks, datalogRunning ) ;
-      fprintf( stdout, "\ttarExtract: bytes remaining->%d\r", size);
+      fprintf( stdout, "\ttarExtract: bytes remaining->%d                                    \r", size);
 
       if ( rc < 0 )
       {
          fprintf( stdout, "error reading archive file\n");
          if ( datalogRunning ) fprintf( stderr, "error reading archive file\n");
-         fclose(fd);
+         close(fd);
          return ERROR;
       }
 
-      wc = fwrite( pBuf->dummy, sizeof(char), min( rc*TBLOCK, size ), fd ) ;
+      wc = write( fd, pBuf->dummy, min( rc*TBLOCK, size ) ) ;
 
       if ( wc == ERROR )
       {
@@ -376,7 +379,7 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
 
 
    /* Close the newly created file */
-   return( fclose(fd) ) ;
+   return( close(fd) ) ;
 
 }
 
@@ -492,10 +495,10 @@ int tarExtract ( const char *file     /* archive file name */,
 
       if ( bcmp( pBlk->dummy, bZero, TBLOCK) == 0 )
       {
-         fprintf( stdout, "end of file encountered, read until eof...\n");
+         fprintf( stdout, "end of file encountered, read until eof...                                \n");
          if ( datalogRunning ) fprintf( stderr, "end of file encountered, read until eof...\n");
          while ( tarRdBlks( &ctrl, &pBlk, 1, datalogRunning ) > 0 ) ;
-         fprintf( stdout, "done.\n");
+         fprintf( stdout, "done.                                                                     \n");
          if ( datalogRunning ) fprintf( stderr, "done.\n");
          retval = 0 ;
          goto finish;

@@ -76,9 +76,6 @@ void MessageBase::registerMsg( const CallbackBase &cb )
    _VirtualNotify = cb;
    if ( _RegisteredFlag == false )
    {
-      struct timespec ts;
-      clock_gettime( CLOCK_REALTIME, &ts );
-
       int len = _MessageName.length();
       //
       // Register this message with the dispatcher...
@@ -88,11 +85,11 @@ void MessageBase::registerMsg( const CallbackBase &cb )
       regPckt.msgData().msgLength( len );
       regPckt.msgData().nodeId( _NodeId );
       regPckt.msgData().taskId( _TaskId );
-      regPckt.msgData().sendTime( ts );
       regPckt.msgData().seqNum( 1 );
       regPckt.msgData().totalNum( 1 );
       regPckt.msgData().packetLength( len );
       regPckt.msgData().msg( (const unsigned char *)messageName().c_str(), len );
+      regPckt.updateTime();
       regPckt.updateCRC();
 
       //
@@ -111,9 +108,6 @@ void MessageBase::deregisterMsg( )
 {
    _VirtualNotify = CallbackBase();
 
-   struct timespec ts;
-   clock_gettime( CLOCK_REALTIME, &ts );
-
    int len = _MessageName.length();
 
    //
@@ -124,7 +118,6 @@ void MessageBase::deregisterMsg( )
    regPckt.msgData().msgLength( len );
    regPckt.msgData().nodeId( 0 );
    regPckt.msgData().taskId( _TaskId );
-   regPckt.msgData().sendTime( ts );
    regPckt.msgData().seqNum( 1 );
    regPckt.msgData().totalNum( 1 );
    regPckt.msgData().packetLength( len );
@@ -133,6 +126,7 @@ void MessageBase::deregisterMsg( )
    if ( _RegisteredFlag == true )
       regPckt.msgData().osCode( MessageData::MESSAGE_DEREGISTER );
 
+   regPckt.updateTime();
    regPckt.updateCRC();
 
    //
@@ -160,15 +154,14 @@ void MessageBase::send()
 
    if ( MessageSystem::MsgSystem() )
    {
-      //
-      // Set the sent time in the message packets ...
-      clock_gettime( CLOCK_REALTIME, &_SentTime );
       list< MessagePacket* >::iterator pckt;
       for ( pckt  = _PacketList.begin();
             pckt != _PacketList.end() ;
             pckt++ ) 
       {
-         (*pckt)->msgData().sendTime( _SentTime );
+         //
+         // Set the sent time in the message packets ...
+         (*pckt)->updateTime();
          (*pckt)->updateCRC();
    
          //
@@ -234,7 +227,6 @@ bool MessageBase::init( )
    //
    // Break up the message data into the message packets ...
    //
-   struct timespec ts = { 0,0 };
    unsigned long dataSize = sizeOfData();
    unsigned long leftOver = dataSize % MessageSystemConstant::MAX_MESSAGE_SIZE;
    unsigned long numPackets = ( dataSize / MessageSystemConstant::MAX_MESSAGE_SIZE ) + ( leftOver > 0 ? 1 : 0 );
@@ -254,7 +246,6 @@ bool MessageBase::init( )
       mp->msgData().msgLength( dataSize );
       mp->msgData().nodeId( _NodeId );
       mp->msgData().taskId( _TaskId );
-      mp->msgData().sendTime( ts );
       mp->msgData().seqNum( i+1 );
       mp->msgData().totalNum( numPackets );
       mp->msgData().packetLength( ( i+1<numPackets ? MessageSystemConstant::MAX_MESSAGE_SIZE : 

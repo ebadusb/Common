@@ -9,6 +9,7 @@
 
 #include "messagepacket.h"
 
+#include "auxclock.h"
 #include "datalog.h"
 #include "messagesystemconstant.h"
 #include "msgcrc.h"
@@ -126,6 +127,37 @@ MessagePacket &MessagePacket::operator=( const MessagePacket &d )
 bool MessagePacket::operator==( const MessagePacket &d ) const
 {
    return( _MessageData == d._MessageData );
+}
+
+void MessagePacket::updateTime()
+{
+   //
+   // Get the time when the tick counter started ...
+   struct rawTime  currentTickCount;
+   struct timespec currentTime;
+   struct timespec startTime;
+
+   //
+   // Get the current tick count and the initialization time ...
+   auxClockTimeGet( &currentTickCount );
+   auxClockInitTimeGet( &startTime );
+
+   //
+   // Calculate the current time ...
+   //
+   currentTime.tv_sec  = startTime.tv_sec;
+   currentTime.tv_nsec = startTime.tv_nsec;
+   //
+   //   add on the current tick count ...
+   currentTime.tv_sec  += currentTickCount.sec;
+   currentTime.tv_nsec += currentTickCount.nanosec;
+   if ( currentTime.tv_nsec >= 1000000000 )
+   {
+      currentTime.tv_nsec -= 1000000000;
+      currentTime.tv_sec++;
+   }
+
+   _MessageData.sendTime( currentTime );
 }
 
 void MessagePacket::updateCRC()

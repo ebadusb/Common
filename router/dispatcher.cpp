@@ -35,9 +35,6 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
       return;
    }
 
-   struct timespec ts;
-   clock_gettime( CLOCK_REALTIME, &ts );
-
    struct mq_attr attr;                                                             // message queue attributes 
    attr.mq_maxmsg =  ( maxMessages>MessageSystemConstant::MAX_MESSAGE_QUEUE_SIZE ?  // set max number of messages 
                                 MessageSystemConstant::MAX_MESSAGE_QUEUE_SIZE :     //            ... maximum queue size
@@ -117,11 +114,11 @@ void Dispatcher :: init( const char *qname, unsigned int maxMessages, const bool
    mp.msgData().nodeId( 0 );
    mp.msgData().taskId( taskIdSelf() );
    mp.msgData().msgLength( length );
-   mp.msgData().sendTime( ts );
    mp.msgData().totalNum( 1 );
    mp.msgData().seqNum( 1 );
    mp.msgData().packetLength( length );
    mp.msgData().msg( (const unsigned char*)qname, length );
+   mp.updateTime();
    mp.updateCRC();
 
    //
@@ -391,9 +388,6 @@ void Dispatcher :: shutdown()
    //
    // Deregister me with the router ...
 
-   struct timespec ts;
-   clock_gettime( CLOCK_REALTIME, &ts );
-
    MessagePacket mp;
    char *tname = taskName( 0 );
    int length = strlen( tname );
@@ -402,11 +396,11 @@ void Dispatcher :: shutdown()
    mp.msgData().nodeId( 0 );
    mp.msgData().taskId( taskIdSelf() );
    mp.msgData().msgLength( length );
-   mp.msgData().sendTime( ts );
    mp.msgData().totalNum( 1 );
    mp.msgData().seqNum( 1 );
    mp.msgData().packetLength( length );
    mp.msgData().msg( (const unsigned char*)tname, length );
+   mp.updateTime();
    mp.updateCRC();
 
    //

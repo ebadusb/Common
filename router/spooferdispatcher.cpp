@@ -60,8 +60,6 @@ void SpooferDispatcher :: spoofMessage( MessageBase &mb, const CallbackBase &cb 
 
    //
    // Register this message as a spoofer message with the router task ...
-   struct timespec ts;
-   clock_gettime( CLOCK_REALTIME, &ts );
    int len = mb.messageName().length();
    MessagePacket spoofmp;
    spoofmp.msgData().osCode( MessageData::SPOOF_MSG_REGISTER );
@@ -69,11 +67,11 @@ void SpooferDispatcher :: spoofMessage( MessageBase &mb, const CallbackBase &cb 
    spoofmp.msgData().msgLength( len );
    spoofmp.msgData().nodeId( 0 );
    spoofmp.msgData().taskId( mb.originTask() );
-   spoofmp.msgData().sendTime( ts );
    spoofmp.msgData().seqNum( 1 );
    spoofmp.msgData().totalNum( 1 );
    spoofmp.msgData().packetLength( len );
    spoofmp.msgData().msg( (const unsigned char *)mb.messageName().c_str(), len );
+   spoofmp.updateTime();
    spoofmp.updateCRC();
    send( spoofmp );
 }
@@ -106,8 +104,6 @@ void SpooferDispatcher :: despoofMessage( MessageBase &mb )
 
    //
    // Deregister this message with the router task ...
-   struct timespec ts;
-   clock_gettime( CLOCK_REALTIME, &ts );
    int len = mb.messageName().length();
    MessagePacket spoofmp;
    spoofmp.msgData().osCode( MessageData::SPOOF_MSG_DEREGISTER );
@@ -115,11 +111,11 @@ void SpooferDispatcher :: despoofMessage( MessageBase &mb )
    spoofmp.msgData().msgLength( len );
    spoofmp.msgData().nodeId( 0 );
    spoofmp.msgData().taskId( mb.originTask() );
-   spoofmp.msgData().sendTime( ts );
    spoofmp.msgData().seqNum( 1 );
    spoofmp.msgData().totalNum( 1 );
    spoofmp.msgData().packetLength( len );
    spoofmp.msgData().msg( (const unsigned char *)mb.messageName().c_str(), len );
+   spoofmp.updateTime();
    spoofmp.updateCRC();
    send( spoofmp );
 }

@@ -480,7 +480,6 @@ void MsgSysTimer::deregisterTimersOfTask( const unsigned long tId )
 
 void MsgSysTimer::checkTimers()
 {
-   struct timespec ts;
    // 
    // Check the top of the priority queue for entries which
    //  have expired ...
@@ -496,9 +495,8 @@ void MsgSysTimer::checkTimers()
       {
          //
          // Get the message packet to send off ...
-         clock_gettime( CLOCK_REALTIME, &ts );
          MessagePacket *mpPtr = qe._MapEntryPtr->_TimerMessage;
-         mpPtr->msgData().sendTime( ts );
+         mpPtr->updateTime();
          mpPtr->updateCRC();
 
          //

@@ -6,10 +6,10 @@
  */
 
 #include "callback.h"
+#include "datalog_levels.h"
 #include "objdictionary.h"
 #include "messagebase.h"
 #include "transmessage.h"
-#include "datalog_levels.h"
 
 TransMessage :: TransMessage() :
 TransAbs(),

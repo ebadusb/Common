@@ -237,7 +237,7 @@ long MessageBase::latency() const
    long msecs;
    //
    // Get the time when the tick counter started ...
-   struct rawTime  currentTickCount;
+   rawTime  currentTickCount;
    struct timespec diffTime;
    struct timespec startTime;
 

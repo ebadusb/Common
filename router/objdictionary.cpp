@@ -137,7 +137,7 @@ int ObjDictionary :: valid( const char *n )
    return 0;
 }
 
-void ObjDictionary :: dump( ostream &outs )
+void ObjDictionary :: dump( DataLog_Stream &outs )
 {
    outs << "ObjDictionary content dump:" << endmsg;
    list< ObjDictionaryEntry* >::iterator entry;

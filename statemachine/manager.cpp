@@ -5,8 +5,8 @@
  *
  */
 
-#include "manager.h"
 #include "datalog_levels.h"
+#include "manager.h"
 
 #include <stdio.h>
 #include <stdlib.h>

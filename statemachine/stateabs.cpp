@@ -5,9 +5,9 @@
  *
  */
 
+#include "datalog_levels.h"
 #include "stateabs.h"
 #include "manager.h"
-#include "datalog_levels.h"
 
 StateAbs :: StateAbs( StateAbs *parentState ) :
 _StateManager( 0 ),
@@ -251,7 +251,7 @@ int StateAbs :: process()
       checkMonitors();
    }
 
-   DataLog( log_level_state_machine_debug ) << "Exit Process: " << _StateName << " status=" << processStatus << ends;
+   DataLog( log_level_state_machine_debug ) << "Exit Process: " << _StateName << " status=" << processStatus << endmsg;
 
    return processStatus;
 
@@ -543,6 +543,4 @@ void StateAbs :: cleanup()
    }
    _MonitorsList.clear( );
 }
-
-
 

@@ -133,7 +133,7 @@ void MessagePacket::updateTime()
 {
    //
    // Get the time when the tick counter started ...
-   struct rawTime  currentTickCount;
+   rawTime  currentTickCount;
    struct timespec currentTime;
    struct timespec startTime;
 

@@ -5,6 +5,7 @@
  *
  */
 
+#include "datalog_levels.h"
 #include "filereader.h"
 #include "returncodes.h"
 #include "transcomplex.h"
@@ -13,7 +14,6 @@
 #include "transtimer.h"
 #include "transmessage.h"
 #include "logicaloperationtype.h"
-#include "datalog_levels.h"
 
 #include <ctype.h>
 

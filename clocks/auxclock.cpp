@@ -3,6 +3,8 @@
  *
  * $Header: Q:/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.14 2004/01/26 18:56:15Z jl11312 Exp jd11007 $
  * $Log: auxclock.cpp $
+ * Revision 1.13  2003/05/07 20:05:44Z  jl11312
+ * - added option to use counting semaphore for aux clock notification
  * Revision 1.12  2003/04/24 19:04:09Z  jl11312
  * - corrected routine to capture current aux clock time (IT 6009)
  * Revision 1.11  2003/01/08 23:41:46Z  ms10234
@@ -53,7 +55,6 @@
  */
 #include <vxWorks.h>
 #include <errno.h>
-#include <extraAuxClock.h>
 #include <ioLib.h>
 #include <semLib.h>
 

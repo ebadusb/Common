@@ -5,6 +5,7 @@
  *
  */
 
+#include "datalog_levels.h"
 #include <statedictionary.h>
 
 StateDictionaryEntry :: StateDictionaryEntry( const char* n, NewObjFcnPtr fcnPtr ) :

@@ -5,8 +5,8 @@
  *
  */
 
-#include "transconditional.h"
 #include "datalog_levels.h"
+#include "transconditional.h"
 
 TransConditional :: TransConditional() :
 TransAbs(),

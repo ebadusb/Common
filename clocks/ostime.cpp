@@ -3,6 +3,8 @@
  *
  * $Header: //Bctquad3/HOME/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.8 2001/04/05 14:16:14 jl11312 Exp pn02526 $
  * $Log: ostime.cpp $
+ * Revision 1.7  2000/03/17 16:41:25  BS04481
+ * Non-essential issues from 3.3 code review
  * Revision 1.6  1999/10/28 20:29:16  BS04481
  * Code review change.  Previous design disabled soft watchdogs
  * while the clock was being set.  This was unacceptable.  This code
@@ -142,7 +144,9 @@ osTime::snapshotRaw(rawTick* now)
       now->cycles_per_sec = _timeptr->cycles_per_sec;
       now->cycle = _timeptr->cycle_lo;
 
-   } while ( now->sec != _timeptr->seconds || now->nanosec != _timeptr->nsec  );
+   } while ( now->sec != _timeptr->seconds ||
+             now->nanosec != _timeptr->nsec ||
+             now->cycle != _timeptr->cycle_lo);
 };
 
 
@@ -270,15 +274,10 @@ osTime::howLongRaw(rawTick then)
 
    snapshotRaw(&now);
 
-   if (now.cnt8254 != 2386) // magic number that represents 2ms tick
-      FATAL_ERROR( __LINE__, __FILE__ "Ticksize is not 2!");
-   if (now.cycles_per_sec != 1193181) // magic number that represents the clock rate of our clock
-      FATAL_ERROR( __LINE__, __FILE__ "Clock chip is wrong!");
-
    // this element of the timesel structure is not sensitive 
-   // changes to the realtime clock.  This value should increment by
-   // 23860 (decimal) each tick which is 1193000 each second.  
-   // The register will wrap in just over 3600 seconds but QNX 
+   // changes to the realtime clock.  This value should increment
+   // at a rate of approximately 1193000 counts each second.
+   // The register will wrap in just over 3600 seconds but QNX
    // handles the wrap.
    deltaRaw = now.cycle - then.cycle;
 

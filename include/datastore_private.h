@@ -12,6 +12,10 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.22  2003/04/07 14:47:03Z  rm70006
+ * HISTORY:    IT 5818.
+ * HISTORY:    
+ * HISTORY:    Fix log levels.
  * HISTORY:    Revision 1.21  2003/03/28 19:55:49Z  ms10234
  * HISTORY:    5948 - Changed code to make message synchronization between nodes more robust
  * HISTORY:    Revision 1.20  2002/11/18 18:29:28Z  jl11312
@@ -363,7 +367,9 @@ template <class dataType> void BaseElement<dataType>::WriteSelf (ofstream &pfrfi
 //
 template <class dataType> void BaseElement<dataType>::SetSpoof (const CallbackBase* fp)
 {
-   _handle->_spooferCacheIsValid = false;
+    DataLog( log_level_cds_spoof_info ) << "SetSpoof: " << _ds->Name() << endmsg;
+   
+    _handle->_spooferCacheIsValid = false;
    *_handle->_fp  = fp;
 }
 
@@ -375,6 +381,8 @@ template <class dataType> void BaseElement<dataType>::SetSpoof (const CallbackBa
 //
 template <class dataType> void BaseElement<dataType>::ClearSpoof ()
 {
+    DataLog( log_level_cds_spoof_info ) << "ClearSpoof: " << _ds->Name() << endmsg;
+
    *_handle->_fp = NULL;
 }
 

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.6  2004/11/30 16:43:21Z  rm10919
+ * Assigning value for production compile.
  * Revision 1.5  2004/11/04 20:19:08Z  rm10919
  * Common updates and changes.
  * Revision 1.4  2004/11/01 17:27:23Z  cf10242
@@ -190,7 +192,10 @@ void CGUIText::setText(const StringChar * string)
          _stringLength += 1;
       }
       _textString = new UGL_WCHAR[_stringLength+1];
-      memcpy(_textString, string, _stringLength * sizeof(StringChar));
+      memcpy(_textString, string, _stringLength * sizeof(UGL_WCHAR));
+
+		_textString[_stringLength] = null_char;  // add the NULL UGL_WCHAR
+
    }
    else
    {
@@ -216,19 +221,14 @@ void CGUIText::setText(const char * string)
    }
    if (string)
    {
-      int i = 0;
 
-      while (string[i] != '\0')
-      {
-         i++;
-      }
-      _stringLength = i;
-      _textString = new StringChar[_stringLength + 1];  
+		_stringLength = strlen(string) + 1;   // add 1 for the NULL
 
-      for (i=0; i<=_stringLength; i++)
-      {
+      _textString = new UGL_WCHAR[_stringLength];  
+
+      for (int i=0; i<_stringLength; i++)
          _textString[i] = string[i];
-      }
+
    }
    else
    {

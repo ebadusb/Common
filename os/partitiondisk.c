@@ -125,7 +125,7 @@ int     size3    /* space (in Mbs) for third partition */
 
    /* Verify the device handle, possibly create wrapper */
 
-   if ( (dev = cbioDevVerify (dev, FALSE)) == NULL )
+   if ( cbioDevVerify(dev) == ERROR )
    {
       return(ERROR);
    }
@@ -146,14 +146,14 @@ int     size3    /* space (in Mbs) for third partition */
       return(ERROR);
    }
 
-   totalSecs = cbioParams.cbio_nBlocks ;
-   trackSecs = cbioParams.cbio_blksPerTrack;
-   blockBytes = cbioParams.cbio_bytesPerBlk;
+   totalSecs = cbioParams.nBlocks ;
+   trackSecs = cbioParams.blocksPerTrack;
+   blockBytes = cbioParams.bytesPerBlk;
 
    if ( trackSecs < 1 )
       trackSecs = 1;
 
-   cylSecs = trackSecs * cbioParams.cbio_nHeads ;
+   cylSecs = trackSecs * cbioParams.nHeads ;
 
    if ( totalSecs < trackSecs * 4 )
    {
@@ -168,7 +168,7 @@ int     size3    /* space (in Mbs) for third partition */
    if ( trackSecs < 1 || trackSecs > 63 )
    {
       trackSecs = 64 ;
-      cylSecs = trackSecs * cbioParams.cbio_nHeads ;
+      cylSecs = trackSecs * cbioParams.nHeads ;
    }
 
    if ( cylSecs < 1 )
@@ -259,7 +259,7 @@ int     size3    /* space (in Mbs) for third partition */
 
    /* allocate a local secBuf for the read sectors MBR/Part data */
 
-   if ( (secBuf = malloc (cbioParams.cbio_bytesPerBlk)) == NULL )
+   if ( (secBuf = malloc (cbioParams.bytesPerBlk)) == NULL )
    {
       printErr ("usrFdiskPartCreate: Error allocating sector buffer.\n");
       return(ERROR);
@@ -268,7 +268,7 @@ int     size3    /* space (in Mbs) for third partition */
 
    /* start filling the MBR buffer */
 
-   bzero( secBuf, cbioParams.cbio_bytesPerBlk) ;
+   bzero( secBuf, cbioParams.bytesPerBlk) ;
 
    /* fill the top with a silly RET sequence, not JMP */
 
@@ -288,10 +288,10 @@ int     size3    /* space (in Mbs) for third partition */
     * signature to the end of the sector as well as at offset 510/511.
     */
 
-   if ( 512 < cbioParams.cbio_bytesPerBlk )
+   if ( 512 < cbioParams.bytesPerBlk )
    {
-      secBuf[ cbioParams.cbio_bytesPerBlk - 2 ] = PART_SIG_MSB; /* 0x55 */
-      secBuf[ cbioParams.cbio_bytesPerBlk - 1 ] = PART_SIG_LSB; /* 0xAA */
+      secBuf[ cbioParams.bytesPerBlk - 2 ] = PART_SIG_MSB; /* 0x55 */
+      secBuf[ cbioParams.bytesPerBlk - 1 ] = PART_SIG_LSB; /* 0xAA */
    }
 
 

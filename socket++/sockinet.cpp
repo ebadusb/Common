@@ -27,7 +27,7 @@
 #include <inetLib.h>   // Needed for inet_aton
 //EXTERN_C_END
 
-
+#include "datalog.h"
 
 
 //
@@ -71,7 +71,10 @@ sockinetaddr::sockinetaddr(const char *addr, unsigned short port_no)
 
    if (inet_aton ((char *)addr, &sin_addr) != OK)   // Stupid VxWorks doesn't have const in prototype
    {
-      // (Fatal?) Error.
+      sin_addr.s_addr = INADDR_NONE;
+
+      DataLog_Critical critical;
+      DataLog(critical) << "Could not translate socket address " << addr << endmsg;
    }
 }
 
@@ -79,9 +82,14 @@ sockinetaddr::sockinetaddr(const char *addr, unsigned short port_no)
 
 void sockinetaddr::setaddr(const char *inet_addr)
 {
+   struct in_addr sockAddr;
+
    if (inet_aton ((char *)inet_addr, &sin_addr) != OK)   // Stupid VxWorks doesn't have const in prototype
    {
-      // (Fatal?) Error.
+      sin_addr.s_addr = INADDR_NONE;
+
+      DataLog_Critical critical;
+      DataLog(critical) << "Could not translate socket address " << inet_addr << endmsg;
    }
 }
 
@@ -153,7 +161,11 @@ bool operator == (const sockinetaddr &lhs, const sockinetaddr &rhs)
 
 ostream & operator << (ostream &os, const sockinetaddr &sa)
 {
-   os << "(" << inet_ntoa(sa.sin_addr) << ", " << sa.sin_port << ")";
+   char buffer[INET_ADDR_LEN];
+
+   inet_ntoa_b (sa.sin_addr, buffer);
+
+   os << "(" << buffer << ", " << ntohs(sa.sin_port) << ")";
 
    return os;
 }
@@ -164,7 +176,7 @@ ostream & operator << (ostream &os, const sockinetaddr &sa)
 #if 0 // NOT SUPPORTED BY VXWORKS
 void sockinetaddr::setport(const char* sn, const char* pn)
 {
-   error ("sockinetaddr: setport not supported.");
+   :rror ("sockinetaddr: setport not supported.");
    exit(1);
 
   servent* sp = getservbyname(sn, pn);
@@ -308,14 +320,18 @@ sockinetaddr sockinetbuf::peeraddr() const
 int sockinetbuf::peerport() const
 {
    sockinetaddr sin = peeraddr();
-   if (sin.family() != af_inet) return -1;
+   if (sin.family() != af_inet)
+      return -1;
+
    return sin.getport();
 }
 
 const char* sockinetbuf::peerhost() const
 {
    sockinetaddr sin = peeraddr();
-   if (sin.family() != af_inet) return "";
+   if (sin.family() != af_inet)
+      return "";
+
    return sin.gethostname();
 }
 
@@ -329,8 +345,10 @@ int sockinetbuf::bind_until_success (int portno)
    {
       sockinetaddr sa ((unsigned long) INADDR_ANY, portno++);
       int eno = bind (sa);
+
       if (eno == 0)
          return 0;
+
       if (eno != EADDRINUSE)
          return eno;
    }

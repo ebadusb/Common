@@ -10,6 +10,7 @@
 #ifndef __CALLBACK_H__
 #define __CALLBACK_H__
 
+#include <stdlib.h>
 
 class CallbackBase
 {
@@ -34,6 +35,7 @@ public:
       _FncPtrData( 0 ),
       _Data( 0 )
    {
+		_Assigned = (ff != NULL);
    };
 
    // constructor that takes a pointer to a non member
@@ -44,6 +46,7 @@ public:
       _FncPtrData( ff ),
       _Data( data )
    {
+		_Assigned = (ff != NULL);
    };
 
    // destructor
@@ -56,7 +59,8 @@ public:
       _MemFncPtrVoid(cb._MemFncPtrVoid),
       _FncPtrData(cb._FncPtrData),
       _MemFncPtrData(cb._MemFncPtrData),
-      _Data(cb._Data)
+      _Data(cb._Data),
+      _Assigned(cb._Assigned)
    {
    };
 
@@ -69,9 +73,12 @@ public:
       _FncPtrData = cb._FncPtrData;
       _MemFncPtrData = cb._MemFncPtrData;
       _Data = cb._Data;
+      _Assigned = cb._Assigned;
    
       return *this;
    };
+
+	bool assigned(void) { return _Assigned; }
 
    // function dispatch
    void operator()() const
@@ -140,9 +147,9 @@ protected:
    //
    // Cannot be used outside of this class and its descendants...
    CallbackBase( CallbackBase* ptr, MemFncPtrVoid fptr ) 
-   : _Ptr( ptr ), _MemFncPtrVoid( fptr ), _MemFncPtrData( 0 ), _Data( 0 ) {}
+   : _Ptr( ptr ), _MemFncPtrVoid( fptr ), _MemFncPtrData( 0 ), _Data( 0 ) { _Assigned = (fptr != NULL); }
    CallbackBase( CallbackBase* ptr, MemFncPtrData fptr, void *data ) 
-   : _Ptr( ptr ), _MemFncPtrVoid( 0 ), _MemFncPtrData( fptr ), _Data( data ) { }
+   : _Ptr( ptr ), _MemFncPtrVoid( 0 ), _MemFncPtrData( fptr ), _Data( data ) { _Assigned = (fptr != NULL); }
 
 private:
 
@@ -150,6 +157,7 @@ private:
    union { MemFncPtrVoid _MemFncPtrVoid; FncPtrVoid _FncPtrVoid; };
    union { MemFncPtrData _MemFncPtrData; FncPtrData _FncPtrData; };
    void *_Data;
+   bool _Assigned;
                                            
 };
 

@@ -467,7 +467,7 @@ int sockbuf::send (const void* buf, int len, int msgf)
    return wlen;
 }
 
-int sockbuf::sendto (sockAddr& sa, const void* buf, int len, int msgf)
+int sockbuf::sendto (const sockAddr& sa, const void* buf, int len, int msgf)
 {
    if(stmo != -1 && is_writeready (stmo)==0) return 0;
 

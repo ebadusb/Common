@@ -260,8 +260,7 @@ public:
 
    int        write (const void* buf, int len);
    int        send  (const void* buf, int len, int msgf=0);
-   int        sendto   (sockAddr& sa,
-                        const void* buf, int len, int msgf=0);
+   int        sendto   (const sockAddr& sa, const void* buf, int len, int msgf=0);
 
    int        sendtimeout (int wp=-1);
    int        recvtimeout (int wp=-1);

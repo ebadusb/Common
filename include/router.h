@@ -160,11 +160,6 @@ protected:
    void synchUpRemoteNode( unsigned long nodeId, unsigned long msgId );
 
    //
-   // This function will return the TCP port to which all requests to remote
-   //  nodes will be attempted.
-   short getGatewayPort();
-
-   //
    // This function will return the gateway connection status found for the
    //  passed in nodeId in the _GatewayConnSynchedMap.  The map contains an
    //  enum which will be reported as a meaningful character value.

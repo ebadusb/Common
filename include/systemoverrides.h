@@ -47,4 +47,10 @@ void getNetworkedNodes( map< short, unsigned long > &nodesAndPorts );
 */
 long spawnGateway( char *gatewayName, FUNCPTR func, const short portNo );
                    
+/*
+ This function spawns the connector process with the given name and 
+  takes a network address and a socket file descriptor as arguments.
+*/
+long spawnConnector( char *connectorName, FUNCPTR func, const unsigned long netAddress, const int sock );
+                   
 #endif

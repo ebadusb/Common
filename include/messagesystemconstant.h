@@ -24,14 +24,11 @@ public:
    // Maximum message queue size
    static const unsigned int MAX_MESSAGE_QUEUE_SIZE;
    //
-   // Gateway connection delay time in milliseconds
-   static const unsigned int CONNECT_DELAY;
-   //
-   // Gateway connection delay time in milliseconds
-   static const unsigned int CONNECT_RETRY_DELAY;
-   //
    // Number of retries before error for messaging operations ...
    static const unsigned int MAX_NUM_RETRIES;
+   //
+   // Gateway connection delay time between retries ...
+   static const struct timespec CONNECT_RETRY_DELAY;
    //
    // Time delay between retries ...
    static const struct timespec RETRY_DELAY;

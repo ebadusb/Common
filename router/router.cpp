@@ -411,7 +411,6 @@ bool Router::initGateways()
 
 void Router::processMessage( MessagePacket &mp, int priority )
 {
-   DataLog_Critical criticalLog;
    //
    // Determine what type of message this is ...
    //
@@ -452,7 +451,6 @@ void Router::processMessage( MessagePacket &mp, int priority )
       synchUpRemoteNode( mp.msgData().nodeId() );
       break;
    case MessageData::GATEWAY_MESSAGE_SYNCH_COMPLETE:
-      DataLog(criticalLog) << "Gateway message synch complete for node=" << hex << mp.msgData().nodeId() << endmsg;
       if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::LocalComplete )
          _GatewayConnSynchedMap[ mp.msgData().nodeId() ] = Router::Synched;
       else if ( _GatewayConnSynchedMap[ mp.msgData().nodeId() ] == Router::Incomplete )
@@ -505,7 +503,7 @@ void Router::connectWithGateway( const MessagePacket &mp )
 
       //
       //
-      int optval=16384; // Set the size of the send buffer to 16
+      int optval=16384; // Set the size of the send buffer to 16k
       if ( setsockopt( sock, SOL_SOCKET, SO_SNDBUF, (char*)&optval, sizeof(optval) ) == ERROR )
       {
          //
@@ -1119,13 +1117,6 @@ void Router::sendMessageToGateways( const MessagePacket &mpConst )
                   //
                   // Send the message to the gateway ...
                   sendMessageToGateway( ((*sockiter).first), mpConst );
-               }
-               else
-               {
-                  //
-                  // Error ...
-                  DataLog_Critical criticalLog;
-                  DataLog(criticalLog) << "Gateway not found=" << hex << (*gatewayiter) << " - Gateway registered for a message, but no active connection" << endmsg;
                }
             }
          }

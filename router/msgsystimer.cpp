@@ -86,6 +86,7 @@ MsgSysTimer::MsgSysTimer()
    _TimerMsgMap(),
    _TimerQueue(),
    _TaskQueueMap(),
+   _TaskQueueActiveMap(),
    _TimerMQ( (mqd_t)ERROR ),
    _MessageHighWaterMark( 0 ),
    _NumMessages( 0 ),
@@ -250,7 +251,7 @@ void MsgSysTimer::dump( DataLog_Stream &outs )
          tqiter++ )
    {
       // if ( (*tqiter).second != (mqd_t)0 ) mq_getattr( (*tqiter).second, &qattributes );
-      outs << "    Tid " << hex << (*tqiter).first << " " << hex << (long)(*tqiter).second
+      outs << "    Tid " << hex << (*tqiter).first << " " << hex << (long)(*tqiter).second << " " << (bool)_TaskQueueActiveMap[ (*tqiter).first ]
            // << "  flags " << qattributes.mq_flags
            // << "  size " << qattributes.mq_curmsgs
            // << "  maxsize " << qattributes.mq_maxmsg 
@@ -304,6 +305,14 @@ void MsgSysTimer::processMessage( const MessagePacket &mp )
    case MessageData::TASK_DEREGISTER:
       deregisterTask( mp.msgData().taskId() );
       deregisterTimersOfTask( mp.msgData().taskId() );
+      break;
+   case MessageData::ENABLE_MESSAGE_QUEUE:
+      if ( _TaskQueueMap.find( mp.msgData().taskId() ) != _TaskQueueMap.end() )
+         _TaskQueueActiveMap[ mp.msgData().taskId() ] = true;
+      break;
+   case MessageData::DISABLE_MESSAGE_QUEUE:
+      if ( _TaskQueueMap.find( mp.msgData().taskId() ) != _TaskQueueMap.end() )
+         _TaskQueueActiveMap[ mp.msgData().taskId() ] = false;
       break;
    case MessageData::TIME_UPDATE:
       memmove( (char *) &ticks , 
@@ -364,6 +373,7 @@ void MsgSysTimer::registerTask( unsigned long tId, const char *qName )
          //
          // ... add task and queue to map ...
          _TaskQueueMap[ tId ] = tQueue;
+         _TaskQueueActiveMap[ tId ] = false;
 
       }
       //
@@ -397,6 +407,7 @@ void MsgSysTimer::deregisterTask( unsigned long tId )
       // 
       mq_close( (mqd_t)(*titer).second );
       _TaskQueueMap.erase( titer );
+      _TaskQueueActiveMap.erase( tId );
    }
 }
 
@@ -533,6 +544,9 @@ void MsgSysTimer::checkTimers()
          // If the task was found to be registered ...
          else
          {
+            if ( _TaskQueueActiveMap[ mpPtr->msgData().taskId() ] == false )
+               return; // Don't send if the task hasn't activated its mqueue
+
             //
             // Check the task's queue to see if it is full or not ...
             mq_attr qattributes;
@@ -642,6 +656,7 @@ void MsgSysTimer::shutdown()
    {
       mq_close( (*qiter).second );
       (*qiter).second = (mqd_t)0;
+      _TaskQueueActiveMap[ (*qiter).first ] = false;
    }
 
 }
@@ -656,6 +671,7 @@ void MsgSysTimer::cleanup()
    // Clean the list structures ...
    _TimerMsgMap.empty();
    _TaskQueueMap.clear();
+   _TaskQueueActiveMap.clear();
 
    MapEntry *mePtr;
    while ( _TimerQueue.size() > 0 )

@@ -88,6 +88,7 @@ Router::Router()
    _MsgToGatewaySynchMap(),
    _MessageTaskMap(),
    _TaskQueueMap(),
+   _TaskQueueActiveMap(),
    _InetGatewayMap(),
    _GatewayConnSynchedMap(),
    _SpooferMsgMap(),
@@ -321,7 +322,7 @@ void Router::dump( DataLog_Stream &outs )
          tqiter++ )
    {
       // if ( (*tqiter).second != (mqd_t)0 ) mq_getattr( (*tqiter).second, &qattributes );
-      outs << "  Tid " << hex << (*tqiter).first << " " << hex << (long)(*tqiter).second
+      outs << "  Tid " << hex << (*tqiter).first << " " << hex << (long)(*tqiter).second << " " << (bool)_TaskQueueActiveMap[ (*tqiter).first ] 
            // << "  flags " << qattributes.mq_flags
            // << "  size " << qattributes.mq_curmsgs
            // << "  maxsize " << qattributes.mq_maxmsg 
@@ -544,6 +545,14 @@ void Router::processMessage( MessagePacket &mp, int priority )
    case MessageData::TASK_DEREGISTER:
       deregisterTask( mp.msgData().taskId() );
       break;
+   case MessageData::ENABLE_MESSAGE_QUEUE:
+      if ( _TaskQueueMap.find( mp.msgData().taskId() ) != _TaskQueueMap.end() )
+         _TaskQueueActiveMap[ mp.msgData().taskId() ] = true;
+      break;
+   case MessageData::DISABLE_MESSAGE_QUEUE:
+      if ( _TaskQueueMap.find( mp.msgData().taskId() ) != _TaskQueueMap.end() )
+         _TaskQueueActiveMap[ mp.msgData().taskId() ] = false;
+      break;
    case MessageData::MESSAGE_NAME_REGISTER:
       checkMessageId( mp.msgData().msgId(), (const char *)( mp.msgData().msg() ) );
       sendMessageToGateways( mp );
@@ -714,6 +723,7 @@ void Router::registerTask( unsigned long tId, const char *qName )
          //
          // ... add task and queue to map ...
          _TaskQueueMap[ tId ] = tQueue;
+         _TaskQueueActiveMap[ tId ] = false;
 
       }
       //
@@ -746,7 +756,8 @@ void Router::deregisterTask( unsigned long tId )
       //    remove the task and close the queue
       // 
       mq_close( (mqd_t)(*titer).second );
-      _TaskQueueMap.erase( titer );
+      _TaskQueueMap.erase( titer );     
+      _TaskQueueActiveMap.erase( tId );
 
       //
       // Remove the entry from the Message-Task map ...
@@ -1134,6 +1145,16 @@ void Router::sendMessage( const MessagePacket &mp, int priority )
 
 void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned long tId, int priority )
 {
+   //
+   // Check to see if the task has enabled its queue yet ...
+   //
+   map< unsigned long, bool >::iterator taiter;
+   taiter = _TaskQueueActiveMap.find( tId );
+   if (    taiter != _TaskQueueActiveMap.end()
+        && (*taiter).second == false 
+      ) 
+      return; // don't send any message to the task until the queue has been enabled
+
    //
    // Check the task's queue to see if it is full or not ...
    mq_attr qattributes;
@@ -1534,6 +1555,7 @@ void Router::shutdown()
    {
       mq_close( (*qiter).second );
       (*qiter).second = (mqd_t)0;
+      _TaskQueueActiveMap[ (*qiter).first ] = false;
    }
 
    //
@@ -1562,6 +1584,7 @@ void Router::cleanup()
    _MsgToGatewaySynchMap.clear();
    _MessageTaskMap.clear();
    _TaskQueueMap.clear();
+   _TaskQueueActiveMap.clear();
    _MessageGatewayMap.clear();
    _InetGatewayMap.clear();
    _SpooferMsgMap.clear();

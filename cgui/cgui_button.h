@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.7  2004/11/04 20:19:08Z  rm10919
+ *  Common updates and changes.
  *  Revision 1.6  2004/11/02 20:48:19Z  rm10919
  *  change setText() fucntions & add checks for bitmaps in enable() & disable().
  *  Revision 1.5  2004/11/01 17:27:22Z  cf10242
@@ -257,11 +259,17 @@ public:
    // can be in.  Note these call does nothing if there is no text associated with the button.
    // They will work if the text is disabled.
    void setEnabledTextStyle(CGUIText::StylingRecord * enabledTextStylingRecord); // style record with appropriate features set
-
    void setDisabledTextStyle(CGUIText::StylingRecord * disabledTextStylingRecord); //	style record with appropriate features set
-
    void setPressedTextStyle(CGUIText::StylingRecord * pressedTextStylingRecord); // style record with appropriate features set
 
+   CGUIText::StylingRecord * getEnabledTextStyle(void){ return _enabledText->getStylingRecord();}
+   CGUIText::StylingRecord * getDisabledTextStyle(void){ return _disabledText->getStylingRecord();}
+   CGUIText::StylingRecord * getPressedTextStyle(void){ return _pressedText->getStylingRecord();}
+  
+   void setEnabledTextColor(CGUIColor color);
+   void setDisabledTextColor(CGUIColor color);
+   void setPressedTextColor(CGUIColor color);
+   
    // ICON METHODS //
 
    // SET ICON
@@ -280,7 +288,6 @@ public:
    // set a previously set icon as invisible
    void disableIcon();
 
-protected:
    // The following methods are called when state of the button is changed.  These can be overriden
    // and supllemented by derived types if different behavior is needed.
    // DO ON PRESS
@@ -318,6 +325,7 @@ protected:
    //   display text in "disabled" text style
    virtual void doOnDisable();
 
+protected:
    // DO ON INVISIBLE
    // actions performed when button is made invisible.  Actions are:
    //  	if button is visible, reset to invisible internally and with parent

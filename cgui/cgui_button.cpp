@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.5  2004/11/04 20:19:08Z  rm10919
+ *  Common updates and changes.
  *  Revision 1.4  2004/11/02 20:48:19Z  rm10919
  *  change setText() fucntions & add checks for bitmaps in enable() & disable().
  *  Revision 1.3  2004/11/01 17:27:21Z  cf10242
@@ -61,7 +63,13 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
    if (buttonData.disabledBitmapId)
    {
       _disabledBitmap = new CGUIBitmap (display, CGUIRegion(0,0,0,0), *buttonData.disabledBitmapId);
-      addObjectToFront(_disabledBitmap);
+      if (!_enabled)
+      {
+         addObjectToFront(_disabledBitmap);
+      }else
+      {
+         addObjectToBack(_disabledBitmap);
+      }
    }
    
    if (buttonData.pressedBitmapId)
@@ -70,13 +78,12 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       if (_pressed) 
       { 
          addObjectToFront(_pressedBitmap);
-      }//else
-     // {
-     //    addObjectToBack(_pressedBitmap);
-     // }
+      }else
+      {
+         addObjectToBack(_pressedBitmap);
+      }
    }
-
-
+   
    if (buttonData.enabledTextItem)
    {
       if ((buttonData.enabledTextStyle->region.width == 0) && (buttonData.enabledTextStyle->region.height == 0))
@@ -149,20 +156,20 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
 // DESTRUCTOR
 CGUIButton::~CGUIButton ()
 {
-   delete _enabledText;
-   delete _disabledText;
-   delete _pressedText;
+   if (_enabledText) delete _enabledText;
+   if (_disabledText) delete _disabledText;
+   if (_pressedText) delete _pressedText;
 
-   delete _enabledBitmap;
-   delete _disabledBitmap;
-   delete _pressedBitmap;
+   if (_enabledBitmap) delete _enabledBitmap;
+   if (_disabledBitmap) delete _disabledBitmap;
+   if (_pressedBitmap) delete _pressedBitmap;
 
-   delete _buttonMessagePointer;
-   delete _audioMessagePointer;
+   if (_buttonMessagePointer) delete _buttonMessagePointer;
+   if (_audioMessagePointer) delete _audioMessagePointer;
 
-   delete _iconPointer;
+   if (_iconPointer) delete _iconPointer;
 
-   delete _btnDataLogLevel;
+   if (_btnDataLogLevel) delete _btnDataLogLevel;
 }
 
 // ENABLE
@@ -653,6 +660,21 @@ void CGUIButton::setDisabledTextStyle (CGUIText::StylingRecord * disabledTextSty
 void CGUIButton::setPressedTextStyle (CGUIText::StylingRecord * pressedTextStylingRecord)
 {
    if (_pressedText)  _pressedText->setStylingRecord(pressedTextStylingRecord);
+}
+  
+void CGUIButton::setEnabledTextColor(CGUIColor color)
+{
+   _enabledText->setColor(color);
+}
+
+void CGUIButton::setDisabledTextColor(CGUIColor color)
+{
+   _disabledText->setColor(color);
+}
+
+void CGUIButton::setPressedTextColor(CGUIColor color)
+{
+   _pressedText->setColor(color);
 }
 
 // SET ICON

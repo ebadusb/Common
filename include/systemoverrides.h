@@ -40,5 +40,11 @@ unsigned long getNetworkAddress( void );
     start.
 */
 void getNetworkedNodes( map< short, unsigned long > &nodesAndPorts );
+
+/*
+ This function spawns the gateway process with the given name and 
+  takes the portNo as an argument.
+*/
+long spawnGateway( char *gatewayName, FUNCPTR func, const short portNo );
                    
 #endif

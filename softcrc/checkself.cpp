@@ -6,6 +6,8 @@
  * CHANGELOG:
  * $Header: I:/BCT_Development/vxWorks/Common/softcrc/rcs/checkself.cpp 1.10 2003/06/17 18:57:13Z td07711 Exp td07711 $
  * $Log: checkself.cpp $
+ * Revision 1.8  2003/03/12 01:59:42Z  td07711
+ * add errno for fopen failure
  * Revision 1.7  2003/03/06 01:41:00Z  td07711
  * changed into sent to datalog
  * Revision 1.6  2003/03/03 19:19:36Z  td07711
@@ -36,7 +38,7 @@
 #include "crcgen.h"
 #include "checkself.h"
 #include "error.h"
-#include "datalog.h"
+#include "datalog_levels.h"
 
 
 extern SYMTAB_ID sysSymTbl; // system sysbol table ID needed for symFindByName()
@@ -58,9 +60,6 @@ int checkself( char* startSymbol, char* endSymbol, const char* filename)
     // for validation on subsequent boots.
     // Returns -1 if file not written, else 0
 
-
-    DataLog_Level log( "checkself" );
-
     //
     // determine region to CRC
     //
@@ -70,12 +69,12 @@ int checkself( char* startSymbol, char* endSymbol, const char* filename)
     FILE* logfile = stderr;
     if( symFindByName( sysSymTbl, startSymbol, &startAddress, &symType ) == ERROR )
     {
-	log( __FILE__, __LINE__ ) << "ERROR failed to find starting symbol=" << startSymbol << endmsg;
+	DataLog( log_level_checkself_error ) << "failed to find starting symbol=" << startSymbol << endmsg;
 	return -1;
     }
     if( symFindByName( sysSymTbl, endSymbol, &endAddress, &symType ) == ERROR )
     {
-	log( __FILE__, __LINE__ ) << "ERROR failed to find ending symbol=" << endSymbol << endmsg;
+	DataLog( log_level_checkself_error ) << "failed to find ending symbol=" << endSymbol << endmsg;
 	return -1;
     }
     long size = endAddress - startAddress;
@@ -86,9 +85,9 @@ int checkself( char* startSymbol, char* endSymbol, const char* filename)
     unsigned int calc_crc = 0;
     if( crcgen32( (unsigned long*)&calc_crc, (const unsigned char*)startAddress, size ) == -1 )
     {
-       log( __FILE__, __LINE__ ) << "ERROR crcgen32 failed, symbol=" << startSymbol
+	DataLog( log_level_checkself_error ) << "crcgen32 failed, symbol=" << startSymbol
 	   << " start=0x" << hex << (unsigned int)startAddress << " size=" << dec << size << endmsg;
-       return -1;
+	return -1;
     }
 
 
@@ -105,7 +104,7 @@ int checkself( char* startSymbol, char* endSymbol, const char* filename)
        //
        if( (outfile = fopen( filename, "w" )) == 0 )
        {
-	  log( __FILE__, __LINE__ ) << "ERROR fopen failed to create " << filename 
+	   DataLog( log_level_checkself_error ) << "fopen failed to create " << filename 
 	      << hex << ", errno=0x" << errno << endmsg;
 	  return -1;
        }
@@ -113,7 +112,7 @@ int checkself( char* startSymbol, char* endSymbol, const char* filename)
        fprintf( outfile, "0x%08x\n", calc_crc );
        fclose( outfile );
        
-       log( __FILE__, __LINE__ ) << "created file=" << filename
+       DataLog( log_level_checkself_info ) << "created file=" << filename
 	   << hex << " calc_crc=0x" << calc_crc
            << " start=0x" << (unsigned int)startAddress << dec << " size=" << size << endmsg;
        return 0;
@@ -121,7 +120,7 @@ int checkself( char* startSymbol, char* endSymbol, const char* filename)
 
     if( fscanf( infile, "%x", &exp_crc) != 1 )
     {
-       log( __FILE__, __LINE__ ) << "ERROR fscanf failed on " << filename << endmsg;
+       DataLog( log_level_checkself_error ) << "fscanf failed on " << filename << endmsg;
        fclose( infile );
        return -1;
     }
@@ -132,7 +131,7 @@ int checkself( char* startSymbol, char* endSymbol, const char* filename)
     fclose( infile );
     if( calc_crc != exp_crc ) 
     {
-       log( __FILE__, __LINE__ ) << "ERROR bad crc, file=" << filename
+       DataLog( log_level_checkself_error ) << "bad crc, file=" << filename
 	   << hex << " exp=0x" << exp_crc << " calc=0x" << calc_crc 
 	   << " start=0x" << (unsigned int)startAddress << dec << " size=" << size << endmsg;
        return -1;
@@ -141,7 +140,7 @@ int checkself( char* startSymbol, char* endSymbol, const char* filename)
     //
     // log good crc and return
     //
-    log( __FILE__, __LINE__ ) << "good crc, file=" << filename
+    DataLog( log_level_checkself_info ) << "good crc, file=" << filename
 	<< hex << " exp=0x" << exp_crc << " calc=0x" << calc_crc 
 	<< " start=0x" << (unsigned int)startAddress << dec << " size=" << size << endmsg;
     return 0;

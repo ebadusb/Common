@@ -5,6 +5,8 @@
 * build_bitmap_info file.
 *
 * $Log: cgui_bitmap_info.h $
+* Revision 1.1  2004/10/14 14:26:52Z  cf10242
+* Initial revision
 *
 */
 #ifndef _CGUIBITMAPINFO_INCLUDE
@@ -35,12 +37,12 @@ class CGUIBitmapInfo
 		// CONSTRUCTOR - accepts a pointer to the input bitmap.  Expects that the data is in
 		// compressed format.
 		CGUIBitmapInfo (const unsigned char bmp_data[],
-							 unsigned short size,
-			             unsigned short height,
-							 unsigned short width) : 	_myHeight (height),
-																_myWidth (width),
-																_loadCount (0),
-																_loadState (UNLOADED)
+							  unsigned short size,
+			                  unsigned short height,
+							  unsigned short width) : 	_myHeight (height),
+														_myWidth (width),
+														_loadCount (0),
+														_loadState (UNLOADED)
 		{
 			_mySize = size;
 			_myBitmap = (unsigned char *)bmp_data; 
@@ -66,6 +68,9 @@ class CGUIBitmapInfo
 			width = _myWidth;
 			height = _myHeight;
 		};
+        
+        int getWidth(void) { return _myWidth;}
+        int getHeight(void) { return _myHeight;}
 
 		// createDisplay - decompress the bitmap loaded at construction and display the image
 		virtual void createDisplay (CGUIDisplay & display);

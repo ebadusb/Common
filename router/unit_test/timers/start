@@ -1,0 +1,4 @@
+ld < init.out
+ld < ../../../bin/common.out
+ld < timertest.out
+

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/gateway.c 1.4 2001/05/11 19:56:38 jl11312 Exp jl11312 $
  * $Log: gateway.c $
+ * Revision 1.3  2000/07/07 20:53:36  bs04481
+ * Bump priorities up 1
  * Revision 1.2  1999/08/31 17:51:01  BS04481
  * Change to use new _log_error_with_display in fatalerror function
  * Revision 1.1  1999/05/24 23:29:37  TD10216
@@ -118,7 +120,7 @@ void fatalError( int line, int code, char* err)
    printf("\nBuild %s. \nAn internal software error has occured.\n\n", rev);
    printf("Wait 1 minute then turn off power.  Wait 5 seconds,\n"); 
    printf("and turn power back on. Follow the disconnect procedure.\n\n");
-   printf("Call Cobe Service.  Thank you. \n ");
+   printf("Call service.  Thank you. \n ");
    kill( getppid(), SIGHUP);                       // kill router
 }
 

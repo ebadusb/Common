@@ -3,6 +3,10 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/router.c 1.11 2001/05/11 19:57:01 jl11312 Exp jl11312 $
  * $Log: router.c $
+ * Revision 1.10  2001/04/05 17:35:24  ms10234
+ * IT5045 - Messages were incorrectly being stopped if the pids matched on
+ * the control and safety side between two processes.  Added a conditional
+ * check on the node id.
  * Revision 1.9  2000/12/14 23:53:11  ms10234
  * IT4618,4685 -  Changes were made to the message types to allow for 
  * messages to be sent, but not received, and for messages to remain local
@@ -274,7 +278,7 @@ void fatalError( int line, int code, char* err)
    printf("\nBuild %s. \nAn internal software error has occured.\n\n", rev);
    printf("Wait 1 minute then turn off power.  Wait 5 seconds,\n"); 
    printf("and turn power back on. Follow the disconnect procedure.\n\n");
-   printf("Call Cobe Service.  Thank you. \n ");
+   printf("Call service.  Thank you. \n ");
    shutdown();                              // shutdown router
 }
 

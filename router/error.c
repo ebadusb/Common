@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/Common/router/rcs/error.c 1.7 2001/05/11 19:56:17 jl11312 Exp jl11312 $
  * $Log: error.c $
+ * Revision 1.6  2000/05/05 21:41:29  BS04481
+ * New _log_error function for drivers
  * Revision 1.5  2000/05/03 16:28:35  BD10648
  * Added Process ID to LOG_ERROR string.
  * Revision 1.4  1999/09/29 18:07:55  TD10216
@@ -126,7 +128,7 @@ fatal_handling(char* file, int line, trace_codes_t code, int usercode, char* eSt
     printf("\nBuild %s. \nAn internal software error has occured.\n\n", rev);
     printf("Wait 1 minute then turn off power.  Wait 5 seconds,\n");
     printf("and turn power back on. Follow the disconnect procedure.\n\n");
-    printf("Call Cobe Service.  Thank you. \n ");
+    printf("Call service.  Thank you. \n ");
 
     // shutdown router and Photon
     // NOTE: we don't use system("slay ...") since that requires new process, disk I/O, etc.

@@ -6,6 +6,8 @@
  * CHANGELOG:
  * $Header: I:/BCT_Development/vxWorks/Common/softcrc/rcs/checkself.cpp 1.10 2003/06/17 18:57:13Z td07711 Exp td07711 $
  * $Log: checkself.cpp $
+ * Revision 1.6  2003/03/03 19:19:36Z  td07711
+ * safety stderr getting lost, use datalog directly instead
  * Revision 1.5  2003/02/26 23:03:53Z  td07711
  * modified for vxworks
  * Revision 1.4  2003/01/09 20:53:25Z  pn02526
@@ -66,12 +68,12 @@ int checkself( char* startSymbol, char* endSymbol, const char* filename)
     FILE* logfile = stderr;
     if( symFindByName( sysSymTbl, startSymbol, &startAddress, &symType ) == ERROR )
     {
-	log( __FILE__, __LINE__ ) << "ERROR failed to find" << startSymbol << endmsg;
+	log( __FILE__, __LINE__ ) << "ERROR failed to find starting symbol=" << startSymbol << endmsg;
 	return -1;
     }
     if( symFindByName( sysSymTbl, endSymbol, &endAddress, &symType ) == ERROR )
     {
-	log( __FILE__, __LINE__ ) << "ERROR failed to find" << endSymbol << endmsg;
+	log( __FILE__, __LINE__ ) << "ERROR failed to find ending symbol=" << endSymbol << endmsg;
 	return -1;
     }
     long size = endAddress - startAddress;
@@ -82,8 +84,8 @@ int checkself( char* startSymbol, char* endSymbol, const char* filename)
     unsigned int calc_crc = 0;
     if( crcgen32( (unsigned long*)&calc_crc, (const unsigned char*)startAddress, size ) == -1 )
     {
-       log( __FILE__, __LINE__ ) << "ERROR crcgen32 failed, start=" << 
-	   startAddress << " size=" << size << endmsg;
+       log( __FILE__, __LINE__ ) << "ERROR crcgen32 failed, symbol=" << startSymbol
+	   << " start=0x" << hex << (unsigned int)startAddress << " size=" << dec << size << endmsg;
        return -1;
     }
 
@@ -101,19 +103,22 @@ int checkself( char* startSymbol, char* endSymbol, const char* filename)
        //
        if( (outfile = fopen( filename, "w" )) == 0 )
        {
-	  log( __FILE__, __LINE__ ) << "ERROR fopen failed on " << filename << endmsg;
+	  log( __FILE__, __LINE__ ) << "ERROR fopen failed to create " << filename << endmsg;
 	  return -1;
        }
+
        fprintf( outfile, "0x%08x\n", calc_crc );
        fclose( outfile );
-       log( __FILE__, __LINE__ ) << "start=" << startAddress << " size=" << size
-	   << " calc_crc=" << calc_crc << " created crcfile=" << filename << endmsg;
+       
+       log( __FILE__, __LINE__ ) << "created file=" << filename
+	   << hex << " calc_crc=0x" << calc_crc
+           << " start=0x" << (unsigned int)startAddress << dec << " size=" << size << endmsg;
        return 0;
     }
 
     if( fscanf( infile, "%x", &exp_crc) != 1 )
     {
-       log( __FILE__, __LINE__ ) << "ERROR fscanf failed" << endmsg;
+       log( __FILE__, __LINE__ ) << "ERROR fscanf failed on " << filename << endmsg;
        fclose( infile );
        return -1;
     }
@@ -124,18 +129,18 @@ int checkself( char* startSymbol, char* endSymbol, const char* filename)
     fclose( infile );
     if( calc_crc != exp_crc ) 
     {
-       log( __FILE__, __LINE__ ) << "ERROR bad crc, exp=" << exp_crc 
-	   << " calc=" << calc_crc << " file=" << filename << " start=" << startAddress
-	   << " size=" << size << endmsg;
+       log( __FILE__, __LINE__ ) << "ERROR bad crc, file=" << filename
+	   << hex << " exp=0x" << exp_crc << " calc=0x" << calc_crc 
+	   << " start=0x" << (unsigned int)startAddress << dec << " size=" << size << endmsg;
        return -1;
     }
 
     //
     // log good crc and return
     //
-    log( __FILE__, __LINE__ ) << "good crc, exp=" << exp_crc 
-	<< " calc=" << calc_crc << " file=" << filename << " start=" << startAddress
-	<< " size=" << size << endmsg;
+    log( __FILE__, __LINE__ ) << "good crc, file=" << filename
+	<< hex << " exp=0x" << exp_crc << " calc=0x" << calc_crc 
+	<< " start=0x" << (unsigned int)startAddress << dec << " size=" << size << endmsg;
     return 0;
  }
 

@@ -1,8 +1,10 @@
-# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.16 2003/02/28 22:06:02Z jl11312 Exp ms10234 $
+# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.17 2003/05/15 15:25:34Z ms10234 Exp ms10234 $
 #
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.16  2003/02/28 22:06:02Z  jl11312
+# - added debug directory
 # Revision 1.15  2003/02/04 15:50:47  ms10234
 # changed to make default common build work for developer sandboxes
 # Revision 1.14  2003/01/31 19:17:18Z  ms10234
@@ -56,6 +58,7 @@ libs:
 	@cd clocks && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd cds && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd cmdline && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
+	@cd state_machine && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd zlib && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 
 COMMON_BUILD_DIR := $(strip $(subst \,/, $(shell cd)))

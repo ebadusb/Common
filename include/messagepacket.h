@@ -15,6 +15,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "datalog.h"
 #include "messagesystemconstant.h"
 #include "msgcrc.h"
 
@@ -146,15 +147,15 @@ public:
    // Dump the contents of the class ...
    void dump( ostream &outs )
    {
-      outs << "######################### Message Data ############################" << endl;
+      outs << "######################### Message Data ############################" << endmsg;
       outs << "OSCode: " << _OSCode << " MsgId: " << hex << _MsgId << dec << " ";
       outs << "Length: " << _Length << " Node: " << hex << _NodeId << " ";
       outs << "Tid: " << hex << _TaskId << " Time: " << dec << _SendTime.tv_sec << " " << _SendTime.tv_nsec << " ";
       outs << "Seq: " << _SeqNum << " Tot: " << _TotNum << " ";
-      outs << "PcktLngth: " << _PacketLength << " Msg: " << _Msg << endl;
+      outs << "PcktLngth: " << _PacketLength << " Msg: " << _Msg << endmsg;
       outs << "Msg: "; for (int i=0;i<MessageSystemConstant::MAX_MESSAGE_SIZE+1;i++) 
-                          outs << hex << (int)((unsigned char)(*(_Msg+i))) << " "; outs << endl;
-      outs << "###################################################################" << endl;
+                          outs << hex << (int)((unsigned char)(*(_Msg+i))) << " "; outs << endmsg;
+      outs << "###################################################################" << endmsg;
    }
 
 protected:
@@ -239,10 +240,10 @@ public:
    // Dump the contents of the class ...
    void dump( ostream &outs )
    {
-      outs << "^^^^^^^^^^^^^^^^^^^^^^^^ Message Packet ^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
+      outs << "^^^^^^^^^^^^^^^^^^^^^^^^ Message Packet ^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endmsg;
       _MessageData.dump( outs );
-      outs << "CRC: " << hex << _CRC << dec << " Unopened: " << _Unopened << endl;
-      outs << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
+      outs << "CRC: " << hex << _CRC << dec << " Unopened: " << _Unopened << endmsg;
+      outs << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endmsg;
    }
 
 protected:

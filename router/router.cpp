@@ -144,17 +144,6 @@ bool Router::init()
    while ( ( _TimerQueue = mq_open( "timertask", O_RDWR ) ) == (mqd_t)ERROR ) 
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
 
-   //
-   // If not opened ...
-   if ( _TimerQueue == (mqd_t)ERROR )
-   {
-      //
-      // Error ...
-      DataLog( log_level_critical ) << "Timer message queue open failed" << endmsg;
-      _FATAL_ERROR( __FILE__, __LINE__, "Timer message queue open failed" );
-      return false;
-   }
-
    MessagePacket mp;
    mp.msgData().osCode( MessageData::TASK_REGISTER );
    mp.msgData().taskId( taskIdSelf() );
@@ -618,6 +607,7 @@ void Router::processMessage( MessagePacket &mp, int priority )
       sendMessage( mp, priority );
       break;
    default:
+      DataLog( log_level_router_error ) << "Unknown OSCode " << mp.msgData().osCode() << " from task " << hex << mp.msgData().taskId() << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Unknown OSCode in message packet" );
       break;
    }
@@ -955,9 +945,6 @@ void Router::registerMessageWithGateway( unsigned long msgId, unsigned long node
 
 void Router::registerSpooferMessage( unsigned long msgId, unsigned long tId )
 {
-   DataLog( log_level_router_info ) << "Spoofer task " << hex << tId 
-                                    << " registered for message " << hex << msgId << endmsg;
-
    //
    // Add the message Id to the map ...
    _SpooferMsgMap[ msgId ] = tId;      
@@ -1058,8 +1045,6 @@ void Router::deregisterMessageWithGateway( unsigned long msgId, unsigned long no
 
 void Router::deregisterSpooferMessage( unsigned long msgId)
 {
-   DataLog( log_level_router_info ) << "Deregistering Spoofer for message " << hex << msgId << endmsg;
-
    //
    // Find the message Id in the list ...
    map< unsigned long, unsigned long >::iterator mtiter;
@@ -1358,32 +1343,27 @@ bool Router::sendMessageToSpoofer( const MessagePacket &mp, int priority )
         || mp.msgData().osCode() == MessageData::DISTRIBUTE_LOCALLY )
    {
       map< unsigned long, unsigned long >::iterator mtiter;
-      for ( mtiter = _SpooferMsgMap.begin() ;
-            mtiter != _SpooferMsgMap.end() ;
-            mtiter++ )
+      mtiter = _SpooferMsgMap.find( mp.msgData().msgId() );
+      if ( mtiter != _SpooferMsgMap.end() )
       {
-         if ( (*mtiter).first == mp.msgData().msgId() )
+         map< unsigned long, mqd_t >::iterator tqiter;
+         tqiter = _TaskQueueMap.find( (*mtiter).second );
+         if ( tqiter == _TaskQueueMap.end() )
          {
-            map< unsigned long, mqd_t >::iterator tqiter;
-            tqiter = _TaskQueueMap.find( (*mtiter).second );
-            if ( tqiter == _TaskQueueMap.end() )
-            {
-               //
-               // Error ...
-               DataLog( log_level_critical ) << "Sending message=" << hex << (*mtiter).first 
-                                    << "(" << _MsgIntegrityMap[ (*mtiter).first ].c_str() << ") " 
-                                    << " - Spoofer Task Id=" << (*mtiter).second 
-                                    << "(" << taskName( (*mtiter).second ) << ")"
-                                    << " not found in task list" << endmsg;
-               _FATAL_ERROR( __FILE__, __LINE__, "Spoofer task lookup failed" );
-               break;
-            }
-            
-            sendMessage( mp, (*tqiter).second, (*tqiter).first, priority );
             //
-            // We only allow one spoofer to register for each message Id ...
-            return true;
+            // Error ...
+            DataLog( log_level_critical ) << "Sending message=" << hex << (*mtiter).first 
+                  << "(" << _MsgIntegrityMap[ (*mtiter).first ].c_str() << ") " 
+                  << " - Spoofer Task Id=" << (*mtiter).second 
+                  << "(" << taskName( (*mtiter).second ) << ")"
+                  << " not found in task list" << endmsg;
+            _FATAL_ERROR( __FILE__, __LINE__, "Spoofer task lookup failed" );
          }
+
+         sendMessage( mp, (*tqiter).second, (*tqiter).first, priority );
+         //
+         // We only allow one spoofer to register for each message Id ...
+         return true;
       }
    }
 

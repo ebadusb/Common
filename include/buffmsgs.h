@@ -1,0 +1,175 @@
+/*
+ * Copyright (c) 1995, 1996 by Cobe BCT, Inc.  All rights reserved.
+ *
+ * $Header: Q:/home1/COMMON_PROJECT/Source/INCLUDE/rcs/BUFFMSGS.H 1.4 1999/07/26 15:38:48 BS04481 Exp TD10216 $
+ * $Log: BUFFMSGS.H $
+ * Revision 1.6  1999/05/13 15:33:14  SB07663
+ * Readded in tcpgateRegistration for IT3838 and new modifyProduct
+ * message for V3.3a PFR
+ * Revision 1.5  1999/05/13 15:24:28  MS10234
+ * Added message type to log non-display messages
+ * Revision 1.3  1999/04/01 16:28:27  SB07663
+ * Message additions for V3.3a optimizer
+ * Revision 1.2  1999/03/24 21:49:48  BS04481
+ * Change hardware version information to provide base version of
+ * hardware plus computer type, board rev and FPGA revision byte.
+ * Add message support in both drivers to respond to queries for 
+ * hardware type.
+ * Revision 1.1  1998/10/23 19:39:18  TM02109
+ * Initial revision
+ * Revision 1.3  1998/10/23 17:42:12  TM02109
+ * Must use distinct names in the INT32 and BUFFER messages.
+ * Revision 1.2  1998/10/22 22:36:31  TM02109
+ * Can not have redefined message names.
+ * Revision 1.1  1998/10/22 22:29:13  TM02109
+ * Initial revision
+ * 
+ * Created by WTM
+ */
+
+#ifndef BUFFMSGS_H                  // prevent multiple includes
+#define BUFFMSGS_H
+
+enum BUFFER_MESSAGES
+{
+   FIRST_BUFFER_MESSAGE=0,        // don't change this entry
+
+//      MESSAGE NAME                  FROM        TO         DESCRIPTION
+// 12/02/96 msm
+// APOLLOnet II Messages Please leave these in a block
+// They are given unique IDs for the TCP/IP processes
+//
+// The msgs identifed as AN2 -> FS will be sent from an external computing resource
+// on a UDP socket directed to the FS of interest ( FS ip, AN2 port ).
+// Msgs ideintifed as FS -> AN2 will be xmitterd on a UDP socket from the FS
+// the the remote host currently active in the tcp_gate ( remote host ip, remote host port ) .
+//
+   AN2SetHostMsg,                 // AN2 -> FS set remote host for tcp_gate FS msg output.
+   AN2AreYouThereRequestMsg,      // AN2 -> FS ping FS for AN2 port status.
+   AN2AreYouThereReplyMsg,        // FS  -> AN2 reply to an2 ping.
+   AN2StatusRequestMsg,           // AN2 -> FS Machine status request.
+   AN2StatusRequestReplyMsg,      // FS  -> AN2 Machine staus request reply.
+   AN2ServiceRequestMsg,          // AN2 -> FS  service request.
+   AN2ServiceRequestReplyMsg,     // FS  -> AN2 result of service request.
+   AN2SetDonorVitalsMsg,          // AN2 -> FS donor vitals structure.
+   AN2SetDonorVitalsReplyMsg,     // FS  -> AN2 donor vitals reception reply.
+// when adding AN2 messages, RENAME the highest 'AN2TestX' message
+   AN2AutoServiceControlCommand,  // auto service msg from external computer containing control cmd data ( pump flows )
+   AN2ManualServiceControlCommand,// manual service msg from external computer containing control cmd data ( pump RPM)
+   AN2Test3,                      // undifferentiated an2 msg for future use/testing
+   AN2Test2,                      // undifferentiated an2 msg for future use/testing
+   AN2Test1,                      // undifferentiated an2 msg for future use/testing
+// End of APOLLonet II Messages
+
+   ControlHardwareCommands,      // Procedure -> CNTL        Control commands to the hardware
+   ControlHardwareStatus,        // CNTL      -> Procedure   Hardware status data
+   CurrentProcedureStatus,       // Procedure -> GUI         Run data
+   DataLog,                      // any       -> GUI         Data logging information
+   GUIConfigToProcedure,         // GUI       -> Procedure   request to set procedure params (i.e. proc time...)
+   GUIToProcedureDonorVitals,    // GUI       -> Procedure   GUI donor safety critical information struct
+   GUIToProcedureAdjust,         // GUI       -> Procedure   GUI procedure adjustment struct
+   GUIToProcedureProductRequest, // GUI       -> Procedure   GUI to procedure product request struct
+   HALtoVDStatus,                // Procedure -> Procedure   Internal message HAL->VD
+   KeyboardMessage,              // ?         -> ?           for test programs
+   KeypadReturnMsg,              // GUI       -> GUI         GUI return information from keypad
+   ProcedureToGUIAdjust,         // Procedure -> GUI         Procedure adjustment struct response to GUI
+   ProcToSafetyDonorVitals,      // Procedure -> Safety
+   EndRunStats,                  // Procedure -> GUI         end of run statistic information
+   RequestRanges,                // GUI       -> Procedure
+   SafetyHardwareCommands,
+   SafetyHardwareStatus,
+   SafetyToGuiDonorVitals,       // Safety    -> GUI
+   StatusLine,                   // many      -> GUI
+   VDtoHALCommands,              // Procedure -> Procedure   Internal message VD->HAL
+   AlarmMessage,                 // Anyone -> Procedure
+   GUIAlarmResponse,             // GUI -> Procedure
+   AlarmDisplayRequest,          // Procedure -> GUI
+   TaskManagerCommand,           // Anyone -> Task_Manager
+   ScreenInvokeStateless,        // GUI  -> GUI, displays stateless screen
+   ScreenInvokeChild,            // GUI  -> GUI, displays child screen
+   ScreenSwapStateless,          // GUI  -> GUI, swaps current stateless screen with another
+   ScreenSwapChild,              // GUI  -> GUI, swaps current child screen with another
+   ScreenInvoke,                 // GUI  -> GUI, displays procedure screen
+   SoundCommands,                // Anyone    -> Sound Manager   Command sounds to speaker
+   BuffTestMessage1,             // test message 1
+   BuffTestMessage2,             // test message 2
+   FastUsData,                   // CTL -> Test  Fast ultrasonics data
+   FastApsData,                  // CTL -> AcOccMon   Fast Access Pressure Data
+   FastPumpData,                 // CTL -> test  Fast pump encoder data
+   SafetyDonorMon,
+   SafetyResMon,
+   SafetyCycleMon,
+   GUIChildScreenToGUI,          // GUI       -> GUI data returning from child screens on GUI
+
+
+// Spectra ProcII Messages, Please leave these in a block
+// They are given unique IDs for the TCP/IP processes
+   SpectraAcMsg,
+   SpectraAsMsg,
+   SpectraAwMsg,
+   SpectraAxMsg,
+   SpectraAyMsg,
+   SpectraAzMsg,
+   SpectraDsMsg,
+   SpectraDyMsg,
+   SpectraKMsg,         // Keyboard
+   SpectraMcMsg,
+   SpectraMsgAck,       // message acknowledge
+   SpectraMsgCmd,       // message command
+   SpectraPwrFailAck,   // Power fail Acknowledge
+   SpectraPwrFailData,  // Power fail Data
+   SpectraPwrFailReq,   // Power fail request
+   SpectraPmMsg,        // parameter command
+   SpectraPmAckMsg,     // parameter acknowledge
+   SpectraPsMsg,
+   SpectraPuMsg,
+   SpectraPxMsg,
+   SpectraPyMsg,
+   SpectraPzMsg,
+   SpectraSsMsg,
+   SpectraSxMsg,
+   SpectraSync,
+   SpectraTest6,
+   SpectraTest5,
+   SpectraTest4,
+   SpectraTest3,
+   SpectraTest2,
+   SpectraTest1,
+   // End of Spectra Messages
+
+   ScreenSwapStackChild,         // GUI       -> GUI Request to clean the child screen stack, then add a new screen.
+   ScreenSwapStackStateless,     // GUI       -> GUI Request to clean the stateless screen stack, then add a new screen.
+   misc_log,                     // anyone    -> proc Request to add misc data to run_data log
+   PowerFailRecoveryData,        // proc<->safety power fail data
+   ProcStateSubstate,            // PFR       -> proc change state and substate simultaneously
+   MeterDataMsg,                 // Router    -> anyone requesting machine meter data.
+   FastFilterAPS,                // control driver -> Proc  Asynchronous APS data for fast alarm
+
+// Spectra ProcII Messages, Please leave these in a block
+   SpectraTest7,
+   SpectraTest8,
+   SpectraTest9,
+   SpectraTest10,
+   SpectraTest11,
+   SpectraTest12,
+   SpectraTest13,
+   SpectraTest14,
+   SpectraTest15,
+   SpectraTest16, 
+// End of Spectra Messages
+   
+// NOTE: When adding buffer messages,
+// Add to end of list, after this comment
+   HardwareVersion,     // drivers -> anyone who requests Hardware version structure
+   CreateProduct,           //  anyone -> proc create new product
+   OptimizerCommands,       // proc -> proc optimizer task : task command
+   OptimizerResults,        // optimizer task -> proc : optimization results
+   ProcedureInformation,    // proc->gui procedure information for selection screen
+   AlarmLogRequest,              // Procedure -> Procedure
+   TcpgateRegistration,     // External->an2inetd->tcp_gate:register for tcpgate msgs
+   ModifyProduct,           // anyone -> proc : modify product (see predict_msgs.h)
+
+   LAST_BUFFER_MESSAGE           // don't change this entry
+};
+
+#endif

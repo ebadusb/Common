@@ -27,7 +27,8 @@ public:
    ~sockinetaddr () {}
 
    sockinetaddr ();
-   sockinetaddr (unsigned long addr, int port_no=0);
+   sockinetaddr (unsigned long addr, unsigned short port_no=0);   // host byte order
+   sockinetaddr (const char *addr,   unsigned short port_no=0);   // Addr in inet . notation (172.21.0.0)
    sockinetaddr (const sockinetaddr& sina);
 
 

@@ -6,6 +6,8 @@
  * CHANGELOG:
  *  $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/crcgen.h 1.4 2001/08/22 14:33:20 rm70006 Exp ms10234 $
  *  $Log: crcgen.h $
+ *  Revision 1.2  2000/06/07 22:04:21  bd10648
+ *  Moved CRC seed into this header file from softcrc.h
  *  Revision 1.1  1999/05/24 23:26:24  TD10216
  *  Initial revision
  *  Revision 1.3  1998/08/18 23:00:39  TD07711
@@ -38,7 +40,7 @@ extern "C" {
 int crcgen32(unsigned long* pcrc, char* pdata, long length);
 
 // common seed for all users to get common results.
-#define INITCRC_DEFAULT 0
+#define INITCRC_DEFAULT (0xFFFFFFFFL)
 
 
 #ifdef __cplusplus

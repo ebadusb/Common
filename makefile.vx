@@ -3,6 +3,8 @@
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.7  2002/07/09 16:25:10  ms10234
+# changed to create a common.out file which can be loaded into vxWorks
 # Revision 1.6  2002/06/24 19:30:15  rm70006
 # Added CDS to make list.
 # Revision 1.5  2002/06/18 16:51:40Z  jl11312
@@ -42,7 +44,7 @@ libs:
 #
 APP_NAME = common.out
 APP_DIR = $(MAINDIR)\bin
-APP_LIBS = @.opt/lib_objs $(MAINDIR)\datalog\lib\libdatalog.a
+APP_LIBS = @.opt/lib_objs
 
 .PHONY: @.opt/lib_objs
 @.opt/lib_objs:
@@ -62,7 +64,7 @@ clean:
 	@cd softcrc && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
 	@cd clocks && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
 	@cd cds && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
-	rm -f $(addprefix $(APP_DIR_CPU)/, $(notdir $(APP_C_FILES:.cpp=.o))) $(addprefix .dfile/, $(notdir $(APP_C_FILES:.cpp=.d)))
+	rm -f $(addprefix $(APP_DIR_CPU)/, $(notdir $(APP_C_FILES:.c=.o))) $(addprefix .dfile/, $(notdir $(APP_C_FILES:.c=.d)))
 	rm -f $(addprefix $(APP_DIR_CPU)/, $(notdir $(APP_CXX_FILES:.cpp=.o))) $(addprefix .dfile/, $(notdir $(APP_CXX_FILES:.cpp=.d)))
 	rm -f $(addprefix $(APP_DIR)/, $(APP_NAME))
 

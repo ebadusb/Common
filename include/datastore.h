@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.h $
+ * HISTORY:    Revision 1.13  2002/10/17 20:14:47Z  rm70006
+ * HISTORY:    Added = and access routines that provide implicit get and set.
  * HISTORY:    Revision 1.12  2002/09/25 16:03:16Z  rm70006
  * HISTORY:    Added GetRef call for Config DataStore
  * HISTORY:    Revision 1.11  2002/09/24 16:46:09Z  rm70006
@@ -74,14 +76,13 @@ protected:
    ElementType ();  // Hide default constructor
    virtual ~ElementType();
 
-   void Register (DataStore *ds, Role role, PfrType pfr);
+   void Register (DataStore *ds, PfrType pfr);
 
    virtual void ReadSelf  (ifstream &pfrfile) = 0;
    virtual void WriteSelf (ofstream &pfrfile) = 0;
 
 // Data Members
 protected:
-   Role       _role;
    PfrType    _pfrType;
    DataStore *_ds;
    //string     _name;
@@ -116,8 +117,8 @@ public:
    void SetSpoof   (FP fp);
    void ClearSpoof ();
 
-   virtual void Register (DataStore *ds, Role role, PfrType pfr);
-   virtual void Register (DataStore *ds, Role role, PfrType pfr, const dataType &initValue);
+   virtual void Register (DataStore *ds, PfrType pfr);
+   virtual void Register (DataStore *ds, PfrType pfr, const dataType &initValue);
 
 // Class Methods
 protected:
@@ -148,8 +149,8 @@ public:
 
    virtual bool Set(const dataType &data);   // Perform range check on set call.
 
-   virtual void Register (DataStore *ds, Role role, PfrType pfr, const dataType min, const dataType max);
-   virtual void Register (DataStore *ds, Role role, PfrType pfr, const dataType min, const dataType max, const dataType &initValue);
+   virtual void Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max);
+   virtual void Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max, const dataType &initValue);
 
 // Data Members
 private:
@@ -214,13 +215,14 @@ public:
 
    // Accessor functions
    static const SYMTAB_ID & getTable() { return _datastoreTable; }
-   const        string    & Name () const {return _name; }
-   const        Role      & GetRole () const { return _role; }
-   void                     GetSymbolName (string &s, const BIND_ITEM_TYPE item);
+   inline const string    & Name () const {return _name; }
+   inline const Role      & GetRole () const { return _role; }
+   
+   void GetSymbolName (string &s, const BIND_ITEM_TYPE item);
 
-   static void turn_on_logging(void)  { _logging = true; };
-   static void turn_off_logging(void) { _logging = false; };
-   static bool is_logging (void) { return _logging; };
+   inline static void turn_on_logging(void)  { _logging = true; };
+   inline static void turn_off_logging(void) { _logging = false; };
+   inline static bool is_logging (void) { return _logging; };
 
    
 // Class Methods
@@ -234,6 +236,7 @@ protected:
 // Data Members
 protected:
    bool *_writerDeclared;
+   Role  _role;
    
 
 // Class Methods
@@ -245,7 +248,6 @@ private:
 private:
 
    // instance vars
-   Role _role;
    string _name;
    
    int _refCount;
@@ -309,6 +311,32 @@ protected:
 
 private:
    MultWriteDataStore();    // Base Constructor not available
+};
+
+
+
+//
+// Dynamic-Single-Write Datastore
+// This Datastore type allows datastore instances to change their role dynamically.
+// The Datastore still only allows a single writer.
+// Created instances default to READ-ONLY
+//
+class DynamicSingleWriteDataStore : public SingleWriteDataStore
+{
+// Class Methods
+public:
+   virtual void SetWrite();
+   virtual void SetRead();
+
+// Class Methods
+protected:
+   DynamicSingleWriteDataStore (char *name, Role role);
+   virtual ~DynamicSingleWriteDataStore();
+
+   //virtual void CheckForMultipleWriters();
+
+private:
+   DynamicSingleWriteDataStore();    // Base Constructor not available
 };
 
 

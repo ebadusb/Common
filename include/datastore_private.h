@@ -12,6 +12,8 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.12  2002/09/25 16:04:32Z  rm70006
+ * HISTORY:    Fixed bugs with fatal error check logging.
  * HISTORY:    Revision 1.11  2002/09/24 16:47:18Z  rm70006
  * HISTORY:    Add extra debugging ability.
  * HISTORY:    Revision 1.10  2002/09/19 16:05:18Z  rm70006
@@ -136,11 +138,11 @@ template <class dataType> BaseElement<dataType>::~BaseElement()
 //
 // Register method
 //
-template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, Role role, PfrType pfr)
+template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, PfrType pfr)
 {
    bool created;
 
-   ElementType::Register(ds, role, pfr);
+   ElementType::Register(ds, pfr);
 
    // Bind the data element to the DataStore symbol table entry.
    BindItem(ds, &_data, ITEM_DATA, created);
@@ -161,11 +163,11 @@ template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, R
 //
 // Register method
 //
-template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, Role role, PfrType pfr, const dataType &initValue)
+template <class dataType> void BaseElement<dataType>::Register (DataStore *ds, PfrType pfr, const dataType &initValue)
 {
    bool created; 
 
-   ElementType::Register(ds, role, pfr);
+   ElementType::Register(ds, pfr);
 
    // Bind the data element to the DataStore symbol table entry.
    BindItem(ds, &_data, ITEM_DATA, created);
@@ -204,7 +206,7 @@ template <class dataType> inline void BaseElement<dataType>::Get(dataType *item)
    _ds->Lock();
 
    // If calling instance is spoofer or no spoof has been registered, return real value
-   if ( (_role == ROLE_SPOOFER) || (*_fp == NULL) )
+   if ( (_ds->GetRole() == ROLE_SPOOFER) || (*_fp == NULL) )
    {
       *item = *_data;
    }
@@ -228,7 +230,7 @@ template<> inline void BaseElement<T>::Get(T *item) const                       
    }                                                                                       \
                                                                                            \
    /* If calling instance is spoofer or no spoof has been registered, return real value */ \
-   if ( (_role == ROLE_SPOOFER) || (*_fp == NULL) )                                        \
+   if ( (_ds->GetRole() == ROLE_SPOOFER) || (*_fp == NULL) )                               \
    {                                                                                       \
       *item = *_data;                                                                      \
    }                                                                                       \
@@ -265,7 +267,7 @@ template <class dataType> inline dataType BaseElement<dataType>::Get() const
    }
 
    // If calling instance is spoofer or no spoof has been registered, return real value
-   if ( (_role == ROLE_SPOOFER) || (*_fp == NULL) )
+   if ( (_ds->GetRole() == ROLE_SPOOFER) || (*_fp == NULL) )
    {
       _ds->Lock();
       dataType temp = *_data;
@@ -294,7 +296,7 @@ template<> inline T BaseElement<T>::Get() const                                 
    }                                                                                       \
                                                                                            \
    /* If calling instance is spoofer or no spoof has been registered, return real value */ \
-   if ( (_role == ROLE_SPOOFER) || (*_fp == NULL) )                                        \
+   if ( (_ds->GetRole() == ROLE_SPOOFER) || (*_fp == NULL) )                               \
    {                                                                                       \
       T temp = *_data;                                                                     \
       return temp;                                                                         \
@@ -332,7 +334,7 @@ template <class dataType> inline bool BaseElement<dataType>::Set(const dataType 
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");
    }
 
-   if (_role != ROLE_RO)
+   if (_ds->GetRole() != ROLE_RO)
    {
       _ds->Lock(); 
       *_data = data;
@@ -359,7 +361,7 @@ template<> inline bool BaseElement<T>::Set(const T &data)                       
       _FATAL_ERROR(__FILE__, __LINE__, "FATAL ERROR.  Element failed to register");  \
    }                                                                                 \
                                                                                      \
-   if (_role != ROLE_RO)                                                             \
+   if (_ds->GetRole() != ROLE_RO)                                                    \
    {                                                                                 \
       *_data = data;                                                                 \
                                                                                      \
@@ -477,12 +479,12 @@ template <class dataType> RangedElement<dataType>::~RangedElement()
 //
 // Register method
 //
-template <class dataType> void RangedElement<dataType>::Register (DataStore *ds, Role role, PfrType pfr, const dataType min, const dataType max)
+template <class dataType> void RangedElement<dataType>::Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max)
 {
    _min = min;
    _max = max;
 
-   BaseElement::Register(ds, role, pfr);
+   BaseElement::Register(ds, pfr);
 }
 
 
@@ -490,12 +492,12 @@ template <class dataType> void RangedElement<dataType>::Register (DataStore *ds,
 //
 // Register method
 //
-template <class dataType> void RangedElement<dataType>::Register (DataStore *ds, Role role, PfrType pfr, const dataType min, const dataType max, const dataType &initValue)
+template <class dataType> void RangedElement<dataType>::Register (DataStore *ds, PfrType pfr, const dataType min, const dataType max, const dataType &initValue)
 {
    _min = min;
    _max = max;
 
-   BaseElement::Register(ds, role, pfr, initValue);
+   BaseElement::Register(ds, pfr, initValue);
 }
 
 

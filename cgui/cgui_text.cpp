@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.5  2004/11/04 20:19:08Z  rm10919
+ * Common updates and changes.
  * Revision 1.4  2004/11/01 17:27:23Z  cf10242
  * Change TextItem to CGUITextItem
  * Revision 1.3  2004/10/29 15:11:14Z  rm10919
@@ -684,7 +686,7 @@ void CGUIText::handleVariableSubstitution(void)
             }
 
             varName[subEndIdx-subStartIdx] = '\0';
-            unsigned char * varValue; //= (unsigned char *)trimaSysGetGUISetting(varName);
+            unsigned char * varValue = '\0'; //= (unsigned char *)trimaSysGetGUISetting(varName);
             if (varValue)
             {
                // Value is present, copy to the string and setup to continue with

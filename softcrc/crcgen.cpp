@@ -8,7 +8,7 @@
  *****************************************************************/
 
 #include "crcgen.h"
-
+#include "datalog.h"
 #include <fstream.h>
 #include <stdio.h>
 #include <errno.h>
@@ -112,7 +112,7 @@ unsigned long  crctable[TABLE_SIZE] =
 //   compute 32 bit CRC over a data buffer.
 //   overwrites initial crc with the new crc.
 // ERROR HANDLING:  returns -1 if arg error, else returns 0
-int crcgen32(unsigned long* pcrc, const char* pdata, long length)
+int crcgen32(unsigned long* pcrc, const unsigned char* pdata, long length)
 {
    // check args
    if (length < 0)
@@ -124,7 +124,7 @@ int crcgen32(unsigned long* pcrc, const char* pdata, long length)
 
    // do crc calc
    while(length--)
-      *pcrc = crctable[ (*pcrc ^ *(unsigned char*)pdata++) & 0xFFL] ^ (*pcrc >> 8);
+      *pcrc = crctable[ (*pcrc ^ *pdata++) & 0xFFL] ^ (*pcrc >> 8);
 
    return 0;
 }
@@ -144,7 +144,7 @@ int crcgen32(unsigned long* pcrc, const char* pdata, long length)
 //    returns -1 if failed
 int file_crcgen32 (const char *filename, unsigned long *pcrc)
 {
-   char buffer[MAXBUFFERLENGTH];
+   unsigned char buffer[MAXBUFFERLENGTH];
    int count;
    int totalBytesRead = 0;
 
@@ -171,7 +171,8 @@ int file_crcgen32 (const char *filename, unsigned long *pcrc)
       // ignore fail status.
       if (inStream.bad())
       {
-         sprintf (buffer, "Stream read failed (%d, %d) (%x).", count, totalBytesRead, inStream.rdstate());
+			DataLog_Critical	critical;
+			DataLog(critical) << "Stream read failed (" << count << ", " << totalBytesRead <<") (0x" << hex << inStream.rdstate() << dec << ")" << endmsg;
          inStream.close();
          return -1;
       }

@@ -35,7 +35,7 @@ public:
    {
       TASK_REGISTER,                            // register task with router
       TASK_DEREGISTER,                          // deregister task with router
-      MESSAGE_NAME_REGISTER,                    // register message name with router, not the message
+      MESSAGE_NAME_REGISTER,                    // register message name with router
       MESSAGE_REGISTER,                         // register message with router
       MESSAGE_DEREGISTER,                       // deregister message with router
       GATEWAY_CONNECT,                          // register a gateway task
@@ -43,18 +43,20 @@ public:
       SPOOFER_REGISTER,                         // register the spoofer task
       SPOOFER_DEREGISTER,                       // deregister the spoofer task
 
-      MESSAGE_MULTICAST,                        // distribute the message to everyone
+      DISTRIBUTE_GLOBALLY,                      // distribute the message to everyone
                                                 //  who registered 
-      MESSAGE_MULTICAST_LOCAL,                  // distribute the message to everyone
+      DISTRIBUTE_LOCALLY,                       // distribute the message to everyone
                                                 //  who registered on the local node
       TIME_UPDATE,                              // time update from the ISR
 
-      SPOOFED_MESSAGE                           // spoofer has modified message
+      SPOOFED_GLOBALLY,                         // spoofer has modified message for everyone
+      SPOOFED_LOCALLY,                          // spoofer has modified message for everyone 
+                                                //  on the local node
    };
 
 public:
 
-   MessageData() { memset( _Msg, 0, MAX_MESSAGE_SIZE + 1 ); }
+   MessageData() { memset( this, 0, sizeof( MessageData ) ); }
    MessageData( const MessageData &d ) { operator=( d ); }
    ~MessageData() {}
 
@@ -154,7 +156,7 @@ public:
       outs << "Tid: " << hex << _TaskId << " Time: " << dec << _SendTime.tv_sec << " " << _SendTime.tv_nsec << " ";
       outs << "Seq: " << _SeqNum << " Tot: " << _TotNum << " ";
       outs << "PcktLngth: " << _PacketLength << " Msg: " << _Msg << endl;
-      outs << "Msg: "; for (int i=0;i<MAX_MESSAGE_SIZE+1;i++) outs << hex << (int)((unsigned char)(*(_Msg+i))); outs << endl;
+      outs << "Msg: "; for (int i=0;i<MAX_MESSAGE_SIZE+1;i++) outs << hex << (int)((unsigned char)(*(_Msg+i))) << " "; outs << endl;
       outs << "###################################################################" << endl;
    }
 

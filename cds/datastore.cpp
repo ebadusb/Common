@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.7  2002/07/17 14:03:22Z  sb07663
+ * HISTORY:    latest latest fix for multiple writer check
  * HISTORY:    Revision 1.6  2002/07/16 22:22:13  rm70006
  * HISTORY:    Fix problem with uninitialized variable.
  * HISTORY:    Revision 1.5  2002/07/16 21:02:44Z  rm70006
@@ -76,14 +78,6 @@ void ElementType::Register(DataStore *ds, Role role, PfrType pfr)
    _ds      = ds;
    _role    = role;
    _pfrType = pfr;
-
-   STATUS status;
-
-   // Only add the element if the Role is RW and PFR is desired (avoid duplicates).
-   if ( (_role == ROLE_RW) && (_pfrType == PFR_RECOVER) )
-   {
-      _ds->AddElement(this);
-   }
 }
 
 
@@ -96,10 +90,11 @@ void ElementType::Register(DataStore *ds, Role role, PfrType pfr)
 
 DATASTORE_LISTTYPE DataStore::_datastoreList;
 
-DataLog_Level    DataStore::_debug(LOG_DATASTORE);
-DataLog_Critical DataStore::_fatal;
+DataLog_Level    *DataStore::_debug = 0;
+DataLog_Critical *DataStore::_fatal = 0;
 
 SYMTAB_ID DataStore::_datastoreTable = NULL;
+
 
 
 //
@@ -108,8 +103,8 @@ SYMTAB_ID DataStore::_datastoreTable = NULL;
 DataStore::DataStore()
 {
    // Assert an error.
-   DataLog(_fatal) << "Datastore Constructor Error: " << endmsg;
-   _FATAL_ERROR(__FILE__, __LINE__, "Datastore default Constructor");
+   DataLog(*_fatal) << "Datastore default constructor was called." << endmsg;
+   _FATAL_ERROR(__FILE__, __LINE__, "Datastore default constructor called.");
 }
 
 
@@ -137,11 +132,19 @@ DataStore::DataStore(char *name, Role role) :
    _readCount(NULL),
    _writerDeclared(NULL)
 {
+   if (_debug == 0)
+   {
+      _debug = new DataLog_Level(LOG_DATASTORE);
+      _fatal = new DataLog_Critical();
+   }
+
+   //datalog_SetTaskOutputOptions(DATALOG_CURRENT_TASK, DataLog_LogEnabled, DataLog_ConsoleEnabled);
+   //DataLog(_fatal) << "DataStore constructor begin "  << _name << "." << endmsg;
+
    const int SEM_FLAGS = SEM_Q_PRIORITY | SEM_DELETE_SAFE | SEM_INVERSION_SAFE;
 
    bool created;
 
-   
    // Create the Symbol table.
    if (_datastoreTable == NULL)
    {
@@ -151,7 +154,7 @@ DataStore::DataStore(char *name, Role role) :
    //
    // Keep track of how many writers there are.  There should only be 1.
    //
-   BindItem(&_writerDeclared, ITEM_WRITER_DECLARED, created);
+   BindItem(this, &_writerDeclared, ITEM_WRITER_DECLARED, created);
 
    // If the symbol doesn't exist, initialize it (first time).
    if (created)
@@ -168,7 +171,7 @@ DataStore::DataStore(char *name, Role role) :
    //
    // Create list symbol name and assign it's value to the member variable.
    //
-   BindItem(&_pfrList, ITEM_PFR_LIST, created);
+   BindItem(this, &_pfrList, ITEM_PFR_LIST, created);
 
 
    // If the symbol doesn't exist, add it to the master list.
@@ -181,7 +184,7 @@ DataStore::DataStore(char *name, Role role) :
    //
    // Create env var names for mutex semaphores and assign their values to the member variables.
    //
-   BindItem(&_readCountSemaphore, ITEM_READ_COUNT_SEMAPHORE, created);
+   BindItem(this, &_readCountSemaphore, ITEM_READ_COUNT_SEMAPHORE, created);
 
    // If the symbol doesn't exist, create it (first time).
    if (created)
@@ -192,12 +195,12 @@ DataStore::DataStore(char *name, Role role) :
       if (*_readCountSemaphore == NULL)
       {
          // Fatal Error
-         DataLog(_fatal) << "_readCountSemaphore could not be created for CDS " << _name << endmsg;
+         DataLog(*_fatal) << "_readCountSemaphore could not be created for CDS " << _name << endmsg;
          _FATAL_ERROR(__FILE__, __LINE__, "_readCountSemaphore could not be created.");
       }
    }
 
-   BindItem(&_writeSemaphore, ITEM_WRITE_COUNT_SEMAPHORE, created);
+   BindItem(this, &_writeSemaphore, ITEM_WRITE_COUNT_SEMAPHORE, created);
 
    // If the env var doesn't exist, create it (first time).
    if (created)
@@ -208,7 +211,7 @@ DataStore::DataStore(char *name, Role role) :
       // Fatal if _writeSemaphore = NULL
       if (*_writeSemaphore == NULL)
       {
-         DataLog(_fatal) << "_writeSemaphoreSemaphore could not be createdfor CDS " << _name << endmsg;
+         DataLog(*_fatal) << "_writeSemaphoreSemaphore could not be createdfor CDS " << _name << endmsg;
          _FATAL_ERROR(__FILE__, __LINE__, "_writeSemaphoreSemaphore could not be created.");
       }
    }
@@ -216,7 +219,7 @@ DataStore::DataStore(char *name, Role role) :
    //
    // Create symbol names for mutex control flags and assign their values to the member variables.
    //
-   BindItem(&_signalWrite, ITEM_SIGNAL_WRITE, created);
+   BindItem(this, &_signalWrite, ITEM_SIGNAL_WRITE, created);
 
    // If the symbol doesn't exist, initialize it (first time).
    if (created)
@@ -224,7 +227,7 @@ DataStore::DataStore(char *name, Role role) :
       *_signalWrite = 0;
    }
 
-   BindItem(&_readCount, ITEM_READ_COUNT, created);
+   BindItem(this, &_readCount, ITEM_READ_COUNT, created);
    
    // If the symbol doesn't exist, initialize it (first time).
    if (created)
@@ -254,7 +257,7 @@ void DataStore::CheckForMultipleWriters()
    if (*_writerDeclared)
    {
       // This is an error.
-      DataLog(_fatal) << "Error.  Multiple Writers Declared for CDS " << _name << ".  Abort!!!!!!" << endmsg;
+      DataLog(*_fatal) << "Error.  Multiple Writers Declared for CDS " << _name << ".  Abort!!!!!!" << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "Datastore multiple writers");
       return;
    }
@@ -276,12 +279,12 @@ void DataStore::SavePfrData (ofstream &pfrFile)
    //        The restore function will put back in the same order.
    for (DATASTORE_LISTTYPE::iterator datastoreIterator = _datastoreList.begin(); datastoreIterator != _datastoreList.end(); ++datastoreIterator)
    {
-      DataLog(_debug) << "saving datastore " << (*datastoreIterator)->_name << endmsg;
+      DataLog(*_debug) << "saving datastore " << (*datastoreIterator)->_name << endmsg;
 
       // Check for existence
       if ((*datastoreIterator)->_pfrList == NULL)
       {
-         DataLog(_fatal) << "SavePfrData _pfrList is NULL.  Datastore " << (*datastoreIterator)->_name << " is invalid" << endmsg;
+         DataLog(*_fatal) << "SavePfrData _pfrList is NULL.  Datastore " << (*datastoreIterator)->_name << " is invalid" << endmsg;
          _FATAL_ERROR(__FILE__, __LINE__, "Datastore SavePfrData _pfrList is NULL");
       }
       else
@@ -306,12 +309,12 @@ void DataStore::RestorePfrData (ifstream &pfrFile)
 {
    for (DATASTORE_LISTTYPE::iterator datastoreIterator = _datastoreList.begin(); datastoreIterator != _datastoreList.end(); ++datastoreIterator)
    {
-      DataLog(_debug) << "restoring datastore " << (*datastoreIterator)->_name << endmsg;
+      DataLog(*_debug) << "restoring datastore " << (*datastoreIterator)->_name << endmsg;
 
       // Check for existence
       if ((*datastoreIterator)->_pfrList == NULL)
       {
-         DataLog(_fatal) << "RestorePfrData _pfrList is NULL.  Datastore " << (*datastoreIterator)->_name << " is invalid" << endmsg;
+         DataLog(*_fatal) << "RestorePfrData _pfrList is NULL.  Datastore " << (*datastoreIterator)->_name << " is invalid" << endmsg;
          _FATAL_ERROR(__FILE__, __LINE__, "Datastore RestorePfrData _pfrList is NULL");
       }
       else
@@ -336,7 +339,7 @@ void DataStore::AddElement (ElementType *member)
 {
    if (_pfrList == NULL)
    {
-      DataLog(_fatal) << "AddElement _pfrList is null for CDS " << _name << endmsg;
+      DataLog(*_fatal) << "AddElement _pfrList is null for CDS " << _name << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "AddElement _pfrList is null");
    }
    else
@@ -354,7 +357,7 @@ void DataStore::DeleteElement (ElementType *member)
 {
    if (_pfrList == NULL)
    {
-      DataLog(_fatal) << "DeleteElement _pfrList is null for CDS " << _name << endmsg;
+      DataLog(*_fatal) << "DeleteElement _pfrList is null for CDS " << _name << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "DeleteElement _pfrList is null");
    }
    else
@@ -372,7 +375,7 @@ void DataStore::Lock()
 {
    if (_signalWrite == NULL)
    {
-      DataLog(_fatal) << "_signalWrite is null for CDS " << _name << ".  DataStore writer must have exited." << endmsg;
+      DataLog(*_fatal) << "_signalWrite is null for CDS " << _name << ".  DataStore writer must have exited." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "Datastore Lock _signalWrite is null.");
    }
    else
@@ -437,6 +440,63 @@ void DataStore::Unlock()
          semGive(*_writeSemaphore);
       }
    }
+}
+
+
+
+//
+// symbolName
+//
+void DataStore::GetSymbolName(string &s, const BIND_ITEM_TYPE item)
+{
+   int size;
+   const int s_len = s.size();
+
+   // Create the Symbol name to search for.
+   switch (item)
+   {
+   case ITEM_DATA:
+      size = sprintf((char *)s.c_str(), DATASTORE_DATA_NAME, _name.c_str(), _refCount);
+      ++_refCount;
+      break;
+
+   case ITEM_SPOOF:
+      size = sprintf((char *)s.c_str(), DATASTORE_SPOOF_NAME, _name.c_str(), _spoofCount);
+      ++_spoofCount;
+      break;
+
+   case ITEM_PFR_LIST:
+      size = sprintf((char *)s.c_str(), DATASTORE_LIST_NAME, _name.c_str());
+      break;
+
+   case ITEM_READ_COUNT_SEMAPHORE:
+      size = sprintf((char *)s.c_str(), DATASTORE_READ_SEM, _name.c_str());
+      break;
+
+   case ITEM_WRITE_COUNT_SEMAPHORE:
+      size = sprintf((char *)s.c_str(), DATASTORE_WRITE_SEM, _name.c_str());
+      break;
+
+   case ITEM_SIGNAL_WRITE:
+      size = sprintf((char *)s.c_str(), DATASTORE_SIGNAL_WRITE, _name.c_str());
+      break;
+
+   case ITEM_READ_COUNT:
+      size = sprintf((char *)s.c_str(), DATASTORE_READ_COUNT, _name.c_str());
+      break;
+   
+   case ITEM_WRITER_DECLARED:
+      size = sprintf((char *)s.c_str(), DATASTORE_WRITER_DECLARED, _name.c_str());
+      break;
+   }
+
+   if (size > s_len)
+   {
+      // FATAL Error.
+
+      // Dude.  You just wiped out something.
+   }
+
 }
 
 

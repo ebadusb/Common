@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.15  2002/09/23 13:54:46  jl11312
+ * - added access function for current log file name
  * Revision 1.14  2002/09/19 21:26:37  jl11312
  * - added errnoMsg manipulator function
  * Revision 1.13  2002/08/28 14:36:40  jl11312
@@ -40,6 +42,7 @@
 #define _DATALOG_INCLUDE
 
 #include <in.h>
+#include <iomanip.h>
 #include <inetLib.h>
 #include <sockLib.h>
 #include <stdio.h>
@@ -197,8 +200,11 @@ protected:
 };
 
 ostream & endmsg(ostream & stream);
-ostream & errnoMsg(ostream & stream);
 ostream & datalog_GetDefaultStream(const char * file, int line);
+
+ostream & omanip_errnoMsg(ostream & stream, int errnoParam);
+inline omanip<int> errnoMsg(int errnoParam) { return omanip<int>(omanip_errnoMsg, errnoParam); }
+inline ostream & errnoMsg(ostream & stream) { return omanip_errnoMsg(stream, errno); }
 
 class DataLog_Critical : public DataLog_Level
 {

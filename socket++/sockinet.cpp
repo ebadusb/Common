@@ -24,22 +24,42 @@
 #include <arpa/inet.h>
 #include <hostLib.h>
 #include <sockLib.h>
+#include <inetLib.h>   // Needed for inet_aton
 //EXTERN_C_END
 
 
 sockinetaddr::sockinetaddr () 
 {
-   sin_family     = sockinetbuf::af_inet;
+   sin_len         = sizeof (struct in_addr);
+   sin_family      = sockinetbuf::af_inet;
    sin_addr.s_addr = htonl(INADDR_ANY);
    sin_port        = 0;
 }
 
-sockinetaddr::sockinetaddr(unsigned long addr, int port_no)
+
+
+sockinetaddr::sockinetaddr(unsigned long addr, unsigned short port_no)
 // addr and port_no are in host byte order
 {
+   sin_len         = sizeof (struct in_addr);
    sin_family      = sockinetbuf::af_inet;
    sin_addr.s_addr = htonl(addr);
    sin_port        = htons(port_no);
+}
+
+
+
+sockinetaddr::sockinetaddr(const char *addr, unsigned short port_no)
+// addr and port_no are in host byte order
+{
+   sin_len    = sizeof (struct in_addr);
+   sin_family = sockinetbuf::af_inet;
+   sin_port   = htons(port_no);
+   
+   if (inet_aton ((char *)addr, &sin_addr) != OK)   // Stupid VxWorks doesn't have const in prototype
+   {
+      // (Fatal?) Error.
+   }
 }
 
 /* NOT SUPPORTED BY VXWORKS

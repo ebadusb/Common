@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.9 2003/04/29 17:07:54Z jl11312 Exp jl11312 $
  * $Log: datalog_message_stream.cpp $
+ * Revision 1.6  2003/01/31 19:52:51  jl11312
+ * - new stream format for datalog
  * Revision 1.5  2002/10/25 16:59:17  jl11312
  * - added new form of errnoMsg stream manipulator which takes an argument for errno
  * Revision 1.4  2002/09/19 21:25:59  jl11312
@@ -332,7 +334,12 @@ DataLog_Stream & DataLog_Stream::operator << (bool val)
 DataLog_Stream & DataLog_Stream::operator << (const char * s)
 {
 	if ( _consoleOutput == DataLog_ConsoleEnabled ) printf("%s", s);
-	if ( _logOutput == DataLog_LogEnabled) writeStringArg(String, s, strlen(s)*sizeof(char));
+	if ( _logOutput == DataLog_LogEnabled)
+	{
+		if (s) writeStringArg(String, s, strlen(s)*sizeof(char));
+		else writeStringArg(String, "null", 4*sizeof(char));
+	} 
+
 	return *this;
 }
 

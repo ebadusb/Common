@@ -354,7 +354,7 @@ int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
       register int wc ;
 
       rc = tarRdBlks( pCtrl, &pBuf, nblks, datalogRunning ) ;
-      fprintf( stdout, "\ttarExtract: bytes remaining->%d                                    \r", size);
+      fprintf( stdout, "\ttarExtract: bytes remaining->%d         \r", size);
 
       if ( rc < 0 )
       {

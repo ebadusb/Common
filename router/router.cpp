@@ -7,20 +7,18 @@
 
 #include <vxWorks.h>
 
-#include <errnoLib.h>
 #include <ioLib.h>
 #include <stdio.h>
 #include <taskHookLib.h>
 #include <netinet/tcp.h>
 
-#include "datalog.h"
-#include "error.h"
+#include "common_datalog.h"
+#include "failure_debug.h"
 #include "gateway.h"
 #include "messagesystem.h"
 #include "messagesystemconstant.h"
 #include "router.h"
 #include "systemoverrides.h"
-#include "datalog_levels.h"
 
 
 WIND_TCB *Router::_TheRouterTid=0;
@@ -133,8 +131,7 @@ bool Router::init()
    {
       //
       // Error ...
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Router message queue open failed" << endmsg;
+      DataLog(log_level_critical) << "Router message queue open failed" << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Router message queue open failed" );
       return false;
    }
@@ -151,8 +148,7 @@ bool Router::init()
    {
       //
       // Error ...
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Timer message queue open failed" << endmsg;
+      DataLog(log_level_critical) << "Timer message queue open failed" << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Timer message queue open failed" );
       return false;
    }
@@ -201,10 +197,8 @@ void Router::dispatchMessages()
       {
          //
          // Error ...
-         int errorNo = errno;
-         DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Dispatching message - mq_receive return size=" << size
-                              << " and (" << strerror( errorNo ) << ")" << endmsg;
+         DataLog(log_level_critical) << "Dispatching message - mq_receive return size=" << size
+                              << " and (" << errnoMsg << ")" << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "Dispatching message - message queue receive failed" );
          return;
       }
@@ -220,8 +214,8 @@ void Router::dispatchMessages()
          // Error ...
          unsigned long crc = mp.crc();
          mp.updateCRC();
-         DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Dispatching message - message CRC validation failed for MsgId=" 
+
+         DataLog(log_level_critical) << "Dispatching message - message CRC validation failed for MsgId=" 
                               << hex << mp.msgData().msgId() 
                               << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ")" 
                               << ", CRC=" << crc << " and should be " << mp.crc() << endmsg;
@@ -507,10 +501,8 @@ bool Router::initGateways()
          {
             //
             // Error ...
-            int errorNo = errno;
-            DataLog_Critical criticalLog;
-            DataLog(criticalLog) << "Router init - could not spawn gateway for address -> " << hex << netAddress 
-                                 << ", (" << strerror( errorNo ) << ")"
+            DataLog(log_level_critical) << "Router init - could not spawn gateway for address -> " << hex << netAddress 
+                                 << ", (" << errnoMsg << ")"
                                  << endmsg;
             _FATAL_ERROR( __FILE__, __LINE__, "Gateway spawn error" );
             return false;
@@ -655,8 +647,7 @@ void Router::connectWithGateway( const MessagePacket &mp )
       {
          //
          // Error ...
-         DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Gateway::init : socket set send buffer size option SO_SNDBUF failed, error->" << strerror( errnoGet() ) << endmsg;
+         DataLog(log_level_critical) << "Gateway::init : socket set send buffer size option SO_SNDBUF failed, error->" << errnoMsg << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "Gateway init: socket set option failed" );
          return;
       }
@@ -724,8 +715,7 @@ void Router::connectWithGateway( const MessagePacket &mp )
       // ... error, the gateway has already established a connection
       //
       // Error ...
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Connect with gateway=" << hex << mp.msgData().nodeId() << " - already connected" << endmsg;
+      DataLog(log_level_critical) << "Connect with gateway=" << hex << mp.msgData().nodeId() << " - already connected" << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Gateway connect failed" );
    }
 }
@@ -784,8 +774,7 @@ void Router::registerTask( unsigned long tId, const char *qName )
          //  before connecting to the router.
          //
          // Error ...
-         DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Register task=" << hex << tId << "(" << taskName( tId ) << ") - message queue open failed" 
+         DataLog(log_level_critical) << "Register task=" << hex << tId << "(" << taskName( tId ) << ") - message queue open failed" 
                               << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "mq_open failed" );
       }
@@ -872,8 +861,7 @@ void Router::checkMessageId( unsigned long msgId, const char *mname )
       {
          //
          // Error ...
-         DataLog_Critical criticalLog;
-         DataLog(criticalLog) << "Check message Id - Message name=" << mname << " to Id=" << hex << msgId << " integrity check failed" << endmsg;
+         DataLog(log_level_critical) << "Check message Id - Message name=" << mname << " to Id=" << hex << msgId << " integrity check failed" << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "Message integrity check failed" );
       }
    }
@@ -907,8 +895,7 @@ void Router::checkMessageId( unsigned long msgId )
    {
       //
       // Error ...
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Check message Id - Message Id=" << hex << msgId << " unregistered use in message system" << endmsg;
+      DataLog(log_level_critical) << "Check message Id - Message Id=" << hex << msgId << " unregistered use in message system" << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Message integrity check failed" );
    }
 }
@@ -1128,6 +1115,11 @@ void Router::deregisterSpooferMessage( unsigned long msgId)
 
 void Router::sendMessage( const MessagePacket &mp, int priority )
 {
+	//
+	// Send message info to debug handler
+	//
+	DBG_LogSentMessage(taskIdSelf(), (int)mp.msgData().osCode(), mp.msgData().msgId());
+
    //
    // Check for spoofer ...
    if ( sendMessageToSpoofer( mp, priority ) == true )
@@ -1165,8 +1157,7 @@ void Router::sendMessage( const MessagePacket &mp, int priority )
          {
             //
             // Error ...
-            DataLog_Critical criticalLog;
-            DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+            DataLog(log_level_critical) << "Sending message=" << hex << mp.msgData().msgId() 
                                  << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
                                  << "- Task Id=" << (*titer).first 
                                  << "(" << taskName( (*titer).first ) << ")"
@@ -1202,14 +1193,12 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
       // The task's queue is full!
       //
       // Error ...
-      int errorNo = errno;
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+      DataLog(log_level_critical) << "Sending message=" << hex << mp.msgData().msgId() 
                            << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
                            << " - Task Id=" << tId 
                            << "(" << taskName( tId ) << ")"
                            << " queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
-                           << ", (" << strerror( errorNo ) << ")"
+                           << ", (" << errnoMsg << ")"
                            << endmsg;
       dumpQueue( tId, mqueue, DataLog( log_level_router_error ) );
 
@@ -1229,14 +1218,12 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
    {
       //
       // Error ...
-      int errorNo = errno;
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+      DataLog(log_level_critical) << "Sending message=" << hex << mp.msgData().msgId() 
                            << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
                            << " - Task Id=" << tId 
                            << "(" << taskName( tId ) << ")"
                            << " send failed" 
-                           << ", (" << strerror( errorNo ) << ")"
+                           << ", (" << errnoMsg << ")"
                            << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "mq_send failed" );
    }
@@ -1363,12 +1350,10 @@ void Router::sendMessageToGateway( unsigned long nodeId, const MessagePacket &mp
          {
             //
             // Error ...
-            int errorNo = errno;
-            DataLog_Critical criticalLog;
-            DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+            DataLog(log_level_critical) << "Sending message=" << hex << mp.msgData().msgId() 
                                  << "(" << _MsgIntegrityMap[ mp.msgData().msgId() ].c_str() << ") " 
                                  << " - Gateway=" << nodeId << " send failed" 
-                                 << ", (" << strerror( errorNo ) << ")"
+                                 << ", (" << errnoMsg << ")"
                                  << endmsg;
             _FATAL_ERROR( __FILE__, __LINE__, "socket send failed" );
          }
@@ -1381,8 +1366,7 @@ void Router::sendMessageToGateway( unsigned long nodeId, const MessagePacket &mp
    {
       //
       // Error ...                                                               
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Error sending to gateway=" << hex << nodeId
+      DataLog(log_level_critical) << "Error sending to gateway=" << hex << nodeId
                            << ", TCP socket not found." << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "Gateway send failed" );
    }
@@ -1408,8 +1392,7 @@ bool Router::sendMessageToSpoofer( const MessagePacket &mp, int priority )
             {
                //
                // Error ...
-               DataLog_Critical criticalLog;
-               DataLog(criticalLog) << "Sending message=" << hex << (*mtiter).first 
+               DataLog(log_level_critical) << "Sending message=" << hex << (*mtiter).first 
                                     << "(" << _MsgIntegrityMap[ (*mtiter).first ].c_str() << ") " 
                                     << " - Spoofer Task Id=" << (*mtiter).second 
                                     << "(" << taskName( (*mtiter).second ) << ")"

@@ -7,10 +7,9 @@
 
 #include <vxWorks.h>
 
-#include "datalog.h"
-#include "datalog_levels.h"
+#include "common_datalog.h"
 #include "dispatcher.h"
-#include "error.h"
+#include "failure_debug.h"
 #include "messagesystemconstant.h"
 
 
@@ -334,6 +333,11 @@ void Dispatcher :: processMessage( MessagePacket &mp )
    // Validate the CRC ...
    if ( mp.validCRC() == true )
    {
+		//
+		// Send message info to debug handler
+		//
+		DBG_LogReceivedMessage(taskIdSelf(), (int)mp.msgData().taskId(), mp.msgData().msgId());
+
       //
       // Distribute the message to all who registered ...
       //
@@ -351,8 +355,7 @@ void Dispatcher :: processMessage( MessagePacket &mp )
          {
             if ( ((MessageBase*)(*siter))->notify( mp ) == false )
             {
-               DataLog_Critical criticalLog;
-               DataLog(criticalLog) << "Message notification failed for MsgId=" << hex << mp.msgData().msgId() << endmsg;
+               DataLog(log_level_critical) << "Message notification failed for MsgId=" << hex << mp.msgData().msgId() << endmsg;
                _FATAL_ERROR( __FILE__, __LINE__, "Message notification failed" );
             }
          }
@@ -363,8 +366,8 @@ void Dispatcher :: processMessage( MessagePacket &mp )
       // Error ...
       unsigned long crc = mp.crc();
       mp.updateCRC();
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Message CRC validation failed for MsgId=" << hex << mp.msgData().msgId() 
+
+      DataLog(log_level_critical) << "Message CRC validation failed for MsgId=" << hex << mp.msgData().msgId() 
                            << ", CRC=" << crc << " and should be " <<  mp.crc() << endmsg;
       _FATAL_ERROR( __FILE__, __LINE__, "CRC check failed" );
       return;
@@ -383,12 +386,10 @@ void Dispatcher :: send( mqd_t mqueue,  const MessagePacket &mp, const int prior
       // The queue is full!
       //
       // Error ...
-      int errorNo = errno;
-      DataLog_Critical criticalLog;
-      DataLog(criticalLog) << "Sending message=" << hex << mp.msgData().msgId() 
+      DataLog(log_level_critical) << "Sending message=" << hex << mp.msgData().msgId() 
                            << " - " << mqueue << " queue full (" 
                            << dec << qattributes.mq_curmsgs << " messages)" 
-                           << ", (" << strerror( errorNo ) << ")"
+                           << ", (" << errnoMsg << ")"
                            << endmsg;
 #if !DEBUG_BUILD && CPU != SIMNT 
       _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );

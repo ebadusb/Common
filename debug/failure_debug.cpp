@@ -5,6 +5,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/debug/rcs/failure_debug.cpp 1.11 2004/02/24 22:31:40Z jl11312 Exp ms10234 $
  * $Log: failure_debug.cpp $
+ * Revision 1.1  2003/02/28 22:07:52Z  jl11312
+ * Initial revision
  *
  */
 
@@ -22,7 +24,6 @@ static void taskSwitchHook(int oldTID, int newTID);
 // Local data
 static DBG_TaskSwitchInfo taskSwitchInfo = { 0, 0, NULL };
 static DBG_MessageInfo messageInfo = { 0, 0, NULL, NULL };
-static DataLog_Handle dumpHandle = DATALOG_NULL_HANDLE;
 
 static volatile unsigned long	idleCounter;
 static unsigned long	maxCountsPerTick;
@@ -42,34 +43,63 @@ void DBG_EnableTaskSwitchLogging(unsigned int recordCount)
 
 		taskSwitchHookAdd((FUNCPTR)taskSwitchHook);
 	}
+}
 
-	if ( dumpHandle == DATALOG_NULL_HANDLE )
+void DBG_EnableMessageLogging(unsigned int recordCount)
+{
+	if ( recordCount > 2 && messageInfo.record == NULL )
 	{
-		datalog_CreateCriticalLevel(&dumpHandle);
+		messageInfo.record = new DBG_MessageRecord[recordCount];
+		messageInfo.recordCount = recordCount;
+		memset(messageInfo.record, 0, recordCount*sizeof(DBG_MessageRecord));
+
+		semBCreate(SEM_Q_PRIORITY, SEM_FULL);
 	}
 }
 
-DBG_MessageInfo * DBG_EnableMessageLogging(unsigned int recordCount)
+void DBG_LogReceivedMessage(int taskID, int sendTaskID, unsigned long msgID)
 {
-	if ( dumpHandle == DATALOG_NULL_HANDLE )
+	if ( messageInfo.record )
 	{
-		datalog_CreateCriticalLevel(&dumpHandle);
-	}
+		semTake(messageInfo.updateLock, WAIT_FOREVER);
 
-	return NULL;
+		DBG_MessageRecord * recordPtr = &messageInfo.record[messageInfo.recordIndex];
+		recordPtr->sendTID = sendTaskID;
+		recordPtr->receiveTID = taskID;
+		datalog_GetTimeStamp(&recordPtr->timeStamp);
+		messageInfo.recordIndex = (messageInfo.recordIndex+1) % messageInfo.recordCount;
+
+		semGive(messageInfo.updateLock);
+	}
+}
+
+void DBG_LogSentMessage(int taskID, int op, unsigned long msgID)
+{
+	if ( messageInfo.record )
+	{
+		semTake(messageInfo.updateLock, WAIT_FOREVER);
+
+		DBG_MessageRecord * recordPtr = &messageInfo.record[messageInfo.recordIndex];
+		recordPtr->sendTID = taskID;
+		recordPtr->receiveTID = 0xf0000000 | op;
+		datalog_GetTimeStamp(&recordPtr->timeStamp);
+		messageInfo.recordIndex = (messageInfo.recordIndex+1) % messageInfo.recordCount;
+
+		semGive(messageInfo.updateLock);
+	}
 }
 
 void DBG_DumpData(void)
 {
 	if ( taskSwitchInfo.record )
 	{
-		datalog_WriteBinaryRecord(dumpHandle, DBG_RecordType, DBG_TaskSwitchInfoSubType,
+		datalog_WriteBinaryRecord(log_handle_critical, DBG_RecordType, DBG_TaskSwitchInfoSubType,
                                  taskSwitchInfo.record, taskSwitchInfo.recordCount*sizeof(DBG_TaskSwitchRecord));
 	}
 
 	if ( messageInfo.record )
 	{
-		datalog_WriteBinaryRecord(dumpHandle, DBG_RecordType, DBG_MessageInfoSubType,
+		datalog_WriteBinaryRecord(log_handle_critical, DBG_RecordType, DBG_MessageInfoSubType,
                                  messageInfo.record, messageInfo.recordCount*sizeof(DBG_MessageRecord));
 	}
 }

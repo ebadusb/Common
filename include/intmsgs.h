@@ -3,6 +3,9 @@
  *
  * $Header: Z:/BCT_Development/Common/INCLUDE/rcs/INTMSGS.H 1.5 2000/04/25 18:14:10 MS10234 Exp MS10234 $
  * $Log: INTMSGS.H $
+ * Revision 1.4  1999/08/18 15:01:31  AS10337
+ * Added 2 Int32 messages to allow communications between the
+ * predict task and the optimizer tasks (IT4080 - optimization hanging)
  * Revision 1.3  1999/07/24 21:07:28  TD10216
  * IT4154
  * Revision 1.2  1999/07/09 15:24:50  BS04481
@@ -133,6 +136,7 @@ enum INT32_MESSAGES
    ProductSelection,			 // proc->AP2 - Product Selection
    OptimizerSelected,            // optimizer -> predict: I have been selected successfully (IT4080)
    OptimizerAreYouOk,            // predict -> optimizer: notify me that you are okay....
+   Rinseback,                    // message to request transition to rinseback
 
    // NOTE: Block of last 255 Int32Msg IDs reserved for Spectra
       // Spectra Int32Msgs go here

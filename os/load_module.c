@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/load_module.c 1.2 2003/05/23 16:10:43Z jl11312 Exp jl11312 $
  * $Log: load_module.c $
+ * Revision 1.1  2003/05/21 20:00:58Z  jl11312
+ * Initial revision
  */
 
 #include <a_out.h>
@@ -39,7 +41,7 @@ static void * allocDataSegment(unsigned long size)
 	return pSeg;
 }
 
-STATUS loadModuleFromFile(const char * fileName)
+STATUS loadModuleFromFile(const char * fileName, LoadModuleInfo * info)
 {
    int      loadFD = open(fileName, O_RDONLY, DEFAULT_FILE_PERM);
    STATUS   status = (loadFD >= 0) ? OK : ERROR;
@@ -105,9 +107,20 @@ STATUS loadModuleFromFile(const char * fileName)
 			/*
 			 *	Protect text segment against writes
 			 */
-			fprintf(stderr, "\"%s\": loaded T=0x%08lx(0x%08lx) D=0x%08lx(0x%08lx) B=0x%0xlx(0x%08lx)\n",
-						fileName, (unsigned long)pText, textSize, (unsigned long)pData, dataSize, (unsigned long)pBSS, bssSize);
 			vmBaseStateSet(0, pText, textSize, VM_STATE_MASK_WRITABLE, VM_STATE_WRITABLE_NOT);
+
+			/*
+			 *	Return load information if requested
+			 */
+			if ( info )
+			{
+				info->textAddr = (unsigned long)pText;
+				info->textSize = textSize;
+				info->dataAddr = (unsigned long)pData;
+				info->dataSize = dataSize;
+				info->bssAddr = (unsigned long)pBSS;
+				info->bssSize = bssSize;
+			}
 		}
 	}
 

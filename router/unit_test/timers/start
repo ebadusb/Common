@@ -1,4 +1,4 @@
-ld < init.out
+ld < bin/init.out
 ld < ../../../bin/common.out
-ld < timertest.out
+ld < bin/timertest.out
 

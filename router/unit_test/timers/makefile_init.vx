@@ -1,12 +1,3 @@
-#
-
-.PHONY: all
-all: check_opt_change apps app
-
-ADDN_INCDIR = 
-ADDN_CXXFLAGS = 
-ADDN_LDFLAGS =
-
 
 #
 # MAINDIR should be set to the relative path from this makefile directory
@@ -15,6 +6,19 @@ ADDN_LDFLAGS =
 #
 MAINDIR = ..\..\..
 COMDIR = $(MAINDIR)
+ADDN_INCDIR = 
+ADDN_CXXFLAGS = 
+ADDN_LDFLAGS =
+
+
+ifeq ($(BUILD_TYPE),CLEAN)
+.PHONY: all
+all: local_libs clean
+else
+.PHONY: all
+all: check_opt_change apps
+endif
+
 include $(MAINDIR)/makefile.vxc
 
 #
@@ -22,38 +26,18 @@ include $(MAINDIR)/makefile.vxc
 #
 LIBDIR = $(MAINDIR)/lib
 
-.PHONY: apps
-apps:
-	@cd $(MAINDIR)\router && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
-
 #
-# The following should define all of the source files of each type
-# to be compiled for the executable
+#  Definitions required for building init.out
 #
-APP_C_FILES   =
-APP_CXX_FILES = error.cpp systemoverrides.cpp
-APP_S_FILES =
+APP_NAME := init
+init_dir = .\bin
+init_map = init.map
+init_c_files =
+init_cxx_files = systemoverrides.cpp datalog.cpp error.cpp
+init_libs = 
+init_lib_list =
+include $(MAINDIR)/makefile.process_app
 
-#
-# The following should define the location of the resulting application.  Note
-# that APP_DIR is used in DOS shell commands, and must use \ directory
-# separators.
-#
-APP_NAME = init.out
-APP_DIR = .
-APP_LIBS =
+apps: $(APP_LIST)
 
-app : $(APP_DIR)/$(APP_NAME)
-
-.PHONY: clean
-clean:
-	rm -f $(addprefix $(CPU)/, $(notdir $(APP_C_FILES:.cpp=.o))) $(addprefix .dfile/, $(notdir $(APP_C_FILES:.cpp=.d)))
-	rm -f $(addprefix $(CPU)/, $(notdir $(APP_CXX_FILES:.cpp=.o))) $(addprefix .dfile/, $(notdir $(APP_CXX_FILES:.cpp=.d)))
-	rm -f $(addprefix $(APP_DIR)/, $(APP_NAME))
-	@cd $(MAINDIR) && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
-
-#
-# This is the standard makefile for Trima applications
-#
-include $(MAINDIR)/makefile.app
-
+include $(MAINDIR)/makefile.build_apps

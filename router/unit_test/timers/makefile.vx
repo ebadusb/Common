@@ -1,20 +1,23 @@
 #
-
-.PHONY: all
-all: check_opt_change apps app
-
-ADDN_INCDIR = 
-ADDN_CXXFLAGS = 
-ADDN_LDFLAGS =
-
-
-#
 # MAINDIR should be set to the relative path from this makefile directory
 # to the base trima project directory.  MAINDIR must use \ (DOS/Windows
 # style) directory separators if they are needed.
 #
 MAINDIR = ..\..\..
 COMDIR = $(MAINDIR)
+ADDN_INCDIR = 
+ADDN_CXXFLAGS = 
+ADDN_LDFLAGS =
+
+
+ifeq ($(BUILD_TYPE),CLEAN)
+.PHONY: all
+all: local_libs clean
+else
+.PHONY: all
+all: check_opt_change libs apps
+endif
+
 include $(MAINDIR)/makefile.vxc
 
 #
@@ -22,39 +25,26 @@ include $(MAINDIR)/makefile.vxc
 #
 LIBDIR = $(MAINDIR)/lib
 
-.PHONY: apps
-apps:
-	@rm -f $(MAINDIR)/bin/common.out
+#
+#  Definitions required for building init.out
+#
+APP_NAME := timertest
+timertest_dir = .\bin
+timertest_map = timertest.map
+timertest_c_files =
+timertest_cxx_files = timer_test.cpp
+timertest_libs = 
+timertest_lib_list =
+include $(MAINDIR)/makefile.process_app
+
+apps: $(APP_LIST)
+
+.PHONY: libs
+libs:
+	@$(MAKE) -f makefile_init.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
 	@cd $(MAINDIR) && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
+        
 
-#
-# The following should define all of the source files of each type
-# to be compiled for the executable
-#
-APP_C_FILES   =
-APP_CXX_FILES = timer_test.cpp
-APP_S_FILES =
+include $(MAINDIR)/makefile.build_apps
 
-#
-# The following should define the location of the resulting application.  Note
-# that APP_DIR is used in DOS shell commands, and must use \ directory
-# separators.
-#
-APP_NAME = timertest.out
-APP_DIR = .
-APP_LIBS =
-
-app : $(MAINDIR)/bin/common.out $(APP_DIR)/$(APP_NAME)
-
-.PHONY: clean
-clean:
-	rm -f $(addprefix $(CPU)/, $(notdir $(APP_C_FILES:.cpp=.o))) $(addprefix .dfile/, $(notdir $(APP_C_FILES:.cpp=.d)))
-	rm -f $(addprefix $(CPU)/, $(notdir $(APP_CXX_FILES:.cpp=.o))) $(addprefix .dfile/, $(notdir $(APP_CXX_FILES:.cpp=.d)))
-	rm -f $(addprefix $(APP_DIR)/, $(APP_NAME))
-	@cd $(MAINDIR) && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) clean
-
-#
-# This is the standard makefile for Trima applications
-#
-include $(MAINDIR)/makefile.app
 

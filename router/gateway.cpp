@@ -17,6 +17,7 @@
 #include "datalog.h"
 #include "datalog_levels.h"
 #include "error.h"
+#include "failure_debug.h"
 #include "gateway.h"
 #include "messagesystemconstant.h"
 #include "systemoverrides.h"
@@ -254,6 +255,9 @@ void Gateway::sendMsgToRouter( const MessagePacket &mp )
                            << " - Router queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
                            << ", (" << errnoMsg << ")"
                            << endmsg;
+      DBG_DumpData();
+      dumpQueue( _RouterQueue, DataLog( log_level_gateway_error ) );
+
 #if !DEBUG_BUILD && CPU != SIMNT
       _FATAL_ERROR( __FILE__, __LINE__, "Message queue full" );
 #endif // #if CPU!=SIMNT && BUILD_TYPE!=DEBUG
@@ -273,6 +277,44 @@ void Gateway::sendMsgToRouter( const MessagePacket &mp )
       _FATAL_ERROR( __FILE__, __LINE__, "Router message queue send failed" );
       return;
    }
+}
+
+
+void Gateway::dumpQueue( mqd_t mqueue, DataLog_Stream &out )
+{
+   struct mq_attr old_attr;                                    // message queue attributes 
+   struct mq_attr attr;                                    // message queue attributes 
+   attr.mq_flags = O_NONBLOCK;
+   mq_setattr( mqueue, &attr, &old_attr );
+
+   char buffer[ sizeof(MessagePacket) ];
+   int count=0;
+   int priority;
+
+   //
+   // Read the queue entry ...
+   while ( mq_receive( mqueue, &buffer, sizeof( MessagePacket ), &priority ) != ERROR )
+   {
+
+#if !DEBUG_BUILD && CPU != SIMNT
+      //
+      // Format the data ...
+      MessagePacket mp;
+      memmove( &mp, &buffer, sizeof( MessagePacket ) );
+
+      out << " Message# " << dec << count << " priority " << priority << " msgId " << hex << mp.msgData().msgId()
+                                                                      << " p# "    << hex << mp.msgData().seqNum()
+                                                                      << " tot# "  << hex << mp.msgData().totalNum()  
+                                                                      << " msg -> ";
+      for (int i=0;i<30;i++) 
+      {
+         out << hex << (int)(unsigned char)buffer[i] << " "; 
+      }
+      out << endmsg;
+#endif // #if BUILD_TYPE!=DEBUG && CPU!=SIMNT
+
+   }
+   mq_setattr( mqueue, &old_attr, 0 );
 }
 
 void Gateway::shutdown()

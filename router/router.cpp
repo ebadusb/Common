@@ -1151,6 +1151,7 @@ void Router::sendMessage( const MessagePacket &mp, mqd_t mqueue, const unsigned 
                            << " queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
                            << ", (" << errnoMsg << ")"
                            << endmsg;
+      DBG_DumpData();
       dumpQueue( tId, mqueue, DataLog( log_level_router_error ) );
 
 #if !DEBUG_BUILD && CPU != SIMNT

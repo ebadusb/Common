@@ -109,6 +109,10 @@ protected:
    void checkTimers();
 
    //
+   // Dump the contents of the given queue
+   void dumpQueue( mqd_t mqueue, DataLog_Stream &out );
+
+   //
    // Shutdown the message queues ...
    void shutdown();
 

@@ -57,6 +57,10 @@ protected:
    void sendMsgToRouter( const MessagePacket &mp );
 
    //
+   // Dump the contents of the given queue
+   void dumpQueue( mqd_t mqueue, DataLog_Stream &out );
+
+   //
    // Closes the socket and message queue.
    void shutdown();
 

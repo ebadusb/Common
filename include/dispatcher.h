@@ -72,6 +72,10 @@ protected:
               const MessagePacket &mp, 
               const int priority=MessageSystemConstant::DEFAULT_MESSAGE_PRIORITY );
 
+   //
+   // Dump the contents of the given queue
+   void dumpQueue( mqd_t mqueue, DataLog_Stream &out );
+
    // 
    // Shutdown message queues ...
    void shutdown();

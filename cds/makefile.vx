@@ -1,8 +1,10 @@
-# $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cds/rcs/makefile.vx 1.1 2002/06/24 20:33:44 rm70006 Exp ms10234 $
+# $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cds/rcs/makefile.vx 1.2 2002/06/25 17:05:53 ms10234 Exp ms10234 $
 #
 # Makefile - makefile for the CDS library
 #
 # $Log: makefile.vx $
+# Revision 1.1  2002/06/24 20:33:44  rm70006
+# Initial revision
 # Revision 1.1  2002/06/24 19:24:25Z  rm70006
 # Initial revision
 #
@@ -48,7 +50,7 @@ ALL_C_FILES :=
 # Definitions required for building CDS Test
 #
 CDS_NAME = cds_common.out
-CDS_DIR  = ..\lib
+CDS_DIR  = $(MAINDIR)\bin
 CDS_MAP  = cds_common.map
 CDS_LIBS = $(addprefix $(COMLIBDIR)/lib, datalog.a)
 CDS_C_FILES =

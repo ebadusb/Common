@@ -19,7 +19,7 @@
 
 WIND_TCB    *MsgSysTimer::_TheTimerTid=0;
 MsgSysTimer *MsgSysTimer::_TheTimer=0;
-int MsgSysTimer::_ReadyToReceiveTickMsg=0;
+int MsgSysTimer::_ReadyToReceiveTimeMsg=0;
 
 
 int MsgSysTimer::MsgSysTimer_main()
@@ -68,7 +68,7 @@ int MsgSysTimer::taskDeleteHook( WIND_TCB *pTcb )
 }
 
 MsgSysTimer::MsgSysTimer() 
- : _TickCount( 0 ),
+ : _Time( 0 ),
    _TimerMsgMap(),
    _TimerQueue(),
    _TimerMQ( (mqd_t)ERROR ),
@@ -120,8 +120,8 @@ bool MsgSysTimer::init()
       return false;
    }
    //
-   // I'm now ready to receive a tick count message ...
-   _ReadyToReceiveTickMsg=1;
+   // I'm now ready to receive a time message ...
+   _ReadyToReceiveTimeMsg=1;
 
    //
    // Open the router's queue ...
@@ -144,7 +144,8 @@ bool MsgSysTimer::init()
 
    //
    // Initialize the ISR routine ...
-   auxClockMsgPktEnable( 10 /* tick rate to notify me every 10ms */, "timertask", &MsgSysTimer::_ReadyToReceiveTickMsg );
+   auxClockMsgPktEnable( 10000 /* time rate to notify me every 10000Um = 10ms */, 
+                         "timertask", &MsgSysTimer::_ReadyToReceiveTimeMsg );
 
    //
    // Set the static pointer to ensure we only init once ...
@@ -193,7 +194,7 @@ void MsgSysTimer::maintainTimers()
       processMessage( mp );
 
       //
-      // Check the overrun counter to see if I'm behind on tick counts...
+      // Check the overrun counter to see if I'm behind on time ...
       //  ( Log the result if I am behind )
       unsigned long overruns =0; // = auxClockNotificationOverruns();
       if ( overruns > 0 )
@@ -209,7 +210,7 @@ void MsgSysTimer::maintainTimers()
 void MsgSysTimer::dump( ostream &outs )
 {
    outs << "??????????????????????? MsgSysTimer DUMP ??????????????????????????" << endl;
-   outs << " TickCount: " << dec << ((unsigned long)_TickCount) << endl;
+   outs << " Time: " << dec << ((unsigned long)_Time) << endl;
    outs << " TimerMQueue: " << hex << (long)_TimerMQ << endl;
    outs << " RouterMQueue: " << hex << (long)_RouterMQ << endl;
    outs << " StopLoop: " << _StopLoop << endl;
@@ -220,7 +221,7 @@ void MsgSysTimer::dump( ostream &outs )
          miter != _TimerMsgMap.end() ;
          miter++ )
    {
-      outs << "  Mid " << hex << (*miter).first << " interval: " << dec << ((*miter).second)->_Interval 
+      outs << "  Mid " << hex << (*miter).first << " interval: " << dec << ((*miter).second)->_Interval << "msecs" 
                        << hex << " message_pckt: " << ((*miter).second)->_TimerMessage << dec << endl;
       if ( ((*miter).second)->_TimerMessage )
          ((*miter).second)->_TimerMessage->dump( outs );
@@ -229,11 +230,11 @@ void MsgSysTimer::dump( ostream &outs )
    outs << " PriorityQueue: size " << dec <<  _TimerQueue.size() << endl;
    if ( !_TimerQueue.empty() )
    {
-      outs << "  top: tick_count " <<  dec << ((unsigned long)_TimerQueue.top()._ExpirationTickCount) << endl;
+      outs << "  top: exp. time " <<  dec << ((unsigned long)_TimerQueue.top()._ExpirationTime) << "usecs"<< endl;
       outs << "       map_entry " << hex << _TimerQueue.top()._MapEntryPtr;
       if ( _TimerQueue.top()._MapEntryPtr )
       {
-         outs << " : interval " << dec << _TimerQueue.top()._MapEntryPtr->_Interval << " ";
+         outs << " : interval " << dec << _TimerQueue.top()._MapEntryPtr->_Interval << "msecs ";
          outs << " : message_pckt " << hex << _TimerQueue.top()._MapEntryPtr->_TimerMessage <<  dec << endl;
          if ( _TimerQueue.top()._MapEntryPtr->_TimerMessage )
             _TimerQueue.top()._MapEntryPtr->_TimerMessage->dump( outs );
@@ -248,7 +249,7 @@ void MsgSysTimer::processMessage( const MessagePacket &mp )
    //
    // Determine what type of message this is ...
    //
-   long long tc;
+   long long usecs;
    unsigned long interval;
    switch ( mp.msgData().osCode() )
    {
@@ -256,11 +257,11 @@ void MsgSysTimer::processMessage( const MessagePacket &mp )
       deregisterTimersOfTask( mp.msgData().taskId() );
       break;
    case MessageData::TIME_UPDATE:
-      memmove( (char *) &tc , 
+      memmove( (char *) &usecs , 
                (char *) mp.msgData().msg(), 
                sizeof( long long ) );
-      updateTime( tc );
-      _ReadyToReceiveTickMsg=1;
+      updateTime( usecs );
+      _ReadyToReceiveTimeMsg=1;
       break;
    case MessageData::DISTRIBUTE_LOCALLY:
    case MessageData::DISTRIBUTE_GLOBALLY:
@@ -282,11 +283,11 @@ void MsgSysTimer::processMessage( const MessagePacket &mp )
 
 }
 
-void MsgSysTimer::updateTime( const long long tickCount )
+void MsgSysTimer::updateTime( const long long usecs )
 {
    //
-   // Save the new tick count ...
-   _TickCount = tickCount;
+   // Save the new time ...
+   _Time = usecs;
 
    //
    // Check the registered timers ...
@@ -310,7 +311,7 @@ void MsgSysTimer::registerTimer( const MessagePacket &mp, const unsigned long in
    // Create a new Queue Entry
    QueueEntry qe;
    qe._MapEntryPtr = mePtr;  // the map entry object is owned by the queue entry object
-   qe._ExpirationTickCount = _TickCount + interval;
+   qe._ExpirationTime = _Time + ( interval*1000 );
 
    //
    // Add the queue entry to the priority queue ...
@@ -377,7 +378,7 @@ void MsgSysTimer::checkTimers()
    // Check the top of the priority queue for entries which
    //  have expired ...
    while (    !_TimerQueue.empty()
-           && _TimerQueue.top() <= _TickCount )
+           && _TimerQueue.top() <= _Time )
    {
       QueueEntry qe = _TimerQueue.top();
       _TimerQueue.pop();
@@ -396,7 +397,7 @@ void MsgSysTimer::checkTimers()
 
          //
          // Reinsert the timer for its next interval ...
-         qe._ExpirationTickCount += qe._MapEntryPtr->_Interval;
+         qe._ExpirationTime += ( qe._MapEntryPtr->_Interval*1000 );
          _TimerQueue.push( qe );
 
          //
@@ -474,13 +475,13 @@ void MsgSysTimer::cleanup()
 }
 
 MsgSysTimer::QueueEntry::QueueEntry()
- : _ExpirationTickCount( 0 ), 
+ : _ExpirationTime( 0 ), 
    _MapEntryPtr( 0 )
 {
 }
 
 MsgSysTimer::QueueEntry::QueueEntry( const QueueEntry &qe )
- : _ExpirationTickCount( qe._ExpirationTickCount ), 
+ : _ExpirationTime( qe._ExpirationTime ), 
    _MapEntryPtr( qe._MapEntryPtr )
 {
 }
@@ -493,7 +494,7 @@ MsgSysTimer::QueueEntry &MsgSysTimer::QueueEntry::operator=( const MsgSysTimer::
 {
    if ( &qe != this )
    {
-      _ExpirationTickCount = qe._ExpirationTickCount;
+      _ExpirationTime = qe._ExpirationTime;
       _MapEntryPtr = qe._MapEntryPtr; 
    }
    return *this; 
@@ -501,46 +502,46 @@ MsgSysTimer::QueueEntry &MsgSysTimer::QueueEntry::operator=( const MsgSysTimer::
 
 int MsgSysTimer::QueueEntry::operator==( const MsgSysTimer::QueueEntry &qe ) const 
 {
-   if ( _ExpirationTickCount == qe._ExpirationTickCount )
+   if ( _ExpirationTime == qe._ExpirationTime )
       return 1;
    return 0;
 }
 
 int MsgSysTimer::QueueEntry::operator==( const long long l ) const 
 {
-   if ( _ExpirationTickCount == l )
+   if ( _ExpirationTime == l )
       return 1;
    return 0;
 }
 
 int MsgSysTimer::QueueEntry::operator<( const MsgSysTimer::QueueEntry &qe ) const 
 {
-   return( _ExpirationTickCount < qe._ExpirationTickCount ); 
+   return( _ExpirationTime < qe._ExpirationTime ); 
 }
 
 int MsgSysTimer::QueueEntry::operator<( const long long l ) const 
 {
-   return( _ExpirationTickCount < l );
+   return( _ExpirationTime < l );
 }
 
 int MsgSysTimer::QueueEntry::operator<=( const long long l ) const
 {
-   return ( _ExpirationTickCount <= l );
+   return ( _ExpirationTime <= l );
 }
 
 int MsgSysTimer::QueueEntry::operator>( const MsgSysTimer::QueueEntry &qe ) const 
 {
-   return( _ExpirationTickCount > qe._ExpirationTickCount ); 
+   return( _ExpirationTime > qe._ExpirationTime ); 
 }
 
 int MsgSysTimer::QueueEntry::operator>( const long long l ) const 
 {
-   return( _ExpirationTickCount > l );
+   return( _ExpirationTime > l );
 }
 
 int MsgSysTimer::QueueEntry::operator>=( const long long l ) const
 {
-   return ( _ExpirationTickCount >= l );
+   return ( _ExpirationTime >= l );
 }
 
 void msgsystimerDump()

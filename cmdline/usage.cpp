@@ -53,7 +53,7 @@ void Usage::add_usage(const char* usage)
     // PURPOSE:  add to usage text
  
     char* newusage = new char[ strlen(_usage_text) + strlen(usage) + 10];
-    sprintf(newusage,"%s\n  %s", _usage_text, usage);
+    sprintf(newusage,"%s  %s\n", _usage_text, usage);
     delete [] _usage_text;
     _usage_text = newusage;
 }

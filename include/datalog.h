@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.21 2003/02/25 20:40:08Z jl11312 Exp jl11312 $
  * $Log: datalog.h $
+ * Revision 1.9  2002/07/17 20:31:51  jl11312
+ * - initial datalog implementation (no support for periodic logging)
  * Revision 1.8  2002/06/04 20:23:48  jl11312
  * - added default level related functions
  * - modified to compile correctly with C-source files
@@ -76,6 +78,7 @@ DataLog_Result datalog_SetEncryptFunc(DataLog_EncryptFunc * func);
 DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * handle);
 DataLog_Result datalog_CreateIntLevel(const char * levelName, DataLog_Handle * handle);
 DataLog_Handle datalog_GetCriticalHandle(void);
+DataLog_Result datalog_GetDefaultLevel(DataLog_Handle * handle);
 DataLog_Result	datalog_SetDefaultLevel(DataLog_Handle handle);
 
 /*
@@ -166,20 +169,16 @@ public:
 
 	DataLog_Stream & operator()(const char * fileName, int lineNumber);
 
-	DataLog_Handle getHandle(void);
+	DataLog_Handle getHandle(void) { return _handle; }
+	DataLog_Result setHandle(DataLog_Handle handle) { _handle = handle; return DataLog_OK; }
+	DataLog_Result setAsDefault(void);
 
 protected:
 	DataLog_Handle	_handle;
 };
 
-class DataLog_DefaultLevel
-{
-public:
-   static DataLog_Stream & getStream(const char * fileName, int lineNumber);
-};
-
 ostream & endmsg(ostream & stream);
-//ostream & operator << (ostream & stream, ostream & (*manip)( &));
+ostream & datalog_GetDefaultStream(const char * file, int line);
 
 class DataLog_Critical : public DataLog_Level
 {
@@ -189,7 +188,7 @@ public:
 };
 
 #define DataLog(instance) (instance)(__FILE__, __LINE__)
-#define DataLog_Default DataLog_DefaultLevel::getStream(__FILE__, __LINE__)
+#define DataLog_Default datalog_GetDefaultStream(__FILE__, __LINE__)
 
 template<class Value> inline DataLog_Result datalog_AddRef(DataLog_SetHandle handle, const Value& ref, const char * key, const char * description)
    {

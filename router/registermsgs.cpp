@@ -5,6 +5,8 @@
  * CHANGELOG:
  * $Header: Q:/home1/COMMON_PROJECT/Source/ROUTER/rcs/DEBUG.HPP 1.1 1999/05/24 2
  * $Log: RegisterMsgs.cpp $
+ * Revision 1.2  1999/07/29 15:53:02  TD10216
+ * IT4154
  * Revision 1.1  1999/07/24 20:51:35  TD10216
  * Initial revision
  *******************************************************************/
@@ -37,20 +39,22 @@ void RegisterMsgs::RegisterMessages(TCPGate_Reg_ReqMsg *msg, int Reply)
 	TCPGate_Reg_Struct *Reg_Struct = &msg->Msg_Struct.Reg_Struct;
 	int i;
 
-	_LOG_ERROR( __FILE__,__LINE__, TRACE_GATEWAY, 
-		Reg_Struct->count, "Registering 'user' number of messages" );
+	//_LOG_ERROR( __FILE__,__LINE__, TRACE_GATEWAY, 
+		//Reg_Struct->count, "Registering 'user' number of messages" );
 	// register/de-register for ALL messages
 	// count == -1 -> register all messages
 	// count == 0  -> de-register all messages
 	if(Reg_Struct->count == -1 || Reg_Struct->count == 0)
 	{
 		short v = (Reg_Struct->count == -1) ? 1 : 0;
+#if 0
 		if(!v)
 			_LOG_ERROR( __FILE__,__LINE__, TRACE_GATEWAY, 
 				v, "UnRegistering all messages" );
 		else
 			_LOG_ERROR( __FILE__,__LINE__, TRACE_GATEWAY, 
 				v, "Registering all messages" );
+#endif
 		for(i = 0; i < LAST_INT32_MESSAGE; ++i)
 			RegisteredMsgs[i] = v;
 	}

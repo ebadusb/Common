@@ -100,12 +100,6 @@ public: \
    }; \
    \
 // End of DECLARE_OBJ macro
-/*
-   static const char *className() { return (const char *)__ClassName; }; \
-   \
-private: \
-   static char *__ClassName; \
-*/
 
 
 #define DEFINE_OBJ( __objclassname__ ) \
@@ -114,9 +108,6 @@ private: \
                     ( #__objclassname__, &__objclassname__##::newObject ); \
    \
 // End of DEFINE_OBJ macro
-/*
-   char * __objclassname__##::__ClassName=#__objclassname__; \
-*/
 
 
 #endif

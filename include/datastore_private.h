@@ -12,6 +12,10 @@
  *             only by datastore.h
  *
  * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    Revision 1.18  2002/11/06 15:42:48  rm70006
+ * HISTORY:    Removed unnecessary new's.
+ * HISTORY:    Removed some inline functions to relieve compiler problems.
+ * HISTORY:    fixed bug in register call.
  * HISTORY:    Revision 1.16  2002/10/31 19:26:48Z  rm70006
  * HISTORY:    Changed internal stucture to use less symbols which improved datastore creation speed.
  * HISTORY:    Revision 1.15  2002/10/25 20:45:08Z  td07711
@@ -209,20 +213,13 @@ template <class dataType> void BaseElement<dataType>::Get(dataType *item) const
    }
 
    // If calling instance is spoofer or no spoof has been registered, return real value
-   if( *_handle->_fp == NULL )
+   if( *_handle->_fp == NULL || _ds->GetRole() == ROLE_SPOOFER )
    {
        _ds->Lock();
        *item = *_handle->_data;
        _ds->Unlock();
    }
-   else if( _ds->GetRole() == ROLE_SPOOFER && _handle->_spooferCacheIsValid == false )
-   {
-       _ds->Lock();
-       _handle->_spooferCacheIsValid = true;
-       *item = *_handle->_data;
-       _ds->Unlock();
-   }
-   else
+   else // spoofer callback returns spoofed value
    {
        _ds->Lock();
        pair< dataType*, const dataType* > toFrom( item, _handle->_data );
@@ -242,16 +239,11 @@ template<> inline void BaseElement<T>::Get(T *item) const                       
    }                                                                                       \
                                                                                            \
    /* If calling instance is spoofer or no spoof has been registered, return real value */ \
-   if ( *_handle->_fp == NULL )                                                            \
+   if ( *_handle->_fp == NULL || _ds->GetRole() == ROLE_SPOOFER )                          \
    {                                                                                       \
       *item = *_handle->_data;                                                             \
    }                                                                                       \
-   else if( _ds->GetRole() == ROLE_SPOOFER && _handle->_spooferCacheIsValid == false )     \
-   {                                                                                       \
-       _handle->_spooferCacheIsValid = true;                                               \
-       *item = *_handle->_data;                                                            \
-   }                                                                                       \
-   else                                                                                    \
+   else /* spoofer callback returns spoofed value */                                       \
    {                                                                                       \
       pair< T*, const T* > toFrom( item, _handle->_data );                                 \
       (*(*_handle->_fp))( &toFrom );  /* runs spoofer callback */                          \
@@ -284,22 +276,14 @@ template <class dataType> dataType BaseElement<dataType>::Get() const
    }
 
    // If calling instance is spoofer or no spoof has been registered, return real value
-   if ( *_handle->_fp == NULL ) 
+   if ( *_handle->_fp == NULL || _ds->GetRole() == ROLE_SPOOFER ) 
    {
       _ds->Lock();
       dataType temp = *_handle->_data;
       _ds->Unlock();
       return temp;
    }
-   else if ( (_ds->GetRole() == ROLE_SPOOFER) && (_handle->_spooferCacheIsValid == false) )
-   {
-       _ds->Lock();
-       _handle->_spooferCacheIsValid = true;
-       dataType temp = *_handle->_data;
-       _ds->Unlock();
-       return temp;
-   }
-   else
+   else // spoofer callback returns spoofed value
    {
       dataType temp;
       pair< dataType*, const dataType* > toFrom( &temp, _handle->_data );
@@ -323,18 +307,12 @@ template<> inline T BaseElement<T>::Get() const                                 
    }                                                                                       \
                                                                                            \
    /* If calling instance is spoofer or no spoof has been registered, return real value */ \
-   if ( *_handle->_fp == NULL )                                                            \
+   if ( *_handle->_fp == NULL || _ds->GetRole() == ROLE_SPOOFER )                          \
    {                                                                                       \
       T temp = *_handle->_data;                                                            \
       return temp;                                                                         \
    }                                                                                       \
-   else if ( (_ds->GetRole() == ROLE_SPOOFER) && (_handle->_spooferCacheIsValid == false) )\
-   {                                                                                       \
-      _handle->_spooferCacheIsValid = true;                                                \
-      T temp = *_handle->_data;                                                            \
-      return temp;                                                                         \
-   }                                                                                       \
-   else                                                                                    \
+   else /* spoofer callback returns spoofed value */                                       \
    {                                                                                       \
       T temp;                                                                              \
       pair< T*, const T* > toFrom( &temp, _handle->_data );                                \

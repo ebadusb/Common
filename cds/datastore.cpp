@@ -11,6 +11,8 @@
  *             Stores are made.
  *
  * HISTORY:    $Log: datastore.cpp $
+ * HISTORY:    Revision 1.13  2002/09/18 22:13:57  rm70006
+ * HISTORY:    Changed get and set to have built in locking.
  * HISTORY:    Revision 1.12  2002/09/13 20:09:23Z  rm70006
  * HISTORY:    Fix bug with lock/unlock.
  * HISTORY:    Revision 1.10  2002/09/04 18:33:24Z  rm70006
@@ -482,7 +484,7 @@ void DataStore::DeleteElement (ElementType *member)
 void DataStore::Lock()
 {
    bool crit_section_released = false;
-   int event_type;
+   int event_type = 0;
    static char temp[20];
 
    // If instance is RO, perform RO semaphore lock
@@ -645,7 +647,7 @@ void DataStore::Lock()
 void DataStore::Unlock()
 {
    static char temp[20];
-   int event_type;
+   int event_type = 0;
 
    // If instance is RO, perform RO semaphore lock
    if (_role == ROLE_RO)

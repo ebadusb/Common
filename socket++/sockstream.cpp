@@ -43,6 +43,8 @@
 
 
 //#include <config.h>
+#include <vxWorks.h>
+
 #include "sockstream.h"
 
 //EXTERN_C_BEGIN

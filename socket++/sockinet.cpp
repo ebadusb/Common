@@ -8,6 +8,7 @@
 //
 // Version: 17Oct95 1.10
 
+#include <vxWorks.h>
 //#include <config.h>
 #include "sockinet.h"
 

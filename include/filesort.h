@@ -3,6 +3,8 @@
  *
  * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/include/rcs/filesort.h 1.2 2003/05/13 09:00:40 jl11312 Exp pn02526 $
  * $Log: filesort.h $
+ * Revision 1.1  2002/09/19 22:16:15Z  jl11312
+ * Initial revision
  *
  */
 
@@ -35,8 +37,6 @@ typedef FileCallBackStatus fileSortCallBack(const char * fullPathName);
  * The fileSort function accepts a directory name, sort type, and application
  * supplied call back function.  It scans and sorts the directory, and executes
  * the call back function for each file in the directory, in the order specified.
- * When the last file name has been processed, it will execute the call back
- * function a final time, with fullPathName set to NULL.
  *
  * The call back function should normally return FILE_CALLBACK_CONTINUE. A
  * value of FILE_CALLBACK_END can be return to end the file sort operation

@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.13  2005/04/04 18:02:19Z  rm10919
+ *  Add ability to char * as button text.
  *  Revision 1.12  2005/03/15 00:21:35Z  rm10919
  *  Change CGUIText to not add object to window object list of parent in constructor.
  *  Revision 1.11  2005/02/21 17:17:11Z  cf10242
@@ -441,6 +443,32 @@ void CGUIButton::pointerEvent (const PointerEvent & event) // event structure re
 // Loads a new enabled bitmap object for the button.
 void CGUIButton::setEnabledBitmap (CGUIBitmapInfo *enabledBitmapId) // ptr to bitmap object to display when button is enabled
 {     
+    if (enabledBitmapId)
+    {
+       if(_enabledBitmap)
+       {
+          deleteObject(_enabledBitmap);
+          delete _enabledBitmap;
+       }
+
+      _enabledBitmap = new CGUIBitmap (_display, CGUIRegion(0,0,0,0), *enabledBitmapId);
+      if(_enabled && !_pressed) 
+        addObjectToFront(_enabledBitmap);
+      else
+        addObjectToBack(_enabledBitmap);
+
+      if(_enabledText)
+         _enabledText->setCaptureBackgroundColor();
+    }
+    else  // a null parameter means remove an existing bitmap
+    {
+      if(_enabledBitmap)
+      {
+         deleteObject(_enabledBitmap);
+         delete _enabledBitmap;
+         _enabledBitmap = NULL;
+      }
+    }
    if (enabledBitmapId)
    {
 //      _enabledBitmap = new CGUIBitmap (_display, CGUIRegion(0,0,0,0), *enabledBitmapId);
@@ -457,10 +485,32 @@ void CGUIButton::setEnabledBitmap (CGUIBitmapInfo *enabledBitmapId) // ptr to bi
 // Loads a new disabled bitmap object for the button.
 void CGUIButton::setDisabledBitmap (CGUIBitmapInfo *disabledBitmapId) // ptr to bitmap object to display when button is disabled
 {
-   if (disabledBitmapId)
-   {
+    if (disabledBitmapId)
+    {
+       if(_disabledBitmap)
+       {
+          deleteObject(_disabledBitmap);
+          delete _disabledBitmap;
+       }
+
       _disabledBitmap = new CGUIBitmap (_display, CGUIRegion(0,0,0,0), *disabledBitmapId);
-   }
+      if(!_enabled && !_pressed) 
+        addObjectToFront(_disabledBitmap);
+      else
+        addObjectToBack(_disabledBitmap);
+
+      if(_disabledText)
+         _disabledText->setCaptureBackgroundColor();
+    }
+    else  // a null parameter means remove an existing bitmap
+    {
+      if(_disabledBitmap)
+      {
+         deleteObject(_disabledBitmap);
+         delete _disabledBitmap;
+         _disabledBitmap = NULL;
+      }
+    }
 }
 
 // SET PRESSED BITMAP
@@ -469,7 +519,29 @@ void CGUIButton::setPressedBitmap (CGUIBitmapInfo *pressedBitmapId) // ptr to bi
 {
    if (pressedBitmapId)
    {
-      _pressedBitmap = new CGUIBitmap (_display, CGUIRegion(0,0,0,0), *pressedBitmapId);
+      if(_pressedBitmap)
+      {
+         deleteObject(_pressedBitmap);
+         delete _pressedBitmap;
+      }
+
+     _pressedBitmap = new CGUIBitmap (_display, CGUIRegion(0,0,0,0), *pressedBitmapId);
+     if(_pressed) 
+       addObjectToFront(_pressedBitmap);
+     else
+       addObjectToBack(_pressedBitmap);
+     
+     if(_pressedText)
+        _pressedText->setCaptureBackgroundColor();
+   }
+   else  // a null parameter means remove an existing bitmap
+   {
+     if(_pressedBitmap)
+     {
+        deleteObject(_pressedBitmap);
+        delete _pressedBitmap;
+        _pressedBitmap = NULL;
+     }
    }
 }
 

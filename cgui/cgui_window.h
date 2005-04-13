@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: L:/vxWorks/Common/cgui/rcs/cgui_window.h 1.7 2005/04/04 17:38:15Z psanusb Exp cf10242 $
+ * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.h 1.12 2007/04/20 14:58:26Z wms10235 Exp rm10919 $
  * $Log: cgui_window.h $
  * Revision 1.6  2005/02/21 17:17:13Z  cf10242
  * IT 133 - delete all allocated memory to avoid unrecovered memory
@@ -68,7 +68,6 @@ public:
    void setObjectRegion  (CGUIWindowObject * obj, const CGUIRegion & newRegion);
    void setObjectVisible (CGUIWindowObject * obj, bool newVisible);
    void invalidateObjectRegion(CGUIWindowObject * obj);
-   void setZPos(UGL_WINDOW_ID, int);
 
    void setWindowVisibility(bool newVisible);
    bool getWindowVisibility(void){ return winVisibleGet(_id);}
@@ -121,8 +120,6 @@ private:
 
    CGUIWindow *   _parent;
    list<CGUIWindow *>  _childWindows;
-
-   int _zPos;
 
    //
    // Window objects for each window are separated into two lists.  The first

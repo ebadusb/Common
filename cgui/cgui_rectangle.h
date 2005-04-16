@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_rectangle.h 1.5 2008/11/06 22:24:16Z rm10919 Exp wms10235 $
  * $Log: cgui_rectangle.h $
+ * Revision 1.3  2005/02/21 17:17:12Z  cf10242
+ * IT 133 - delete all allocated memory to avoid unrecovered memory
  * Revision 1.2  2004/09/30 16:10:29Z  jl11312
  * - updated old-style class names
  * Revision 1.1  2004/09/20 18:18:07Z  rm10919
@@ -31,6 +33,7 @@ public:
 
    void setColor(CGUIColor color);
    CGUIColor getColor(void) { return _color;}
+   virtual void setRegion(const CGUIRegion & newRegion);
 
 protected:
    virtual void draw(UGL_GC_ID gc);

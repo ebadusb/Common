@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.13 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.h $
+ * Revision 1.11  2005/01/28 23:52:17Z  rm10919
+ * CGUITextItem class changed and put into own file.
  * Revision 1.10  2005/01/12 20:06:09Z  rm10919
  * Deleted convertToAscii().
  * Revision 1.9  2004/12/27 22:48:51Z  rm10919
@@ -77,30 +79,6 @@ enum
    MAX_FONTS = 256
 };
 
-class DataItemBase
-{
-public:
-   virtual void convertToString(StringChar * string, size_t length) = 0;
-};
-
-template <class T> struct DataItem : public DataItemBase
-{
-   T & dataItem;
-   virtual void convertToString(StringChar * string, size_t length);
-};
-
-
-class VarDatabase
-{
-public:
-   StringChar * varLookUp(const char * name);
-
-   void addItem(const char * name, DataItemBase * dataItem);
-
-private:
-   map<string, DataItemBase *> variables;
-};
-
 //
 // String Management
 
@@ -108,6 +86,7 @@ typedef int LanguageId;
 
 extern int currentLanguage;
 
+StringChar * convertToStringChar(const char * string);
 //
 // The CGUIDisplay class handles the underlying UGL graphics context
 // and event loop.  Currently, only one instance of the CGUIDisplay

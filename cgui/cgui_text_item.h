@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.7 2005/11/22 00:34:43Z rm10919 Exp MS10234 $
  * $Log: cgui_text_item.h $
+ * Revision 1.4  2005/04/04 18:03:53Z  rm10919
+ * Add int getLength(void) method for text string.
  * Revision 1.3  2005/03/15 00:21:36Z  rm10919
  * Change CGUIText to not add object to window object list of parent in constructor.
  * Revision 1.2  2005/02/21 17:17:13Z  cf10242
@@ -19,7 +21,7 @@
 
 struct StylingRecord
 {
-   CGUIColor     * color;     // color of the text as applied to whole string
+   CGUIColor     color;       // color of the text as applied to whole string
    unsigned int  attributes;  // attributes from the attribute enums above
    CGUIRegion    region;      // placement in window or _owner relative
    CGUIFontId    fontId;      // font used, this should use the _owner default value
@@ -33,6 +35,8 @@ struct StylingRecord
 // string id is the key to accessing this information.
 //
 
+class CGUIStringDataContainer;
+
 class CGUITextItem
 {
 public:
@@ -41,6 +45,7 @@ public:
    virtual ~ CGUITextItem();
 
    void setId(const char * id);
+   const char * getId(){return _id;}
    //
    // The method will retrun the text string
    //
@@ -65,6 +70,8 @@ public:
    StylingRecord getStylingRecord(){return _stylingRecord;}
 
    int getLength(void) {return _stringLength;}
+
+   static CGUIStringDataContainer _textMap;
 
 protected:
 

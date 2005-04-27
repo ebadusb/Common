@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.14  2005/04/08 19:51:42Z  cf10242
+ *  Common IT 27 - change methods to set/change a bitmap after construction.
  *  Revision 1.13  2005/04/04 18:02:19Z  rm10919
  *  Add ability to char * as button text.
  *  Revision 1.12  2005/03/15 00:21:35Z  rm10919
@@ -885,17 +887,17 @@ void CGUIButton::setPressedStylingRecord (StylingRecord * pressedTextStylingReco
    if (_pressedText)  _pressedText->setStylingRecord(pressedTextStylingRecord);
 }
   
-void CGUIButton::setEnabledTextColor(CGUIColor * color)
+void CGUIButton::setEnabledTextColor(CGUIColor color)
 {
    _enabledText->setColor(color);
 }
 
-void CGUIButton::setDisabledTextColor(CGUIColor * color)
+void CGUIButton::setDisabledTextColor(CGUIColor color)
 {
    _disabledText->setColor(color);
 }
 
-void CGUIButton::setPressedTextColor(CGUIColor * color)
+void CGUIButton::setPressedTextColor(CGUIColor color)
 {
    _pressedText->setColor(color);
 }

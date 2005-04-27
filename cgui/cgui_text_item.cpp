@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.2  2005/02/21 17:17:12Z  cf10242
+ * IT 133 - delete all allocated memory to avoid unrecovered memory
  * Revision 1.1  2005/01/31 17:36:38Z  rm10919
  * Initial revision
  *
@@ -10,6 +12,9 @@
 
 #include <vxWorks.h>
 #include "cgui_text_item.h"
+#include "cgui_string_data_container.h"
+
+CGUIStringDataContainer CGUITextItem::_textMap;
 
 int CGUITextItem::_defaultLanguageId = 0;
 

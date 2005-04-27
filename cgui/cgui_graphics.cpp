@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.22 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.17  2005/01/28 23:52:17Z  rm10919
+ * CGUITextItem class changed and put into own file.
  * Revision 1.16  2005/01/17 17:47:06Z  jl11312
  * - implemented setId function
  * Revision 1.15  2005/01/12 20:06:08Z  rm10919
@@ -41,7 +43,26 @@
 #include "cgui_window.h"
 //#include "datalogger.h"
 
+//
+// String Management
+//  
+StringChar * convertToStringChar(const char * string)
+{
+   if (string)
+   {
+      int stringLength = strlen(string) + 1;   // add 1 for the NULL
 
+      StringChar * textString = new UGL_WCHAR[stringLength];  
+
+   for (int i=0; i<stringLength; i++)
+      textString[i] = string[i];
+
+   return textString;
+   }
+   else return NULL;
+}
+            
+            
 // START MESSAGE_SYSTEM_IN_WIN_MGR
 #include "messagesystem.h"
 extern void (* winAppStartupTask)(void);

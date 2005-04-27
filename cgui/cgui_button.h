@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.15  2005/04/04 18:02:57Z  rm10919
+ *  Add ability to add char * strings to button text.
  *  Revision 1.14  2005/03/15 00:21:35Z  rm10919
  *  Change CGUIText to not add object to window object list of parent in constructor.
  *  Revision 1.13  2005/02/21 17:17:11Z  cf10242
@@ -287,9 +289,9 @@ public:
    StylingRecord * getDisabledStylingRecord(void){ return _disabledText->getStylingRecord();}
    StylingRecord * getPressedStylingRecord(void){ return _pressedText->getStylingRecord();}
   
-   void setEnabledTextColor(CGUIColor * color);
-   void setDisabledTextColor(CGUIColor * color);
-   void setPressedTextColor(CGUIColor * color);
+   void setEnabledTextColor(CGUIColor color);
+   void setDisabledTextColor(CGUIColor color);
+   void setPressedTextColor(CGUIColor color);
    
    // ICON METHODS //
 

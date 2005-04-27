@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.13  2005/04/04 18:03:53Z  rm10919
+ * Add int getLength(void) method for text string.
  * Revision 1.12  2005/03/18 16:42:07Z  rm10919
  * Fix getText method to actually do something.
  * Revision 1.11  2005/03/15 00:21:36Z  rm10919
@@ -56,8 +58,9 @@
 #include "cgui_window_object.h"
 #include "cgui_text_item.h"
 
-
 class CGUIWindow;
+class CGUIVariableDatabaseContainer;
+
 class CGUIText : public CGUIWindowObject
 {
 public:
@@ -132,9 +135,9 @@ public:
    // These methods set the text color by sending on CGUIColor
    // or by sending the RGB numbers.
    //
-   void setColor( CGUIColor * color);
+   void setColor(CGUIColor color);
    void setColor(int red, int green, int blue);
-   CGUIColor * getColor(void) { return _stylingRecord.color;}
+   CGUIColor * getColor(void) { return &_stylingRecord.color;}
 
    //
    // SET_CAPTURE_BACKGROUND_COLOR
@@ -205,6 +208,12 @@ public:
 
    int getLength(void) {return _stringLength;}
 
+   //
+   // Member for storing variable values that appear in strings.
+   // The actual variable and value is controled by the project.
+   //
+   static CGUIVariableDatabaseContainer _variableDictionary;
+          
 protected:
 
    //

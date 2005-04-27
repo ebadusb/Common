@@ -3,6 +3,8 @@
 # Makefile - makefile for common GUI library
 #
 # $Log: makefile.vx $
+# Revision 1.8  2005/01/28 23:52:19Z  rm10919
+# CGUITextItem class changed and put into own file.
 # Revision 1.7  2004/11/22 19:13:10Z  cf10242
 # add cgui_button
 # Revision 1.6  2004/11/03 17:49:34Z  rm10919
@@ -47,8 +49,9 @@ LIB_C_FILES   =
 LIB_CXX_FILES = cgui_graphics.cpp cgui_rectangle.cpp cgui_window.cpp \
 		cgui_window_object.cpp cgui_bitmap_info.cpp cgui_bitmap.cpp \
 		cgui_frame.cpp cgui_text_item.cpp cgui_text.cpp cgui_time_date.cpp \
-                cgui_button.cpp
-#               cgui_string_data.cpp
+                cgui_button.cpp cgui_data_item.cpp cgui_variable_database.cpp \
+                cgui_variable_db_container.cpp \
+                cgui_string_data.cpp cgui_string_data_container.cpp
 LIB_S_FILES =
 
 #

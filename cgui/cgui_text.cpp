@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.14  2005/03/18 16:42:07Z  rm10919
+ * Fix getText method to actually do something.
  * Revision 1.13  2005/03/15 00:21:35Z  rm10919
  * Change CGUIText to not add object to window object list of parent in constructor.
  * Revision 1.12  2005/02/21 17:17:12Z  cf10242
@@ -37,6 +39,7 @@
 #include <vxWorks.h>
 #include "cgui_text.h"
 #include "cgui_window.h"
+#include "cgui_variable_db_container.h"
 
 static UGL_WCHAR newline_char = '\n';
 static UGL_WCHAR space_char = ' ';
@@ -46,6 +49,7 @@ UGL_ORD option;
 
 int currentLanguage = 0;
 
+CGUIVariableDatabaseContainer CGUIText::_variableDictionary;
 
 CGUIText::CGUIText(CGUIDisplay & display)
 : CGUIWindowObject(display)
@@ -129,7 +133,7 @@ void CGUIText::setBackgroundColor(CGUIColor color)
    _backgroundColor = color;
 }
 
-void CGUIText::setColor(CGUIColor * color)
+void CGUIText::setColor(CGUIColor color)
 {
    _stylingRecord.color = color;
    _owner->invalidateObjectRegion(this);
@@ -137,7 +141,7 @@ void CGUIText::setColor(CGUIColor * color)
 
 void CGUIText::setColor(int red, int green, int blue)
 {
-   _stylingRecord.color = (CGUIColor *)(MakeCGUIColor(red, green, blue));
+   _stylingRecord.color = MakeCGUIColor(red, green, blue);
    _owner->invalidateObjectRegion(this);
 }
 
@@ -431,7 +435,7 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
          }
          else
          {
-            if (_textString[current_index] == '\n')
+            if (_textString[current_index] == newline_char ) //'\n')
             {
                // newline forced a line break
                current_index += token_byte_count;
@@ -573,6 +577,7 @@ bool CGUIText::convertLinePosition(int width, int height, CGUIRegion & region)
 void CGUIText::computeTextRegion(void)
 {
    CGUIRegion    text_region;
+//   if (_stringLength > 0) handleVariableSubstitution();
    convertTextToMultiline(text_region);
 
    // find vertical region to place text
@@ -690,7 +695,7 @@ void CGUIText::draw(UGL_GC_ID gc)
    } 
 
    uglBackgroundColorSet(gc, backgroundColor);
-   uglForegroundColorSet(gc, *_stylingRecord.color);
+   uglForegroundColorSet(gc, _stylingRecord.color);
    uglFontSet(gc, _stylingRecord.fontId);
 
    list<LineData>::const_iterator   lineIter = _lineData.begin();
@@ -708,7 +713,6 @@ void CGUIText::handleVariableSubstitution(void)
    UGL_WCHAR * new_textString = (UGL_WCHAR *)malloc(new_stringSize * sizeof(UGL_WCHAR));
    size_t     new_stringLength = 0;
    size_t     idx = 0;
-
    while (_textString[idx] != null_char &&
           idx < _stringLength)
    {
@@ -734,26 +738,26 @@ void CGUIText::handleVariableSubstitution(void)
          {
             // Have a valid variable substitution string - lookup the value
             //
-            char  * varName = new char[subEndIdx-subStartIdx+1];
+            char  * variableName = new char[subEndIdx-subStartIdx+1];
             for (int i=0; i<subEndIdx-subStartIdx; i++)
             {
-               varName[i] = (char)(_textString[subStartIdx+i] & 0x00ff);
+               variableName[i] = (char)(_textString[subStartIdx+i] & 0x00ff);
             }
 
-            varName[subEndIdx-subStartIdx] = '\0';
-            unsigned char * varValue = '\0'; //= (unsigned char *)trimaSysGetGUISetting(varName);
-            delete[] varName;
-            if (varValue)
+            variableName[subEndIdx-subStartIdx] = '\0';
+            StringChar * variableText = _variableDictionary.variableLookUp(variableName);
+            delete[] variableName;
+            if (variableText)
             {
                // Value is present, copy to the string and setup to continue with
                // next character after substitution string
                //
-               new_stringSize += strlen((char *)varValue);
-               new_textString = (UGL_WCHAR *)realloc(new_textString, new_stringSize * sizeof(wchar_t));
+               new_stringSize += strlen((char *)variableText);
+               new_textString = (StringChar *)realloc(new_textString, new_stringSize * sizeof(StringChar));
 
-               for (int i=0; i<strlen((char *)varValue); i++)
+               for (int i=0; i<strlen((char *)variableText); i++)
                {
-                  new_textString[new_stringLength++] = (UGL_WCHAR)varValue[i];
+                  new_textString[new_stringLength++] = (StringChar)variableText[i];
                }
 
                idx = subEndIdx + 1;
@@ -764,10 +768,9 @@ void CGUIText::handleVariableSubstitution(void)
 
       new_textString[new_stringLength++] = _textString[idx++];
    }
-
    delete[] _textString;
-   _textString = new UGL_WCHAR[new_stringLength+1];
-   memcpy(_textString, new_textString, new_stringLength * sizeof(UGL_WCHAR));
+   _textString = new StringChar[new_stringLength+1];
+   memcpy(_textString, new_textString, new_stringLength * sizeof(StringChar));
    _textString[new_stringLength] = null_char;
    _stringLength = new_stringLength;
 

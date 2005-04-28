@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.cpp 1.12 2007/06/14 19:34:11Z wms10235 Exp wms10235 $
  * $Log: cgui_string_data.cpp $
+ * Revision 1.1  2005/04/27 13:40:45Z  rm10919
+ * Initial revision
  *
  */
 
@@ -55,7 +57,7 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
    while (fgets(lineBuffer, LineBufferSize, stringInfo) != NULL)
    {
       line += 1;
-      char * firstToken = strtok(lineBuffer, " \t\n\"");
+      char * firstToken = strtok(lineBuffer, " \t\n\r\"");
 
       if (!firstToken || firstToken[0] == '#')
       {
@@ -100,15 +102,15 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
 
          hold = strtok(NULL,"\"");// get to the first quote
          entry->text = strtok(NULL, "\"");
-         entry->red = strtok(NULL," \t\n");
-         entry->green = strtok(NULL," \t\n");
-         entry->blue = strtok(NULL," \t\n");
-         entry->attributes = strtok(NULL," \t\n");
-         entry->x = strtok(NULL," \t\n");
-         entry->y = strtok(NULL," \t\n");
-         entry->width = strtok(NULL," \t\n");
-         entry->height = strtok(NULL," \t\n");
-         entry->fontSize = strtok(NULL," \t\n");
+         entry->red = strtok(NULL," \t\n\r");
+         entry->green = strtok(NULL," \t\n\r");
+         entry->blue = strtok(NULL," \t\n\r");
+         entry->attributes = strtok(NULL," \t\n\r");
+         entry->x = strtok(NULL," \t\n\r");
+         entry->y = strtok(NULL," \t\n\r");
+         entry->width = strtok(NULL," \t\n\r");
+         entry->height = strtok(NULL," \t\n\r");
+         entry->fontSize = strtok(NULL," \t\n\r");
 
          if (entry->id)
          {

@@ -1,4 +1,4 @@
-// $Header: //bctquad3/home/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_parse.cpp 1.2 2005/05/11 16:10:39Z jl11312 Exp ms10234 $
+// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_parse.cpp 1.1 2005/05/11 16:10:39Z jl11312 Exp jl11312 $
 //
 // Configuration file parse tool
 //

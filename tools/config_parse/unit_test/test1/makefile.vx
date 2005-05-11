@@ -1,0 +1,34 @@
+# $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/unit_test/test1/rcs/makefile.vx 1.1 2005/05/11 15:15:06Z jl11312 Exp jl11312 $
+# $Log: makefile.vx $
+# Revision 1.1  2004/07/20 19:35:21Z  jl11312
+# Initial revision
+#
+
+.PHONY: all
+all: check_opt_change app
+
+#
+# MAINDIR should be set to the relative path from this makefile directory
+# to the base trima project directory.  MAINDIR must use \ (DOS/Windows
+# style) directory separators if they are needed.
+#
+MAINDIR = ..\..\..\..
+ADDN_INCDIR = -I$(MAINDIR) 
+
+include $(MAINDIR)/makefile.vxc
+
+#
+# The following should define all of the source files of each type
+# to be compiled for the executable
+#
+APP_NAME := test1
+test1_dir = out
+test1_cxx_files = test1.cpp test1_main.cpp
+include $(MAINDIR)/makefile.process_app
+
+#
+# This is the standard makefile for Trima applications
+#
+include $(MAINDIR)/makefile.build_apps
+app : $(APP_LIST)
+

@@ -1,4 +1,4 @@
-// $Header: //bctquad3/home/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_file.h 1.2 2005/05/11 15:53:17Z jl11312 Exp MS10234 $
+// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_file.h 1.1 2005/05/11 15:53:17Z jl11312 Exp jl11312 $
 //
 // Configuration file class
 //

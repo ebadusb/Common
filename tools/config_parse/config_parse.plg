@@ -1,0 +1,36 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: config_parse - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "c:\temp\RSPA5.tmp" with contents
+[
+/nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fp"Release/config_parse.pch" /Yu"stdafx.h" /Fo"Release/" /Fd"Release/" /FD /c 
+"D:\TAOS\tools\config_parse\config_file.cpp"
+]
+Creating command line "cl.exe @c:\temp\RSPA5.tmp" 
+Creating temporary file "c:\temp\RSPA6.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:no /pdb:"Release/config_parse.pdb" /machine:I386 /out:"Release/config_parse.exe" 
+.\Release\config_file.obj
+.\Release\config_parse.obj
+.\Release\crc.obj
+.\Release\parameter.obj
+.\Release\StdAfx.obj
+]
+Creating command line "link.exe @c:\temp\RSPA6.tmp"
+<h3>Output Window</h3>
+Compiling...
+config_file.cpp
+Linking...
+
+
+
+<h3>Results</h3>
+config_parse.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

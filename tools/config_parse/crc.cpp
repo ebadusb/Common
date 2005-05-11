@@ -1,4 +1,4 @@
-// $Header: K:/BCT_Development/Taos/tools/config_parse/rcs/crc.cpp 1.1 2005/01/20 15:14:12Z jl11312 Exp jl11312 $
+// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/crc.cpp 1.1 2005/05/11 15:15:09Z jl11312 Exp jl11312 $
 //
 // CRC generation function
 //

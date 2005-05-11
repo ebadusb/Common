@@ -1,4 +1,4 @@
-// $Header: K:/BCT_Development/Taos/tools/config_parse/rcs/config_parse.h 1.1 2004/06/24 03:23:48Z jl11312 Exp jl11312 $
+// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_parse.h 1.1 2005/05/11 15:15:10Z jl11312 Exp jl11312 $
 //
 // Configuration file parse tool
 //

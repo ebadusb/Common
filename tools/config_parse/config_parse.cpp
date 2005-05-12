@@ -1,8 +1,10 @@
-// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_parse.cpp 1.1 2005/05/11 16:10:39Z jl11312 Exp jl11312 $
+// $Header: //bctquad3/home/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_parse.cpp 1.3 2005/05/11 21:30:45Z ms10234 Exp MS10234 $
 //
 // Configuration file parse tool
 //
 // $Log: config_parse.cpp $
+// Revision 1.2  2005/05/11 16:10:39Z  jl11312
+// - corrected archive types
 // Revision 1.4  2005/01/20 19:22:15Z  jl11312
 // - added suport for export file for shared enumeration types
 // Revision 1.3  2005/01/13 19:05:07Z  ms10234
@@ -23,7 +25,7 @@
 
 static vector<ConfigFile *> configFile;
 
-static void generateHeaderFile(FILE * fp, const char * projectName, const char * outputName, const char * exportOutputFile, const char * sourceFileBase)
+static void generateHeaderFile(FILE * fp, const char * outputName, const char * exportOutputFile, const char * sourceFileBase, const char *fileNamesHeaderDir, const char *configHelperHeaderDir)
 {
 	fprintf(fp,
 		"/*\n"
@@ -46,10 +48,10 @@ static void generateHeaderFile(FILE * fp, const char * projectName, const char *
 		"#define _%s_INCLUDE\n\n"
 		"#include <vxWorks.h>\n"
 		"#include <limits.h>\n\n"
-		"#include \"base/datalog/%s_datalog.h\"\n"
-		"#include \"base/config/file_names.h\"\n"
-		"#include \"base/module_entry/common/config_helper.h\"\n\n",
-		sourceFileBase, sourceFileBase, projectName);
+		"#include \"datalog.h\"\n"
+		"#include \"%s/file_names.h\"\n"
+		"#include \"%s/config_helper.h\"\n\n",
+		sourceFileBase, sourceFileBase, fileNamesHeaderDir, configHelperHeaderDir);
 
 	if ( exportOutputFile )
 	{
@@ -259,7 +261,7 @@ void parseFileList(void)
 	if ( error ) exit(1);
 }
 
-void generateCode(const char * projectName, const char * outputName, const char * exportOutputFile, const char * outputDir)
+void generateCode(const char * outputName, const char * exportOutputFile, const char * outputDir, const char *fileNamesHeaderDir, const char *configHelperHeaderDir)
 {
 	string fileName;
 	string sourceFileBase;
@@ -297,7 +299,7 @@ void generateCode(const char * projectName, const char * outputName, const char 
 
 	if ( !error )
 	{
-		generateHeaderFile(h_file, projectName, outputName, exportOutputFile, sourceFileBase.c_str());
+		generateHeaderFile(h_file, outputName, exportOutputFile, sourceFileBase.c_str(), fileNamesHeaderDir, configHelperHeaderDir);
 		generateSourceFile(cpp_file, outputName, sourceFileBase.c_str());
 	}
 
@@ -367,6 +369,9 @@ int main(int argc, char* argv[])
 	//			-input_dir <name>	- sets the directory name for config files
 	//
 	//			-project <name> - set root project name (e.g. -project taos)
+   //    
+   //       -file_names <path> - sets the directory path, relative to the base directory, where "file_names.h" exists in the project
+   //       -config_helper <path> - sets the directory path, relative to the base directory, where "config_helper.h" exists in the project
 	//
 	//	  file list:
 	//	  		List of one or more file names (with no path information and no .cfg extension, these are
@@ -380,6 +385,8 @@ int main(int argc, char* argv[])
 	char *	outputDir = NULL;
 	char *	inputDir = NULL;
 	char *	projectName = NULL;
+	char *	fileNamesHeaderDir = NULL;
+	char *   configHelperHeaderDir = NULL;
 
 	while ( argParse < argc )
 	{
@@ -456,6 +463,28 @@ int main(int argc, char* argv[])
 			   projectName = argv[argParse+1];
 				argParse += 2;
 			}
+			else if ( strcmp(argv[argParse], "-file_names") == 0 )
+			{
+				if ( argParse+1 >= argc )
+				{
+					fprintf(stderr, "Missing -file_names argument\n");
+					exit(1);
+				}
+
+			   fileNamesHeaderDir = argv[argParse+1];
+				argParse += 2;
+			}
+			else if ( strcmp(argv[argParse], "-config_helper") == 0 )
+			{
+				if ( argParse+1 >= argc )
+				{
+					fprintf(stderr, "Missing -config_helper argument\n");
+					exit(1);
+				}
+
+			   configHelperHeaderDir = argv[argParse+1];
+				argParse += 2;
+			}
 			else if ( strcmp(argv[argParse], "-output_dir") == 0 )
 			{
 				if ( argParse+1 >= argc )
@@ -503,6 +532,16 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "Must specify \"-project\" option\n");
 		exit(1);
 	}
+	else if ( !fileNamesHeaderDir )
+	{
+		fprintf(stderr, "Must specify \"-file_names\" option\n");
+		exit(1);
+	}
+	else if ( !configHelperHeaderDir )
+	{
+		fprintf(stderr, "Must specify \"-config_helper\" option\n");
+		exit(1);
+	}
 	else
 	{
 		for ( int file=0; file<configFile.size(); file++ )
@@ -523,7 +562,7 @@ int main(int argc, char* argv[])
 	}
 
 	parseFileList();
-	if ( outputName ) generateCode(projectName, outputName, exportOutputFile, outputDir);
+	if ( outputName ) generateCode(outputName, exportOutputFile, outputDir, fileNamesHeaderDir, configHelperHeaderDir);
 	if ( exportOutputFile ) generateExportFile(outputName, exportOutputFile, outputDir);
 	if ( dataFileDir ) generateDataFiles(dataFileDir);
 

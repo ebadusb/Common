@@ -3,6 +3,9 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.14  2005/04/26 23:16:48Z  rm10919
+ * Made changes to cgui_text and cgui_text_item, plus added 
+ * classes for variable substitution in text strings.
  * Revision 1.13  2005/04/04 18:03:53Z  rm10919
  * Add int getLength(void) method for text string.
  * Revision 1.12  2005/03/18 16:42:07Z  rm10919
@@ -203,6 +206,9 @@ public:
    void setText(CGUITextItem * textItem);
    void setText(const char * string);
    void setText(const StringChar * string);
+
+	void appendText( const StringChar * suffixText, int suffixLength );
+
 //   void getText(char * string);
    void getText(StringChar * string);
 

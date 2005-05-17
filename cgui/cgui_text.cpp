@@ -3,6 +3,9 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.15  2005/04/26 23:16:48Z  rm10919
+ * Made changes to cgui_text and cgui_text_item, plus added 
+ * classes for variable substitution in text strings.
  * Revision 1.14  2005/03/18 16:42:07Z  rm10919
  * Fix getText method to actually do something.
  * Revision 1.13  2005/03/15 00:21:35Z  rm10919
@@ -200,6 +203,28 @@ void CGUIText::setText(CGUITextItem * textItem)
             *_textString =  null_char;
          }
       }
+   }
+}
+
+void CGUIText::appendText( const StringChar * suffixText, int suffixLength )
+{
+
+   if ( _stringLength > 0 && suffixText )
+   {
+		StringChar prefixText[_stringLength];
+		memcpy(prefixText, _textString, _stringLength * sizeof(UGL_WCHAR));
+		int prefixLength = _stringLength;
+
+		if (_textString)
+		{
+			delete _textString;
+			_stringLength = 0;
+		}
+		_stringLength = prefixLength+suffixLength;
+		_textString = new UGL_WCHAR [_stringLength+1];
+		memcpy(_textString, prefixText, prefixLength* sizeof(UGL_WCHAR));
+		memcpy((_textString+prefixLength), suffixText, suffixLength* sizeof(UGL_WCHAR));
+		_textString[_stringLength] = null_char;
    }
 }
 

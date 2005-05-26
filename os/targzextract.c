@@ -58,6 +58,7 @@ tar is limited at 100 characters.
 #include <stdio.h>
 #include <dirent.h>
 #include <errno.h>
+#include <errnoLib.h>
 #include <fcntl.h>
 #include <ioLib.h>
 #include <sys/stat.h>
@@ -376,7 +377,7 @@ static int tarExtractFile ( MT_TAR_SOFT   *pCtrl,     /* control structure */
 
       if ( wc == ERROR )
       {
-         fprintf( stdout, "error writing file.  Errno = %d\n", errnoGet())
+         fprintf( stdout, "error writing file.  Errno = %d\n", errnoGet());
          break;
       }
 

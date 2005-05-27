@@ -3,6 +3,8 @@
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags_55 $
+# Revision 1.8  2005/01/12 18:15:52Z  jl11312
+# - restored optimization flags (IT 17)
 # Revision 1.7  2004/12/02 22:02:58Z  jl11312
 # - changed optimization flags (IT 15)
 # Revision 1.6  2004/11/22 15:22:36Z  jl11312
@@ -85,8 +87,10 @@ endif
 ifneq ($(CPU),PENTIUM)
   ifneq ($(CPU),SIMNT)
     ifneq ($(CPU),PENTIUM2)
-      OPT_ERROR := Invalid CPU type: $(CPU).  Valid types are PENTIUM or SIMNT.
-      FORCE_REBUILD := 1
+      ifneq ($(CPU),I80486)
+        OPT_ERROR := Invalid CPU type: $(CPU).  Valid types are PENTIUM, I80486 or SIMNT.
+        FORCE_REBUILD := 1
+      endif
     endif
   endif
 endif
@@ -187,6 +191,52 @@ LD_ARCH_RELOC :=
 endif
 
 endif
+
+#
+# Build flags for I80486
+#
+ifeq ($(CPU),I80486)
+AS = ccpentium  -mcpu=i486 -march=i486 -c   
+CPP = ccpentium -mcpu=i486 -march=i486 -E
+CC = ccpentium  -mcpu=i486 -march=i486 -c
+CXX = ccpentium -mcpu=i486 -march=i486 -c
+AR = arpentium  
+LD = ldpentium  
+NM = nmpentium   -g
+GREP = grep -h
+MUNCH = wtxtcl $(WIND_BASE)/host/src/hutils/munch.tcl -asm 386
+
+ifndef ARCH_FLAGS
+ARCH_FLAGS := -DCPU=I80486  -DVXWORKS  
+endif
+
+ifndef AS_ARCH_FLAGS
+AS_ARCH_FLAGS := $(ARCH_FLAGS) -xassembler-with-cpp
+endif
+
+ifndef CPP_ARCH_FLAGS
+CPP_ARCH_FLAGS := $(ARCH_FLAGS)
+endif
+
+ifndef CC_ARCH_FLAGS
+CC_ARCH_FLAGS := $(ARCH_FLAGS) -fno-builtin -fno-defer-pop -ffloat-store
+endif
+
+ifndef CXX_ARCH_FLAGS
+CXX_ARCH_FLAGS := $(ARCH_FLAGS) -Wstrict-prototypes -fno-builtin -fno-defer-pop -ffloat-store
+endif
+
+ifndef LD_ARCH_FLAGS
+LD_ARCH_FLAGS := -r -X
+endif
+
+ifndef LD_ARCH_RELOC
+LD_ARCH_RELOC :=
+endif
+
+endif
+
+
 
 #
 # Build flags for SIMNT
@@ -293,7 +343,7 @@ endif
 # These files are the files common to all build directories which should be
 # removed by a make BUILD_TYPE=CLEAN
 #
-COMMON_CLEAN_FILELIST = .dfile/*.d .opt/* PENTIUM/*.* SIMNT/*.*
+COMMON_CLEAN_FILELIST = .dfile/*.d .opt/* I80486/*.* PENTIUM/*.* SIMNT/*.*
 
 #
 # The float-store flag was added to correct a problem with inconsistent

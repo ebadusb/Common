@@ -4,7 +4,7 @@
  *  Define the class to create an empty non-filled frame.
  *
  * $Header $
- * $Log $
+ * $Log cgui_frame.h $
  *
  */
 
@@ -24,19 +24,17 @@
 class CGUIFrame : public CGUIWindowObject
 {
 public:
-	typedef enum CGUIFrameType  {
-		CGUI_SIMPLE_FRAME,
-		CGUI_SHADED_FRAME
-	};
+	typedef enum CGUIFrameType { CGUI_SIMPLE_FRAME, CGUI_SHADED_FRAME };
 
 	// CONSTRUCTOR - construct a shaded frame.  Must provide a display reference, region, and frame type. Also,
 	// colors and line widths for shaded and unshaded segemnts of frame
-   CGUIFrame(CGUIDisplay & display, const CGUIRegion region,  CGUIColor shadedColor,
-		       CGUIColor unshadedColor, unsigned short shadedLineWid, unsigned short unshadedLineWid);
+   CGUIFrame(CGUIDisplay & display, const CGUIRegion region,  
+             CGUIColor shadedColor, CGUIColor unshadedColor, 
+             unsigned short shadedLineWidth, unsigned short unshadedLineWidth);
 
 	// CONSTRUCTOR - construct a simple frame.  color and line width must be provided along with display reference
 	// and region for the frame.
-	CGUIFrame(CGUIDisplay & display, const CGUIRegion region,  CGUIColor color, unsigned short lineWid);
+	CGUIFrame(CGUIDisplay & display, const CGUIRegion region,  CGUIColor color, unsigned short lineWidth);
 
 	//DESTRUCTIOR
 	virtual ~CGUIFrame(void);
@@ -49,7 +47,7 @@ public:
 
 	// setLineSize - set the width in pixels of the lines that make up a shaded frame.  If used on a simple frame, no
 	// change is made.
-	void setLineSize (unsigned short shadedLineWid, unsigned short unShadedLineWid);
+	void setLineSize (unsigned short shadedLineWidth, unsigned short unShadedLineWidth);
 
 	// setLineSize - set the width in pixels of a simple frame.  If used on a shaded frame, no change is made.
 	void setLineSize (unsigned short line);

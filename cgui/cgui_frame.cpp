@@ -186,7 +186,7 @@ void CGUIFrame::draw(UGL_GC_ID gc)
 		{
 			// set the line width and color for unshaded lines
 			uglLineWidthSet(gc, (int)_unShadedLineWidth);
-			uglForegroundColorSet(gc, (UGL_COLOR)_shadedColor);
+			uglForegroundColorSet(gc, (UGL_COLOR)_unShadedColor);
 		}
 
 		// draw bottom of frame

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.15 2005/05/31 20:26:41Z jheiusb Exp ms10234 $
  * $Log: datalog.cpp $
+ * Revision 1.14  2004/10/26 20:18:45Z  rm70006
+ * Ported datalog code to be compatible with windows compiler.  No functional changes made.  Re-ran unit test and it passed.
  * Revision 1.13  2003/12/05 16:33:05Z  jl11312
  * - removed non-portable calls
  * Revision 1.12  2003/10/03 12:34:58Z  jl11312
@@ -63,12 +65,12 @@ DataLog_TaskInfo * DataLog_CommonData::findTask(DataLog_TaskID task)
 {
 	DataLog_TaskID	searchTask = (task == DATALOG_CURRENT_TASK) ? datalog_CurrentTask() : task;
 
-	datalog_LockAccess(_tasksLock);
+	datalog_LockAccess(_tasksLock,WAIT_FOREVER);
 	if ( _tasks.find(searchTask) == _tasks.end() )
 	{
 		datalog_ReleaseAccess(_tasksLock);
 		datalog_TaskCreated(datalog_CurrentTask());
-		datalog_LockAccess(_tasksLock);
+		datalog_LockAccess(_tasksLock,WAIT_FOREVER);
 	}
 
 	DataLog_TaskInfo * result = _tasks[searchTask];
@@ -78,7 +80,7 @@ DataLog_TaskInfo * DataLog_CommonData::findTask(DataLog_TaskID task)
 
 void DataLog_CommonData::addTask(DataLog_TaskInfo * taskInfo)
 {
-	datalog_LockAccess(_tasksLock);
+	datalog_LockAccess(_tasksLock,WAIT_FOREVER);
 	_tasks[taskInfo->_id] = taskInfo;
 	datalog_ReleaseAccess(_tasksLock);
 }
@@ -87,7 +89,7 @@ void DataLog_CommonData::deleteTask(DataLog_TaskID task)
 {
 	DataLog_TaskInfo * taskInfo = NULL;
 
-	datalog_LockAccess(_tasksLock);
+	datalog_LockAccess(_tasksLock,WAIT_FOREVER);
 	if ( _tasks.find(task) != _tasks.end() )
 	{
 		taskInfo = _tasks[task];

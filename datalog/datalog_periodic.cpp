@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_periodic.cpp 1.6 2005/05/31 20:26:46Z jheiusb Exp ms10234 $
  * $Log: datalog_periodic.cpp $
+ * Revision 1.5  2004/10/26 20:19:14Z  rm70006
+ * Ported datalog code to be compatible with windows compiler.  No functional changes made.  Re-ran unit test and it passed.
  * Revision 1.4  2003/10/03 12:35:09Z  jl11312
  * - improved DataLog_Handle lookup time
  * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
@@ -48,8 +50,8 @@ int DataLog_PeriodicTask::main(void)
 			datalog_SetupPeriodicSignal(_set->_writeSignal, _set->_logIntervalMilliSec);
 		}
 
-		datalog_LockAccess(_set->_outputLock);
-		datalog_LockAccess(_set->_lock);
+		datalog_LockAccess(_set->_outputLock,WAIT_FOREVER);
+		datalog_LockAccess(_set->_lock,WAIT_FOREVER);
 		itemsIter = _set->_items.begin();
 		while ( itemsIter != _set->_items.end() )
 		{
@@ -249,7 +251,7 @@ DataLog_Result datalog_ForcePeriodicOutput(DataLog_SetHandle handle)
 
 DataLog_Result datalog_DisablePeriodicOutput(DataLog_SetHandle handle)
 {
-	datalog_LockAccess(handle->_outputLock);
+	datalog_LockAccess(handle->_outputLock,WAIT_FOREVER);
 	return DataLog_OK;
 }
 
@@ -276,7 +278,7 @@ DataLog_PeriodicItemBase::DataLog_PeriodicItemBase(DataLog_SetHandle set, size_t
 	DataLog_CommonData common;
 	_keyCode = common.getNextInternalID();
 
-	datalog_LockAccess(set->_lock);
+	datalog_LockAccess(set->_lock,WAIT_FOREVER);
 	set->_items.push_back(this);
 	datalog_ReleaseAccess(set->_lock);
 	datalog_SendSignal(set->_modifiedSignal);
@@ -330,7 +332,7 @@ bool DataLog_PeriodicItemBase::itemChanged(void)
 {
 	bool	changed = false;
 
-	datalog_LockAccess(_lock);
+	datalog_LockAccess(_lock,WAIT_FOREVER);
 	if ( !_oldData ||
 		  _size != _oldSize ||
 		  memcmp(_data, _oldData, _size) != 0 )
@@ -373,14 +375,14 @@ void DataLog_PeriodicItemBase::copyItemData(size_t size, const void * data)
 
 void DataLog_PeriodicItemBase::setItemData(size_t size, const void * data)
 {
-	datalog_LockAccess(_lock);
+	datalog_LockAccess(_lock,WAIT_FOREVER);
 	copyItemData(size, data);
 	datalog_ReleaseAccess(_lock);
 }
 
 void DataLog_PeriodicItemBase::setItemString(const char * str)
 {
-	datalog_LockAccess(_lock);
+	datalog_LockAccess(_lock,WAIT_FOREVER);
 	if ( !str )
 	{
 		copyItemData(1, "\0");
@@ -399,7 +401,7 @@ size_t DataLog_PeriodicItemBase::getData(void * buffer, size_t maxSize)
 
 	if ( _oldSize <= maxSize )
 	{
-		datalog_LockAccess(_lock);
+		datalog_LockAccess(_lock,WAIT_FOREVER);
 		memcpy(buffer, _oldData, _oldSize);
 		result = _oldSize;
 		datalog_ReleaseAccess(_lock);

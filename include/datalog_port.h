@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.20 2005/05/31 20:27:14Z jheiusb Exp ms10234 $
  * $Log: datalog_port.h $
+ * Revision 1.19  2005/05/31 19:58:25Z  jl11312
+ * - temporarily removed previous changes since they broke the common build
  * Revision 1.17  2004/10/26 20:49:02Z  rm70006
  * Revision 1.16  2003/10/03 12:32:57Z  jl11312
  * - improved DataLog_Handle lookup time
@@ -333,7 +335,7 @@ DataLog_Lock datalog_CreateMLock(void);
 DataLog_Lock datalog_CreateBLock(void);
 
 void datalog_DeleteLock(DataLog_Lock lock);
-int datalog_LockAccess(DataLog_Lock lock, int delay = WAIT_FOREVER);
+int datalog_LockAccess(DataLog_Lock lock, int delay);
 void datalog_ReleaseAccess(DataLog_Lock lock);
 
 /*

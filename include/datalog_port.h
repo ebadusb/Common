@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.18 2005/05/31 18:26:08Z jheiusb Exp jl11312 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.20 2005/05/31 20:27:14Z jheiusb Exp ms10234 $
  * $Log: datalog_port.h $
  * Revision 1.17  2004/10/26 20:49:02Z  rm70006
  * Revision 1.16  2003/10/03 12:32:57Z  jl11312
@@ -333,7 +333,7 @@ DataLog_Lock datalog_CreateMLock(void);
 DataLog_Lock datalog_CreateBLock(void);
 
 void datalog_DeleteLock(DataLog_Lock lock);
-int datalog_LockAccess(DataLog_Lock lock, int delay );
+int datalog_LockAccess(DataLog_Lock lock, int delay = WAIT_FOREVER);
 void datalog_ReleaseAccess(DataLog_Lock lock);
 
 /*

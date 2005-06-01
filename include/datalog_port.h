@@ -3,6 +3,7 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.18 2005/05/31 18:26:08Z jheiusb Exp jl11312 $
  * $Log: datalog_port.h $
+ * Revision 1.17  2004/10/26 20:49:02Z  rm70006
  * Revision 1.16  2003/10/03 12:32:57Z  jl11312
  * - improved DataLog_Handle lookup time
  * - modified datalog signal handling to eliminate requirement for a name lookup and the semaphore lock/unlock that went with it
@@ -332,7 +333,7 @@ DataLog_Lock datalog_CreateMLock(void);
 DataLog_Lock datalog_CreateBLock(void);
 
 void datalog_DeleteLock(DataLog_Lock lock);
-int datalog_LockAccess(DataLog_Lock lock, int delay = WAIT_FOREVER);
+int datalog_LockAccess(DataLog_Lock lock, int delay );
 void datalog_ReleaseAccess(DataLog_Lock lock);
 
 /*

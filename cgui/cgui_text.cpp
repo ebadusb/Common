@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.16  2005/05/16 22:49:26Z  cf10242
+ * add appendText
  * Revision 1.15  2005/04/26 23:16:48Z  rm10919
  * Made changes to cgui_text and cgui_text_item, plus added 
  * classes for variable substitution in text strings.
@@ -62,13 +64,13 @@ CGUIText::CGUIText(CGUIDisplay & display)
 }
 
 CGUIText::CGUIText(CGUIDisplay & display, CGUITextItem * textItem, StylingRecord * stylingRecord = NULL)
-: CGUIWindowObject(display), _requestedRegion(stylingRecord->region), _textString(NULL)
+: CGUIWindowObject(display), _textString(NULL)
 {
    initializeData(textItem, stylingRecord);
 }
 
 CGUIText::CGUIText(CGUIDisplay & display, CGUITextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL)
-: CGUIWindowObject(display), _requestedRegion(stylingRecord->region), _textString(NULL)
+: CGUIWindowObject(display), _textString(NULL)
 {
    initializeData(textItem, stylingRecord);
    setBackgroundColor(backgroundColor);
@@ -97,6 +99,20 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
       if (_textItem->isInitialized())
       {
          const StringChar * string = _textItem->getText(_textItem->getLanguageId());
+         
+         //
+         //  If styling record from constructor is null, 
+         //  set the the cgui_text._stylingRecord to 
+         //  the cgui_text_item._stylingRecord by default.
+         //
+         if (!stylingRecord)
+         {
+            _stylingRecord = _textItem->getStylingRecord();
+
+         }
+         
+         // Set the requested region.
+         _requestedRegion = _stylingRecord.region;
 
          if (string)
          {
@@ -106,15 +122,6 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
          {
             _textString = new StringChar[1];
             *_textString =  null_char;
-         }
-         //
-         //  If styling record from constructor is null, 
-         //  set the the cgui_text._stylingRecord to 
-         //  the cgui_text_item._stylingRecord by default.
-         //
-         if (!stylingRecord)
-         {
-            _stylingRecord = _textItem->getStylingRecord();
          }
       }
    }

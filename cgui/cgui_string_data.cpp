@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.cpp 1.12 2007/06/14 19:34:11Z wms10235 Exp wms10235 $
  * $Log: cgui_string_data.cpp $
+ * Revision 1.2  2005/04/28 14:40:32Z  rm10919
+ * Fixed bug in reading eol characters.
  * Revision 1.1  2005/04/27 13:40:45Z  rm10919
  * Initial revision
  *
@@ -51,13 +53,14 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
    FILE * stringInfo = fopen(filename, "r");
 
    int   line = 0;
+   char * p = NULL;
 
 //   taskSuspend(taskIdSelf());
 
    while (fgets(lineBuffer, LineBufferSize, stringInfo) != NULL)
    {
       line += 1;
-      char * firstToken = strtok(lineBuffer, " \t\n\r\"");
+      char * firstToken = strtok_r(lineBuffer, " \t\n\r\"", &p);
 
       if (!firstToken || firstToken[0] == '#')
       {
@@ -100,17 +103,17 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
          //
          entry->id = firstToken;
 
-         hold = strtok(NULL,"\"");// get to the first quote
-         entry->text = strtok(NULL, "\"");
-         entry->red = strtok(NULL," \t\n\r");
-         entry->green = strtok(NULL," \t\n\r");
-         entry->blue = strtok(NULL," \t\n\r");
-         entry->attributes = strtok(NULL," \t\n\r");
-         entry->x = strtok(NULL," \t\n\r");
-         entry->y = strtok(NULL," \t\n\r");
-         entry->width = strtok(NULL," \t\n\r");
-         entry->height = strtok(NULL," \t\n\r");
-         entry->fontSize = strtok(NULL," \t\n\r");
+         hold = strtok_r(NULL,"\"", &p);    // get to the first quote
+         entry->text = strtok_r(NULL, "\"", &p);
+         entry->red = strtok_r(NULL," \t\n\r", &p);
+         entry->green = strtok_r(NULL," \t\n\r", &p);
+         entry->blue = strtok_r(NULL," \t\n\r", &p);
+         entry->attributes = strtok_r(NULL," \t\n\r", &p);
+         entry->x = strtok_r(NULL," \t\n\r", &p);
+         entry->y = strtok_r(NULL," \t\n\r", &p);
+         entry->width = strtok_r(NULL," \t\n\r", &p);
+         entry->height = strtok_r(NULL," \t\n\r", &p);
+         entry->fontSize = strtok_r(NULL," \t\n\r", &p);
 
          if (entry->id)
          {
@@ -145,15 +148,14 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
 
                // Allocate to maximum possible length (may be less due to \x sequences)
                //
-               reference = new char[length];
+               reference = new char[length+2];  // +2 to add terminating Null to end of max length string.
 
                // Scan string, replacing \x sequences as necessary
                //
                int   readIndex = 0;
                int   writeIndex = 0;
 
-               while (readIndex < length &&
-                      status)
+               while (readIndex < length && status)
                {
                   if (entry->text[readIndex] != '\\')
                   {
@@ -161,7 +163,7 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
                   }
                   else
                   {
-                     if (readIndex >= length-2)
+                     if (readIndex >= length - 1)
                      {
                         // Can't have \ as last character in string
                         //

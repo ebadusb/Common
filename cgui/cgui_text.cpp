@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.17  2005/06/06 18:21:57Z  rm10919
+ * Changed constructor not to use the region the styling record passed in unless the styling record exsists.
  * Revision 1.16  2005/05/16 22:49:26Z  cf10242
  * add appendText
  * Revision 1.15  2005/04/26 23:16:48Z  rm10919
@@ -93,7 +95,7 @@ void CGUIText::attachText( CGUIWindow * parent)
 void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRecord)
 {
    _textItem =  textItem;
-   _stylingRecord = * stylingRecord;
+//   _stylingRecord = * stylingRecord;
    if (_textItem)
    {
       if (_textItem->isInitialized())
@@ -110,7 +112,9 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
             _stylingRecord = _textItem->getStylingRecord();
 
          }
-         
+         else
+            _stylingRecord = * stylingRecord;
+
          // Set the requested region.
          _requestedRegion = _stylingRecord.region;
 

@@ -1,10 +1,12 @@
 /*
-* $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info.h 1.5 2005/02/21 10:17:10 cf10242 Exp pn02526 $ 
+* $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info.h 1.7 2006/05/15 21:47:36Z rm10919 Exp wms10235 $ 
 * This file defines the class that defines the bitmaps compiled into the application.
 * Each bitmap will have automatically generated an object of this type via the
 * build_bitmap_info file.
 *
 * $Log: cgui_bitmap_info.h $
+* Revision 1.5  2005/02/21 10:17:10  cf10242
+* IT 133 - delete all allocated memory to avoid unrecovered memory
 * Revision 1.4  2004/11/11 17:44:39Z  cf10242
 * Size of bitmap change to unsigned long to handle large bitmaps.
 * Revision 1.3  2004/11/03 18:10:58Z  cf10242
@@ -50,7 +52,25 @@ class CGUIBitmapInfo
 														_myWidth (width),
 														_loadCount (0),
 														_loadState (UNLOADED),
-														_myId(UGL_NULL_ID)
+														_myId(UGL_NULL_ID),
+                                                        _compressed(true)
+		{
+			_mySize = size;
+			_myBitmap = (unsigned char *)bmp_data; 
+		};
+
+		// CONSTRUCTOR - accepts a pointer to the input bitmap.  Expects that the data is in
+		// uncompressed format.
+		CGUIBitmapInfo (const unsigned short bmp_data[],
+							unsigned long size,
+			            unsigned short width,
+							unsigned short height
+							) :						_myHeight (height),
+														_myWidth (width),
+														_loadCount (0),
+														_loadState (UNLOADED),
+														_myId(UGL_NULL_ID),
+                                                        _compressed(false)
 		{
 			_mySize = size;
 			_myBitmap = (unsigned char *)bmp_data; 
@@ -96,6 +116,7 @@ class CGUIBitmapInfo
 		CGUIBitmapState _loadState;
 		unsigned short _loadCount;
 		CGUIBitmapId _myId;
+        bool        _compressed;
 };
 #endif
 

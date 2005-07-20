@@ -1,10 +1,12 @@
 /*
-* $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info.cpp 1.3 2005/01/25 14:45:40 cf10242 Exp pn02526 $ 
+* $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info.cpp 1.5 2006/05/15 21:47:36Z rm10919 Exp wms10235 $ 
 * This file implements the class that manages the bitmaps compiled into the application.
 * Each bitmap will have automatically generated an object of this type via the
 * build_bitmap_info file.
 *
 * $Log: cgui_bitmap_info.cpp $
+* Revision 1.3  2005/01/25 14:45:40  cf10242
+* uncompress bitmaps once to improve speed
 * Revision 1.2  2004/11/11 17:44:38Z  cf10242
 * Size of bitmap change to unsigned long to handle large bitmaps.
 * Revision 1.1  2004/10/14 14:26:53Z  cf10242
@@ -37,10 +39,10 @@ void CGUIBitmapInfo::createDisplay (CGUIDisplay & dispObj)
 	{
 		// bitmap not loaded yet
 		unsigned long   bmpSize = _myHeight * _myWidth * sizeof(unsigned short);   // the USHORT is for RGB565 representation of color for bmp
-		unsigned char * bmpImage = new unsigned char[bmpSize];
+		unsigned char * bmpImage = _compressed ? new unsigned char[bmpSize] : _myBitmap;
 		UGL_DIB dib;
 
-		if(uncompress(bmpImage, &bmpSize, _myBitmap, _mySize) != Z_OK)
+		if(_compressed && uncompress(bmpImage, &bmpSize, _myBitmap, _mySize) != Z_OK)
 		{
 			// log mesage to error log level and set a null ID
 			_myId = UGL_NULL_ID;
@@ -72,7 +74,6 @@ void CGUIBitmapInfo::createDisplay (CGUIDisplay & dispObj)
 
 			UGL_DEVICE_ID display = dispObj.display();
 			_myId = uglBitmapCreate(display, &dib, UGL_DIB_INIT_DATA, 0, UGL_DEFAULT_MEM);
-			delete[] bmpImage;
 
 			// get actual height and width
 	      UGL_SIZE width, height;
@@ -81,6 +82,7 @@ void CGUIBitmapInfo::createDisplay (CGUIDisplay & dispObj)
 			_myHeight = height;
 			_loadCount = 1;
 		}
+        if( _compressed ) delete[] bmpImage;
 	}
 }
 

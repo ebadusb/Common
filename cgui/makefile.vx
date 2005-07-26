@@ -1,8 +1,11 @@
-# @(#) $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/makefile.vx 1.9 2005/04/26 17:16:49 rm10919 Exp pn02526 $
+# @(#) $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/makefile.vx 1.13 2006/07/12 17:36:08 rm10919 Exp pn02526 $
 #
 # Makefile - makefile for common GUI library
 #
 # $Log: makefile.vx $
+# Revision 1.9  2005/04/26 17:16:49  rm10919
+# Made changes to cgui_text and cgui_text_item, plus added 
+# classes for variable substitution in text strings.
 # Revision 1.8  2005/01/28 23:52:19Z  rm10919
 # CGUITextItem class changed and put into own file.
 # Revision 1.7  2004/11/22 19:13:10Z  cf10242
@@ -51,6 +54,7 @@ LIB_CXX_FILES = cgui_graphics.cpp cgui_rectangle.cpp cgui_window.cpp \
 		cgui_frame.cpp cgui_text_item.cpp cgui_text.cpp cgui_time_date.cpp \
                 cgui_button.cpp cgui_data_item.cpp cgui_variable_database.cpp \
                 cgui_variable_db_container.cpp \
+		cgui_textbox.cpp cgui_adjustor.cpp \
                 cgui_string_data.cpp cgui_string_data_container.cpp
 LIB_S_FILES =
 

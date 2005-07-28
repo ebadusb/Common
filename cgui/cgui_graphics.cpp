@@ -3,6 +3,9 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.22 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.18  2005/04/26 23:16:47Z  rm10919
+ * Made changes to cgui_text and cgui_text_item, plus added 
+ * classes for variable substitution in text strings.
  * Revision 1.17  2005/01/28 23:52:17Z  rm10919
  * CGUITextItem class changed and put into own file.
  * Revision 1.16  2005/01/17 17:47:06Z  jl11312
@@ -135,7 +138,7 @@ CGUIDisplay::CGUIDisplay(const CallbackBase & startCB, const CallbackBase & wake
    // END MESSAGE_SYSTEM_IN_WIN_MGR
 
 
-   _uglApp = winAppCreate("winApp", 0, 0, 0, UGL_NULL);     
+   _uglApp = winAppCreate("winApp", 0, 64000, 0, UGL_NULL);     
 
    _uglRootWindow = winCreate(_uglApp, UGL_NULL_ID,         
                               WIN_ATTRIB_VISIBLE,             // list window attributes 

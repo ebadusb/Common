@@ -3,6 +3,9 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.7 2005/11/22 00:34:43Z rm10919 Exp MS10234 $
  * $Log: cgui_text_item.h $
+ * Revision 1.5  2005/04/26 23:16:48Z  rm10919
+ * Made changes to cgui_text and cgui_text_item, plus added 
+ * classes for variable substitution in text strings.
  * Revision 1.4  2005/04/04 18:03:53Z  rm10919
  * Add int getLength(void) method for text string.
  * Revision 1.3  2005/03/15 00:21:36Z  rm10919
@@ -76,6 +79,8 @@ public:
 protected:
 
    unsigned short _stringLength;
+
+   unsigned short _stringSize;
 
 private:
    //

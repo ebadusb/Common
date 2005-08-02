@@ -3,6 +3,9 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.3  2005/04/26 23:16:48Z  rm10919
+ * Made changes to cgui_text and cgui_text_item, plus added 
+ * classes for variable substitution in text strings.
  * Revision 1.2  2005/02/21 17:17:12Z  cf10242
  * IT 133 - delete all allocated memory to avoid unrecovered memory
  * Revision 1.1  2005/01/31 17:36:38Z  rm10919
@@ -14,6 +17,8 @@
 #include "cgui_text_item.h"
 #include "cgui_string_data_container.h"
 
+const int textBlockSize = 64;
+
 CGUIStringDataContainer CGUITextItem::_textMap;
 
 int CGUITextItem::_defaultLanguageId = 0;
@@ -24,7 +29,7 @@ CGUITextItem::CGUITextItem()
 }
 
 CGUITextItem::CGUITextItem(const char * id, StylingRecord * stylingRecord)
-:_id(id), _string(NULL)
+:_id(id), _string(NULL), _stringSize(0), _stringLength(0)
 {
    if (stylingRecord)
    {
@@ -48,7 +53,23 @@ void CGUITextItem::setText(const char * string, LanguageId = currentLanguage)
    {
       if (_id)
       {
-         _string = new StringChar[strlen(string) + 1];
+         int newLength = strlen(string);
+         if(!string)
+         {         
+            _stringSize = newLength;
+            if(newLength < textBlockSize)
+               _stringSize = textBlockSize;
+            _string = new StringChar[_stringSize + 1];
+         }
+         else
+         {
+            if(newLength > _stringSize)
+            {
+           		delete[] _string;
+               _string = new StringChar[newLength + textBlockSize + 1];
+               _stringSize = newLength + textBlockSize;
+            }
+         }
          
          int stringLength = 0;
 
@@ -72,10 +93,26 @@ void CGUITextItem::setText(const StringChar * string, LanguageId = currentLangua
       {
          stringLength += 1;
       }
+
+      if(!string)
+      {         
+         _stringSize = stringLength;
+         if(stringLength < textBlockSize)
+            _stringSize = textBlockSize;
+         _string = new StringChar[_stringSize + 1];
+      }
+      else
+      {
+         if(stringLength > _stringSize)
+         {
+        		delete[] _string;
+            _string = new StringChar[stringLength + textBlockSize + 1];
+            _stringSize = stringLength + textBlockSize;
+         }
+      }
       
       _stringLength = ++stringLength;
 
-      _string = new StringChar[stringLength+1];
       memcpy(_string, string, stringLength * sizeof(StringChar));
    }
 }

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.18  2005/06/20 14:49:02Z  rm10919
+ * Fix bug in creating region from text item.
  * Revision 1.17  2005/06/06 18:21:57Z  rm10919
  * Changed constructor not to use the region the styling record passed in unless the styling record exsists.
  * Revision 1.16  2005/05/16 22:49:26Z  cf10242
@@ -51,6 +53,8 @@
 static UGL_WCHAR newline_char = '\n';
 static UGL_WCHAR space_char = ' ';
 static UGL_WCHAR null_char = '\0';
+
+const int textBlockSize = 64;
 
 UGL_ORD option;
 
@@ -124,8 +128,10 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
          }
          else
          {
-            _textString = new StringChar[1];
+            _textString = new StringChar[textBlockSize+1];
             *_textString =  null_char;
+            _stringLength = 0;
+            _stringSize = textBlockSize;
          }
       }
    }
@@ -208,10 +214,12 @@ void CGUIText::setText(CGUITextItem * textItem)
          {
             setText(string);
          }
-         else
+         else if(!_textString)
          {
-            _textString = new StringChar[1];
+            _textString = new StringChar[textBlockSize+1];
             *_textString =  null_char;
+            _stringLength = 0;
+            _stringSize = textBlockSize;
          }
       }
    }
@@ -225,14 +233,20 @@ void CGUIText::appendText( const StringChar * suffixText, int suffixLength )
 		StringChar prefixText[_stringLength];
 		memcpy(prefixText, _textString, _stringLength * sizeof(UGL_WCHAR));
 		int prefixLength = _stringLength;
+      int totalLength = prefixLength+suffixLength;
 
 		if (_textString)
 		{
 			delete _textString;
 			_stringLength = 0;
 		}
-		_stringLength = prefixLength+suffixLength;
-		_textString = new UGL_WCHAR [_stringLength+1];
+
+		_stringLength = totalLength;
+      if(_stringLength < textBlockSize)
+         _stringSize = textBlockSize;
+      else
+         _stringSize = _stringLength;
+		_textString = new UGL_WCHAR [_stringSize+1];
 		memcpy(_textString, prefixText, prefixLength* sizeof(UGL_WCHAR));
 		memcpy((_textString+prefixLength), suffixText, suffixLength* sizeof(UGL_WCHAR));
 		_textString[_stringLength] = null_char;
@@ -241,24 +255,36 @@ void CGUIText::appendText( const StringChar * suffixText, int suffixLength )
 
 void CGUIText::setText(const StringChar * string)
 {
-   if (_textString)
-   {
-      delete _textString;                                  
-      _textString = NULL;                                  
-      _stringLength = 0;                                   
-   }
+   int newLength = 0;
    if (string)
    {
-      _stringLength = 0;
-      while (string[_stringLength])
+      while (string[newLength])
+          newLength += 1;
+
+      if (_textString)
       {
-         _stringLength += 1;
+         // find length of new string and compare to old
+         if(newLength > _stringSize)
+         {
+            delete _textString;                                  
+            _textString = new UGL_WCHAR[newLength+textBlockSize+1];
+            _stringLength = newLength;
+            _stringSize = newLength+textBlockSize;
+         }
       }
-      _textString = new UGL_WCHAR[_stringLength+1];
+      else
+      {
+         _stringSize = newLength;
+         if(newLength < textBlockSize)
+            _stringSize = textBlockSize;
+            
+         _textString = new UGL_WCHAR[_stringSize+1];
+      }
+
+      _stringLength = newLength;
       memcpy(_textString, string, _stringLength * sizeof(UGL_WCHAR));
 
       _textString[_stringLength] = null_char;  // add the NULL UGL_WCHAR
-
    }
    else
    {
@@ -268,29 +294,42 @@ void CGUIText::setText(const StringChar * string)
 
    if (!_textString)
    {
-      _textString = new StringChar[1];
+      _textString = new StringChar[textBlockSize+1];
+      _stringLength = 0;
+      _stringSize = textBlockSize;
       *_textString =  null_char;
    }
 }
 
 void CGUIText::setText(const char * string)                 
-{                              
-   if (_textString)
+{
+   if(string)
    {
-      delete _textString;                                  
-      _textString = NULL;                                  
-      _stringLength = 0;                                   
-   }
-   if (string)
-   {
+      int newLength = strlen(string)+1;
 
-      _stringLength = strlen(string) + 1;   // add 1 for the NULL
-
-      _textString = new UGL_WCHAR[_stringLength];  
+      if (_textString)
+      {
+         // find length of new string and compare to old
+         if(newLength > _stringSize)
+         {
+            delete _textString;                                  
+            _textString = new UGL_WCHAR[newLength+textBlockSize+1];
+            _stringLength = newLength;
+            _stringSize = newLength+textBlockSize;
+         }
+      }
+      else
+      {
+         _stringSize = newLength;
+         if(newLength < textBlockSize)
+            _stringSize = textBlockSize;
+            
+         _textString = new UGL_WCHAR[_stringSize+1];
+      }
+      _stringLength = newLength;
 
       for (int i=0; i<_stringLength; i++)
          _textString[i] = string[i];
-
    }
    else
    {
@@ -301,7 +340,9 @@ void CGUIText::setText(const char * string)
 
    if (!_textString)
    {
-      _textString = new StringChar[1];
+      _textString = new StringChar[textBlockSize+1];
+      _stringLength = 0;
+      _stringSize = textBlockSize;
       *_textString =  null_char;
    }
 } // END set_text

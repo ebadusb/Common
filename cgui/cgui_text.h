@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.15  2005/05/16 22:49:33Z  cf10242
+ * add appendText
  * Revision 1.14  2005/04/26 23:16:48Z  rm10919
  * Made changes to cgui_text and cgui_text_item, plus added 
  * classes for variable substitution in text strings.
@@ -271,6 +273,7 @@ protected:
 
    list<LineData> _lineData;        // list of text lines for object
    unsigned short _stringLength;
+   unsigned short _stringSize;
 
    //
    // These are used to determine the background color for the text.

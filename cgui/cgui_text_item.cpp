@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.5  2005/08/02 00:05:45Z  cf10242
+ * fix text of existing string
  * Revision 1.4  2005/08/01 23:31:39Z  cf10242
  * Revision 1.3  2005/04/26 23:16:48Z  rm10919
  * Made changes to cgui_text and cgui_text_item, plus added 
@@ -95,7 +97,7 @@ void CGUITextItem::setText(const StringChar * string, LanguageId = currentLangua
          stringLength += 1;
       }
 
-      if(!string)
+      if(!_string)
       {         
          _stringSize = stringLength;
          if(stringLength < textBlockSize)

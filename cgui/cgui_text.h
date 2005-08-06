@@ -3,6 +3,7 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.16  2005/08/01 23:31:38Z  cf10242
  * Revision 1.15  2005/05/16 22:49:33Z  cf10242
  * add appendText
  * Revision 1.14  2005/04/26 23:16:48Z  rm10919
@@ -208,8 +209,6 @@ public:
    void setText(CGUITextItem * textItem);
    void setText(const char * string);
    void setText(const StringChar * string);
-
-	void appendText( const StringChar * suffixText, int suffixLength );
 
 //   void getText(char * string);
    void getText(StringChar * string);

@@ -3,6 +3,7 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.19  2005/08/01 23:31:38Z  cf10242
  * Revision 1.18  2005/06/20 14:49:02Z  rm10919
  * Fix bug in creating region from text item.
  * Revision 1.17  2005/06/06 18:21:57Z  rm10919
@@ -54,7 +55,7 @@ static UGL_WCHAR newline_char = '\n';
 static UGL_WCHAR space_char = ' ';
 static UGL_WCHAR null_char = '\0';
 
-const int textBlockSize = 64;
+const int textBlockSize = 16;
 
 UGL_ORD option;
 
@@ -86,7 +87,7 @@ CGUIText::~CGUIText()
 {
    if (_textString)
    {
-      delete[] _textString;
+      delete _textString;
       _textString = NULL;
    }
 }
@@ -225,33 +226,6 @@ void CGUIText::setText(CGUITextItem * textItem)
    }
 }
 
-void CGUIText::appendText( const StringChar * suffixText, int suffixLength )
-{
-
-   if ( _stringLength > 0 && suffixText )
-   {
-		StringChar prefixText[_stringLength];
-		memcpy(prefixText, _textString, _stringLength * sizeof(UGL_WCHAR));
-		int prefixLength = _stringLength;
-      int totalLength = prefixLength+suffixLength;
-
-		if (_textString)
-		{
-			delete _textString;
-			_stringLength = 0;
-		}
-
-		_stringLength = totalLength;
-      if(_stringLength < textBlockSize)
-         _stringSize = textBlockSize;
-      else
-         _stringSize = _stringLength;
-		_textString = new UGL_WCHAR [_stringSize+1];
-		memcpy(_textString, prefixText, prefixLength* sizeof(UGL_WCHAR));
-		memcpy((_textString+prefixLength), suffixText, suffixLength* sizeof(UGL_WCHAR));
-		_textString[_stringLength] = null_char;
-   }
-}
 
 void CGUIText::setText(const StringChar * string)
 {
@@ -292,13 +266,6 @@ void CGUIText::setText(const StringChar * string)
    }
    computeTextRegion();
 
-   if (!_textString)
-   {
-      _textString = new StringChar[textBlockSize+1];
-      _stringLength = 0;
-      _stringSize = textBlockSize;
-      *_textString =  null_char;
-   }
 }
 
 void CGUIText::setText(const char * string)                 
@@ -338,13 +305,6 @@ void CGUIText::setText(const char * string)
 
    computeTextRegion();
 
-   if (!_textString)
-   {
-      _textString = new StringChar[textBlockSize+1];
-      _stringLength = 0;
-      _stringSize = textBlockSize;
-      *_textString =  null_char;
-   }
 } // END set_text
 
 //void CGUIText::getText(char * string)

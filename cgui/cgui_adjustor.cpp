@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.cpp 1.1 2005/07/25 13:49:28 pn02526 Exp pn02526 $
+ * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.cpp 1.2 2005/08/10 11:55:09 pn02526 Exp pn02526 $
  * $Log: cgui_adjustor.cpp $
+ * Revision 1.1  2005/07/25 13:49:28  pn02526
+ * Initial revision
  *
  */
 
@@ -125,8 +127,8 @@ void CGUIAdjustor::increasePressed(void)
 {
     if( _enabled && ( _adjustorData.behavior == Continuous  || (_adjustorData.behavior == Stepwise && _direction != INCREASING ) ) )
     {
-        _increaseCallback();
         _direction = INCREASING;
+        _increaseCallback();
     }
 }
 
@@ -139,8 +141,8 @@ void CGUIAdjustor::decreasePressed(void)
 {
     if( _enabled && ( _adjustorData.behavior == Continuous  || (_adjustorData.behavior == Stepwise && _direction != DECREASING ) ) )
     {
-        _decreaseCallback();
         _direction = DECREASING;
+        _decreaseCallback();
     }
 }
 

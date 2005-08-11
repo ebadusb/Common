@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.h 1.12 2007/04/20 14:58:26Z wms10235 Exp rm10919 $
  * $Log: cgui_window.h $
+ * Revision 1.8  2005/04/12 18:13:40Z  cf10242
+ * remove changes from 1.7
  * Revision 1.6  2005/02/21 17:17:13Z  cf10242
  * IT 133 - delete all allocated memory to avoid unrecovered memory
  * Revision 1.5  2005/01/28 23:52:19Z  rm10919
@@ -29,6 +31,7 @@
 
 #include "cgui_graphics.h"
 #include "cgui_text.h"
+#include "datalog_levels.h"
 
 class CGUIText;
 class CGUIWindowObject;
@@ -42,6 +45,7 @@ class CGUIWindowObject;
 class CGUIWindow
 {
 public:
+   unsigned long _guardTop;
    CGUIWindow(CGUIDisplay & display);
    CGUIWindow(CGUIDisplay & display, const CGUIRegion & region);
    virtual ~CGUIWindow();
@@ -138,6 +142,7 @@ private:
    //
    list<CGUIWindowObject *> _clippedObjects;
    list<CGUIWindowObject *> _nonClippedObjects;
+   unsigned long _guardBottom;
 };
 
 #endif /* #ifndef _CGUI_WINDOW_INCLUDE */

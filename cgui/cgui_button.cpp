@@ -6,6 +6,9 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.15  2005/04/26 23:16:46Z  rm10919
+ *  Made changes to cgui_text and cgui_text_item, plus added 
+ *  classes for variable substitution in text strings.
  *  Revision 1.14  2005/04/08 19:51:42Z  cf10242
  *  Common IT 27 - change methods to set/change a bitmap after construction.
  *  Revision 1.13  2005/04/04 18:02:19Z  rm10919
@@ -203,6 +206,7 @@ CGUIButton::~CGUIButton ()
 
    if (_iconPointer) delete _iconPointer;
 
+   winCbRemove(_id, &CGUIWindow::uglPointerCallback);
    winCbRemove(_id, &CGUIWindow::uglPointerCallback);
 
 }

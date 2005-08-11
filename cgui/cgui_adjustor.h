@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.h 1.1 2005/07/25 13:29:45 pn02526 Exp pn02526 $
+ * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.h 1.3 2005/08/11 18:45:54Z pn02526 Exp wms10235 $
  * $Log: cgui_adjustor.h $
+ * Revision 1.1  2005/07/25 13:29:45  pn02526
+ * Initial revision
  *
  */
 
@@ -107,6 +109,10 @@ public:
    // IS ENABLED
    // returns true if the adjustor's buttons are enabled
    virtual inline bool isEnabled() const {return _enabled;};
+
+   // IS HELD
+   // returns true if the adjustor has a button being held by the operator
+   virtual inline bool isHeld() const {return _direction != NOCHANGE;};
 
 //   virtual void updateValue(float);     // Updates displayed value and sends next increase/decrease message and/or callback.
 

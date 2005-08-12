@@ -1,8 +1,9 @@
 /*
  * Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.cpp 1.2 2005/08/10 11:55:09 pn02526 Exp pn02526 $
+ * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.cpp 1.4 2006/11/01 15:35:19Z cf10242 Exp pn02526 $
  * $Log: cgui_adjustor.cpp $
+ * Revision 1.2  2005/08/10 11:55:09  pn02526
  * Revision 1.1  2005/07/25 13:49:28  pn02526
  * Initial revision
  *
@@ -125,29 +126,39 @@ void CGUIAdjustor::disable(void)
 //
 void CGUIAdjustor::increasePressed(void)
 {
+//    DataLog(log_level_cgui_info) << "CGUIAdjustor: increase pressed & _enabled=" << _enabled << " & _direction=" << (_direction==NOCHANGE ? "NOCHANGE" : _direction==INCREASING ? "INCREASING" : _direction==DECREASING ? "DECREASING" : "UNKNOWN") << endmsg;
     if( _enabled && ( _adjustorData.behavior == Continuous  || (_adjustorData.behavior == Stepwise && _direction != INCREASING ) ) )
     {
-        _direction = INCREASING;
+        // It is critical that the callback preceed changing _direction,
+        // since the callback can query _direction (via  the increaseHeld() method)
+        // to determine that the increase button is not being held.
         _increaseCallback();
+        _direction = INCREASING;
     }
 }
 
 void CGUIAdjustor::increaseReleased(void)
 {
+//    DataLog(log_level_cgui_info) << "CGUIAdjustor: increase released & _enabled=" << _enabled << " & _direction=" << (_direction==NOCHANGE ? "NOCHANGE" : _direction==INCREASING ? "INCREASING" : _direction==DECREASING ? "DECREASING" : "UNKNOWN") << endmsg;
     if( _enabled && _direction == INCREASING ) _direction = NOCHANGE;
 }
 
 void CGUIAdjustor::decreasePressed(void)
 {
+//    DataLog(log_level_cgui_info) << "CGUIAdjustor: decrease pressed & _enabled=" << _enabled << " & _direction=" << (_direction==NOCHANGE ? "NOCHANGE" : _direction==INCREASING ? "INCREASING" : _direction==DECREASING ? "DECREASING" : "UNKNOWN") << endmsg;
     if( _enabled && ( _adjustorData.behavior == Continuous  || (_adjustorData.behavior == Stepwise && _direction != DECREASING ) ) )
     {
-        _direction = DECREASING;
+        // It is critical that the callback preceed changing _direction,
+        // since the callback can query _direction (via  the decreaseHeld() method)
+        // to determine that the decrease button is not being held.
         _decreaseCallback();
+        _direction = DECREASING;
     }
 }
 
 void CGUIAdjustor::decreaseReleased(void)
 {
+//    DataLog(log_level_cgui_info) << "CGUIAdjustor: decrease released & _enabled=" << _enabled << " & _direction=" << (_direction==NOCHANGE ? "NOCHANGE" : _direction==INCREASING ? "INCREASING" : _direction==DECREASING ? "DECREASING" : "UNKNOWN") << endmsg;
     if( _enabled && _direction == DECREASING ) _direction = NOCHANGE;
 }
 
@@ -254,12 +265,16 @@ void CGUIAdjustor::updateValue( char * valueString )
             case INCREASING:   // Increase still pressed?
             {
                 // Send another _increaseCallback;
+                // Because _direction = INCREASING, when it queries via the increaseHeld() method
+                // the callback will see that the increase button is being held by the operator.
                 _increaseCallback();
                 break;
             }
             case DECREASING: //Decrease still pressed?
             {
                 // Send another _decreaseCallback;
+                // Because _direction = DECREASING, when it queries via the decreaseHeld() method
+                // the callback will see that the decrease button is being held by the operator.
                 _decreaseCallback();
                 break;
             }

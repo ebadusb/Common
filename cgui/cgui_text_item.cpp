@@ -3,6 +3,7 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.6  2005/08/02 14:42:32Z  cf10242
  * Revision 1.5  2005/08/02 00:05:45Z  cf10242
  * fix text of existing string
  * Revision 1.4  2005/08/01 23:31:39Z  cf10242
@@ -127,22 +128,13 @@ const StringChar * CGUITextItem::getText(LanguageId languageId = currentLanguage
 
 void CGUITextItem::getAscii( char * myString, LanguageId languageId = currentLanguage)
 {
-   int stringLength = 0;
-
-	myString[0] = '\0';
-
+    // anyone using this function needs to confirm that myString can hold the full
+    // string length of the text item
    if (_string)
    {
-      while (_string[stringLength])
+      for (int i=0; i<_stringLength; i++)
       {
-         stringLength ++;
-      }
-      
-      stringLength++;
-      
-      for (int i=0; i<=_stringLength; i++)
-      {
-         if (_string[i] > 0xff)
+         if (_string[i] > 127)
          {
             //  have an invalid character!! force an exit to the loop with no joy
             myString[0] = '\0';
@@ -151,6 +143,7 @@ void CGUITextItem::getAscii( char * myString, LanguageId languageId = currentLan
 			else
 				myString[i] = _string[i];
       }
+      myString[_stringLength] = 0;
 	}
 }
 

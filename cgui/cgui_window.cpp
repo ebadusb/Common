@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.21 2010/04/02 16:26:25Z agauusb Exp agauusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.12  2005/08/11 16:26:12Z  cf10242
+ * TAOS IT 674 - ungrab when deleting to prevent page fault
  * Revision 1.11  2005/04/12 18:14:24Z  cf10242
  * remove changes from 1.10
  * Revision 1.9  2005/03/02 01:37:51Z  cf10242
@@ -69,37 +71,23 @@ void CGUIWindow::initializeData(void)
 
 CGUIWindow::~CGUIWindow()
 {
+    UGL_STATUS status;
     if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
        DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
 
-	winCbRemove(_id, CGUIWindow::uglDrawCallback);
+	status = winCbRemove(_id, CGUIWindow::uglDrawCallback);
+    if(status != UGL_STATUS_OK)
+        DataLog( log_level_cgui_info ) << "winCbRemove failed = " << status << endmsg;
 
     // NULL out the window
     winDataSet(_id, UGL_NULL, UGL_NULL, 0);
     if(winPointerGrabGet(NULL) == _id)
-        winPointerUngrab (_id);
+    {
+        status = winPointerUngrab (_id);
+        if(status != UGL_STATUS_OK)
+            DataLog( log_level_cgui_info ) << "winPointerUngrab failed = " << status << endmsg;
+    }
 
-
-   //
-   // Clear _owner reference for any objects contained in this window, since
-   // this reference will no longer be valid.
-   //
-
-	/*
-   list<CGUIWindowObject *>::iterator objIter;
-   for (objIter = _clippedObjects.begin(); objIter != _clippedObjects.end(); ++objIter)
-   {
-      (*objIter)->_owner = NULL;
-   }
-
-   for (objIter = _nonClippedObjects.begin(); objIter != _nonClippedObjects.end(); ++objIter)
-   {
-      (*objIter)->_owner = NULL;
-   }
-	*/
-   //
-   // Delete the underlying UGL resources for this window.
-   //
    detach();
 }
 
@@ -494,7 +482,7 @@ UGL_STATUS CGUIWindow::uglPointerCallback (WIN_ID id, WIN_MSG * pMsg, void * pDa
    UGL_WINDOW_ID  windowId = id;
    CGUIWindow * window = *(CGUIWindow **)pData;
 
-   if (window && pMsg)
+   if ((windowId != UGL_NULL) && window && pMsg)
    {
       if ((pMsg->data.ptr.buttonChange & 0x01) == 0)
       {
@@ -507,11 +495,13 @@ UGL_STATUS CGUIWindow::uglPointerCallback (WIN_ID id, WIN_MSG * pMsg, void * pDa
       {
          // Left button is pressed.  Grab the pointer to insure
          // we get the release event as well.
+         //DataLog( log_level_cgui_info ) << "Grabbing pointer " << endmsg;
          winPointerGrab (windowId);
          ptEvent.eventType = CGUIWindow::PointerEvent::ButtonPress;
       }
       else
       {
+        // DataLog( log_level_cgui_info ) << "Ungrabbing pointer " << endmsg;
          winPointerUngrab (windowId);
          ptEvent.eventType = CGUIWindow::PointerEvent::ButtonRelease;  
       }
@@ -521,8 +511,10 @@ UGL_STATUS CGUIWindow::uglPointerCallback (WIN_ID id, WIN_MSG * pMsg, void * pDa
 
       if (!window->disabled())
       {
+        // DataLog( log_level_cgui_info ) << "Processing pointer event " << endmsg;
          window->pointerEvent(ptEvent);
       }
+     // DataLog( log_level_cgui_info ) << "Completed pointer event processing " << endmsg;
    }
 
    return UGL_STATUS_FINISHED;

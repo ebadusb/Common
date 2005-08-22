@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.20  2005/08/05 22:55:14Z  cf10242
+ * remove append text function
  * Revision 1.19  2005/08/01 23:31:38Z  cf10242
  * Revision 1.18  2005/06/20 14:49:02Z  rm10919
  * Fix bug in creating region from text item.
@@ -50,6 +52,7 @@
 #include "cgui_text.h"
 #include "cgui_window.h"
 #include "cgui_variable_db_container.h"
+#include "datalog_levels.h"
 
 static UGL_WCHAR newline_char = '\n';
 static UGL_WCHAR space_char = ' ';
@@ -133,6 +136,7 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
             *_textString =  null_char;
             _stringLength = 0;
             _stringSize = textBlockSize;
+            //DataLog(log_level_cgui_info) << "Creating new text block " << __LINE__ << "  New length = " << _stringSize << endmsg; 
          }
       }
    }
@@ -217,6 +221,7 @@ void CGUIText::setText(CGUITextItem * textItem)
          }
          else if(!_textString)
          {
+             //DataLog(log_level_cgui_info) << "Creating new text block " << __LINE__ << "  New length = " << _stringSize << endmsg; 
             _textString = new StringChar[textBlockSize+1];
             *_textString =  null_char;
             _stringLength = 0;
@@ -242,6 +247,7 @@ void CGUIText::setText(const StringChar * string)
          {
             delete _textString;                                  
             _textString = new UGL_WCHAR[newLength+textBlockSize+1];
+            //DataLog(log_level_cgui_info) << "Deleting/Creating new text block " << __LINE__ << " Old length = " << _stringSize << "  New length = " << newLength+textBlockSize << endmsg; 
             _stringLength = newLength;
             _stringSize = newLength+textBlockSize;
          }
@@ -252,6 +258,7 @@ void CGUIText::setText(const StringChar * string)
          if(newLength < textBlockSize)
             _stringSize = textBlockSize;
             
+         //DataLog(log_level_cgui_info) << "Creating new text block " << __LINE__ << "  New length = " << _stringSize << endmsg; 
          _textString = new UGL_WCHAR[_stringSize+1];
       }
 
@@ -273,6 +280,7 @@ void CGUIText::setText(const char * string)
    if(string)
    {
       int newLength = strlen(string)+1;
+      //DataLog(log_level_cgui_info) << "Size of char string = " << strlen(string) << endmsg;
 
       if (_textString)
       {
@@ -281,6 +289,7 @@ void CGUIText::setText(const char * string)
          {
             delete _textString;                                  
             _textString = new UGL_WCHAR[newLength+textBlockSize+1];
+            //DataLog(log_level_cgui_info) << "Deleting/Creating new text block " << __LINE__ << " Old length = " << _stringSize << "  New length = " << newLength+textBlockSize << endmsg; 
             _stringLength = newLength;
             _stringSize = newLength+textBlockSize;
          }
@@ -291,6 +300,7 @@ void CGUIText::setText(const char * string)
          if(newLength < textBlockSize)
             _stringSize = textBlockSize;
             
+         //DataLog(log_level_cgui_info) << "Creating new text block " << __LINE__ << "  New length = " << _stringSize << endmsg;
          _textString = new UGL_WCHAR[_stringSize+1];
       }
       _stringLength = newLength;
@@ -340,7 +350,9 @@ void CGUIText::setText(const char * string)
 
 void CGUIText::getText(StringChar * string)
 {
-   string = _textString;
+   // this makes a copy of the text.  consider changing to just send point to texString
+   memcpy(string, _textString, _stringLength * sizeof(StringChar));
+   string[_stringLength] = null_char;
 }
 
 void CGUIText::getSize(CGUIRegion & region, int startIndex, int length)

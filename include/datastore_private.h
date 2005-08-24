@@ -11,7 +11,7 @@
  *             compilation.  This file should not be included on it's own, but
  *             only by datastore.h
  *
- * HISTORY:    $Log: datastore_private.h $
+ * HISTORY:    $Log$
  * HISTORY:    Revision 1.27  2003/08/29 21:10:20Z  ms10234
  * HISTORY:    semaphore protected the element register code
  * HISTORY:    Revision 1.26  2003/06/19 18:38:34Z  ms10234
@@ -291,6 +291,13 @@ template <class dataType> dataType BaseElement<dataType>::Get() const
    if (_ds == 0)
    {
       _FATAL_ERROR(__FILE__, __LINE__, "Element failed to register");
+   }
+
+   // Check for a NULL Handle Pointer. This Check is also performed in BindItem defined
+   // above. This is done here to see why _handle is getting corrupted.
+   if ( _handle == NULL ) {
+
+      _FATAL_ERROR(__FILE__, __LINE__, "Handle is now a NULL Pointer!");
    }
 
    // If calling instance is spoofer or no spoof has been registered, return real value

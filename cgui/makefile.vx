@@ -3,6 +3,8 @@
 # Makefile - makefile for common GUI library
 #
 # $Log: makefile.vx $
+# Revision 1.10  2005/07/25 19:46:06Z  pn02526
+# Add TextBox and Adjustor classes.
 # Revision 1.9  2005/04/26 17:16:49  rm10919
 # Made changes to cgui_text and cgui_text_item, plus added 
 # classes for variable substitution in text strings.
@@ -55,7 +57,8 @@ LIB_CXX_FILES = cgui_graphics.cpp cgui_rectangle.cpp cgui_window.cpp \
                 cgui_button.cpp cgui_data_item.cpp cgui_variable_database.cpp \
                 cgui_variable_db_container.cpp \
 		cgui_textbox.cpp cgui_adjustor.cpp \
-                cgui_string_data.cpp cgui_string_data_container.cpp
+                cgui_string_data.cpp cgui_string_data_container.cpp \
+		cgui_pool_allocator.cpp
 LIB_S_FILES =
 
 #

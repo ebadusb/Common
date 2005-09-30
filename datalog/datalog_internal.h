@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.13 2004/10/26 20:19:01Z rm70006 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.13 2004/10/26 20:19:01Z rm70006 Exp $
  * $Log: datalog_internal.h $
+ * Revision 1.13  2004/10/26 20:19:01Z  rm70006
+ * Ported datalog code to be compatible with windows compiler.  No functional changes made.  Re-ran unit test and it passed.
  * Revision 1.12  2003/12/09 14:14:23Z  jl11312
  * - corrected time stamp problem (IT 6668)
  * - removed obsolete code/data types (IT 6664)
@@ -161,6 +163,8 @@ struct DataLog_SetInfo
   
   DataLog_Lock _lock;
   DataLog_Lock _outputLock;
+
+  bool _writeAllItems;
 };
 
 class DataLog_CommonData
@@ -188,12 +192,23 @@ public:
 	void setLocalConnect(const char * fileName);
 	void setNetworkConnect(const char * ipAddress, int port);
 	void setCriticalReserveBuffers(unsigned long criticalReserveBuffers) { _commonData->_criticalReserveBuffers = criticalReserveBuffers; }
+	void setPersistSystemInfo(bool flag);
+	void setPlatformName(const char * platformName);
+	void setPlatformInfo(const char * platformInfo);
+	void setNodeName(const char * nodeName);
 
 	ConnectType connectType(void) { return _commonData->_connectType; }
 	DataLog_SharedPtr(const char) connectName(void) { return _commonData->_connectName; }
 	int connectPort(void) { return _commonData->_connectPort; }
 	unsigned long criticalReserveBuffers(void) { return _commonData->_criticalReserveBuffers; }
+	bool persistSystemInfo(void) { return _commonData->_persistSystemInfo; }
+	DataLog_BufferChain &systemInfoChain(void) { return _commonData->_persistedSystemInfoChain; }
+	DataLog_SharedPtr(const char) platformName(void) { return _commonData->_platformName; }
+	DataLog_SharedPtr(const char) platformInfo(void) { return _commonData->_platformInfo; }
+	DataLog_SharedPtr(const char) nodeName(void) { return _commonData->_nodeName; }
 
+	void outputSystemInfo(void);
+	
 public:
 	//
 	// The following functions are platform dependent, generally because they
@@ -215,6 +230,12 @@ private:
 		int _connectPort;
 
 		unsigned long _criticalReserveBuffers;
+
+		DataLog_SharedPtr(const char) _platformName;
+		DataLog_SharedPtr(const char) _platformInfo;
+		DataLog_SharedPtr(const char) _nodeName;
+		bool _persistSystemInfo;
+		DataLog_BufferChain _persistedSystemInfoChain;
 	};
 
 	static void initializeCommonData(DataLog_SharedPtr(CommonData) data);

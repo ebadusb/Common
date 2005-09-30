@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.20 2005/05/31 20:27:14Z jheiusb Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.20 2005/05/31 20:27:14Z jheiusb Exp $
  * $Log: datalog_port.h $
+ * Revision 1.20  2005/05/31 20:27:14Z  jheiusb
+ * IT32 Make changes to common to accommodate the Trima 5.2 vxWorks 5.5 port
  * Revision 1.19  2005/05/31 19:58:25Z  jl11312
  * - temporarily removed previous changes since they broke the common build
  * Revision 1.17  2004/10/26 20:49:02Z  rm70006
@@ -73,6 +75,7 @@ typedef enum
 	DataLog_PeriodicWriteError,
 	DataLog_NotLogToFile,
 	DataLog_BufferTooSmall,
+	DataLog_StartNewLogNotAllowed,
 
 	DataLog_LastError				/* must be last entry */
 } DataLog_ErrorType;
@@ -107,7 +110,8 @@ DataLog_ErrorInformation	datalog_ErrorInformation[DataLog_LastError] =
 	{ DataLog_InternalWriteError, "internal write error", 1 },
 	{ DataLog_PeriodicWriteError, "periodic write error", 1 },
 	{ DataLog_NotLogToFile, "connection type not log to file", 1 },
-	{ DataLog_BufferTooSmall, "supplied buffer too small", 1 }
+	{ DataLog_BufferTooSmall, "supplied buffer too small", 1 },
+	{ DataLog_StartNewLogNotAllowed, "not configured for created multiple logs without rebooting", 0 }
 };
 
 #endif /* ifdef DATALOG_DECLARE_ERROR_INFORMATION */

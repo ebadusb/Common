@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message.cpp 1.7 2003/11/24 23:06:11Z jl11312 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message.cpp 1.7 2003/11/24 23:06:11Z jl11312 Exp $
  * $Log: datalog_message.cpp $
+ * Revision 1.7  2003/11/24 23:06:11Z  jl11312
+ * - added missing API function
  * Revision 1.6  2003/02/28 22:10:40Z  jl11312
  * - added type/sub-type for binary record
  * Revision 1.5  2003/02/25 16:10:14  jl11312
@@ -27,6 +29,7 @@ DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * hand
 	DataLog_Result result = DataLog_OK;
 	DataLog_CommonData common;
 	const DataLog_HandleInfo * handleInfo = common.findHandle(levelName);
+	bool saveInfo = common.persistSystemInfo();
 
 	if ( !handleInfo )
 	{
@@ -62,6 +65,16 @@ DataLog_Result datalog_CreateLevel(const char * levelName, DataLog_Handle * hand
 			  DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&logLevelRecord, sizeof(logLevelRecord)) &&
 			  DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)levelName, logLevelRecord._nameLen * sizeof(char)) )
 		{
+			if ( saveInfo )
+			{
+				DataLog_BufferManager::writeToChain(common.systemInfoChain(), 
+																(DataLog_BufferData *)&logLevelRecord, 
+																sizeof(logLevelRecord));
+				DataLog_BufferManager::writeToChain(common.systemInfoChain(), 
+																(DataLog_BufferData *)levelName, 
+																logLevelRecord._nameLen * sizeof(char));
+				
+			}
 			outputOK = true;
 			DataLog_BufferManager::addChainToList(DataLog_BufferManager::CriticalList, outputChain);
 		}

@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_periodic.cpp 1.6 2005/05/31 20:26:46Z jheiusb Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_periodic.cpp 1.6 2005/05/31 20:26:46Z jheiusb Exp $
  * $Log: datalog_periodic.cpp $
+ * Revision 1.6  2005/05/31 20:26:46Z  jheiusb
+ * it32 Make changes to common to accommodate the Trima 5.2 vxWorks  5.5 port
  * Revision 1.5  2004/10/26 20:19:14Z  rm70006
  * Ported datalog code to be compatible with windows compiler.  No functional changes made.  Re-ran unit test and it passed.
  * Revision 1.4  2003/10/03 12:35:09Z  jl11312
@@ -96,7 +98,7 @@ int DataLog_PeriodicTask::main(void)
 		itemsIter = _set->_items.begin();
 		while ( itemsIter != _set->_items.end() && writeOK )
 		{
-			if ( (*itemsIter)->itemChanged() )
+			if ( (*itemsIter)->itemChanged() || _set->_writeAllItems )
 			{
 				//
 				// Account for space used by header information for item
@@ -129,6 +131,7 @@ int DataLog_PeriodicTask::main(void)
 
 			++itemsIter;
 		}
+		_set->_writeAllItems = false;
 
 		datalog_ReleaseAccess(_set->_lock);
 		datalog_ReleaseAccess(_set->_outputLock);
@@ -169,6 +172,7 @@ DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_SetHandle
 	DataLog_Result	result = DataLog_OK;
 	DataLog_CommonData common;
 	DataLog_SetInfo *	setInfo = new DataLog_SetInfo;
+	bool saveInfo = common.persistSystemInfo();
 
 	setInfo->_id = common.getNextInternalID();
 	setInfo->_logIntervalMilliSec = 0;
@@ -214,6 +218,15 @@ DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_SetHandle
 
 	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&periodicSetRecord, sizeof(periodicSetRecord));
 	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)setName, periodicSetRecord._nameLen * sizeof(char));
+	if ( saveInfo )
+	{
+		DataLog_BufferManager::writeToChain(common.systemInfoChain(), 
+														(DataLog_BufferData *)&periodicSetRecord, 
+														sizeof(periodicSetRecord));
+		DataLog_BufferManager::writeToChain(common.systemInfoChain(), 
+														(DataLog_BufferData *)setName, 
+														periodicSetRecord._nameLen * sizeof(char));
+	}
 	DataLog_BufferManager::addChainToList(DataLog_BufferManager::CriticalList, outputChain);
 
 	if ( outputChain._missedBytes > 0 )
@@ -241,8 +254,9 @@ DataLog_Result datalog_SetPeriodicOutputInterval(DataLog_SetHandle handle, long 
 	return DataLog_OK;
 }
 
-DataLog_Result datalog_ForcePeriodicOutput(DataLog_SetHandle handle)
+DataLog_Result datalog_ForcePeriodicOutput(DataLog_SetHandle handle, bool writeAllItems)
 {
+	handle->_writeAllItems = writeAllItems;
 	datalog_SendSignal(handle->_periodUpdateSignal);
 	datalog_SendSignal(handle->_writeSignal);
 
@@ -276,6 +290,7 @@ DataLog_PeriodicItemBase::DataLog_PeriodicItemBase(DataLog_SetHandle set, size_t
 	_lock = datalog_CreateMLock();
 
 	DataLog_CommonData common;
+	bool saveInfo = common.persistSystemInfo();
 	_keyCode = common.getNextInternalID();
 
 	datalog_LockAccess(set->_lock,WAIT_FOREVER);
@@ -303,6 +318,21 @@ DataLog_PeriodicItemBase::DataLog_PeriodicItemBase(DataLog_SetHandle set, size_t
 	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)key, periodicItemRecord._keyLen * sizeof(char));
 	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)description, periodicItemRecord._descLen * sizeof(char));
 	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)format, periodicItemRecord._formatLen * sizeof(char));
+	if ( saveInfo )
+	{
+		DataLog_BufferManager::writeToChain(common.systemInfoChain(), 
+														(DataLog_BufferData *)&periodicItemRecord, 
+														sizeof(periodicItemRecord));
+		DataLog_BufferManager::writeToChain(common.systemInfoChain(), 
+														(DataLog_BufferData *)key, 
+														periodicItemRecord._keyLen * sizeof(char));
+		DataLog_BufferManager::writeToChain(common.systemInfoChain(), 
+														(DataLog_BufferData *)description,
+														periodicItemRecord._descLen * sizeof(char));
+		DataLog_BufferManager::writeToChain(common.systemInfoChain(), 
+														(DataLog_BufferData *)format, 
+														periodicItemRecord._formatLen * sizeof(char));
+	}
 	DataLog_BufferManager::addChainToList(DataLog_BufferManager::CriticalList, outputChain);
 
 	if ( outputChain._missedBytes > 0 )

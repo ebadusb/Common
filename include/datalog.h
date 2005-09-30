@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.29 2004/10/26 20:49:21Z rm70006 Exp ms10234 $
+ * $Header: H:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.30 2005/09/29 21:58:52Z ms10234 Exp wms10235 $
  * $Log: datalog.h $
+ * Revision 1.29  2004/10/26 20:49:21Z  rm70006
+ * Make compile with windows.
  * Revision 1.28  2003/12/09 14:15:02Z  jl11312
  * - corrected time stamp problem (IT 6668)
  * - removed obsolete code/data types (IT 6664)
@@ -107,18 +109,19 @@ extern "C" {
  */
 #ifdef DATALOG_NETWORK_SUPPORT
 
-DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * nodeName, const char * platformInfo);
+DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * nodeName, const char * platformInfo, bool allowReset=false);
 DataLog_Result datalog_InitNet(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * ipAddress, int port, long connectTimeout, const char * nodeName);
 
 #else /* ifdef DATALOG_NETWORK_SUPPORT */
 
-DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * platformInfo);
+DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * platformInfo, bool allowReset=false);
 
 #endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 typedef DataLog_BufferData * DataLog_EncryptFunc(DataLog_BufferData * input, size_t inputLength, size_t * outputLength);
 DataLog_Result datalog_SetEncryptFunc(DataLog_EncryptFunc * func);
 
+DataLog_Result datalog_StartNewLogFile(const char * newLogFileName);
 DataLog_Result datalog_GetCurrentLogFileName(char * fileName, size_t bufferLength);
 
 /*
@@ -149,7 +152,7 @@ DataLog_Result datalog_PrintToDefault(const char * file, int line, const char * 
 DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_SetHandle * handle);
 DataLog_Result datalog_GetPeriodicOutputInterval(DataLog_SetHandle handle, long * milliSeconds);
 DataLog_Result datalog_SetPeriodicOutputInterval(DataLog_SetHandle handle, long milliSeconds);
-DataLog_Result datalog_ForcePeriodicOutput(DataLog_SetHandle handle);
+DataLog_Result datalog_ForcePeriodicOutput(DataLog_SetHandle handle, bool writeAllItems=false);
 DataLog_Result datalog_DisablePeriodicOutput(DataLog_SetHandle handle);
 DataLog_Result datalog_EnablePeriodicOutput(DataLog_SetHandle handle);
 

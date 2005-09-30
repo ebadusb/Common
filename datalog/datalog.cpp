@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.15 2005/05/31 20:26:41Z jheiusb Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.16 2005/09/29 21:59:50Z ms10234 Exp ms10234 $
  * $Log: datalog.cpp $
+ * Revision 1.15  2005/05/31 20:26:41Z  jheiusb
+ * it32 Make changes to common to accommodate the Trima 5.2 vxWorks  5.5 port
  * Revision 1.14  2004/10/26 20:18:45Z  rm70006
  * Ported datalog code to be compatible with windows compiler.  No functional changes made.  Re-ran unit test and it passed.
  * Revision 1.13  2003/12/05 16:33:05Z  jl11312
@@ -130,12 +132,50 @@ void DataLog_CommonData::setNetworkConnect(const char * ipAddress, int port)
 	_commonData->_connectPort = port;
 }
 
+void DataLog_CommonData::setPersistSystemInfo(bool flag)
+{
+	_commonData->_persistSystemInfo = flag;
+
+	if ( flag )
+	{
+		DataLog_BufferManager::createChain(_commonData->_persistedSystemInfoChain);
+	}
+}
+
+void DataLog_CommonData::setPlatformName(const char * platformName)
+{
+	DataLog_SharedPtr(char)	buffer = (DataLog_SharedPtr(char))datalog_AllocSharedMem(strlen(platformName)+1);
+	strcpy(buffer, platformName);
+	_commonData->_platformName = buffer;
+}
+
+void DataLog_CommonData::setPlatformInfo(const char * platformInfo)
+{
+	DataLog_SharedPtr(char)	buffer = (DataLog_SharedPtr(char))datalog_AllocSharedMem(strlen(platformInfo)+1);
+	strcpy(buffer, platformInfo);
+	_commonData->_platformInfo = buffer;
+}
+
+void DataLog_CommonData::setNodeName(const char * nodeName)
+{
+	DataLog_SharedPtr(char)	buffer = (DataLog_SharedPtr(char))datalog_AllocSharedMem(strlen(nodeName)+1);
+	strcpy(buffer, nodeName);
+	_commonData->_nodeName = buffer;
+}
+
 void DataLog_CommonData::initializeCommonData(DataLog_SharedPtr(CommonData) data)
 {
 	data->_connectType = NotConnected;
 	data->_connectName = DATALOG_NULL_SHARED_PTR;
 	data->_connectPort = 0;
 	data->_criticalReserveBuffers = 0;
+}
+
+void DataLog_CommonData::outputSystemInfo(void)
+{
+	DataLog_BufferChain systemInfoChain;
+	DataLog_BufferManager::copyChain(systemInfoChain,_commonData->_persistedSystemInfoChain); 
+	DataLog_BufferManager::addChainToList(DataLog_BufferManager::CriticalList,systemInfoChain);
 }
 
 DataLog_TaskErrorHandler * DataLog_CommonData::getTaskErrorHandler(DataLog_TaskID task)
@@ -204,6 +244,36 @@ DataLog_Result datalog_ClearError(DataLog_TaskID task)
 	return DataLog_OK;
 }
 
+DataLog_Result datalog_StartNewLogFile(const char *newLogFileName)
+{
+	DataLog_CommonData	common;
+	DataLog_Result			result = DataLog_Error;
+
+	if ( !common.persistSystemInfo() )
+	{
+		common.setTaskError(DataLog_StartNewLogNotAllowed, __FILE__, __LINE__);
+	}
+	else if ( common.connectType() != DataLog_CommonData::LogToFile )
+	{
+		common.setTaskError(DataLog_NotLogToFile, __FILE__, __LINE__);
+	}
+	else
+	{
+		common.setLocalConnect(newLogFileName);
+		result = DataLog_OK;
+
+#ifdef DATALOG_NETWORK_SUPPORT
+		datalog_StartLocalOutputTask(common.platformName(), common.nodeName(), common.platformInfo());
+#else /* ifdef DATALOG_NETWORK_SUPPORT */
+		datalog_StartLocalOutputTask(common.platformName(), NULL, common.platformInfo());
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
+
+		common.outputSystemInfo();
+	}
+
+	return result;
+}
+
 DataLog_Result datalog_GetCurrentLogFileName(char * fileName, size_t bufferLength)
 {
 	DataLog_CommonData	common;
@@ -262,6 +332,7 @@ void datalog_TaskCreated(DataLog_TaskID taskID)
 {
 	DataLog_CommonData common;
 	DataLog_TaskInfo * info = new DataLog_TaskInfo;
+	bool saveInfo = common.persistSystemInfo();
 
 	info->_id = taskID;
 	info->_error = DataLog_NoError;
@@ -296,9 +367,17 @@ void datalog_TaskCreated(DataLog_TaskID taskID)
 
 	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&taskCreateRecord, sizeof(taskCreateRecord));
 
+	if ( saveInfo ) 
+		DataLog_BufferManager::writeToChain(common.systemInfoChain(), 
+														(DataLog_BufferData *)&taskCreateRecord, 
+														sizeof(taskCreateRecord));
 	if ( taskName )
 	{
 		DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)taskName, taskCreateRecord._nameLen * sizeof(char));
+		if ( saveInfo ) 
+			DataLog_BufferManager::writeToChain(common.systemInfoChain(), 
+															(DataLog_BufferData *)taskName, 
+															taskCreateRecord._nameLen * sizeof(char));
 	}
 
 	DataLog_BufferManager::addChainToList(DataLog_BufferManager::CriticalList, outputChain);
@@ -308,6 +387,7 @@ void datalog_TaskDeleted(DataLog_TaskID taskID)
 {
 	DataLog_CommonData common;
 	DataLog_TaskInfo * taskInfo = common.findTask(taskID);
+	bool saveInfo = common.persistSystemInfo();
 
 	//
 	// Use the deleted tasks critical buffer for the task deleted log
@@ -329,6 +409,10 @@ void datalog_TaskDeleted(DataLog_TaskID taskID)
 
 	DataLog_BufferChain	outputChain;
 	DataLog_BufferManager::writeToChain(outputChain, (DataLog_BufferData *)&taskDeleteRecord, sizeof(taskDeleteRecord));
+	if ( saveInfo ) 
+		DataLog_BufferManager::writeToChain(common.systemInfoChain(), 
+														(DataLog_BufferData *)&taskDeleteRecord, 
+														sizeof(taskDeleteRecord));
 	DataLog_BufferManager::addChainToList(DataLog_BufferManager::CriticalList, outputChain);
 
 	common.deleteTask(taskID);

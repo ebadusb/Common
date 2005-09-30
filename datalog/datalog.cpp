@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.16 2005/09/29 21:59:50Z ms10234 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.16 2005/09/29 21:59:50Z ms10234 Exp $
  * $Log: datalog.cpp $
+ * Revision 1.16  2005/09/29 21:59:50Z  ms10234
+ * IT42 - allow generation of new log files without rebooting
  * Revision 1.15  2005/05/31 20:26:41Z  jheiusb
  * it32 Make changes to common to accommodate the Trima 5.2 vxWorks  5.5 port
  * Revision 1.14  2004/10/26 20:18:45Z  rm70006
@@ -42,6 +44,7 @@
 #include "datalog_internal.h"
 #include "datalog_records.h"
 #include "error.h"
+#include <string>
 
 #ifdef DATALOG_LEVELS_INIT_SUPPORT
 # include "datalog_levels.h"
@@ -259,6 +262,7 @@ DataLog_Result datalog_StartNewLogFile(const char *newLogFileName)
 	}
 	else
 	{
+		datalog_FreeSharedMem( (void*)common.connectName() );
 		common.setLocalConnect(newLogFileName);
 		result = DataLog_OK;
 

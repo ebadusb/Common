@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_init.cpp 1.10 2005/09/29 21:59:56Z ms10234 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_init.cpp 1.11 2005/09/30 17:00:29Z ms10234 Exp ms10234 $
  * $Log: datalog_init.cpp $
+ * Revision 1.10  2005/09/29 21:59:56Z  ms10234
+ * IT42 - allow generation of new log files without rebooting
  * Revision 1.9  2003/11/10 17:46:09Z  jl11312
  * - corrections from data log unit tests (see IT 6598)
  * Revision 1.8  2003/04/11 15:26:11Z  jl11312
@@ -105,7 +107,7 @@ DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKByte
 		taskUnlock();
 
 #ifdef DATALOG_NETWORK_SUPPORT
-		common.setPlatformName(nodeName);
+		common.setNodeName(nodeName);
 		datalog_StartLocalOutputTask(platformName, nodeName, platformInfo);
 #else /* ifdef DATALOG_NETWORK_SUPPORT */
 		datalog_StartLocalOutputTask(platformName, NULL, platformInfo);

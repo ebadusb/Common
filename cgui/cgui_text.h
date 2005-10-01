@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.17  2005/08/05 22:55:14Z  cf10242
+ * remove append text function
  * Revision 1.16  2005/08/01 23:31:38Z  cf10242
  * Revision 1.15  2005/05/16 22:49:33Z  cf10242
  * add appendText
@@ -63,9 +65,9 @@
 #include "cgui_graphics.h"
 #include "cgui_window_object.h"
 #include "cgui_text_item.h"
+#include "cgui_variable_db_container.h"
 
 class CGUIWindow;
-class CGUIVariableDatabaseContainer;
 
 class CGUIText : public CGUIWindowObject
 {
@@ -113,11 +115,6 @@ public:
    // Destructor
    //
    virtual ~CGUIText();
-
-   //
-   // Add text object to window.
-   //
-   void attachText(CGUIWindow * parent);
 
    //
    // SET_ATTRIBUTES
@@ -190,7 +187,6 @@ public:
    void setRegion(const CGUIRegion & region);
    CGUIRegion getRegion(void) { return _stylingRecord.region;}
 
-
    //
    // SET_STYLING_RECORD
    // This method sets the styling record of the 
@@ -209,11 +205,13 @@ public:
    void setText(CGUITextItem * textItem);
    void setText(const char * string);
    void setText(const StringChar * string);
+   void setText();  // Sets _textString to the string in the _textItem memeber.
 
 //   void getText(char * string);
    void getText(StringChar * string);
 
    int getLength(void) {return _stringLength;}
+   const CGUIRegion & getPixelSize(void);  // The entire string on one line, no text wrapping.
 
    //
    // Member for storing variable values that appear in strings.
@@ -233,8 +231,7 @@ protected:
    void convertTextToMultiline(CGUIRegion & region);
    bool convertLinePosition(int width, int height, CGUIRegion & region);
    void computeTextRegion(void);
-
-
+   
    virtual void draw(UGL_GC_ID gc);
 
 private:
@@ -263,8 +260,7 @@ protected:
    {
       short x, y;                   // offset from top left corner of text region to top left corner of line
       unsigned short index;         // index into text string for start of line
-      unsigned short textLength;    // number of text characters on line
-                                    // the ofsset for RIGHTTOLEFT text string may have a negative offset.
+      unsigned short textLength;    // number of text characters on line                                   // the ofsset for RIGHTTOLEFT text string may have a negative offset.
    };
 
    CGUITextItem   *_textItem;       // This is the string id or the key to the string id
@@ -290,12 +286,11 @@ private:
    StringChar *   _textString;
 
    CGUIRegion     _requestedRegion; // used to determine area for LineData
+   CGUIRegion     _pixelRegion;
    LanguageId     _configLanguage;  // language of text string, need to know where to look for string. Not sure if this is need _textItem.languageId may be used.
 private:
 	CGUIText();
 	CGUIText (CGUIText & copy);
 	CGUIText operator=(CGUIText &obj);
-
-
 };
 #endif /* #ifndef _CGUI_TEXT_INCLUDE */

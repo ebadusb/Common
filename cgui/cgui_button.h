@@ -6,6 +6,9 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.16  2005/04/26 23:16:47Z  rm10919
+ *  Made changes to cgui_text and cgui_text_item, plus added 
+ *  classes for variable substitution in text strings.
  *  Revision 1.15  2005/04/04 18:02:57Z  rm10919
  *  Add ability to add char * strings to button text.
  *  Revision 1.14  2005/03/15 00:21:35Z  rm10919
@@ -256,19 +259,23 @@ public:
 
    // SET TEXT
    // set the text associated with the button.  
-   void setText(CGUITextItem * textItem = NULL); // ptr to a text object associated with the button
-   void setText(const char * string = NULL); // ptr to a text object associated with the button
-   void setText(const StringChar * string = NULL); // ptr to a text object associated with the button
+   void setText(CGUITextItem * textItem); // ptr to a text object associated with the button
+   void setText(const char * string); // ptr to a text object associated with the button
+   void setText(const StringChar * string); // ptr to a text object associated with the button
+   void setText();  // forces a redraw or update to button text.
   
-   void setEnabledText(CGUITextItem * textItem = NULL);
-   void setEnabledText(const char * string = NULL);
-   void setEnabledText(const StringChar * string = NULL);
-   void setDisabledText(CGUITextItem * textItem = NULL);
-   void setDisabledText(const char * string = NULL);
-   void setDisabledText(const StringChar * string = NULL);
-   void setPressedText(CGUITextItem * textItem = NULL);
-   void setPressedText(const char * string = NULL);
-   void setPressedText(const StringChar * string = NULL);
+   void setEnabledText(CGUITextItem * textItem);
+   void setEnabledText(const char * string);
+   void setEnabledText(const StringChar * string);
+   void setEnabledText();
+   void setDisabledText(CGUITextItem * textItem);
+   void setDisabledText(const char * string);
+   void setDisabledText(const StringChar * string);
+   void setDisabledText();
+   void setPressedText(CGUITextItem * textItem);
+   void setPressedText(const char * string);
+   void setPressedText(const StringChar * string);
+   void setPressedText();
 
    // SET TEXTSTYLE
    // set/change the style of the text associated with this button in ALL states.  This is a pass-thru to the 

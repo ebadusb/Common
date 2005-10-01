@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_variable_db_container.cpp 1.4 2007/06/04 22:04:22Z wms10235 Exp wms10235 $
  * $Log: cgui_variable_db_container.cpp $
+ * Revision 1.1  2005/04/27 13:40:50Z  rm10919
+ * Initial revision
  *
  */
 
@@ -13,12 +15,10 @@
 
 CGUIVariableDatabaseContainer::CGUIVariableDatabaseContainer()
 {
-
-}
+}                                  
 
 CGUIVariableDatabaseContainer::~CGUIVariableDatabaseContainer()
 {
-
 }
 
 StringChar * CGUIVariableDatabaseContainer::variableLookUp(const char * name)

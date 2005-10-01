@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.cpp 1.9 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
  * $Log: cgui_data_item.cpp $
+ * Revision 1.1  2005/04/27 13:40:50Z  rm10919
+ * Initial revision
  *
  */
 
@@ -26,9 +28,8 @@ CGUIDataItem::CGUIDataItem(bool valueChanged) : _string(NULL), _valueChanged(val
 
 CGUIDataItem::~CGUIDataItem()
 {
+
 }
-
-
 
 //
 // Void Constructor
@@ -45,45 +46,44 @@ CGUIDataItemInteger::CGUIDataItemInteger(int value):  CGUIDataItem(true), _value
 
 CGUIDataItemInteger::~CGUIDataItemInteger()
 {
+
 }
 
 StringChar * CGUIDataItemInteger::convertToString(void)
 {
-   const char * string = NULL;
-   ostringstream textStream;
-   
-   textStream.setf(ios::fixed);
-   textStream.precision(0);
-   textStream << _value;
+   if (_valueChanged || !_string)
+   {
+      const char * string = NULL;
+      ostringstream textStream;
 
-   //
-   // Get string length
-   //
-   int stringLength = strlen(string);
+      textStream.setf(ios::fixed);
+      textStream.precision(0);
+      textStream << _value;
+      
+      string = textStream.str().c_str();
 
-   //
-   // Clear _string
-   //
-   if (_string) delete _string;
+      //
+      // Clear _string
+      //
+      if (_string) delete _string;
 
-   _string = new StringChar(stringLength + 1);
-
-   string = textStream.str().c_str();
-
-   //
-   // Copy value (string) into _string
-   //
-   memcpy(_string, string, stringLength * sizeof(StringChar));
-
-   _valueChanged = false;
-
+      //
+      // Copy value (string) into _string
+      //
+      _string = convertToStringChar(string);
+      
+      _valueChanged = false;
+   }
    return _string;
 }
 
 void CGUIDataItemInteger::setValue(int value)
 {
-   _value = value;
-   _valueChanged = true;
+   if (_value != value)
+   {
+      _value = value;
+      _valueChanged = true;
+   }
 }
 
 //
@@ -105,42 +105,40 @@ CGUIDataItemDouble::~CGUIDataItemDouble()
 
 StringChar * CGUIDataItemDouble::convertToString(void)
 {
-   const char * string = NULL;
-   ostringstream textStream;
-   
-   textStream.setf(ios::fixed);
-   textStream.precision(_precision);
-   textStream << _value;
+   if (_valueChanged || _string)
+   {
+      const char * string = NULL;
 
-   //
-   // Get string length
-   //
-   int stringLength = strlen(string);
+      ostringstream textStream;
 
-   //
-   // Clear _string
-   //
-   if (_string) delete _string;
+      textStream.setf(ios::fixed);
+      textStream.precision(_precision);
+      textStream << _value;
+      
+      string = textStream.str().c_str();
 
-   _string = new StringChar(stringLength + 1);
+      //
+      // Clear _string
+      //
+      if (_string) delete _string;
 
-   string = textStream.str().c_str();
+      //
+      // Copy value (string) into _string
+      //
+      _string = convertToStringChar(string);
 
-   //
-   // Copy value (string) into _string
-   //
-   memcpy(_string, string, stringLength * sizeof(StringChar));
-
-   _valueChanged = false;
-
+      _valueChanged = false;
+   }
    return _string;
 }
 
 void CGUIDataItemDouble::setValue(double value)
 {
-   _value = value;
-   
-   _valueChanged = true;
+   if (_value != value)
+   {
+      _value = value;
+      _valueChanged = true;
+   }
 }
 
 void CGUIDataItemDouble::setPrecision(int precision)
@@ -163,7 +161,7 @@ CGUIDataItemTextItem::CGUIDataItemTextItem(CGUITextItem * value): CGUIDataItem(t
 {
 
 }
-   
+
 CGUIDataItemTextItem::~CGUIDataItemTextItem()
 {
 
@@ -171,21 +169,28 @@ CGUIDataItemTextItem::~CGUIDataItemTextItem()
 
 StringChar * CGUIDataItemTextItem::convertToString()
 {
-   if (_string) delete _string;
-   _string =  new StringChar(_value->getLength());
+   if (_valueChanged || !_string)
+   {
+      if (_string) delete _string;
+      _string =  new StringChar[_value->getLength()+1];
 
-   memcpy (_string, _value->getText(), _value->getLength() * sizeof(StringChar));
+      memcpy (_string, _value->getText(), _value->getLength() * sizeof(StringChar));
 
-   _valueChanged = false;
-   
+      _string[_value->getLength()] = '\0';
+
+      _valueChanged = false;
+   }
    return _string;
 }
 
 void CGUIDataItemTextItem::setValue(CGUITextItem * value)
 {
-   _value = value;
+   if (_value != value)
+   {
+      _value = value;
 
-   _valueChanged = true;
+      _valueChanged = true;
+   }
 }
 
 
@@ -202,35 +207,32 @@ CGUIDataItemText::CGUIDataItemText(char * value): CGUIDataItem(true), _value(val
 {
 
 }
-   
+
 CGUIDataItemText::~CGUIDataItemText()
 {
 
 }
 
 StringChar * CGUIDataItemText::convertToString()
-{
-   //
-   // Find CGUITextItem for _value.
-   // Currently not done since CGUIStringData::findString
-   // doesn't exsist!
-//   CGUITextItem * textItem = findString(_value);
-  
-   if (_string) delete _string;
+{  
+   if (_valueChanged || !_string)
+   {
+      if (_string) delete _string;
 
-   // This doesn't mean anything for _string!
-   // _string = textItem->getText();
-   _string = convertToStringChar(_value);
+      _string = convertToStringChar(_value);
 
-   _valueChanged = false;
-   
+      _valueChanged = false;
+   }
    return _string;
 }
 
 void CGUIDataItemText::setValue(char * value)
 {
-   _value = value;
+   if (_value != value)
+   {
+      _value = value;
 
-   _valueChanged = true;
+      _valueChanged = true;
+   }
 }
 

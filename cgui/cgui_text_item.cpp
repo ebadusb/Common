@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.7  2005/08/13 20:55:17Z  cf10242
+ * TAOS IT 842 - string handling
  * Revision 1.6  2005/08/02 14:42:32Z  cf10242
  * Revision 1.5  2005/08/02 00:05:45Z  cf10242
  * fix text of existing string
@@ -28,7 +30,7 @@ CGUIStringDataContainer CGUITextItem::_textMap;
 int CGUITextItem::_defaultLanguageId = 0;
 
 CGUITextItem::CGUITextItem()
-:_id(NULL), _string(NULL)
+:_id(NULL), _string(NULL), _stringSize(0), _stringLength(0)
 {
 }
 
@@ -83,6 +85,7 @@ void CGUITextItem::setText(const char * string, LanguageId = currentLanguage)
             stringLength++;
          }
          _stringLength = stringLength;
+         _string[_stringLength] = (StringChar)0;
       }
    }
 }
@@ -115,8 +118,6 @@ void CGUITextItem::setText(const StringChar * string, LanguageId = currentLangua
          }
       }
       
-      _stringLength = ++stringLength;
-
       memcpy(_string, string, stringLength * sizeof(StringChar));
    }
 }

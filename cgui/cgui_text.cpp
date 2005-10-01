@@ -3,13 +3,16 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.21  2005/08/21 19:59:48Z  cf10242
+ * TAOS It 841 - fix getString to actually work
  * Revision 1.20  2005/08/05 22:55:14Z  cf10242
  * remove append text function
  * Revision 1.19  2005/08/01 23:31:38Z  cf10242
  * Revision 1.18  2005/06/20 14:49:02Z  rm10919
  * Fix bug in creating region from text item.
  * Revision 1.17  2005/06/06 18:21:57Z  rm10919
- * Changed constructor not to use the region the styling record passed in unless the styling record exsists.
+ * Changed constructor not to use the region the 
+ * styling record passed in unless the styling record exsists.
  * Revision 1.16  2005/05/16 22:49:26Z  cf10242
  * add appendText
  * Revision 1.15  2005/04/26 23:16:48Z  rm10919
@@ -54,9 +57,9 @@
 #include "cgui_variable_db_container.h"
 #include "datalog_levels.h"
 
-static UGL_WCHAR newline_char = '\n';
-static UGL_WCHAR space_char = ' ';
-static UGL_WCHAR null_char = '\0';
+static StringChar newline_char = '\n';
+static StringChar space_char = ' ';
+static StringChar null_char = '\0';
 
 const int textBlockSize = 16;
 
@@ -69,18 +72,17 @@ CGUIVariableDatabaseContainer CGUIText::_variableDictionary;
 CGUIText::CGUIText(CGUIDisplay & display)
 : CGUIWindowObject(display)
 {   
-//   assert(parent);
-//   parent->addObjectToFront(this);
+
 }
 
 CGUIText::CGUIText(CGUIDisplay & display, CGUITextItem * textItem, StylingRecord * stylingRecord = NULL)
-: CGUIWindowObject(display), _textString(NULL)
+                  :CGUIWindowObject(display), _textString(NULL), _pixelRegion(0, 0, 0, 0)
 {
    initializeData(textItem, stylingRecord);
 }
 
 CGUIText::CGUIText(CGUIDisplay & display, CGUITextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL)
-: CGUIWindowObject(display), _textString(NULL)
+                  :CGUIWindowObject(display), _textString(NULL), _pixelRegion(0, 0, 0, 0)
 {
    initializeData(textItem, stylingRecord);
    setBackgroundColor(backgroundColor);
@@ -94,22 +96,17 @@ CGUIText::~CGUIText()
       _textString = NULL;
    }
 }
-void CGUIText::attachText( CGUIWindow * parent)
-{
-   assert(parent);
-   parent->addObjectToFront(this);
-}
 
 void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRecord)
 {
    _textItem =  textItem;
-//   _stylingRecord = * stylingRecord;
+
    if (_textItem)
    {
       if (_textItem->isInitialized())
       {
          const StringChar * string = _textItem->getText(_textItem->getLanguageId());
-         
+
          //
          //  If styling record from constructor is null, 
          //  set the the cgui_text._stylingRecord to 
@@ -140,8 +137,6 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
          }
       }
    }
-//   assert(parent);
-//   parent->addObjectToFront(this);
    _languageSetByApp = false;
 }
 
@@ -206,7 +201,6 @@ void CGUIText::setStylingRecord (StylingRecord * stylingRecord)
 
 void CGUIText::setText(CGUITextItem * textItem)
 {
-
    if (textItem)
    {
       _textItem =  textItem;
@@ -219,9 +213,9 @@ void CGUIText::setText(CGUITextItem * textItem)
          {
             setText(string);
          }
-         else if(!_textString)
+         else if (!_textString)
          {
-             //DataLog(log_level_cgui_info) << "Creating new text block " << __LINE__ << "  New length = " << _stringSize << endmsg; 
+            //DataLog(log_level_cgui_info) << "Creating new text block " << __LINE__ << "  New length = " << _stringSize << endmsg; 
             _textString = new StringChar[textBlockSize+1];
             *_textString =  null_char;
             _stringLength = 0;
@@ -231,6 +225,10 @@ void CGUIText::setText(CGUITextItem * textItem)
    }
 }
 
+void CGUIText::setText()
+{
+   setText(_textItem->getText(_textItem->getLanguageId()));
+}
 
 void CGUIText::setText(const StringChar * string)
 {
@@ -238,15 +236,15 @@ void CGUIText::setText(const StringChar * string)
    if (string)
    {
       while (string[newLength])
-          newLength += 1;
+         newLength += 1;
 
       if (_textString)
       {
          // find length of new string and compare to old
-         if(newLength > _stringSize)
+         if (newLength > _stringSize)
          {
             delete _textString;                                  
-            _textString = new UGL_WCHAR[newLength+textBlockSize+1];
+            _textString = new StringChar[newLength+textBlockSize+1];
             //DataLog(log_level_cgui_info) << "Deleting/Creating new text block " << __LINE__ << " Old length = " << _stringSize << "  New length = " << newLength+textBlockSize << endmsg; 
             _stringLength = newLength;
             _stringSize = newLength+textBlockSize;
@@ -255,17 +253,17 @@ void CGUIText::setText(const StringChar * string)
       else
       {
          _stringSize = newLength;
-         if(newLength < textBlockSize)
+         if (newLength < textBlockSize)
             _stringSize = textBlockSize;
-            
+
          //DataLog(log_level_cgui_info) << "Creating new text block " << __LINE__ << "  New length = " << _stringSize << endmsg; 
-         _textString = new UGL_WCHAR[_stringSize+1];
+         _textString = new StringChar[_stringSize+1];
       }
 
       _stringLength = newLength;
-      memcpy(_textString, string, _stringLength * sizeof(UGL_WCHAR));
+      memcpy(_textString, string, _stringLength * sizeof(StringChar));
 
-      _textString[_stringLength] = null_char;  // add the NULL UGL_WCHAR
+      _textString[_stringLength] = null_char;  // add the NULL StringChar
    }
    else
    {
@@ -277,7 +275,7 @@ void CGUIText::setText(const StringChar * string)
 
 void CGUIText::setText(const char * string)                 
 {
-   if(string)
+   if (string)
    {
       int newLength = strlen(string)+1;
       //DataLog(log_level_cgui_info) << "Size of char string = " << strlen(string) << endmsg;
@@ -285,10 +283,10 @@ void CGUIText::setText(const char * string)
       if (_textString)
       {
          // find length of new string and compare to old
-         if(newLength > _stringSize)
+         if (newLength > _stringSize)
          {
             delete _textString;                                  
-            _textString = new UGL_WCHAR[newLength+textBlockSize+1];
+            _textString = new StringChar[newLength+textBlockSize+1];
             //DataLog(log_level_cgui_info) << "Deleting/Creating new text block " << __LINE__ << " Old length = " << _stringSize << "  New length = " << newLength+textBlockSize << endmsg; 
             _stringLength = newLength;
             _stringSize = newLength+textBlockSize;
@@ -297,16 +295,20 @@ void CGUIText::setText(const char * string)
       else
       {
          _stringSize = newLength;
-         if(newLength < textBlockSize)
+         if (newLength < textBlockSize)
             _stringSize = textBlockSize;
-            
+
          //DataLog(log_level_cgui_info) << "Creating new text block " << __LINE__ << "  New length = " << _stringSize << endmsg;
-         _textString = new UGL_WCHAR[_stringSize+1];
+         _textString = new StringChar[_stringSize+1];
       }
       _stringLength = newLength;
 
-      for (int i=0; i<_stringLength; i++)
-         _textString[i] = string[i];
+      _textString = convertToStringChar(string);
+
+//      for (int i=0; i<_stringLength; i++)
+//         _textString[i] = string[i];
+
+//      _textString[_stringLength] = '\0';
    }
    else
    {
@@ -316,37 +318,6 @@ void CGUIText::setText(const char * string)
    computeTextRegion();
 
 } // END set_text
-
-//void CGUIText::getText(char * string)
-//{                                                                      
-//   int max_conv_len = 3 * _stringLength + 1;
-//   char * result = new char[max_conv_len];
-//   int result_idx = 0;
-
-//   for (int conv_idx=0; conv_idx < _stringLength; conv_idx++)
-//   {
-//      wchar_t ch = txt_wstring[conv_idx];
-//      if ((ch & 0xff00) == 0)
-//      {
-//         result[result_idx++] = (char)ch;
-//      }
-//      else if ((ch & 0x00ff) == 0)
-//      {
-//         result[result_idx++] = 0x01;
-//         result[result_idx++] = (ch >> 8) & 0xff;
-//      }
-//      else
-//      {
-//         result[result_idx++] = 0x02;
-//         result[result_idx++] = (ch >> 8) & 0xff;
-//         result[result_idx++] = ch & 0xff;
-//      }
-//   }
-
-//   result[result_idx] = '\0';
-//   string = result;
-//   delete[] result;
-//}
 
 void CGUIText::getText(StringChar * string)
 {
@@ -393,6 +364,12 @@ void CGUIText::getSize(CGUIRegion & region, int startIndex, int length)
    }
 } // END get_size
 
+const CGUIRegion & CGUIText::getPixelSize()
+{   
+   getSize(_pixelRegion, 0, _stringLength);
+   return _pixelRegion;
+}
+
 int CGUIText::getToken(int start_index)
 {
    // this flag is false before encountering non-blank token characters
@@ -438,16 +415,13 @@ int CGUIText::getToken(int start_index)
          {
             look_for_trailing_blank = true;
          }
-
          // add this character to the token
          token_char_count++;
          current_index++;
       }
    }
-
    return token_char_count;
 } // END get_token
-
 
 void CGUIText::convertTextToMultiline(CGUIRegion & region)
 {
@@ -484,7 +458,7 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
          }
          else
          {
-            if (_textString[current_index] == newline_char ) //'\n')
+            if (_textString[current_index] == newline_char) //'\n')
             {
                // newline forced a line break
                current_index += token_byte_count;
@@ -626,7 +600,7 @@ bool CGUIText::convertLinePosition(int width, int height, CGUIRegion & region)
 void CGUIText::computeTextRegion(void)
 {
    CGUIRegion    text_region;
-//   if (_stringLength > 0) handleVariableSubstitution();
+   if (_stringLength > 0) handleVariableSubstitution();
    convertTextToMultiline(text_region);
 
    // find vertical region to place text
@@ -671,8 +645,6 @@ void CGUIText::setRegion(const CGUIRegion & newRegion)
       _region = newRegion;
 }
 
-
-
 void CGUIText::draw(UGL_GC_ID gc)
 {
    if (!_stringLength ||
@@ -683,7 +655,6 @@ void CGUIText::draw(UGL_GC_ID gc)
    {
       return;
    }
-
    //
    // Need true coordinates (not viewport relative) on screen so that
    // we can get correct background color for text.
@@ -692,7 +663,6 @@ void CGUIText::draw(UGL_GC_ID gc)
    uglViewPortGet(gc, &vp_left, &vp_top, &vp_right, &vp_bottom);
 
    CGUIColor  backgroundColor;
-
    {
       //
       // Average the color of the four corner pixels for the text region.
@@ -755,13 +725,13 @@ void CGUIText::draw(UGL_GC_ID gc)
    }
 } // END draw
 
-
 void CGUIText::handleVariableSubstitution(void)
 {
-   size_t     new_stringSize = _stringLength+1;
-   UGL_WCHAR * new_textString = (UGL_WCHAR *)malloc(new_stringSize * sizeof(UGL_WCHAR));
-   size_t     new_stringLength = 0;
-   size_t     idx = 0;
+   size_t newStringSize = _stringLength+1;
+   StringChar * newTextString = (StringChar *)malloc(newStringSize * sizeof(StringChar));
+   size_t newStringLength = 0;
+   size_t idx = 0;
+
    while (_textString[idx] != null_char &&
           idx < _stringLength)
    {
@@ -773,8 +743,9 @@ void CGUIText::handleVariableSubstitution(void)
       {
          // Find ending '}' character if any
          //
-         size_t     subStartIdx = idx+3;
-         size_t     subEndIdx = subStartIdx;
+         size_t subStartIdx = idx+3;
+         size_t subEndIdx = subStartIdx;
+
          while (_textString[subEndIdx] != null_char &&
                 _textString[subEndIdx] != (wchar_t)'}' &&
                 subEndIdx < _stringLength)
@@ -787,26 +758,34 @@ void CGUIText::handleVariableSubstitution(void)
          {
             // Have a valid variable substitution string - lookup the value
             //
+
             char  * variableName = new char[subEndIdx-subStartIdx+1];
+
             for (int i=0; i<subEndIdx-subStartIdx; i++)
             {
                variableName[i] = (char)(_textString[subStartIdx+i] & 0x00ff);
+            
             }
 
             variableName[subEndIdx-subStartIdx] = '\0';
             StringChar * variableText = _variableDictionary.variableLookUp(variableName);
             delete[] variableName;
+
+            int variableTextLength = 0;
             if (variableText)
             {
+               while (variableText[variableTextLength])
+                  variableTextLength += 1;
+               
                // Value is present, copy to the string and setup to continue with
                // next character after substitution string
                //
-               new_stringSize += strlen((char *)variableText);
-               new_textString = (StringChar *)realloc(new_textString, new_stringSize * sizeof(StringChar));
+               newStringSize += (variableTextLength + textBlockSize);
+               newTextString = (StringChar *)realloc(newTextString, (newStringSize * sizeof(StringChar) + textBlockSize));
 
-               for (int i=0; i<strlen((char *)variableText); i++)
+               for (int i=0; i<variableTextLength; i++)
                {
-                  new_textString[new_stringLength++] = (StringChar)variableText[i];
+                  newTextString[newStringLength++] = (StringChar)variableText[i];
                }
 
                idx = subEndIdx + 1;
@@ -815,14 +794,16 @@ void CGUIText::handleVariableSubstitution(void)
          }
       }
 
-      new_textString[new_stringLength++] = _textString[idx++];
+      newTextString[newStringLength++] = _textString[idx++];
    }
-   delete[] _textString;
-   _textString = new StringChar[new_stringLength+1];
-   memcpy(_textString, new_textString, new_stringLength * sizeof(StringChar));
-   _textString[new_stringLength] = null_char;
-   _stringLength = new_stringLength;
+   if (_textString) delete[] _textString;
+   _textString = new StringChar[newStringLength+1];
+   memcpy(_textString, newTextString, newStringLength * sizeof(StringChar));
+   _textString[newStringLength] = null_char;
+   _stringLength = newStringLength;
+   _stringSize = newStringLength;
 
-   free(new_textString);
-   new_textString = NULL;
+   free(newTextString);
+   newTextString = NULL;
 }
+

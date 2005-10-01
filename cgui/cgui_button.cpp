@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.16  2005/08/11 16:24:22Z  cf10242
+ *  TAOS IT 764 - fix callbacks
  *  Revision 1.15  2005/04/26 23:16:46Z  rm10919
  *  Made changes to cgui_text and cgui_text_item, plus added 
  *  classes for variable substitution in text strings.
@@ -120,7 +122,7 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       }
       _enabledText = new CGUIText(display, buttonData.enabledTextItem, buttonData.enabledStylingRecord);
       _enabledText->setCaptureBackgroundColor();
-      _enabledText->attachText(this);
+      addObjectToFront(_enabledText);
    }
    else
    {
@@ -142,7 +144,7 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _disabledText = new CGUIText(display, buttonData.disabledTextItem, buttonData.disabledStylingRecord);
       _disabledText->setCaptureBackgroundColor();
       _disabledText->setVisible(false);
-      _disabledText->attachText(this);
+      addObjectToFront(_disabledText);
    }
    else
    {
@@ -164,7 +166,7 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _pressedText = new CGUIText(display, buttonData.pressedTextItem, buttonData.pressedStylingRecord);
       _pressedText->setCaptureBackgroundColor();
       _pressedText->setVisible(false);
-      _pressedText->attachText(this);
+      addObjectToFront(_pressedText);
    }
    else
    {
@@ -610,7 +612,14 @@ void CGUIButton::setText (const StringChar * string = NULL) // ptr to a text obj
    }
 }
 
-void CGUIButton::setEnabledText (CGUITextItem * textItem = NULL)
+void CGUIButton::setText()
+{
+   setEnabledText();
+   setDisabledText();
+   setPressedText();
+}
+
+void CGUIButton::setEnabledText (CGUITextItem * textItem)
 {
    if (textItem)
    {
@@ -621,7 +630,7 @@ void CGUIButton::setEnabledText (CGUITextItem * textItem = NULL)
       else
       {
          _enabledText = new CGUIText(_display, textItem);
-         _enabledText->attachText(this);
+         addObjectToFront(_enabledText);
       }      
    }
    if (!textItem)
@@ -653,7 +662,7 @@ void CGUIButton::setEnabledText (const char * string = NULL)
       {
          _enabledText = new CGUIText(_display);
          _enabledText->setText(string);
-         _enabledText->attachText(this);
+         addObjectToFront(_enabledText);
       }      
    }
    if (!string)
@@ -685,7 +694,7 @@ void CGUIButton::setEnabledText (const StringChar * string = NULL)
       {
          _enabledText = new CGUIText(_display);
          _enabledText->setText(string);
-         _enabledText->attachText(this);
+         addObjectToFront(_enabledText);
       }      
    }
    if (!string)
@@ -705,6 +714,11 @@ void CGUIButton::setEnabledText (const StringChar * string = NULL)
    }
 }
 
+void CGUIButton::setEnabledText()
+{
+   _enabledText->setText();
+}
+
 void CGUIButton::setDisabledText (CGUITextItem * textItem = NULL)
 {
    if (textItem)
@@ -716,7 +730,7 @@ void CGUIButton::setDisabledText (CGUITextItem * textItem = NULL)
       else
       {
          _disabledText = new CGUIText(_display, textItem);
-         _disabledText->attachText(this);
+         addObjectToFront(_disabledText);
       }      
    }
    if (!textItem)
@@ -748,7 +762,7 @@ void CGUIButton::setDisabledText (const char * string = NULL)
       {
          _disabledText = new CGUIText(_display);
          _disabledText->setText(string);
-         _disabledText->attachText(this);
+         addObjectToFront(_disabledText);
       }      
    }
    if (!string)
@@ -780,7 +794,7 @@ void CGUIButton::setDisabledText (const StringChar * string = NULL)
       {
          _disabledText = new CGUIText(_display);
          _disabledText->setText(string);
-         _disabledText->attachText(this);
+         addObjectToFront(_disabledText);
       }      
    }
    if (!string)
@@ -800,6 +814,11 @@ void CGUIButton::setDisabledText (const StringChar * string = NULL)
    }
 }
 
+void CGUIButton::setDisabledText()
+{
+   _disabledText->setText();
+}
+
 void CGUIButton::setPressedText (CGUITextItem * textItem = NULL)
 {
    if (textItem)
@@ -811,7 +830,7 @@ void CGUIButton::setPressedText (CGUITextItem * textItem = NULL)
       else
       {
          _pressedText = new CGUIText(_display, textItem);
-         _pressedText->attachText(this);
+         addObjectToFront(_pressedText);
       }      
    }else
    {
@@ -831,7 +850,7 @@ void CGUIButton::setPressedText (const char * string = NULL)
       {
          _pressedText = new CGUIText(_display);
          _pressedText->setText(string);
-         _pressedText->attachText(this);
+         addObjectToFront(_pressedText);
       }      
    }else
    {
@@ -851,12 +870,17 @@ void CGUIButton::setPressedText (const StringChar * string = NULL)
       {
          _pressedText = new CGUIText(_display);
          _pressedText->setText(string);
-         _pressedText->attachText(this);
+         addObjectToFront(_pressedText);
       }      
    }else
    {
       // NOT GOOD!!! Nothing to do.
    }
+}
+
+void CGUIButton::setPressedText()
+{
+   _pressedText->setText();
 }
 
 // SET TEXTSTYLE

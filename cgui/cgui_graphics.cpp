@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.22 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.19  2005/07/27 22:27:57Z  cf10242
+ * increase winApp stack size
  * Revision 1.18  2005/04/26 23:16:47Z  rm10919
  * Made changes to cgui_text and cgui_text_item, plus added 
  * classes for variable substitution in text strings.
@@ -57,15 +59,17 @@ StringChar * convertToStringChar(const char * string)
 
       StringChar * textString = new UGL_WCHAR[stringLength];  
 
-   for (int i=0; i<stringLength; i++)
-      textString[i] = string[i];
+      for (int i=0; i<stringLength; i++)
+         textString[i] = string[i];
 
-   return textString;
+      textString[stringLength] = '\0';
+
+      return textString;
    }
    else return NULL;
 }
-            
-            
+
+
 // START MESSAGE_SYSTEM_IN_WIN_MGR
 #include "messagesystem.h"
 extern void (* winAppStartupTask)(void);

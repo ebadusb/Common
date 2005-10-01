@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a text box.
  *  
  *  $Log: cgui_textbox.cpp $
+ *  Revision 1.1  2005/07/19 15:01:12Z  pn02526
+ *  Initial revision
  *
  */
 
@@ -119,7 +121,7 @@ void CGUITextBox::addObjects( )
         }
         if( _text )
         {
-             _text->attachText(this);
+             addObjectToFront( _text );
         }
 }
 
@@ -368,7 +370,7 @@ void CGUITextBox::setText (CGUITextItem * textItem, StylingRecord * stylingRecor
        {
           _text = new CGUIText(_display, textItem, stylingRecord );
 //          setText();
-          _text->attachText(this);
+          addObjectToFront( _text );
        }
        _text->setVisible(true);
    }
@@ -386,7 +388,7 @@ void CGUITextBox::setText (const char * string)
        {
           _text = new CGUIText(_display);
           _text->setText(string);
-          _text->attachText(this);
+          addObjectToFront( _text );
        }      
        _text->setVisible(true);
     }

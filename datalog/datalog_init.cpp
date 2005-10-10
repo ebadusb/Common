@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_init.cpp 1.11 2005/09/30 17:00:29Z ms10234 Exp ms10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_init.cpp 1.11 2005/09/30 17:00:29Z ms10234 Exp $
  * $Log: datalog_init.cpp $
+ * Revision 1.11  2005/09/30 17:00:29Z  ms10234
+ * - fix memory leak and copy/paste error
  * Revision 1.10  2005/09/29 21:59:56Z  ms10234
  * IT42 - allow generation of new log files without rebooting
  * Revision 1.9  2003/11/10 17:46:09Z  jl11312
@@ -90,6 +92,14 @@ DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKByte
 		// deleted during this logging phase.
 		//
 		taskLock();
+
+		DataLog_CommonData common;
+		common.setPersistSystemInfo(allowReset);
+		common.setLocalConnect(logPath);
+		common.setCriticalReserveBuffers((criticalReserveKBytes*1024+DataLog_BufferSize-1)/DataLog_BufferSize);
+		common.setPlatformName(platformName);
+		common.setPlatformInfo(platformInfo);
+
 		int	idList[64];
 		int	idCount = taskIdListGet(idList, 64);
 
@@ -98,12 +108,6 @@ DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKByte
 			datalog_TaskCreated(idList[i]);
 		}
 
-		DataLog_CommonData common;
-		common.setLocalConnect(logPath);
-		common.setCriticalReserveBuffers((criticalReserveKBytes*1024+DataLog_BufferSize-1)/DataLog_BufferSize);
-		common.setPersistSystemInfo(allowReset);
-		common.setPlatformName(platformName);
-		common.setPlatformInfo(platformInfo);
 		taskUnlock();
 
 #ifdef DATALOG_NETWORK_SUPPORT

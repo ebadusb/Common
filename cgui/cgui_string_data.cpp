@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.cpp 1.12 2007/06/14 19:34:11Z wms10235 Exp wms10235 $
  * $Log: cgui_string_data.cpp $
+ * Revision 1.3  2005/06/09 15:00:12Z  rm10919
+ * Fix the read data file routine.
  * Revision 1.2  2005/04/28 14:40:32Z  rm10919
  * Fixed bug in reading eol characters.
  * Revision 1.1  2005/04/27 13:40:45Z  rm10919
@@ -102,8 +104,11 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
          // Parse entry from file.
          //
          entry->id = firstToken;
-
-         hold = strtok_r(NULL,"\"", &p);    // get to the first quote
+         
+         if (*p != '"')
+         {
+            hold = strtok_r(NULL,"\"", &p);    // get to the first quote
+         }
          entry->text = strtok_r(NULL, "\"", &p);
          entry->red = strtok_r(NULL," \t\n\r", &p);
          entry->green = strtok_r(NULL," \t\n\r", &p);

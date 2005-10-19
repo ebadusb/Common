@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.22  2005/09/30 22:40:52Z  rm10919
+ * Get the variable database working!
  * Revision 1.21  2005/08/21 19:59:48Z  cf10242
  * TAOS It 841 - fix getString to actually work
  * Revision 1.20  2005/08/05 22:55:14Z  cf10242
@@ -801,7 +803,7 @@ void CGUIText::handleVariableSubstitution(void)
    memcpy(_textString, newTextString, newStringLength * sizeof(StringChar));
    _textString[newStringLength] = null_char;
    _stringLength = newStringLength;
-   _stringSize = newStringLength;
+   _stringSize = newStringLength + textBlockSize;
 
    free(newTextString);
    newTextString = NULL;

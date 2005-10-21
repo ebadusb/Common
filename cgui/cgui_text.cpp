@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.23  2005/10/19 16:17:25Z  rm10919
+ * Add Chris' textBlock addition to string size in variable sub. function.
  * Revision 1.22  2005/09/30 22:40:52Z  rm10919
  * Get the variable database working!
  * Revision 1.21  2005/08/21 19:59:48Z  cf10242
@@ -131,11 +133,11 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
          }
          else
          {
-            _textString = new StringChar[textBlockSize+1];
+            _stringSize = textBlockSize;
+            _textString = new StringChar[_stringSize+1];
+
             *_textString =  null_char;
             _stringLength = 0;
-            _stringSize = textBlockSize;
-            //DataLog(log_level_cgui_info) << "Creating new text block " << __LINE__ << "  New length = " << _stringSize << endmsg; 
          }
       }
    }
@@ -217,11 +219,11 @@ void CGUIText::setText(CGUITextItem * textItem)
          }
          else if (!_textString)
          {
-            //DataLog(log_level_cgui_info) << "Creating new text block " << __LINE__ << "  New length = " << _stringSize << endmsg; 
-            _textString = new StringChar[textBlockSize+1];
+            _stringSize = textBlockSize;
+            _textString = new StringChar[_stringSize+1];
+
             *_textString =  null_char;
             _stringLength = 0;
-            _stringSize = textBlockSize;
          }
       }
    }
@@ -246,10 +248,9 @@ void CGUIText::setText(const StringChar * string)
          if (newLength > _stringSize)
          {
             delete _textString;                                  
-            _textString = new StringChar[newLength+textBlockSize+1];
-            //DataLog(log_level_cgui_info) << "Deleting/Creating new text block " << __LINE__ << " Old length = " << _stringSize << "  New length = " << newLength+textBlockSize << endmsg; 
-            _stringLength = newLength;
+
             _stringSize = newLength+textBlockSize;
+            _textString = new StringChar[_stringSize+1];
          }
       }
       else
@@ -258,7 +259,6 @@ void CGUIText::setText(const StringChar * string)
          if (newLength < textBlockSize)
             _stringSize = textBlockSize;
 
-         //DataLog(log_level_cgui_info) << "Creating new text block " << __LINE__ << "  New length = " << _stringSize << endmsg; 
          _textString = new StringChar[_stringSize+1];
       }
 
@@ -288,10 +288,9 @@ void CGUIText::setText(const char * string)
          if (newLength > _stringSize)
          {
             delete _textString;                                  
-            _textString = new StringChar[newLength+textBlockSize+1];
-            //DataLog(log_level_cgui_info) << "Deleting/Creating new text block " << __LINE__ << " Old length = " << _stringSize << "  New length = " << newLength+textBlockSize << endmsg; 
-            _stringLength = newLength;
+
             _stringSize = newLength+textBlockSize;
+            _textString = new StringChar[_stringSize+1];
          }
       }
       else
@@ -300,17 +299,14 @@ void CGUIText::setText(const char * string)
          if (newLength < textBlockSize)
             _stringSize = textBlockSize;
 
-         //DataLog(log_level_cgui_info) << "Creating new text block " << __LINE__ << "  New length = " << _stringSize << endmsg;
          _textString = new StringChar[_stringSize+1];
       }
+
       _stringLength = newLength;
+      for (int i=0; i<_stringLength; i++)
+         _textString[i] = string[i];
 
-      _textString = convertToStringChar(string);
-
-//      for (int i=0; i<_stringLength; i++)
-//         _textString[i] = string[i];
-
-//      _textString[_stringLength] = '\0';
+      _textString[_stringLength] = '\0';
    }
    else
    {
@@ -729,6 +725,7 @@ void CGUIText::draw(UGL_GC_ID gc)
 
 void CGUIText::handleVariableSubstitution(void)
 {
+   bool changedText = false;
    size_t newStringSize = _stringLength+1;
    StringChar * newTextString = (StringChar *)malloc(newStringSize * sizeof(StringChar));
    size_t newStringLength = 0;
@@ -760,6 +757,7 @@ void CGUIText::handleVariableSubstitution(void)
          {
             // Have a valid variable substitution string - lookup the value
             //
+            changedText = true;
 
             char  * variableName = new char[subEndIdx-subStartIdx+1];
 
@@ -798,12 +796,18 @@ void CGUIText::handleVariableSubstitution(void)
 
       newTextString[newStringLength++] = _textString[idx++];
    }
-   if (_textString) delete[] _textString;
-   _textString = new StringChar[newStringLength+1];
-   memcpy(_textString, newTextString, newStringLength * sizeof(StringChar));
-   _textString[newStringLength] = null_char;
-   _stringLength = newStringLength;
-   _stringSize = newStringLength + textBlockSize;
+
+   if (changedText)
+   {
+      if (_textString) delete[] _textString;
+      
+      _stringSize = newStringLength + textBlockSize;
+      _textString = new StringChar[_stringSize+1];
+
+      memcpy(_textString, newTextString, newStringLength * sizeof(StringChar));
+      _textString[newStringLength] = null_char;
+      _stringLength = newStringLength;
+   }
 
    free(newTextString);
    newTextString = NULL;

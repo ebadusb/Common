@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.22 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.20  2005/09/30 22:40:52Z  rm10919
+ * Get the variable database working!
  * Revision 1.19  2005/07/27 22:27:57Z  cf10242
  * increase winApp stack size
  * Revision 1.18  2005/04/26 23:16:47Z  rm10919
@@ -61,8 +63,6 @@ StringChar * convertToStringChar(const char * string)
 
       for (int i=0; i<stringLength; i++)
          textString[i] = string[i];
-
-      textString[stringLength] = '\0';
 
       return textString;
    }

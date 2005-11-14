@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.17  2005/09/30 22:40:42Z  rm10919
+ *  Get the variable database working!
  *  Revision 1.16  2005/08/11 16:24:22Z  cf10242
  *  TAOS IT 764 - fix callbacks
  *  Revision 1.15  2005/04/26 23:16:46Z  rm10919
@@ -218,7 +220,10 @@ CGUIButton::~CGUIButton ()
 //  If currently invisible, the button is made visible.
 void CGUIButton::enable(void)
 {
+    if(!_enabled)
+    {
       _enabled = true;
+      _pressed = false;
       if (_disabledBitmap) moveObjectToBack(_disabledBitmap);
 		if (_pressedBitmap) moveObjectToBack(_pressedBitmap);
       if (_enabledBitmap) moveObjectToFront(_enabledBitmap);
@@ -234,13 +239,17 @@ void CGUIButton::enable(void)
          _enabledText->setVisible(true);
          _enabledText->setCaptureBackgroundColor();
       }
+    }
 }
 
 // ENABLEPRESSED
 //  Set the state of the button to enabled and already pressed.  
 void CGUIButton::enablePressed(void)
 {
+    if(!_pressed)
+    {
       _enabled = true;
+      _pressed = true;
       if (_disabledBitmap) moveObjectToBack(_disabledBitmap);
 		if (_enabledBitmap) moveObjectToBack(_enabledBitmap);
       if (_pressedBitmap) moveObjectToFront(_pressedBitmap);
@@ -256,6 +265,7 @@ void CGUIButton::enablePressed(void)
          _pressedText->setVisible(true);
          _pressedText->setCaptureBackgroundColor();
       }
+    }
 }
 
 

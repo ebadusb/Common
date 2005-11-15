@@ -1,8 +1,10 @@
-# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.vxc 1.5 2004/12/02 22:05:09Z jl11312 Exp jl11312 $
+# @(#) $Header: H:/BCT_Development/vxWorks/Common/rcs/makefile.vxc 1.6 2005/11/14 20:12:31Z jl11312 Exp wms10235 $
 #
 # Makefile.vxc - common makefile for common/vxWorks
 #
 # $Log: makefile.vxc $
+# Revision 1.5  2004/12/02 22:05:09Z  jl11312
+# - removed BUILD_TYPE from list of changes that force a rebuild (IT 14)
 # Revision 1.4  2002/08/15 20:49:19Z  jl11312
 # - added support for addition option checking
 # - added a default rule to improve error reporting
@@ -29,10 +31,10 @@ include $(MAINDIR)/makefile.flags
 # for application specific build settings which aren't used within the
 # common makefile templates.
 #
-SETUP_OPT_DIR := $(shell if not exist .opt mkdir .opt)
-SETUP_BUILD_TYPE_FILE := $(shell if not exist .opt\build_type echo "" > .opt\build_type)
-SETUP_CPU_FILE := $(shell if not exist .opt\cpu echo "" > .opt\cpu)
-SETUP_ADDN_FILE := $(shell if not exist .opt\addn echo "" > .opt\addn)
+SETUP_OPT_DIR := $(shell cmd /c 'if not exist .opt mkdir .opt')
+SETUP_BUILD_TYPE_FILE := $(shell cmd /c 'if not exist .opt\build_type echo "" > .opt\build_type')
+SETUP_CPU_FILE := $(shell cmd /c 'if not exist .opt\cpu echo "" > .opt\cpu')
+SETUP_ADDN_FILE := $(shell cmd /c 'if not exist .opt\addn echo "" > .opt\addn')
 OLD_BUILD_TYPE := $(strip $(shell cat .opt/build_type))
 OLD_CPU := $(strip $(shell cat .opt/cpu))
 OLD_ADDN_OPT_TEST:= $(strip $(shell cat .opt/addn))
@@ -48,9 +50,9 @@ OLD_ADDN_OPT_TEST:= $(strip $(shell cat .opt/addn))
 ADDN_OPT_TEST ?=
 ifneq ("$(CPU)""$(ADDN_OPT_TEST)", $(OLD_CPU)$(OLD_ADDN_OPT_TEST))
   DUMMY_VAR := $(shell rm -f $(COMMON_CLEAN_FILELIST))
-  DUMMY_VAR := $(shell echo "$(BUILD_TYPE)" > .opt\build_type)
-  DUMMY_VAR := $(shell echo "$(CPU)" > .opt\cpu)
-  DUMMY_VAR := $(shell echo "$(ADDN_OPT_TEST)" > .opt\addn)
+  DUMMY_VAR := $(shell cmd /c 'echo "$(BUILD_TYPE)" > .opt\build_type')
+  DUMMY_VAR := $(shell cmd /c 'echo "$(CPU)" > .opt\cpu')
+  DUMMY_VAR := $(shell cmd /c 'echo "$(ADDN_OPT_TEST)" > .opt\addn')
   FORCE_REBUILD := 1
 endif
 

@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.18  2005/11/14 09:52:52  cf10242
+ *  IT 46 - check for button enabled before initiating enable method logic.  Change also applied to disabled and enablePressed.
  *  Revision 1.17  2005/09/30 22:40:42Z  rm10919
  *  Get the variable database working!
  *  Revision 1.16  2005/08/11 16:24:22Z  cf10242
@@ -220,7 +222,7 @@ CGUIButton::~CGUIButton ()
 //  If currently invisible, the button is made visible.
 void CGUIButton::enable(void)
 {
-    if(!_enabled)
+    if(!_enabled || _pressed) // Button must be either disabled or pressed to execute this logic.
     {
       _enabled = true;
       _pressed = false;
@@ -246,7 +248,7 @@ void CGUIButton::enable(void)
 //  Set the state of the button to enabled and already pressed.  
 void CGUIButton::enablePressed(void)
 {
-    if(!_pressed)
+    if(!_enabled || !_pressed)  // Button must be either disabled or up to execute this logic.
     {
       _enabled = true;
       _pressed = true;

@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.19  2005/11/16 18:20:44Z  pn02526
+ *  Further fix for IT # 46
  *  Revision 1.18  2005/11/14 09:52:52  cf10242
  *  IT 46 - check for button enabled before initiating enable method logic.  Change also applied to disabled and enablePressed.
  *  Revision 1.17  2005/09/30 22:40:42Z  rm10919
@@ -227,10 +229,10 @@ void CGUIButton::enable(void)
       _enabled = true;
       _pressed = false;
       if (_disabledBitmap) moveObjectToBack(_disabledBitmap);
-		if (_pressedBitmap) moveObjectToBack(_pressedBitmap);
+	  if (_pressedBitmap) moveObjectToBack(_pressedBitmap);
       if (_enabledBitmap) moveObjectToFront(_enabledBitmap);
 
-	   if (_iconPointer) moveObjectToFront(_iconPointer);
+	  if (_iconPointer) moveObjectToFront(_iconPointer);
 
 
       if (_disabledText) _disabledText->setVisible(false);
@@ -299,13 +301,14 @@ void CGUIButton::disable()
 void CGUIButton::invisible()
 {
    setDisabled(true);
+   setWindowVisibility(false);
 }
 
 // IS VISIBLE
 // return flag indicating current state of visibility.  Uses CGUIWindow class to do this
 bool CGUIButton::isVisible() const
 {
-   return true; //_disabled;
+   return winVisibleGet(_id);
 }
 
 //SET MESSAGE

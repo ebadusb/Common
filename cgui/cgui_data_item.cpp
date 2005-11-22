@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.cpp 1.9 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
  * $Log: cgui_data_item.cpp $
+ * Revision 1.2  2005/09/30 22:40:43Z  rm10919
+ * Get the variable database working!
  * Revision 1.1  2005/04/27 13:40:50Z  rm10919
  * Initial revision
  *
@@ -28,7 +30,7 @@ CGUIDataItem::CGUIDataItem(bool valueChanged) : _string(NULL), _valueChanged(val
 
 CGUIDataItem::~CGUIDataItem()
 {
-
+   delete _string;
 }
 
 //
@@ -164,7 +166,7 @@ CGUIDataItemTextItem::CGUIDataItemTextItem(CGUITextItem * value): CGUIDataItem(t
 
 CGUIDataItemTextItem::~CGUIDataItemTextItem()
 {
-
+   delete _value;
 }
 
 StringChar * CGUIDataItemTextItem::convertToString()
@@ -210,7 +212,7 @@ CGUIDataItemText::CGUIDataItemText(char * value): CGUIDataItem(true), _value(val
 
 CGUIDataItemText::~CGUIDataItemText()
 {
-
+   delete _value;
 }
 
 StringChar * CGUIDataItemText::convertToString()

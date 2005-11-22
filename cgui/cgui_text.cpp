@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.24  2005/10/21 16:45:38Z  rm10919
+ * Correct use of _stringSize and adding null string terminator.
  * Revision 1.23  2005/10/19 16:17:25Z  rm10919
  * Add Chris' textBlock addition to string size in variable sub. function.
  * Revision 1.22  2005/09/30 22:40:52Z  rm10919
@@ -231,7 +233,7 @@ void CGUIText::setText(CGUITextItem * textItem)
 
 void CGUIText::setText()
 {
-   setText(_textItem->getText(_textItem->getLanguageId()));
+   setText(_textItem->getText());
 }
 
 void CGUIText::setText(const StringChar * string)

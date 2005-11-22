@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.8  2005/09/30 22:40:53Z  rm10919
+ * Get the variable database working!
  * Revision 1.7  2005/08/13 20:55:17Z  cf10242
  * TAOS IT 842 - string handling
  * Revision 1.6  2005/08/02 14:42:32Z  cf10242
@@ -50,6 +52,12 @@ CGUITextItem::~ CGUITextItem()
 		delete[] _string;
 		_string = NULL;
 	}
+
+   if (_id)
+   {
+      delete [] _id;
+      _id = NULL;
+   }
 }
 
 
@@ -129,8 +137,8 @@ const StringChar * CGUITextItem::getText(LanguageId languageId = currentLanguage
 
 void CGUITextItem::getAscii( char * myString, LanguageId languageId = currentLanguage)
 {
-    // anyone using this function needs to confirm that myString can hold the full
-    // string length of the text item
+   // anyone using this function needs to confirm that myString can hold the full
+   // string length of the text item
    if (_string)
    {
       for (int i=0; i<_stringLength; i++)
@@ -139,13 +147,19 @@ void CGUITextItem::getAscii( char * myString, LanguageId languageId = currentLan
          {
             //  have an invalid character!! force an exit to the loop with no joy
             myString[0] = '\0';
-				i = _stringLength;
+            i = _stringLength;
          }
-			else
-				myString[i] = _string[i];
+         else
+            myString[i] = _string[i];
       }
       myString[_stringLength] = 0;
 	}
+}
+
+CGUITextItem * CGUITextItem::getTextItem(const char * id, LanguageId languageId = currentLanguage)
+{
+//   CGUITextItem textItem;
+   return _textMap.findString(id);
 }
 
 void CGUITextItem::setId(const char * id)

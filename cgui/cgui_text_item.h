@@ -3,6 +3,7 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.7 2005/11/22 00:34:43Z rm10919 Exp MS10234 $
  * $Log: cgui_text_item.h $
+ * Revision 1.6  2005/08/01 23:31:39Z  cf10242
  * Revision 1.5  2005/04/26 23:16:48Z  rm10919
  * Made changes to cgui_text and cgui_text_item, plus added 
  * classes for variable substitution in text strings.
@@ -56,7 +57,7 @@ public:
    const StringChar * getText(LanguageId languageId = currentLanguage);
    void getAscii( char * myString, LanguageId languageId = currentLanguage);
 
-   CGUITextItem * getTextItem(const char * id, LanguageId languageId);
+   CGUITextItem * getTextItem(const char * id, LanguageId languageId = currentLanguage);
 
    void setText(const char * string, LanguageId = currentLanguage);
    void setText(const StringChar * texString, LanguageId = currentLanguage);

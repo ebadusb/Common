@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.21 2010/04/02 16:26:25Z agauusb Exp agauusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.13  2005/08/15 18:47:43Z  cf10242
+ * IT 674 - log failed UGl cleanup
  * Revision 1.12  2005/08/11 16:26:12Z  cf10242
  * TAOS IT 674 - ungrab when deleting to prevent page fault
  * Revision 1.11  2005/04/12 18:14:24Z  cf10242
@@ -421,7 +423,11 @@ void CGUIWindow::setWindowVisibility (bool newVisible)
        DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
    if (newVisible != winVisibleGet(_id))
    {
+      UGL_RECT rect;
+      _region.convertToUGLRect(rect);
+      
       winVisibleSet(_id, newVisible);
+      winRectInvalidate(_id, &rect);
    }
 }
 

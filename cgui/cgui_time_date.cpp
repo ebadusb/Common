@@ -3,6 +3,8 @@
  *
  * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_time_date.cpp 1.7 2007/01/29 09:08:39 rm10919 Exp pn02526 $
  * $Log: cgui_time_date.cpp $
+ * Revision 1.5  2005/03/15 00:21:36Z  rm10919
+ * Change CGUIText to not add object to window object list of parent in constructor.
  * Revision 1.4  2005/01/28 23:52:18Z  rm10919
  * CGUITextItem class changed and put into own file.
  * Revision 1.3  2005/01/17 17:59:18Z  cf10242
@@ -58,6 +60,16 @@ void CGUITimeDate::update()
 
    localtime_r(&currentdate, &local_tm);
    
+   // round up if 30 seconds past the minute or more
+   if(local_tm.tm_sec >= 30)
+   {
+       if(++local_tm.tm_min > 59)
+       {
+           local_tm.tm_min = 0;
+           if(++local_tm.tm_hour > 23)
+               local_tm.tm_hour = 0;
+       }
+   }
    //
    // Date String using DateAttributes
    //

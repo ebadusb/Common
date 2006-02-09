@@ -331,17 +331,27 @@ int generateAlarmID(char *pStrPath)
 }
 
 // Generates alarm_config.cpp
-int generateAlarmConfig(char *pStrPath)
+int generateAlarmConfig(char *sysName, char *pStrPath)
 {
 	char fileName[MAX_PATH];
+	char enumTextFile[MAX_PATH];
 	strcpy(fileName, pStrPath);
 	strcat(fileName, "/alarm_config.cpp");
+	strcpy(enumTextFile, pStrPath);
+	strcat(enumTextFile, "/alarm_enum_text.h");
 
 	FILE *pFile = fopen(fileName, "w");
 	if (pFile == NULL)
 	{
 		printf("ERROR: Could not create file %s.\n", fileName);
 		return -1;
+	}
+
+	FILE *pEnumFile = fopen(enumTextFile, "w");
+	if (pEnumFile == NULL)
+	{
+		// not a critical error as this file is used for unit test only
+		printf("Warning: Could not create unit test file %s.\n", enumTextFile);
 	}
 
 	// file header
@@ -383,8 +393,8 @@ int generateAlarmConfig(char *pStrPath)
 	fprintf(pFile, "struct AlarmAttributesStruct\n");
 	fprintf(pFile, "{\n");
 	fprintf(pFile, "\tstring					_alarmName;		// string version of _alarmId\n");
-	fprintf(pFile, "\tTaosNodeID				_nodeId;		// Node ID or source of the alarm (control or safety)\n");
-	fprintf(pFile, "\tTaosLinkElement::Level	_moduleLevel;	// Module link level base, disposable, protocol\n");
+	fprintf(pFile, "\t%sNodeID				_nodeId;		// Node ID or source of the alarm (control or safety)\n", sysName);
+	fprintf(pFile, "\t%sLinkElement::Level	_moduleLevel;	// Module link level base, disposable, protocol\n", sysName);
 	fprintf(pFile, "\tint						_alarmId;		// Alarm serial number (only unique for a module and node)\n");
 	fprintf(pFile, "\tint						_priority;		// Display priority higher number is higher priority\n");
 	fprintf(pFile, "\tConstraintGroup*			_constraintObj;	// Pointer to constraint group object. Pointer may be NULL.\n");
@@ -443,6 +453,13 @@ int generateAlarmConfig(char *pStrPath)
 	// alarm attributes table
 	fprintf(pFile, "AlarmAttributesStruct attributesTable[] =\n");
 	fprintf(pFile, "{\n");
+	// ---------
+	// unit test file
+	fprintf(pEnumFile, "// Auto-Generated.  Do not edit.\n");
+	fprintf(pEnumFile, "#include <string>\n");
+	fprintf(pEnumFile, "string %s_Alarms[] = ", (*_alarmDataList.begin()).layer.c_str());
+	fprintf(pEnumFile, "\n{\n");
+	// ---------
 	AlarmDataList::iterator alarmDataIter;
 	bFirstTimeThrough = true;
 	for (alarmDataIter = _alarmDataList.begin(); alarmDataIter != _alarmDataList.end(); alarmDataIter++)
@@ -450,28 +467,40 @@ int generateAlarmConfig(char *pStrPath)
 		if (!bFirstTimeThrough)
 		{
 			fprintf(pFile, "},\n");
+			// --------------
+			// unit test file
+			fprintf(pEnumFile, ",\n");
+			// --------------
 		}
 		bFirstTimeThrough = false;
 
 		if ((*alarmDataIter).display == "NULL")
 		{
-			fprintf(pFile, "{\"%s\",%s,TaosLinkElement::%s,%s::%s,%s,&%s,&%s,\"%s\",%s,%s,%s,%s", 
-				(*alarmDataIter).alarmID.c_str(), (*alarmDataIter).node.c_str(), (*alarmDataIter).layer.c_str(), 
+			fprintf(pFile, "{\"%s\",%s,%sLinkElement::%s,%s::%s,%s,&%s,&%s,\"%s\",%s,%s,%s,%s", 
+				(*alarmDataIter).alarmID.c_str(), (*alarmDataIter).node.c_str(), sysName, (*alarmDataIter).layer.c_str(), 
 				(*alarmDataIter).alarmNamespace.c_str(), (*alarmDataIter).alarmID.c_str(), (*alarmDataIter).priority.c_str(), 
 				(*alarmDataIter).constraint.c_str(), (*alarmDataIter).response.c_str(), (*alarmDataIter).buttonGroupName.c_str(), 
 				(*alarmDataIter).display.c_str(), (*alarmDataIter).screen.c_str(), (*alarmDataIter).alarmMsg.c_str(), (*alarmDataIter).alarmText.c_str());
 		}
 		else
 		{
-			fprintf(pFile, "{\"%s\",%s,TaosLinkElement::%s,%s::%s,%s,&%s,&%s,\"%s\",&%s,%s,%s,%s", 
-				(*alarmDataIter).alarmID.c_str(), (*alarmDataIter).node.c_str(), (*alarmDataIter).layer.c_str(), 
+			fprintf(pFile, "{\"%s\",%s,%sLinkElement::%s,%s::%s,%s,&%s,&%s,\"%s\",&%s,%s,%s,%s", 
+				(*alarmDataIter).alarmID.c_str(), (*alarmDataIter).node.c_str(), sysName, (*alarmDataIter).layer.c_str(), 
 				(*alarmDataIter).alarmNamespace.c_str(), (*alarmDataIter).alarmID.c_str(), (*alarmDataIter).priority.c_str(), 
 				(*alarmDataIter).constraint.c_str(), (*alarmDataIter).response.c_str(), (*alarmDataIter).buttonGroupName.c_str(), 
 				(*alarmDataIter).display.c_str(), (*alarmDataIter).screen.c_str(), (*alarmDataIter).alarmMsg.c_str(), (*alarmDataIter).alarmText.c_str());
 		}
+		// ---------
+		// unit test file
+		fprintf(pEnumFile, "\"%s\"", (*alarmDataIter).alarmID.c_str());
+		// ---------
 	}
 	fprintf(pFile, "}\n");
 	fprintf(pFile, "};\n\n");
+	// ---------
+	// unit test file
+	fprintf(pEnumFile, "};\n");
+	// ---------
 
 	// code that uses the above structs and tables to init the alarms
 	string layer = (*_alarmDataList.begin()).layer;
@@ -534,6 +563,7 @@ int generateAlarmConfig(char *pStrPath)
 	fprintf(pFile, "}\n\n");
 
 	fclose(pFile);
+	fclose(pEnumFile);
 	printf("alarm_config.cpp generated.\n");
 	return 0;
 }
@@ -558,31 +588,39 @@ char **ParseStringInfoArray(char *stringInfo)
 int _tmain(int argc, _TCHAR* argv[])
 {
 	// Arguments
+	// -n system name (Taos, Trima, etc...used for TaosLinkElement::)
 	// -p path to alarm.info file
 	// -s stringInfo (path to string.info file to use for verifying)
-	if (argc < 3)
+	// 
+	if (argc < 5)
 	{
 		printf("Missing arguments.\r\n");
 		printf("Arguments are:\r\n");
+		printf("  -n system name (Taos, Trima, etc...used for TaosLinkElement::)\r\n");
 		printf("  -p path (path to alarm.info file)\r\n");
 		printf("  [-s stringInfoFileArray] (array of string.info files comma separated without spaces)\r\n\r\n");
 		printf("Example:\r\n");
-		printf("   build_alarm_data -p ../../base/safety/ -s ../../base/gui/string.info,../../base/generic.info\r\n");
+		printf("   build_alarm_data -n Taos -p ../../base/safety/ -s ../../base/gui/string.info,../../base/generic.info\r\n");
 
 		return -1;
 	}
 
+	char sysName[MAX_PATH];
 	char path[MAX_PATH];
 	char stringInfo[MAX_PATH];
+	memset(&sysName, 0, MAX_PATH);
 	memset(&path, 0, MAX_PATH);
 	memset(&stringInfo, 0, MAX_PATH);
 
 	bool bHaveMandatory = false;
 	for (int i = 0; i < argc; i++)
 	{
-		if (strcmp(argv[i], "-p") == 0)
+		if (strcmp(argv[i], "-n") == 0)
 		{
-			bHaveMandatory = true;
+			strcpy(sysName, argv[++i]);
+		}
+		else if (strcmp(argv[i], "-p") == 0)
+		{
 			strcpy(path, argv[++i]);
 		}
 		else if (strcmp(argv[i], "-s") == 0)
@@ -591,14 +629,21 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 	}
 
+	if (strlen(sysName) > 0 && strlen(path) > 0)
+	{
+		bHaveMandatory = true;
+	}
+
 	if (!bHaveMandatory)
 	{
 		printf("Missing arguments.\r\n");
 		printf("Arguments are:\r\n");
+		printf("  -n system name (Taos, Trima, etc...used for TaosLinkElement::)\r\n");
 		printf("  -p path (path to alarm.info file)\r\n");
 		printf("  [-s stringInfoFileArray] (array of string.info files comma separated without spaces)\r\n\r\n");
 		printf("Example:\r\n");
-		printf("   build_alarm_data -p ../../base/safety/ -s ../../base/gui/string.info,../../base/generic.info\r\n");
+		printf("   build_alarm_data -n Taos -p ../../base/safety/ -s ../../base/gui/string.info,../../base/generic.info\r\n");
+		return -1;
 	}
 
 	_stringInfoIDList.clear();
@@ -623,7 +668,8 @@ int _tmain(int argc, _TCHAR* argv[])
 		retVal = generateAlarmID(path);
 		if (retVal == 0)
 		{
-			retVal = generateAlarmConfig(path);
+			retVal = generateAlarmConfig(sysName, path);
+
 			// generate .dfile for vxworks makfile
 			string dfilePath = path;
 			if (dfilePath.rfind('/') == dfilePath.length())

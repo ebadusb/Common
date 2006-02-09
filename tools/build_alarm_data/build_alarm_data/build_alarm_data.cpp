@@ -334,24 +334,14 @@ int generateAlarmID(char *pStrPath)
 int generateAlarmConfig(char *sysName, char *pStrPath)
 {
 	char fileName[MAX_PATH];
-	char enumTextFile[MAX_PATH];
 	strcpy(fileName, pStrPath);
 	strcat(fileName, "/alarm_config.cpp");
-	strcpy(enumTextFile, pStrPath);
-	strcat(enumTextFile, "/alarm_enum_text.h");
 
 	FILE *pFile = fopen(fileName, "w");
 	if (pFile == NULL)
 	{
 		printf("ERROR: Could not create file %s.\n", fileName);
 		return -1;
-	}
-
-	FILE *pEnumFile = fopen(enumTextFile, "w");
-	if (pEnumFile == NULL)
-	{
-		// not a critical error as this file is used for unit test only
-		printf("Warning: Could not create unit test file %s.\n", enumTextFile);
 	}
 
 	// file header
@@ -453,13 +443,6 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	// alarm attributes table
 	fprintf(pFile, "AlarmAttributesStruct attributesTable[] =\n");
 	fprintf(pFile, "{\n");
-	// ---------
-	// unit test file
-	fprintf(pEnumFile, "// Auto-Generated.  Do not edit.\n");
-	fprintf(pEnumFile, "#include <string>\n");
-	fprintf(pEnumFile, "string %s_Alarms[] = ", (*_alarmDataList.begin()).layer.c_str());
-	fprintf(pEnumFile, "\n{\n");
-	// ---------
 	AlarmDataList::iterator alarmDataIter;
 	bFirstTimeThrough = true;
 	for (alarmDataIter = _alarmDataList.begin(); alarmDataIter != _alarmDataList.end(); alarmDataIter++)
@@ -467,10 +450,6 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 		if (!bFirstTimeThrough)
 		{
 			fprintf(pFile, "},\n");
-			// --------------
-			// unit test file
-			fprintf(pEnumFile, ",\n");
-			// --------------
 		}
 		bFirstTimeThrough = false;
 
@@ -490,17 +469,9 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 				(*alarmDataIter).constraint.c_str(), (*alarmDataIter).response.c_str(), (*alarmDataIter).buttonGroupName.c_str(), 
 				(*alarmDataIter).display.c_str(), (*alarmDataIter).screen.c_str(), (*alarmDataIter).alarmMsg.c_str(), (*alarmDataIter).alarmText.c_str());
 		}
-		// ---------
-		// unit test file
-		fprintf(pEnumFile, "\"%s\"", (*alarmDataIter).alarmID.c_str());
-		// ---------
 	}
 	fprintf(pFile, "}\n");
 	fprintf(pFile, "};\n\n");
-	// ---------
-	// unit test file
-	fprintf(pEnumFile, "};\n");
-	// ---------
 
 	// code that uses the above structs and tables to init the alarms
 	string layer = (*_alarmDataList.begin()).layer;
@@ -563,7 +534,6 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	fprintf(pFile, "}\n\n");
 
 	fclose(pFile);
-	fclose(pEnumFile);
 	printf("alarm_config.cpp generated.\n");
 	return 0;
 }

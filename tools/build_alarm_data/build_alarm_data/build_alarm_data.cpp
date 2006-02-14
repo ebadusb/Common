@@ -62,7 +62,7 @@ bool loadStringInfo(char *stringInfoPath)
 	FILE *pFile = fopen(stringInfoPath, "r");
 	if (pFile == NULL)
 	{
-		printf("ERROR: %s file not found\r\n", stringInfoPath);
+		printf("ERROR: %s file not found\n", stringInfoPath);
 		return false;
 	}
 
@@ -86,30 +86,102 @@ bool loadStringInfo(char *stringInfoPath)
 	return true;
 }
 
+int verifyString(AlarmData *alarm, int lineNo)
+{
+	int retVal = 0;
+	bool bMsgOk = false;
+	bool bTextOk = false;
+	StringList::iterator iter;
+	
+	if (strcmp("\"\"", alarm->alarmMsg.c_str()) == 0)
+	{
+		bMsgOk = true;
+	}
+	
+	if (strcmp("\"\"", alarm->alarmText.c_str()) == 0)
+	{
+		bTextOk = true;
+	}
+
+	for (iter = _stringInfoIDList.begin(); iter != _stringInfoIDList.end(); iter++)
+	{
+		if (!bMsgOk)
+		{
+			if ((*iter) == alarm->alarmMsg)
+			{
+				bMsgOk = true;
+			}
+		}
+
+		if (!bTextOk)
+		{
+			if ((*iter) == alarm->alarmText)
+			{
+				bTextOk = true;
+			}
+		}
+
+		if (bMsgOk && bTextOk)
+		{
+			break;
+		}
+	}
+
+	if (!bMsgOk)
+	{
+		printf("ERROR: %s @ line(%d) not found in any string.info file\n", alarm->alarmMsg.c_str(), lineNo);
+		retVal = -1;
+	}
+
+	if (!bMsgOk)
+	{
+		printf("ERROR: %s @ line(%d) not found in any string.info file\n", alarm->alarmText.c_str(), lineNo);
+		retVal = -1;
+	}
+
+	return retVal;
+}
+
+int verifyButtonName(string buttonGroupName)
+{
+	int retVal = -1;
+	ButtonGroupList::iterator iter;
+	for (iter = _buttonGroupList.begin(); iter != _buttonGroupList.end(); iter++)
+	{
+		if ((*iter).GroupName == buttonGroupName)
+		{
+			retVal = 0;
+			break;
+		}
+	}
+	return retVal;
+}
+
 // Reads in alarm.info and sets up all of our link lists that 
 // are needed to generate our alarm_id.h and alarm_config.cpp files.
 // Also calls verifyString if the user gave us a string.info file path.
-int readStringInfo(char *pStrPath)
+int readStringInfo(char *pStrPath, char *pStrButtons)
 {
 	int retVal = 0;
 	int lineNo = 0;
-	char fileName[MAX_PATH];
-	strcpy(fileName, pStrPath);
-	strcat(fileName, "/alarm.info");
 
-	FILE *pFile = fopen(fileName, "r");
-	if (pFile == NULL)
+	// ----------------------------------------
+	// BUTTONS
+	// ----------------------------------------
+	ButtonGroup btnGrp;
+	char btnFileName[MAX_PATH];
+	strcpy(btnFileName, pStrButtons);
+
+	FILE *pBtnFile = fopen(btnFileName, "r");
+	if (pBtnFile == NULL)
 	{
-		printf("ERROR: %s file not found\r\n", fileName);
+		printf("ERROR: %s file not found\n", btnFileName);
 		return -1;
 	}
 
-	ButtonGroup btnGrp;
-	bool bReadingButtons = false;
-	bool bReadingAlarms = false;
 	char lineBuffer[LineBufferSize];
-
-	while ( fgets(lineBuffer, LineBufferSize, pFile) != NULL )
+	bool bReadingButtons = false;
+	while ( fgets(lineBuffer, LineBufferSize, pBtnFile) != NULL )
 	{
 		lineNo++;
 		char *firstToken = strtok(lineBuffer, " \t\n");
@@ -129,21 +201,6 @@ int readStringInfo(char *pStrPath)
 		if (strcmp(firstToken, "END_DEFINE_BUTTONS") == 0)
 		{
 			// done with the button definition section
-			bReadingButtons = false;
-			continue;
-		}
-
-		if (strcmp(firstToken, "BEGIN_ALARM_CONFIG") == 0)
-		{
-			// starting the alarm config section
-			bReadingAlarms = true;
-			continue;
-		}
-
-		if (strcmp(firstToken, "END_ALARM_CONFIG") == 0)
-		{
-			// done with the alarm config section and since that's the
-			// last section in the file we're done reading the file too.
 			break;
 		}
 
@@ -195,7 +252,48 @@ int readStringInfo(char *pStrPath)
 				continue;
 			}
 		}
-		else if (bReadingAlarms)
+	}
+	fclose(pBtnFile);
+	
+	// ----------------------------------------
+	// ALARM CONFIG
+	// ----------------------------------------
+	char fileName[MAX_PATH];
+	strcpy(fileName, pStrPath);
+
+	FILE *pFile = fopen(fileName, "r");
+	if (pFile == NULL)
+	{
+		printf("ERROR: %s file not found\n", fileName);
+		return -1;
+	}
+
+	lineNo = 0;
+	bool bReadingAlarms = false;
+	while ( fgets(lineBuffer, LineBufferSize, pFile) != NULL )
+	{
+		lineNo++;
+		char *firstToken = strtok(lineBuffer, " \t\n");
+		if ( !firstToken || firstToken[0] == '#' )
+		{
+			// empty line or a comment
+			continue;
+		}
+
+		if (strcmp(firstToken, "BEGIN_ALARM_CONFIG") == 0)
+		{
+			// starting the alarm config section
+			bReadingAlarms = true;
+			continue;
+		}
+
+		if (strcmp(firstToken, "END_ALARM_CONFIG") == 0)
+		{
+			// done with the alarm config section
+			break;
+		}
+
+		if (bReadingAlarms)
 		{
 			AlarmData alarm;
 			try
@@ -212,11 +310,19 @@ int readStringInfo(char *pStrPath)
 				alarm.alarmMsg = strtok(NULL, " \t\n");
 				alarm.alarmText = strtok(NULL, " \t\n");
 				alarm.buttonGroupName = strtok(NULL, " \t\n");
+
+				retVal = verifyButtonName(alarm.buttonGroupName);
+				if (retVal < 0)
+				{
+					printf("ERROR: Button Group not defined.  Line %d\n", lineNo);
+					break;
+				}
+
 				_alarmDataList.push_back(alarm);
 			}
 			catch (...)
 			{
-				printf("ERROR: Bad syntax in alarm.info line %d", lineNo);
+				printf("ERROR: Bad syntax in alarm.info line %d\n", lineNo);
 				retVal = -1;
 				break;
 			}
@@ -226,72 +332,33 @@ int readStringInfo(char *pStrPath)
 			// and are defined in a string.info file already.
 			if (_stringInfoIDList.size() > 0)
 			{
-				bool bMsgOk = false;
-				bool bTextOk = false;
-				StringList::iterator iter;
-				
-				if (strcmp("\"\"", alarm.alarmMsg.c_str()) == 0)
+				retVal = verifyString(&alarm, lineNo);
+				if (retVal < 0)
 				{
-					bMsgOk = true;
-				}
-				
-				if (strcmp("\"\"", alarm.alarmText.c_str()) == 0)
-				{
-					bTextOk = true;
-				}
-
-				for (iter = _stringInfoIDList.begin(); iter != _stringInfoIDList.end(); iter++)
-				{
-					if (!bMsgOk)
-					{
-						if ((*iter) == alarm.alarmMsg)
-						{
-							bMsgOk = true;
-						}
-					}
-
-					if (!bTextOk)
-					{
-						if ((*iter) == alarm.alarmText)
-						{
-							bTextOk = true;
-						}
-					}
-
-					if (bMsgOk && bTextOk)
-					{
-						break;
-					}
-				}
-
-				if (!bMsgOk)
-				{
-					printf("ERROR: %s @ line(%d) not found in any string.info file\r\n", alarm.alarmMsg.c_str(), lineNo);
-					retVal = -1;
 					break;
 				}
-	
-				if (!bMsgOk)
-				{
-					printf("ERROR: %s @ line(%d) not found in any string.info file\r\n", alarm.alarmText.c_str(), lineNo);
-					retVal = -1;
-					break;
-				}
-
 			}
 		}
-
 	}
-
 	fclose(pFile);
+
 	return retVal;
 }
 
 // Generates alarm_id.h
 int generateAlarmID(char *pStrPath)
 {
+	char copy[MAX_PATH];
+	strcpy(copy, pStrPath);
+
 	char fileName[MAX_PATH];
-	strcpy(fileName, pStrPath);
+	char *pLastSlash = strrchr(copy, '/');
+	if (pLastSlash == NULL)
+	{
+		pLastSlash = strrchr(copy, '\\');
+	}
+	*pLastSlash = 0;
+	strcpy(fileName, copy);
 	strcat(fileName, "/alarm_id.h");
 
 	FILE *pFile = fopen(fileName, "w");
@@ -304,7 +371,7 @@ int generateAlarmID(char *pStrPath)
 	// file header
 	fprintf(pFile, "// Do NOT edit this file.\n");
 	fprintf(pFile, "// This is an auto-generated file from the build_alarm_data tool.\n");
-	fprintf(pFile, "// Built from %s/alarm.info\n\n", pStrPath);
+	fprintf(pFile, "// Built from %s/alarm.info\n\n", copy);
 	
 	AlarmDataList::iterator iter;
 	for (iter = _alarmDataList.begin(); iter != _alarmDataList.end(); iter++)
@@ -333,8 +400,17 @@ int generateAlarmID(char *pStrPath)
 // Generates alarm_config.cpp
 int generateAlarmConfig(char *sysName, char *pStrPath)
 {
+	char copy[MAX_PATH];
+	strcpy(copy, pStrPath);
+
 	char fileName[MAX_PATH];
-	strcpy(fileName, pStrPath);
+	char *pLastSlash = strrchr(copy, '/');
+	if (pLastSlash == NULL)
+	{
+		pLastSlash = strrchr(copy, '\\');
+	}
+	*pLastSlash = 0;
+	strcpy(fileName, copy);
 	strcat(fileName, "/alarm_config.cpp");
 
 	FILE *pFile = fopen(fileName, "w");
@@ -347,7 +423,7 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	// file header
 	fprintf(pFile, "// Do NOT edit this file.\n");
 	fprintf(pFile, "// This is an auto-generated file from the build_alarm_data tool.\n");
-	fprintf(pFile, "// Built from %s/alarm.info\n\n", pStrPath);
+	fprintf(pFile, "// Built from %s/alarm.info\n\n", copy);
 
 	// include files
 	fprintf(pFile, "#include <string>\n\n");
@@ -560,26 +636,30 @@ int _tmain(int argc, _TCHAR* argv[])
 	// Arguments
 	// -n system name (Taos, Trima, etc...used for TaosLinkElement::)
 	// -p path to alarm.info file
+	// -b path to alarm_button.info file
 	// -s stringInfo (path to string.info file to use for verifying)
 	// 
-	if (argc < 5)
+	if (argc < 7)
 	{
-		printf("Missing arguments.\r\n");
-		printf("Arguments are:\r\n");
-		printf("  -n system name (Taos, Trima, etc...used for TaosLinkElement::)\r\n");
-		printf("  -p path (path to alarm.info file)\r\n");
-		printf("  [-s stringInfoFileArray] (array of string.info files comma separated without spaces)\r\n\r\n");
-		printf("Example:\r\n");
-		printf("   build_alarm_data -n Taos -p ../../base/safety/ -s ../../base/gui/string.info,../../base/generic.info\r\n");
+		printf("Missing arguments.\n");
+		printf("Arguments are:\n");
+		printf("  -n system name (Taos, Trima, etc...used for TaosLinkElement::)\n");
+		printf("  -p alarm.info path\n");
+		printf("  -b alarm_button.info path\n");
+		printf("  [-s stringInfoFileArray] (array of string.info files comma separated without spaces)\n\n");
+		printf("Example:\n");
+		printf("   build_alarm_data -n Taos -p ../../base/safety/alarm.info -b ../../base/alarm_button.info -s ../../base/gui/string.info,../../base/generic.info\n");
 
 		return -1;
 	}
 
 	char sysName[MAX_PATH];
 	char path[MAX_PATH];
+	char buttons[MAX_PATH];
 	char stringInfo[MAX_PATH];
 	memset(&sysName, 0, MAX_PATH);
 	memset(&path, 0, MAX_PATH);
+	memset(&buttons, 0, MAX_PATH);
 	memset(&stringInfo, 0, MAX_PATH);
 
 	bool bHaveMandatory = false;
@@ -593,26 +673,31 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			strcpy(path, argv[++i]);
 		}
+		else if (strcmp(argv[i], "-b") == 0)
+		{
+			strcpy(buttons, argv[++i]);
+		}
 		else if (strcmp(argv[i], "-s") == 0)
 		{
 			strcpy(stringInfo, argv[++i]);
 		}
 	}
 
-	if (strlen(sysName) > 0 && strlen(path) > 0)
+	if (strlen(sysName) > 0 && strlen(path) > 0 && strlen(buttons) > 0)
 	{
 		bHaveMandatory = true;
 	}
 
 	if (!bHaveMandatory)
 	{
-		printf("Missing arguments.\r\n");
-		printf("Arguments are:\r\n");
-		printf("  -n system name (Taos, Trima, etc...used for TaosLinkElement::)\r\n");
-		printf("  -p path (path to alarm.info file)\r\n");
-		printf("  [-s stringInfoFileArray] (array of string.info files comma separated without spaces)\r\n\r\n");
-		printf("Example:\r\n");
-		printf("   build_alarm_data -n Taos -p ../../base/safety/ -s ../../base/gui/string.info,../../base/generic.info\r\n");
+		printf("Missing arguments.\n");
+		printf("Arguments are:\n");
+		printf("  -n system name (Taos, Trima, etc...used for TaosLinkElement::)\n");
+		printf("  -p alarm.info path\n");
+		printf("  -b alarm_button.info path\n");
+		printf("  [-s stringInfoFileArray] (array of string.info files comma separated without spaces)\n\n");
+		printf("Example:\n");
+		printf("   build_alarm_data -n Taos -p ../../base/safety/alarm.info -b ../../base/alarm_button.info -s ../../base/gui/string.info,../../base/generic.info\n");
 		return -1;
 	}
 
@@ -623,27 +708,36 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		if (!loadStringInfo(pFileName[arrayIndex]))
 		{
-			printf("ERROR: %s file not found.\r\n", pFileName[arrayIndex]);
+			printf("ERROR: %s file not found.\n", pFileName[arrayIndex]);
 			return -1;
 		}
 		arrayIndex++;
 	}
 
-	int retVal = readStringInfo(path);
+	int retVal = readStringInfo(path, buttons);
 	if (retVal == 0)
 	{
 		// MUST BE CALLED IN THIS ORDER...
-		// generateAlarmID(path);
-		// generateAlarmConfig(path);
+		// generateAlarmID();
+		// generateAlarmConfig();
 		retVal = generateAlarmID(path);
 		if (retVal == 0)
 		{
 			retVal = generateAlarmConfig(sysName, path);
 
 			// generate .dfile for vxworks makfile
+			char *pLastSlash = strrchr(path, '\\');
+			if (pLastSlash == NULL)
+			{
+				pLastSlash = strrchr(path, '/');
+			}
+			*pLastSlash = 0;
+
 			string dfilePath = path;
 			if (dfilePath.rfind('/') == dfilePath.length())
 				dfilePath += ".dfile/alarm_config_cpp.d";
+			else if (dfilePath.rfind('\\') == dfilePath.length())
+				dfilePath += ".dfile\\alarm_config_cpp.d";
 			else
 				dfilePath += "/.dfile/alarm_config_cpp.d";
 			FILE *dfile = fopen(dfilePath.c_str(), "w");

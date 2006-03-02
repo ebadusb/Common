@@ -41,6 +41,7 @@ struct AlarmData
 	string layer;
 	string alarmNamespace;
 	string priority;
+	string alwaysShow;
 	string constraint;
 	string response;
 	string display;
@@ -270,6 +271,9 @@ int readStringInfo(char *pStrPath, char *pStrButtons)
 
 	lineNo = 0;
 	bool bReadingAlarms = false;
+	int currentItem = 1;
+	AlarmData alarm;
+
 	while ( fgets(lineBuffer, LineBufferSize, pFile) != NULL )
 	{
 		lineNo++;
@@ -295,21 +299,109 @@ int readStringInfo(char *pStrPath, char *pStrButtons)
 
 		if (bReadingAlarms)
 		{
-			AlarmData alarm;
 			try
 			{
-				alarm.alarmID = firstToken;
-				alarm.node = strtok(NULL, " \t\n");
-				alarm.layer = strtok(NULL, " \t\n");
-				alarm.alarmNamespace = strtok(NULL, " \t\n");
-				alarm.priority = strtok(NULL, " \t\n");
-				alarm.constraint = strtok(NULL, " \t\n");
-				alarm.response = strtok(NULL, " \t\n");
-				alarm.display = strtok(NULL, " \t\n");
-				alarm.screen = strtok(NULL, " \t\n");
-				alarm.alarmMsg = strtok(NULL, " \t\n");
-				alarm.alarmText = strtok(NULL, " \t\n");
-				alarm.buttonGroupName = strtok(NULL, " \t\n");
+				if (currentItem == 1)
+				{
+					alarm.alarmID = firstToken;
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 2)
+				{
+					alarm.node = firstToken;
+					if (alarm.node == "\\")
+						continue;
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 3)
+				{
+					alarm.layer = firstToken;
+					if (alarm.layer == "\\")
+						continue;
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 4)
+				{
+					alarm.alarmNamespace = firstToken;
+					if (alarm.alarmNamespace == "\\")
+						continue;
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 5)
+				{
+					alarm.priority = firstToken;
+					if (alarm.priority == "\\")
+						continue;
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 6)
+				{
+					alarm.alwaysShow = firstToken;
+					if (alarm.alwaysShow == "\\")
+						continue;
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 7)
+				{
+					alarm.constraint = firstToken;
+					if (alarm.constraint == "\\")
+						continue;
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 8)
+				{
+					alarm.response = firstToken;
+					if (alarm.response == "\\")
+						continue;
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 9)
+				{
+					alarm.display = firstToken;
+					if (alarm.display == "\\")
+						continue;
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 10)
+				{
+					alarm.screen = firstToken;
+					if (alarm.screen == "\\")
+						continue;
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 11)
+				{
+					alarm.alarmMsg = firstToken;
+					if (alarm.alarmMsg == "\\")
+						continue;
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 12)
+				{
+					alarm.alarmText = firstToken;
+					if (alarm.alarmText == "\\")
+						continue;
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 13)
+				{
+					alarm.buttonGroupName = firstToken;
+					if (alarm.buttonGroupName == "\\")
+						continue;
+					currentItem++;
+				}
 
 				retVal = verifyButtonName(alarm.buttonGroupName);
 				if (retVal < 0)
@@ -338,6 +430,10 @@ int readStringInfo(char *pStrPath, char *pStrButtons)
 					break;
 				}
 			}
+			
+			// reset things for the next alarm config item
+			currentItem = 1;
+			memset(&alarm, 0, sizeof(AlarmData));
 		}
 	}
 	fclose(pFile);
@@ -463,6 +559,7 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	fprintf(pFile, "\t%sLinkElement::Level	_moduleLevel;	// Module link level base, disposable, protocol\n", sysName);
 	fprintf(pFile, "\tint						_alarmId;		// Alarm serial number (only unique for a module and node)\n");
 	fprintf(pFile, "\tint						_priority;		// Display priority higher number is higher priority\n");
+	fprintf(pFile, "\tbool						_alwaysShow;	// Always show the alarm even if alarms are dismissed\n");
 	fprintf(pFile, "\tConstraintGroup*			_constraintObj;	// Pointer to constraint group object. Pointer may be NULL.\n");
 	fprintf(pFile, "\tAlarmResponse* 			_responseObj;	// Pointer to operator response. Pointer may be NULL.\n");
 	fprintf(pFile, "\tstring					_responseMsgs;	// string that maps to data that will create the response message array.\n");
@@ -531,19 +628,21 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 
 		if ((*alarmDataIter).display == "NULL")
 		{
-			fprintf(pFile, "{\"%s\",%s,%sLinkElement::%s,%s::%s,%s,&%s,&%s,\"%s\",%s,%s,%s,%s", 
+			fprintf(pFile, "{\"%s\",%s,%sLinkElement::%s,%s::%s,%s,%s,&%s,&%s,\"%s\",%s,%s,%s,%s", 
 				(*alarmDataIter).alarmID.c_str(), (*alarmDataIter).node.c_str(), sysName, (*alarmDataIter).layer.c_str(), 
 				(*alarmDataIter).alarmNamespace.c_str(), (*alarmDataIter).alarmID.c_str(), (*alarmDataIter).priority.c_str(), 
-				(*alarmDataIter).constraint.c_str(), (*alarmDataIter).response.c_str(), (*alarmDataIter).buttonGroupName.c_str(), 
-				(*alarmDataIter).display.c_str(), (*alarmDataIter).screen.c_str(), (*alarmDataIter).alarmMsg.c_str(), (*alarmDataIter).alarmText.c_str());
+				(*alarmDataIter).alwaysShow.c_str(), (*alarmDataIter).constraint.c_str(), (*alarmDataIter).response.c_str(), 
+				(*alarmDataIter).buttonGroupName.c_str(), (*alarmDataIter).display.c_str(), (*alarmDataIter).screen.c_str(), 
+				(*alarmDataIter).alarmMsg.c_str(), (*alarmDataIter).alarmText.c_str());
 		}
 		else
 		{
-			fprintf(pFile, "{\"%s\",%s,%sLinkElement::%s,%s::%s,%s,&%s,&%s,\"%s\",&%s,%s,%s,%s", 
+			fprintf(pFile, "{\"%s\",%s,%sLinkElement::%s,%s::%s,%s,%s,&%s,&%s,\"%s\",&%s,%s,%s,%s", 
 				(*alarmDataIter).alarmID.c_str(), (*alarmDataIter).node.c_str(), sysName, (*alarmDataIter).layer.c_str(), 
 				(*alarmDataIter).alarmNamespace.c_str(), (*alarmDataIter).alarmID.c_str(), (*alarmDataIter).priority.c_str(), 
-				(*alarmDataIter).constraint.c_str(), (*alarmDataIter).response.c_str(), (*alarmDataIter).buttonGroupName.c_str(), 
-				(*alarmDataIter).display.c_str(), (*alarmDataIter).screen.c_str(), (*alarmDataIter).alarmMsg.c_str(), (*alarmDataIter).alarmText.c_str());
+				(*alarmDataIter).alwaysShow.c_str(), (*alarmDataIter).constraint.c_str(), (*alarmDataIter).response.c_str(), 
+				(*alarmDataIter).buttonGroupName.c_str(), (*alarmDataIter).display.c_str(), (*alarmDataIter).screen.c_str(), 
+				(*alarmDataIter).alarmMsg.c_str(), (*alarmDataIter).alarmText.c_str());
 		}
 	}
 	fprintf(pFile, "}\n");
@@ -599,6 +698,7 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	fprintf(pFile, "\t\t\tattributesTable[i]._moduleLevel,\n");
     fprintf(pFile, "\t\t\tattributesTable[i]._alarmId,\n");
 	fprintf(pFile, "\t\t\tattributesTable[i]._priority,\n");
+	fprintf(pFile, "\t\t\tattributesTable[i]._alwaysShow,\n");
 	fprintf(pFile, "\t\t\tattributesTable[i]._constraintObj,\n");
 	fprintf(pFile, "\t\t\tattributesTable[i]._responseObj,\n");
 	fprintf(pFile, "\t\t\tpResponseArray,\n");

@@ -48,6 +48,7 @@ struct AlarmData
 	string screen;
 	string alarmMsg;
 	string alarmText;
+	string causeActionBitmap;
 	string buttonGroupName;
 };
 
@@ -271,6 +272,7 @@ int readStringInfo(char *pStrPath, char *pStrButtons)
 
 	lineNo = 0;
 	bool bReadingAlarms = false;
+	bool bCauseActionList = false;
 	int currentItem = 1;
 	AlarmData alarm;
 
@@ -396,6 +398,83 @@ int readStringInfo(char *pStrPath, char *pStrButtons)
 					firstToken = strtok(NULL, " \t\n");
 				}
 				if (currentItem == 13)
+				{
+					string nextItem = firstToken;
+					// if we have a "CauseStart" tag then we have N number of
+					// cause/action/bitmap strings...otherwise we skip over
+					// down to buttonGroupName.
+					if (nextItem == "\\")
+						continue;
+					if (nextItem == "\"CauseStart\"")
+					{
+						alarm.causeActionBitmap = ":CauseStart:";
+						currentItem++;
+						firstToken = strtok(NULL, " \t\n");
+					}
+					else
+					{
+						alarm.causeActionBitmap = "";
+						currentItem = 20;
+					}
+				}
+BeginCauseDef:
+				if (currentItem == 14)
+				{
+					// CAUSE
+					string nextItem = firstToken;
+					if (nextItem == "\\")
+						continue;
+					alarm.causeActionBitmap += nextItem.substr(1, nextItem.size() - 2);
+					alarm.causeActionBitmap += ":";
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 15)
+				{
+					// ACTION
+					string nextItem = firstToken;
+					if (nextItem == "\\")
+						continue;
+					alarm.causeActionBitmap += nextItem.substr(1, nextItem.size() - 2);
+					alarm.causeActionBitmap += ":";
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 16)
+				{
+					// BITMAP
+					string nextItem = firstToken;
+					if (nextItem == "\\")
+						continue;
+					// bitmaps are optional, gui expects a space placeholder though
+					if (nextItem == "\"\"")
+						alarm.causeActionBitmap += " ";
+					else
+						alarm.causeActionBitmap += nextItem.substr(1, nextItem.size() - 2);
+					alarm.causeActionBitmap += ":";
+					currentItem++;
+					firstToken = strtok(NULL, " \t\n");
+				}
+				if (currentItem == 17)
+				{
+					string nextItem = firstToken;
+					if (nextItem == "\\")
+						continue;
+					if (nextItem == "\"CauseEnd\"")
+					{
+						alarm.causeActionBitmap += "CauseEnd";
+						currentItem	= 20;
+						firstToken = strtok(NULL, " \t\n");
+					}
+					else
+					{
+						// OH MY GOD, I haven't used a "goto" in decades...
+						// hope I don't get flogged for this one!
+						currentItem = 14;
+						goto BeginCauseDef;
+					}
+				}
+				if (currentItem == 20)
 				{
 					alarm.buttonGroupName = firstToken;
 					if (alarm.buttonGroupName == "\\")
@@ -565,8 +644,9 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	fprintf(pFile, "\tstring					_responseMsgs;	// string that maps to data that will create the response message array.\n");
 	fprintf(pFile, "\tAlarmDisplay* 			_displayObj;	// Pointer to display object. Pointer may be NULL.\n");
 	fprintf(pFile, "\tActionScreenGenFunc		_actionGenerator;	// Function to generate a BaseActionScreen* for GUI object.\n");
-	fprintf(pFile, "\tstring					_alarmMsg;\n");
-	fprintf(pFile, "\tstring					_alarmText;\n");
+	fprintf(pFile, "\tstring					_alarmMsg;		// Alarm message bar text\n");
+	fprintf(pFile, "\tstring					_alarmText;		// Alarm text\n");
+	fprintf(pFile, "\tstring					_causeActionBitmap;	// Cause/Action/Bitmap string array (if any)\n");
 	fprintf(pFile, "};\n\n");
 	
 	// alarm response array table
@@ -628,21 +708,21 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 
 		if ((*alarmDataIter).display == "NULL")
 		{
-			fprintf(pFile, "{\"%s\",%s,%sLinkElement::%s,%s::%s,%s,%s,&%s,&%s,\"%s\",%s,%s,%s,%s", 
+			fprintf(pFile, "{\"%s\",%s,%sLinkElement::%s,%s::%s,%s,%s,&%s,&%s,\"%s\",%s,%s,%s,%s,\"%s\"", 
 				(*alarmDataIter).alarmID.c_str(), (*alarmDataIter).node.c_str(), sysName, (*alarmDataIter).layer.c_str(), 
 				(*alarmDataIter).alarmNamespace.c_str(), (*alarmDataIter).alarmID.c_str(), (*alarmDataIter).priority.c_str(), 
 				(*alarmDataIter).alwaysShow.c_str(), (*alarmDataIter).constraint.c_str(), (*alarmDataIter).response.c_str(), 
 				(*alarmDataIter).buttonGroupName.c_str(), (*alarmDataIter).display.c_str(), (*alarmDataIter).screen.c_str(), 
-				(*alarmDataIter).alarmMsg.c_str(), (*alarmDataIter).alarmText.c_str());
+				(*alarmDataIter).alarmMsg.c_str(), (*alarmDataIter).alarmText.c_str(), (*alarmDataIter).causeActionBitmap.c_str());
 		}
 		else
 		{
-			fprintf(pFile, "{\"%s\",%s,%sLinkElement::%s,%s::%s,%s,%s,&%s,&%s,\"%s\",&%s,%s,%s,%s", 
+			fprintf(pFile, "{\"%s\",%s,%sLinkElement::%s,%s::%s,%s,%s,&%s,&%s,\"%s\",&%s,%s,%s,%s,\"%s\"", 
 				(*alarmDataIter).alarmID.c_str(), (*alarmDataIter).node.c_str(), sysName, (*alarmDataIter).layer.c_str(), 
 				(*alarmDataIter).alarmNamespace.c_str(), (*alarmDataIter).alarmID.c_str(), (*alarmDataIter).priority.c_str(), 
 				(*alarmDataIter).alwaysShow.c_str(), (*alarmDataIter).constraint.c_str(), (*alarmDataIter).response.c_str(), 
 				(*alarmDataIter).buttonGroupName.c_str(), (*alarmDataIter).display.c_str(), (*alarmDataIter).screen.c_str(), 
-				(*alarmDataIter).alarmMsg.c_str(), (*alarmDataIter).alarmText.c_str());
+				(*alarmDataIter).alarmMsg.c_str(), (*alarmDataIter).alarmText.c_str(), (*alarmDataIter).causeActionBitmap.c_str());
 		}
 	}
 	fprintf(pFile, "}\n");
@@ -666,6 +746,7 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	fprintf(pFile, "\t\tAlarmResponseArray* pResponseArray = NULL;\n");
 	fprintf(pFile, "\t\tint len = attributesTable[i]._alarmMsg.size();\n");
 	fprintf(pFile, "\t\tlen += attributesTable[i]._alarmText.size();\n");
+	fprintf(pFile, "\t\tlen += attributesTable[i]._causeActionBitmap.size();\n");
 	fprintf(pFile, "\t\tchar *parameterString = NULL;\n");
 	fprintf(pFile, "\t\tfor (int y=0; y < sizeof(responseArrayTable)/sizeof(responseArrayTable[0]); y++)\n");
 	fprintf(pFile, "\t\t{\n");
@@ -690,6 +771,7 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	fprintf(pFile, "\t\t\t\tstrcat(parameterString, \":\");\n");
 	fprintf(pFile, "\t\t\t\tstrcat(parameterString, attributesTable[i]._alarmText.c_str());\n");
 	fprintf(pFile, "\t\t\t\tstrcat(parameterString, responseArrayTable[y].params);\n");
+	fprintf(pFile, "\t\t\t\tstrcat(parameterString, attributesTable[i]._causeActionBitmap.c_str());\n");
     fprintf(pFile, "\t\t\t}\n");
 	fprintf(pFile, "\t\t}\n\n");
 	fprintf(pFile, "\t\t// add new alarm attribute object\n");

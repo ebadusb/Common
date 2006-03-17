@@ -150,6 +150,10 @@ void CGUIFrame::draw(UGL_GC_ID gc)
 	if(gc != UGL_NULL_ID)
 	{
 		UGL_POS x1,y1,x2,y2;
+#if CPU!=SIMNT
+        int ltOffset;
+        int rbOffset;
+#endif
 		// set the linestyle to solid
 		uglLineStyleSet(gc, UGL_LINE_STYLE_SOLID);
 		uglBackgroundColorSet(gc, UGL_COLOR_TRANSPARENT);
@@ -159,26 +163,47 @@ void CGUIFrame::draw(UGL_GC_ID gc)
 			// setup initial width and color for shaded lines	
 			uglLineWidthSet(gc, (int)_shadedLineWidth);
 			uglForegroundColorSet(gc, (UGL_COLOR)_shadedColor);
+#if CPU!=SIMNT
+            // correct for offsets that will be applied by uglGenericLine
+            ltOffset = (_shadedLineWidth - 1) / 2;
+            rbOffset = _shadedLineWidth / 2 + 1;
+#endif
 		}
 		else
 		{
 			//simple frame so only one color and width
 			uglLineWidthSet(gc, (int)_lineWidth);
 			uglForegroundColorSet(gc, (UGL_COLOR)_color);
+#if CPU!=SIMNT
+            // correct for offsets that will be applied by uglGenericLine
+            ltOffset = (_lineWidth - 1) / 2;
+            rbOffset = _lineWidth / 2 + 1;
+#endif
 		}
 
 		// the frame is drawn with line segments instead of polygon to allow for changes in line width and color
 		// for a shaded frame.
 
-		// draw the top of the frame (vertical segment from starting location)
+		// draw the left side of the frame (vertical segment from starting location)
+#if CPU==SIMNT
 		x1=_region.x;
 		y1=_region.y;
-		x2=x1;
 		y2=_region.y+_region.height;
+		x2=x1;
+#else
+		x1=_region.x + ltOffset;
+		y1=_region.y + ltOffset;
+		y2=_region.y+_region.height - rbOffset;
+#endif
+		x2=x1;
 		uglLine(gc, x1,y1,x2,y2);
 
-		// draw the left side the frame (horizontal from starting location)
+		// draw the top of the frame (horizontal from starting location)
+#if CPU==SIMNT
 		x2 = _region.x+_region.width;
+#else
+		x2 = _region.x+_region.width - rbOffset;
+#endif
 		y2 = y1;
 		uglLine(gc, x1,y1,x2,y2);
 
@@ -187,21 +212,34 @@ void CGUIFrame::draw(UGL_GC_ID gc)
 			// set the line width and color for unshaded lines
 			uglLineWidthSet(gc, (int)_unShadedLineWidth);
 			uglForegroundColorSet(gc, (UGL_COLOR)_unShadedColor);
+            // correct for offsets that will be applied by uglGenericLine
+#if CPU!=SIMNT
+            ltOffset = (_unShadedLineWidth - 1) / 2;
+            rbOffset = _unShadedLineWidth / 2 + 1;
+            x1=_region.x + ltOffset;
+#endif
 		}
 
 		// draw bottom of frame
+#if CPU==SIMNT
 		y1=_region.y+_region.height;
 		x2=_region.x+_region.width;
+#else
+		y1=_region.y+_region.height - rbOffset;
+		x2=_region.x+_region.width - rbOffset;
+#endif
 		y2=y1;
 		uglLine(gc, x1,y1,x2,y2);
 
 		// draw right side of frame
-		x1=_region.x+_region.width;
+		x1=x2;
+#if CPU==SIMNT
 		y1=_region.y+_region.height;
 		y2=_region.y;
+#else
+		y1=_region.y+_region.height - rbOffset;
+		y2=_region.y + ltOffset;
+#endif
 		uglLine(gc, x1,y1,x2,y2);
 	}
 }
-
-
-	

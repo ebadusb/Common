@@ -42,6 +42,10 @@ public:
    //  message.
    void despoofMessage( MessageBase &mb );
 
+   //
+   // Crash the message crc.
+   static void sendCorruptMessage( MessageBase &mb );
+
 protected:
 
    //

@@ -12,6 +12,7 @@
 #include "datalog.h"
 #include "datalog_levels.h"
 #include "spooferdispatcher.h"
+#include "messagesystem.h"
 
 
 SpooferDispatcher :: SpooferDispatcher( ) : Dispatcher()
@@ -117,6 +118,25 @@ void SpooferDispatcher :: despoofMessage( MessageBase &mb )
    spoofmp.updateTime();
    spoofmp.updateCRC();
    send( spoofmp );
+}
+
+void SpooferDispatcher :: sendCorruptMessage( MessageBase &mb )
+{
+    //
+   // Change the message packet list for the MessageBase object ...
+    //
+   DataLog( log_level_message_spoof_info ) << "sendCorruptMessage:crc error spoofer " << endmsg;
+   list< MessagePacket* >::iterator pckt;
+   for ( pckt  = mb._PacketList.begin();
+         pckt != mb._PacketList.end() ;
+         ++pckt ) 
+   {                  
+      (*pckt)->msgData().msgLength((*pckt)->msgData().msgLength() - 1);
+      
+      MessageSystem::MsgSystem()->dispatcher().send( *(*pckt) );
+
+      DataLog( log_level_message_spoof_info ) << "sendCorruptMessage:msg send " << endmsg;
+   }
 }
 
 void SpooferDispatcher :: processMessage( MessagePacket &mp )

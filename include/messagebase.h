@@ -21,7 +21,6 @@ class MessageBase
 public:
    friend class Dispatcher;
    friend class SpooferDispatcher;
-   friend class TaosSpooferDispatcher;
 public:
 
    //

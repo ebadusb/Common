@@ -1,0 +1,79 @@
+# $Header$
+#
+# Makefile - makefile for datalog unit test software
+#
+# $Log$
+#
+
+ifeq ($(BUILD_TYPE),CLEAN)
+.PHONY: all
+all: clean
+else
+.PHONY: all
+all: check_opt_change apps
+endif
+
+#
+# Define include directories needed for apps built in this directory
+#
+ADDN_INCDIR = -I ../.. -I ../../include
+
+#
+# MAINDIR should be set to the relative path from this makefile directory
+# to the base trima project directory.  MAINDIR must use \ (DOS/Windows
+# style) directory separators if they are needed.
+#
+MAINDIR = ..\..
+include $(MAINDIR)/makefile.vxc
+
+#
+# Define location for Trima libraries
+#
+LIBDIR = $(MAINDIR)/lib
+
+#
+# The following should define all of the source files of each type
+# to be compiled for the executable
+#
+APP_NAME := datalog_test_buffer
+datalog_test_buffer_dir = ..\bin
+datalog_test_buffer_c_files =
+datalog_test_buffer_cxx_files = datalog_test_buffer.cpp
+datalog_test_buffer_libs =
+include $(MAINDIR)/makefile.process_app
+
+APP_NAME := datalog_test_print
+datalog_test_print_dir = ..\bin
+datalog_test_print_c_files =
+datalog_test_print_cxx_files = datalog_test_print.cpp
+datalog_test_print_libs =
+include $(MAINDIR)/makefile.process_app
+
+APP_NAME := datalog_test_general
+datalog_test_general_dir = ..\bin
+datalog_test_general_c_files =
+datalog_test_general_cxx_files = datalog_test_general.cpp
+datalog_test_general_libs =
+include $(MAINDIR)/makefile.process_app
+
+APP_NAME := datalog_test_stream
+datalog_test_stream_dir = ..\bin
+datalog_test_stream_c_files =
+datalog_test_stream_cxx_files = datalog_test_stream.cpp
+datalog_test_stream_libs =
+include $(MAINDIR)/makefile.process_app
+
+APP_NAME := datalog_test_periodic
+datalog_test_periodic_dir = ..\bin
+datalog_test_periodic_c_files =
+datalog_test_periodic_cxx_files = datalog_test_periodic.cpp
+datalog_test_periodic_libs =
+include $(MAINDIR)/makefile.process_app
+
+apps : $(APP_LIST)
+
+#
+# This is the standard makefile for Trima applications
+#
+include $(MAINDIR)/makefile.build_apps
+

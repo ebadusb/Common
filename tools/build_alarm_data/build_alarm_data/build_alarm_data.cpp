@@ -744,9 +744,9 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	fprintf(pFile, "\t\t// create response array\n");
 	fprintf(pFile, "\t\tstring responseName = attributesTable[i]._responseMsgs;\n");
 	fprintf(pFile, "\t\tAlarmResponseArray* pResponseArray = NULL;\n");
-	fprintf(pFile, "\t\tint len = attributesTable[i]._alarmMsg.size();\n");
-	fprintf(pFile, "\t\tlen += attributesTable[i]._alarmText.size();\n");
-	fprintf(pFile, "\t\tlen += attributesTable[i]._causeActionBitmap.size();\n");
+	fprintf(pFile, "\t\tint len = attributesTable[i]._alarmMsg.size() + 1;\n");
+	fprintf(pFile, "\t\tlen += attributesTable[i]._alarmText.size() + 1;\n");
+	fprintf(pFile, "\t\tlen += attributesTable[i]._causeActionBitmap.size() + 1;\n");
 	fprintf(pFile, "\t\tchar *parameterString = NULL;\n");
 	fprintf(pFile, "\t\tfor (int y=0; y < sizeof(responseArrayTable)/sizeof(responseArrayTable[0]); y++)\n");
 	fprintf(pFile, "\t\t{\n");

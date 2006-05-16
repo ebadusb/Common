@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.9  2005/11/22 00:34:42Z  rm10919
+ * Get data item database to work with software layers.
  * Revision 1.8  2005/09/30 22:40:53Z  rm10919
  * Get the variable database working!
  * Revision 1.7  2005/08/13 20:55:17Z  cf10242
@@ -89,7 +91,7 @@ void CGUITextItem::setText(const char * string, LanguageId = currentLanguage)
 
          while (string[stringLength] != '\0')
          {
-            _string[stringLength] = string[stringLength];
+            _string[stringLength] = (unsigned char)(UGL_WCHAR)string[stringLength];
             stringLength++;
          }
          _stringLength = stringLength;

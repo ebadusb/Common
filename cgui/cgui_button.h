@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.17  2005/09/30 22:40:42Z  rm10919
+ *  Get the variable database working!
  *  Revision 1.16  2005/04/26 23:16:47Z  rm10919
  *  Made changes to cgui_text and cgui_text_item, plus added 
  *  classes for variable substitution in text strings.
@@ -299,6 +301,7 @@ public:
    void setEnabledTextColor(CGUIColor color);
    void setDisabledTextColor(CGUIColor color);
    void setPressedTextColor(CGUIColor color);
+   void setTextColor(CGUIColor color);
    
    // ICON METHODS //
 

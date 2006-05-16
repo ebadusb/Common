@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.20  2005/11/22 00:34:42Z  rm10919
+ *  Get data item database to work with software layers.
  *  Revision 1.19  2005/11/16 18:20:44Z  pn02526
  *  Further fix for IT # 46
  *  Revision 1.18  2005/11/14 09:52:52  cf10242
@@ -942,6 +944,13 @@ void CGUIButton::setDisabledTextColor(CGUIColor color)
 
 void CGUIButton::setPressedTextColor(CGUIColor color)
 {
+   _pressedText->setColor(color);
+}
+
+void CGUIButton::setTextColor(CGUIColor color)
+{
+   _enabledText->setColor(color);
+   _disabledText->setColor(color);
    _pressedText->setColor(color);
 }
 

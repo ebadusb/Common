@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.cpp 1.12 2007/06/14 19:34:11Z wms10235 Exp wms10235 $
  * $Log: cgui_string_data.cpp $
+ * Revision 1.4  2005/10/19 15:42:22Z  rm10919
+ * Fix file read to not skip over text if only one space.
  * Revision 1.3  2005/06/09 15:00:12Z  rm10919
  * Fix the read data file routine.
  * Revision 1.2  2005/04/28 14:40:32Z  rm10919
@@ -91,6 +93,7 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
             exit(1);
          }
 
+//         printf("\n\n\nline %d: STRING_FILE_TABLE_END\n - %s\n\n\n", line, filename);
          readingFileTable = false;
          continue;
       }
@@ -119,6 +122,8 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
          entry->width = strtok_r(NULL," \t\n\r", &p);
          entry->height = strtok_r(NULL," \t\n\r", &p);
          entry->fontSize = strtok_r(NULL," \t\n\r", &p);
+
+//         printf("line %d: unexpected END\n - %s", line, filename);
 
          if (entry->id)
          {

@@ -3,6 +3,9 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.13 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.h $
+ * Revision 1.12  2005/04/26 23:16:47Z  rm10919
+ * Made changes to cgui_text and cgui_text_item, plus added 
+ * classes for variable substitution in text strings.
  * Revision 1.11  2005/01/28 23:52:17Z  rm10919
  * CGUITextItem class changed and put into own file.
  * Revision 1.10  2005/01/12 20:06:09Z  rm10919
@@ -70,6 +73,21 @@ typedef UGL_FONT_ID  CGUIFontId;
 typedef UGL_DDB_ID   CGUIBitmapId;
 
 //
+// Color management
+//
+// Palette Size
+enum { CGUIPaletteSize = 256 };
+struct CGUIPaletteEntry
+{
+	unsigned char	red;
+	unsigned char	green;
+	unsigned char	blue;
+};
+#if CPU==SIMNT
+extern UGL_ARGB deviceClut[CGUIPaletteSize];
+#endif /* if CPU==SIMNT */
+
+//
 // make text strings a wide char for standard
 //
 typedef UGL_WCHAR StringChar;
@@ -86,7 +104,7 @@ typedef int LanguageId;
 
 extern int currentLanguage;
 
-StringChar * convertToStringChar(const char * string);
+void convertToStringChar(const char * string, StringChar ** stringChar);
 //
 // The CGUIDisplay class handles the underlying UGL graphics context
 // and event loop.  Currently, only one instance of the CGUIDisplay
@@ -148,6 +166,9 @@ public:
    void setCursorPos(int x, int y);
    void getCursorPos(int &x, int &y);
 
+   void setPaletteColor(CGUIColor index, const CGUIPaletteEntry & entry);
+   void getPaletteColor(CGUIColor index, CGUIPaletteEntry * entry);
+
 private:
    void cursorInit(void);
    void drawRootWindow(void);
@@ -169,7 +190,7 @@ private:
    CGUIDisplay (CGUIDisplay &);
    CGUIDisplay& operator= (const CGUIDisplay&);
 
-
+//   UGL_ARGB colorPallette [256];
 };
 
 
@@ -195,5 +216,18 @@ private:
 //	CGUIRegion& operator= (const CGUIRegion&);
 
 };
+
+class CGUIPalette
+{
+public:
+   CGUIPalette(void);
+   ~CGUIPalette(void);
+
+   UGL_ARGB colorPallette [256];
+   
+   void setPaletteColor(CGUIColor index, const CGUIPaletteEntry & entry);
+   void getPaletteColor(int red, int green, int blue);
+};
+
 #endif /* #ifndef _CGUI_GRAPHICS_INCLUDE */
 

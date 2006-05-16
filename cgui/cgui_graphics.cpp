@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.22 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.21  2005/10/21 16:45:37Z  rm10919
+ * Correct use of _stringSize and adding null string terminator.
  * Revision 1.20  2005/09/30 22:40:52Z  rm10919
  * Get the variable database working!
  * Revision 1.19  2005/07/27 22:27:57Z  cf10242
@@ -50,25 +52,26 @@
 #include "cgui_window.h"
 //#include "datalogger.h"
 
+#if CPU==SIMNT
+UGL_ARGB deviceClut[CGUIPaletteSize];
+#endif /* if CPU==SIMNT */
+
 //
 // String Management
 //  
-StringChar * convertToStringChar(const char * string)
+void convertToStringChar(const char * string, StringChar ** stringChar)
 {
    if (string)
    {
       int stringLength = strlen(string) + 1;   // add 1 for the NULL
 
-      StringChar * textString = new UGL_WCHAR[stringLength];  
+      *stringChar = new UGL_WCHAR[stringLength];  
 
       for (int i=0; i<stringLength; i++)
-         textString[i] = string[i];
-
-      return textString;
+         (*stringChar)[i] = (unsigned char)(UGL_WCHAR)string[i];
    }
-   else return NULL;
+   else *stringChar =  NULL;
 }
-
 
 // START MESSAGE_SYSTEM_IN_WIN_MGR
 #include "messagesystem.h"
@@ -126,9 +129,10 @@ CGUIDisplay::CGUIDisplay(const CallbackBase & startCB, const CallbackBase & wake
    uglInfo(_uglDisplay, UGL_MODE_INFO_REQ, &modeInfo);
    _height = modeInfo.height;
    _width = modeInfo.width;
-   if (modeInfo.colorModel != UGL_DIRECT)
+   
+   if ((modeInfo.colorModel != UGL_DIRECT) && (modeInfo.colorModel != UGL_INDEXED_8))
    {
-      fprintf(stderr, "UGL reports color model %d - expected %d\n", (int)modeInfo.colorModel, (int)UGL_DIRECT);
+      fprintf(stderr, "UGL reports color model %d - expected %d or %d \n", (int)modeInfo.colorModel, (int)UGL_DIRECT, (int)UGL_INDEXED_8);
       taskSuspend(taskIdSelf());
    }
 
@@ -159,11 +163,9 @@ CGUIDisplay::CGUIDisplay(const CallbackBase & startCB, const CallbackBase & wake
    cursorInit();
 }
 
-
 CGUIDisplay::~CGUIDisplay()
 {
 }
-
 
 void CGUIDisplay::flush(void)
 {
@@ -179,7 +181,6 @@ void CGUIDisplay::flush(void)
 
    drawRootWindow();
 }
-
 
 CGUIFontId CGUIDisplay::createFont(const char * familyName, unsigned char pixelSize)
 {
@@ -289,7 +290,61 @@ void CGUIDisplay::getCursorPos(int &x, int &y)
 {
    uglCursorPositionGet (_uglDisplay, &x, &y);
 }
+     
+void CGUIDisplay::setPaletteColor(CGUIColor index, const CGUIPaletteEntry & entry)
+{
+	//
+	// Free color first, in case it has already been allocated.  If not allocated,
+	// the function will simply do nothing and return an error status.
+	//
+	UGL_COLOR	uglColor = index;
+	uglColorFree(_uglDisplay, &uglColor, 1);
 
+//    printf("Old Palette Entry %d  Red - %d,  Green - %d,  Blue - %d\n ", index, entry.red, entry.green, entry.blue);
+	//
+	// Allocate the color for the associated palette entry
+	//
+	UGL_ARGB uglARGB = UGL_MAKE_RGB(entry.red, entry.green, entry.blue);
+	UGL_ORD	uglColorIndex = index;
+	uglColorAlloc(_uglDisplay, &uglARGB, &uglColorIndex, &uglColor, 1);
+    uglClutSet(_uglDisplay, uglColorIndex, &uglARGB, 1);
+
+#if CPU==SIMNT
+	deviceClut[index] = uglARGB;
+#endif
+
+//    UGL_ARGB newARGB; // = UGL_MAKE_RGB(entry.red, entry.green, entry.blue);
+
+//    int red = UGL_ARGB_RED(uglARGB);
+//    int green = UGL_ARGB_GREEN(uglARGB);
+//    int blue = UGL_ARGB_BLUE(uglARGB);
+
+//    printf("UGL_RGB Palette Entry %d  Red - %d,  Green - %d,  Blue - %d\n ", index, red, green, blue);
+
+//    uglClutGet(_uglDisplay, uglColorIndex, &newARGB, 1);
+
+//    red = UGL_ARGB_RED(newARGB);
+//    green = UGL_ARGB_GREEN(newARGB);
+//    blue = UGL_ARGB_BLUE(newARGB);
+
+//    printf("New Palette Entry %d  Red - %d,  Green - %d,  Blue - %d\n\n ", index, red, green, blue);
+}
+
+void CGUIDisplay::getPaletteColor(CGUIColor index, CGUIPaletteEntry * entry)
+{
+   UGL_COLOR	uglColor = index;
+   UGL_ARGB uglARGB; // = UGL_MAKE_RGB(entry.red, entry.green, entry.blue);
+   UGL_ORD	uglColorIndex = index;
+   uglClutGet(_uglDisplay, uglColorIndex, &uglARGB, 1);
+
+//   printf("Old Palette Entry %d  Red - %d,  Green - %d,  Blue - %d\n ", index, entry->red, entry->green, entry->blue);
+
+//   int red = UGL_ARGB_RED(uglARGB);
+//   int green = UGL_ARGB_GREEN(uglARGB);
+//   int blue = UGL_ARGB_BLUE(uglARGB);
+
+//   printf("New Palette Entry %d  Red - %d,  Green - %d,  Blue - %d\n\n ", index, red, green, blue);
+}
 
 void CGUIRegion::convertToUGLRect(UGL_RECT & rect) const
 {
@@ -298,5 +353,4 @@ void CGUIRegion::convertToUGLRect(UGL_RECT & rect) const
    rect.right = x + width - 1;
    rect.bottom = y + height - 1;
 }
-
 

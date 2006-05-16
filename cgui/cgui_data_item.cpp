@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.cpp 1.9 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
  * $Log: cgui_data_item.cpp $
+ * Revision 1.3  2005/11/22 00:34:42Z  rm10919
+ * Get data item database to work with software layers.
  * Revision 1.2  2005/09/30 22:40:43Z  rm10919
  * Get the variable database working!
  * Revision 1.1  2005/04/27 13:40:50Z  rm10919
@@ -72,7 +74,7 @@ StringChar * CGUIDataItemInteger::convertToString(void)
       //
       // Copy value (string) into _string
       //
-      _string = convertToStringChar(string);
+      convertToStringChar(string, &_string);
       
       _valueChanged = false;
    }
@@ -127,7 +129,7 @@ StringChar * CGUIDataItemDouble::convertToString(void)
       //
       // Copy value (string) into _string
       //
-      _string = convertToStringChar(string);
+      convertToStringChar(string, &_string);
 
       _valueChanged = false;
    }
@@ -195,7 +197,6 @@ void CGUIDataItemTextItem::setValue(CGUITextItem * value)
    }
 }
 
-
 //
 // Void Constructor
 //
@@ -221,7 +222,7 @@ StringChar * CGUIDataItemText::convertToString()
    {
       if (_string) delete _string;
 
-      _string = convertToStringChar(_value);
+      convertToStringChar(_value, &_string);
 
       _valueChanged = false;
    }

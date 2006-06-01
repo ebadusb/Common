@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.10  2006/05/15 21:54:41Z  rm10919
+ * Fix bug to handle latin char (accented vowels) as unsigned char to unsigned wide char correctly.
  * Revision 1.9  2005/11/22 00:34:42Z  rm10919
  * Get data item database to work with software layers.
  * Revision 1.8  2005/09/30 22:40:53Z  rm10919
@@ -122,13 +124,14 @@ void CGUITextItem::setText(const StringChar * string, LanguageId = currentLangua
       {
          if(stringLength > _stringSize)
          {
-        		delete[] _string;
+        	delete[] _string;
             _string = new StringChar[stringLength + textBlockSize + 1];
             _stringSize = stringLength + textBlockSize;
          }
       }
       
       memcpy(_string, string, stringLength * sizeof(StringChar));
+      _stringLength = stringLength + textBlockSize;
    }
 }
 
@@ -143,18 +146,14 @@ void CGUITextItem::getAscii( char * myString, LanguageId languageId = currentLan
    // string length of the text item
    if (_string)
    {
-      for (int i=0; i<_stringLength; i++)
+      int i = 0;
+      while (i < _stringLength  && _string[i] <= 127 && _string[i] != '\0')
       {
-         if (_string[i] > 127)
-         {
-            //  have an invalid character!! force an exit to the loop with no joy
-            myString[0] = '\0';
-            i = _stringLength;
-         }
-         else
-            myString[i] = _string[i];
+         myString[i] = _string[i];
+         i++;
       }
-      myString[_stringLength] = 0;
+      // terminate myString
+      myString[i] = '\0';
 	}
 }
 

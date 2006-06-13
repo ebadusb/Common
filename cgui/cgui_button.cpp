@@ -1,11 +1,13 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- *  $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_button.cpp 1.21 2006/05/15 21:48:45Z rm10919 Exp MS10234 $ 
+ *  $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_button.cpp 1.22 2006/06/13 14:33:43Z MS10234 Exp MS10234 $ 
  *  This file defines the base class for all button styles in the common GUI.
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.21  2006/05/15 21:48:45Z  rm10919
+ *  Add setTextColor method to change text color for all states of the button.
  *  Revision 1.20  2005/11/22 00:34:42Z  rm10919
  *  Get data item database to work with software layers.
  *  Revision 1.19  2005/11/16 18:20:44Z  pn02526
@@ -226,7 +228,7 @@ CGUIButton::~CGUIButton ()
 //  If currently invisible, the button is made visible.
 void CGUIButton::enable(void)
 {
-    if(!_enabled || _pressed) // Button must be either disabled or pressed to execute this logic.
+    if(!_enabled)
     {
       _enabled = true;
       _pressed = false;

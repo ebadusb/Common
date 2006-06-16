@@ -90,11 +90,16 @@ bool loadStringInfo(char *stringInfoPath)
 
 int verifyString(AlarmData *alarm, int lineNo)
 {
+	const int MAX_CAUSES = 32;
 	int retVal = 0;
 	bool bMsgOk = false;
 	bool bTextOk = false;
+	bool bCauseActionOk = false;
+	char *tempString;
+	char causeActionString[MAX_CAUSES][255];
 	StringList::iterator iter;
-	
+	int arrayIndex = 0;
+
 	if (strcmp("\"\"", alarm->alarmMsg.c_str()) == 0)
 	{
 		bMsgOk = true;
@@ -104,6 +109,45 @@ int verifyString(AlarmData *alarm, int lineNo)
 	{
 		bTextOk = true;
 	}
+
+	if (strcmp(" ", alarm->causeActionBitmap.c_str()) == 0)
+	{
+		bCauseActionOk = true;
+	}
+	else
+	{
+		// split up string into cause/action/bitmap array
+		tempString = new char[alarm->causeActionBitmap.size() + 1];
+		strcpy(tempString, alarm->causeActionBitmap.c_str());
+		
+		char *pStr = strtok(tempString, ":");
+		while (pStr != NULL)
+		{
+			if (strncmp(pStr, "CauseStart", 10) == 0)
+			{
+				pStr = strtok(NULL, ":");
+				continue;
+			}
+			if (strncmp(pStr, " ", 1) == 0)
+			{
+				pStr = strtok(NULL, ":");
+				continue;
+			}
+			if (strncmp(pStr, "CauseEnd", 8) == 0)
+			{
+				break;
+			}
+			strcpy(causeActionString[arrayIndex], "\"");
+			strcat(causeActionString[arrayIndex], pStr);
+			strcat(causeActionString[arrayIndex++], "\"");
+			pStr = strtok(NULL, ":");
+		}
+
+		delete tempString;
+	}
+
+	bool bAllCauseOk[MAX_CAUSES];
+	for (int i = 0; i < MAX_CAUSES; i++) {bAllCauseOk[i] = false;}
 
 	for (iter = _stringInfoIDList.begin(); iter != _stringInfoIDList.end(); iter++)
 	{
@@ -123,7 +167,29 @@ int verifyString(AlarmData *alarm, int lineNo)
 			}
 		}
 
-		if (bMsgOk && bTextOk)
+		if (!bCauseActionOk)
+		{
+			for (int i = 0; i < arrayIndex; i++)
+			{
+				if (strcmp((*iter).c_str(), &causeActionString[i][0]) == 0)
+				{
+					bAllCauseOk[i] = true;
+					break;
+				}
+			}
+		}
+
+		bCauseActionOk = true;
+		for (int i = 0; i < arrayIndex; i++) 
+		{
+			if (!bAllCauseOk[i])
+			{
+				bCauseActionOk = false;
+				break;
+			}
+		}
+
+		if (bMsgOk && bTextOk && bCauseActionOk)
 		{
 			break;
 		}
@@ -135,9 +201,15 @@ int verifyString(AlarmData *alarm, int lineNo)
 		retVal = -1;
 	}
 
-	if (!bMsgOk)
+	if (!bTextOk)
 	{
 		printf("ERROR: %s @ line(%d) not found in any string.info file\n", alarm->alarmText.c_str(), lineNo);
+		retVal = -1;
+	}
+
+	if (!bCauseActionOk)
+	{
+		printf("ERROR: %s @ line(%d) not found in any string.info file\n", alarm->causeActionBitmap.c_str(), lineNo);
 		retVal = -1;
 	}
 

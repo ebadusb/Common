@@ -1,11 +1,13 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- *  $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_button.h 1.18 2006/05/15 21:48:45Z rm10919 Exp MS10234 $ 
+ *  $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_button.h 1.28 2009/01/08 00:55:20Z rm10919 Exp wms10235 $ 
  *  This file defines the base class for all button styles in the common GUI.  An object of this class types
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.18  2006/05/15 21:48:45Z  rm10919
+ *  Add setTextColor method to change text color for all states of the button.
  *  Revision 1.17  2005/09/30 22:40:42Z  rm10919
  *  Get the variable database working!
  *  Revision 1.16  2005/04/26 23:16:47Z  rm10919
@@ -75,6 +77,12 @@ public:
       RaiseAfterCallback,        // callback is executed on touch release, then button switches back to up bitmap
       Manual                     // callback is executed on touch release, button stays down (setUp must be used to raise button again)
    };
+
+	enum ButtonStateType
+	{
+		Released,
+		Pressed,
+	};
   
    struct ButtonData
    {
@@ -101,6 +109,9 @@ public:
 
 
 protected:
+
+	ButtonStateType			_buttonState;
+
    Message<long>           *_buttonMessagePointer; // used to communicate a message to other tasks when a button is pressed and released
    bool                     _enabled;              // current enabled/disabled state
    

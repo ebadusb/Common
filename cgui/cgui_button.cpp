@@ -1,11 +1,13 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- *  $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_button.cpp 1.22 2006/06/13 14:33:43Z MS10234 Exp MS10234 $ 
+ *  $Header: Q:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_button.cpp 1.37 2009/02/25 22:20:12Z rm10919 Exp jd11007 $ 
  *  This file defines the base class for all button styles in the common GUI.
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.22  2006/06/13 14:33:43Z  MS10234
+ *  - fix enable function to fix the problem with the button from becoming unpressed before the touchscreen release occurs
  *  Revision 1.21  2006/05/15 21:48:45Z  rm10919
  *  Add setTextColor method to change text color for all states of the button.
  *  Revision 1.20  2005/11/22 00:34:42Z  rm10919
@@ -68,7 +70,7 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
                          bool                 enabled = true,         // button will be constructed as enabled unless specified here
                          bool                 visible = true,         // button will be constructed as visbile unless otherwise specified here
                          bool                 pressed = false
-                        ):CGUIWindow(display), _behaviorType(buttonData.type), _iconPointer(NULL), _pressed(pressed)
+                        ):CGUIWindow(display), _buttonState(CGUIButton::Released), _behaviorType(buttonData.type), _iconPointer(NULL), _pressed(pressed)
 {
    if (!buttonLevel)
    {
@@ -228,15 +230,21 @@ CGUIButton::~CGUIButton ()
 //  If currently invisible, the button is made visible.
 void CGUIButton::enable(void)
 {
-    if(!_enabled)
+    if(!_enabled || _pressed)
     {
       _enabled = true;
       _pressed = false;
       if (_disabledBitmap) moveObjectToBack(_disabledBitmap);
-	  if (_pressedBitmap) moveObjectToBack(_pressedBitmap);
-      if (_enabledBitmap) moveObjectToFront(_enabledBitmap);
+		if (_buttonState == CGUIButton::Released)
+		{
+			if (_pressedBitmap) moveObjectToBack(_pressedBitmap);
+			if (_enabledBitmap) moveObjectToFront(_enabledBitmap);
+		}
 
 	  if (_iconPointer) moveObjectToFront(_iconPointer);
+
+		setDisabled(false);
+		setWindowVisibility(true);
 
 
       if (_disabledText) _disabledText->setVisible(false);
@@ -262,8 +270,10 @@ void CGUIButton::enablePressed(void)
 		if (_enabledBitmap) moveObjectToBack(_enabledBitmap);
       if (_pressedBitmap) moveObjectToFront(_pressedBitmap);
 
-	   if (_iconPointer) moveObjectToFront(_iconPointer);
+		setDisabled(false);
+		setWindowVisibility(true);
 
+	   if (_iconPointer) moveObjectToFront(_iconPointer);
 
       if (_disabledText) _disabledText->setVisible(false);
       if (_enabledText)  _enabledText->setVisible(false);
@@ -287,6 +297,9 @@ void CGUIButton::disable()
       _enabled = false;
       if (_enabledBitmap) moveObjectToBack(_enabledBitmap);
       if (_disabledBitmap) moveObjectToFront(_disabledBitmap);
+
+		setDisabled(false);
+		setWindowVisibility(true);
 
       if (_enabledText)  _enabledText->setVisible(false);
       if (_pressedText)  _pressedText->setVisible(false);
@@ -424,6 +437,7 @@ void CGUIButton::pointerEvent (const PointerEvent & event) // event structure re
    {
       if (event.eventType == PointerEvent::ButtonPress)
       {
+			_buttonState = CGUIButton::Pressed;
          doOnPress();
 
          if (_pressedCBEnabled)
@@ -438,6 +452,7 @@ void CGUIButton::pointerEvent (const PointerEvent & event) // event structure re
       }
       else if (event.eventType == PointerEvent::ButtonRelease)
       {
+			_buttonState = CGUIButton::Released;
          if (_behaviorType == RaiseAfterRelease)
          {
             doOnEnable();

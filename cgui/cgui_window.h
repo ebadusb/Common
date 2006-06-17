@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.h 1.12 2007/04/20 14:58:26Z wms10235 Exp rm10919 $
  * $Log: cgui_window.h $
+ * Revision 1.9  2005/08/11 16:26:13Z  cf10242
+ * TAOS IT 674 - ungrab when deleting to prevent page fault
  * Revision 1.8  2005/04/12 18:13:40Z  cf10242
  * remove changes from 1.7
  * Revision 1.6  2005/02/21 17:17:13Z  cf10242
@@ -117,6 +119,7 @@ private:
 
    CGUIRegion     _region;
    bool           _disabled;
+   static bool           _needRelease;
 
    UGL_REGION_ID  _activeDrawRegion;
 

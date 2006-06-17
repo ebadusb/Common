@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.21 2010/04/02 16:26:25Z agauusb Exp agauusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.14  2005/11/22 00:36:01Z  rm10919
+ * Invalidate window region to redraw when setting window visibility.
  * Revision 1.13  2005/08/15 18:47:43Z  cf10242
  * IT 674 - log failed UGl cleanup
  * Revision 1.12  2005/08/11 16:26:12Z  cf10242
@@ -34,6 +36,8 @@
 #include "cgui_graphics.h"
 #include "cgui_window.h"
 #include "cgui_window_object.h"
+
+bool CGUIWindow::_needRelease = false; 
 
 CGUIWindow::CGUIWindow(CGUIDisplay & display)
 : _display(display)
@@ -504,6 +508,8 @@ UGL_STATUS CGUIWindow::uglPointerCallback (WIN_ID id, WIN_MSG * pMsg, void * pDa
          //DataLog( log_level_cgui_info ) << "Grabbing pointer " << endmsg;
          winPointerGrab (windowId);
          ptEvent.eventType = CGUIWindow::PointerEvent::ButtonPress;
+		 if(!window->disabled())
+			 _needRelease = true;
       }
       else
       {
@@ -515,11 +521,15 @@ UGL_STATUS CGUIWindow::uglPointerCallback (WIN_ID id, WIN_MSG * pMsg, void * pDa
       ptEvent.x = pMsg->data.ptr.position.x;
       ptEvent.y = pMsg->data.ptr.position.y;
 
-      if (!window->disabled())
+      if (!window->disabled() || (ptEvent.eventType == CGUIWindow::PointerEvent::ButtonRelease &&
+								  _needRelease) )
       {
         // DataLog( log_level_cgui_info ) << "Processing pointer event " << endmsg;
          window->pointerEvent(ptEvent);
       }
+
+	  if (ptEvent.eventType == CGUIWindow::PointerEvent::ButtonRelease) 
+		  _needRelease = false;
      // DataLog( log_level_cgui_info ) << "Completed pointer event processing " << endmsg;
    }
 

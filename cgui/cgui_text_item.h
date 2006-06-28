@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.7 2005/11/22 00:34:43Z rm10919 Exp MS10234 $
+ * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.15 2009/04/13 22:34:00Z rm10919 Exp wms10235 $
  * $Log: cgui_text_item.h $
+ * Revision 1.7  2005/11/22 00:34:43Z  rm10919
+ * Get data item database to work with software layers.
  * Revision 1.6  2005/08/01 23:31:39Z  cf10242
  * Revision 1.5  2005/04/26 23:16:48Z  rm10919
  * Made changes to cgui_text and cgui_text_item, plus added 
@@ -22,6 +24,7 @@
 #define _CGUI_TEXT_ITEM_INCLUDE
 
 #include "cgui_graphics.h"
+#include "cgui_string_data_container.h"
 
 struct StylingRecord
 {
@@ -38,8 +41,6 @@ struct StylingRecord
 // (both string id and the actual string text).  The 
 // string id is the key to accessing this information.
 //
-
-class CGUIStringDataContainer;
 
 class CGUITextItem
 {

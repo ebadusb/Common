@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.11  2006/05/31 19:51:09Z  rm10919
+ * Fix _stringLength in setChar(StringChar), and the getAscii method.
  * Revision 1.10  2006/05/15 21:54:41Z  rm10919
  * Fix bug to handle latin char (accented vowels) as unsigned char to unsigned wide char correctly.
  * Revision 1.9  2005/11/22 00:34:42Z  rm10919
@@ -47,6 +49,38 @@ CGUITextItem::CGUITextItem(const char * id, StylingRecord * stylingRecord)
    {
       _stylingRecord = *stylingRecord;
    }
+   int newLength = 0;
+
+   if (_string)
+   {
+      while (_string[newLength])
+         newLength += 1;
+
+      _stringLength = newLength;
+   }
+}
+
+CGUITextItem::CGUITextItem(const CGUITextItem& textItem)
+{
+   (*this) = textItem;
+}
+
+CGUITextItem CGUITextItem::operator= (const CGUITextItem& textItem)
+{
+   _defaultLanguageId = textItem._defaultLanguageId;
+   _languageId = textItem._languageId;
+   _stringLength = textItem._stringLength;
+   _stringSize = textItem._stringSize;
+   _stylingRecord = textItem._stylingRecord;
+
+   // must allocate memory
+   char * textId = new char[strlen(textItem._id)+1];
+   
+   strcpy(textId, textItem._id);
+   _id = textId;
+
+   memcpy(_string, textItem._string, _stringLength * sizeof(StringChar));
+   return (*this);
 }
 
 CGUITextItem::~ CGUITextItem()
@@ -63,7 +97,6 @@ CGUITextItem::~ CGUITextItem()
       _id = NULL;
    }
 }
-
 
 void CGUITextItem::setText(const char * string, LanguageId = currentLanguage)
 {

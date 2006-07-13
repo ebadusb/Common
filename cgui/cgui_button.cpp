@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.23  2006/06/16 16:10:07Z  MS10234
+ *   - add a variable to keep the state of the button based on the event callback
  *  Revision 1.22  2006/06/13 14:33:43Z  MS10234
  *  - fix enable function to fix the problem with the button from becoming unpressed before the touchscreen release occurs
  *  Revision 1.21  2006/05/15 21:48:45Z  rm10919
@@ -648,9 +650,9 @@ void CGUIButton::setText (const StringChar * string = NULL) // ptr to a text obj
 
 void CGUIButton::setText()
 {
-   setEnabledText();
-   setDisabledText();
-   setPressedText();
+   if (_enabledText!= NULL) setEnabledText();
+   if (_disabledText!= NULL) setDisabledText();
+   if (_pressedText!= NULL) setPressedText();
 }
 
 void CGUIButton::setEnabledText (CGUITextItem * textItem)

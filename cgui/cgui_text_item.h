@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.15 2009/04/13 22:34:00Z rm10919 Exp wms10235 $
  * $Log: cgui_text_item.h $
+ * Revision 1.8  2006/06/28 00:56:37Z  MS10234
+ * - add include file for cgui_string_data_container.h
  * Revision 1.7  2005/11/22 00:34:43Z  rm10919
  * Get data item database to work with software layers.
  * Revision 1.6  2005/08/01 23:31:39Z  cf10242
@@ -46,7 +48,12 @@ class CGUITextItem
 {
 public:
    CGUITextItem();
-   CGUITextItem(const char * id, StylingRecord * stylingRecord = NULL);
+   CGUITextItem(const char * bvid, StylingRecord * stylingRecord = NULL);
+   CGUITextItem(const CGUITextItem& textItem);
+
+   CGUITextItem operator= (const CGUITextItem& textItem);
+
+   inline bool operator== (const CGUITextItem& textItem) {return (strcmp(_id, textItem._id)== 0);}
    virtual ~ CGUITextItem();
 
    void setId(const char * id);
@@ -100,8 +107,7 @@ private:
 
    StylingRecord _stylingRecord;
    // copy constructor and copy assignment are not legal for this class
-   //CGUITextItem (CGUITextItem &);
-   //CGUITextItem& operator= (const CGUITextItem&);
+   CGUITextItem (CGUITextItem &);
 };
 
 #endif /* #ifndef _CGUI_TEXT_ITEM_INCLUDE */

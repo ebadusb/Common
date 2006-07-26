@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.h 1.6 2007/05/03 16:19:14Z jl11312 Exp wms10235 $
  * $Log: cgui_string_data.h $
+ * Revision 1.1  2005/04/27 13:40:46Z  rm10919
+ * Initial revision
  *
  */
 
@@ -31,5 +33,8 @@ public:
    map<string, CGUITextItem *> _textMap;
 
 protected:
+
+private:
+	StringChar UTF8ToUnicode(StringChar utf8Char, int line);
 };
 #endif //_CGUI_STRING_DATA_INCLUDE

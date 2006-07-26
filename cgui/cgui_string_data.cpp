@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.cpp 1.12 2007/06/14 19:34:11Z wms10235 Exp wms10235 $
  * $Log: cgui_string_data.cpp $
+ * Revision 1.6  2006/07/12 23:37:57Z  rm10919
+ * Update for reading in unicode strings.
  * Revision 1.5  2006/05/15 21:52:17Z  rm10919
  * Add debug lines.
  * Revision 1.4  2005/10/19 15:42:22Z  rm10919
@@ -29,6 +31,22 @@ CGUIStringData::CGUIStringData(unsigned int linkLevel): LinkElement()
 
 CGUIStringData::~CGUIStringData(void)
 {
+}
+
+StringChar CGUIStringData::UTF8ToUnicode(StringChar utf8Char, int line)
+{
+	StringChar unicodeChar = utf8Char;
+	unsigned char firstByte = utf8Char & 0xff;
+	unsigned char secondByte = (utf8Char & 0xff00) >> 8;
+	// get number of bytes in UTF8 shows up in both bytes to make sure this is not
+	// just an extended ASCII character
+	unsigned char numBytes1 = firstByte & 0x60 ;
+	unsigned char numBytes2 = secondByte & 0xc0 ;
+	if (numBytes1 == 0x40 && numBytes2 == 0x80)  // corresponds to 2 bytes utf8 in both bytes
+		unicodeChar = ((firstByte & 0x3) << 6) | (secondByte & 0x30) | (secondByte & 0xf);
+	else
+		DataLog( log_level_cgui_error ) << "Found possible non-2 byte UTF8 sequence in line " << line << "   1st byte = " << hex << firstByte << "  second byte = " << secondByte << dec << endmsg;
+	return unicodeChar;
 }
 
 bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontId, LanguageId languageId = currentLanguage)
@@ -170,7 +188,16 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
                {
                   if (entry->text[readIndex] != '\\')
                   {
-                     wString[writeIndex++] = (unsigned char)(UGL_WCHAR)entry->text[readIndex++];
+					 // check for UTF8 character and convert
+				     StringChar * nextWord = (StringChar *)&entry->text[readIndex];
+					 if( (*nextWord & 0x80C0) == 0x80C0 )
+					 {
+						 wString[writeIndex++] = (unsigned char)UTF8ToUnicode(*nextWord, line);
+						 readIndex+=2;
+					 }
+					 else
+						 wString[writeIndex++] = (unsigned char)(UGL_WCHAR)entry->text[readIndex++];
+
                   } else
                   {
                      if (readIndex >= length - 1)

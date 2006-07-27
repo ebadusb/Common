@@ -6,6 +6,8 @@
  * list_box.h
  *
  * $Log: cgui_list_box.h $
+ * Revision 1.1  2006/07/12 23:36:44Z  rm10919
+ * Initial revision
  *
  *
  */
@@ -44,6 +46,9 @@ public:
 
    // returns text item selected
    CGUITextItem * returnTextItem(void); //{return _returnTextItem;} // returns text item selected
+
+   // override cguiwindow attach
+   virtual void attach(CGUIWindow * window, WIN_ATTRIB winAttrib = WIN_ATTRIB_VISIBLE);
 
 private:
    void initializeData(CGUIDisplay & display, CGUIWindow * parent, const CallbackBase & callback, list<CGUITextItem*> buttonNames, CGUIButton::ButtonData * listButtonData, CGUIButton::ButtonData * upButtonData, CGUIButton::ButtonData * downButtonData, int numberOfButtons, bool haveBackground = false);

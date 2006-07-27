@@ -6,6 +6,8 @@
  * cgui_list_box.cpp
  *
  * $Log: cgui_list_box.cpp $
+ * Revision 1.1  2006/07/12 23:36:44Z  rm10919
+ * Initial revision
  *
  *
  */
@@ -184,10 +186,11 @@ void CGUIListBox::initializeData(CGUIDisplay & display, CGUIWindow * parent, con
    // Set the region for the list box window
    setRegion(listBoxRegion);
 
-   assert(_parent);
-   _parent->setDisabled(true);
+//  Moved to CGUIListBox:attach()
+//   assert(_parent);
+//   _parent->setDisabled(true);
 
-   CGUIWindow::attach(NULL); //, winAttrib);
+//   CGUIWindow::attach(NULL); //, winAttrib);
 
    // Set the state of buttons.
    updateButtons();
@@ -233,6 +236,14 @@ CGUIListBox::~CGUIListBox()
 //      delete _returnTextItem;
 //      _returnTextItem = NULL;
 //   }
+}
+
+void CGUIListBox::attach(CGUIWindow * window, WIN_ATTRIB winAttrib)
+{
+   assert(_parent);
+   _parent->setDisabled(true);
+
+   CGUIWindow::attach(window, winAttrib);
 }
 
 CGUITextItem * CGUIListBox::returnTextItem(void)

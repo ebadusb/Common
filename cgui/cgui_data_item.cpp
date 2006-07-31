@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.cpp 1.9 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
  * $Log: cgui_data_item.cpp $
+ * Revision 1.4  2006/05/15 21:49:43Z  rm10919
+ * update for change in convertToStringChar in cgui_graphics.
  * Revision 1.3  2005/11/22 00:34:42Z  rm10919
  * Get data item database to work with software layers.
  * Revision 1.2  2005/09/30 22:40:43Z  rm10919
@@ -116,7 +118,11 @@ StringChar * CGUIDataItemDouble::convertToString(void)
       ostringstream textStream;
 
       textStream.setf(ios::fixed);
-      textStream.precision(_precision);
+      if (_precision < 0)
+         textStream.precision(0);
+      else
+         textStream.precision(_precision);
+
       textStream << _value;
       
       string = textStream.str().c_str();

@@ -6,6 +6,8 @@
  * list_box.h
  *
  * $Log: cgui_list_box.h $
+ * Revision 1.2  2006/07/26 23:30:47Z  rm10919
+ * Add virtual attach to override CGUIWindow::attach().
  * Revision 1.1  2006/07/12 23:36:44Z  rm10919
  * Initial revision
  *
@@ -33,8 +35,8 @@
 class CGUIListBox : public CGUIWindow
 {
 public:
-   CGUIListBox(CGUIDisplay & display, CGUIWindow * parent, const CallbackBase & callback, list<CGUITextItem*> buttonNames, CGUIButton::ButtonData * listButtonData, CGUIButton::ButtonData * upButtonData, CGUIButton::ButtonData * downButtonData, int numberOfButtons, bool haveBackground = false, CGUIColor backgroundColor = 0);
-   CGUIListBox(CGUIDisplay & display, CGUIWindow * parent, const CallbackBase & callback, list<CGUITextItem*> buttonNames, CGUIButton::ButtonData * listButtonData, CGUIButton::ButtonData * upButtonData, CGUIButton::ButtonData * downButtonData, int numberOfButtons, CGUIBitmapInfo * backgroundBitmapId);
+   CGUIListBox(CGUIDisplay & display, CGUIWindow * parent, const CallbackBase & callback, list<CGUITextItem*> buttonNames, CGUIButton::ButtonData * listButtonData, CGUIButton::ButtonData * upButtonData, CGUIButton::ButtonData * downButtonData, int numberOfButtons, bool haveBackground = false, CGUIColor backgroundColor = 0, int buttonSpacing = 3);
+   CGUIListBox(CGUIDisplay & display, CGUIWindow * parent, const CallbackBase & callback, list<CGUITextItem*> buttonNames, CGUIButton::ButtonData * listButtonData, CGUIButton::ButtonData * upButtonData, CGUIButton::ButtonData * downButtonData, int numberOfButtons, CGUIBitmapInfo * backgroundBitmapId, int buttonSpacing = 3);
 
    ~CGUIListBox();
 
@@ -69,6 +71,7 @@ private:
 
    int _numberOfButtons;
    int _listSize;
+   int _buttonSpacing;
 
    // Will always point to listButton[0] place in list.
    list<CGUITextItem*>::iterator _indexTopButton;
@@ -85,7 +88,6 @@ private:
    //  for _upArrowButtonData.  If upArrowButtonData is null then
    //  placement of list window is based on CGUIRegion in listButtonData.
    CGUIButton * _upArrowButton;
-
    CGUIButton * _downArrowButton;
 
    void updateButtons();

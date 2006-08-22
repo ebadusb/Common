@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.27 2006/07/12 23:36:07Z rm10919 Exp jl11312 $
+ * $Header: Q:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.28 2006/08/21 18:17:18Z jl11312 Exp jd11007 $
  * $Log: cgui_text.cpp $
+ * Revision 1.27  2006/07/12 23:36:07Z  rm10919
+ * Updates from adding cguiListBox class.
  * Revision 1.26  2006/05/15 21:54:40Z  rm10919
  * Fix bug to handle latin char (accented vowels) as unsigned char to unsigned wide char correctly.
  * Revision 1.25  2005/11/22 00:34:42Z  rm10919
@@ -66,6 +68,15 @@
 #include "cgui_window.h"
 #include "cgui_variable_db_container.h"
 #include "datalog_levels.h"
+
+#if CPU==SIMNT
+# include <string.h>
+
+bool captureTextID = false;
+string captureTextIDStr;
+const char * captureScreenName = NULL;
+
+#endif /* if CPU==SIMNT */
 
 static StringChar newline_char = '\n';
 static StringChar space_char = ' ';
@@ -715,6 +726,17 @@ void CGUIText::draw(UGL_GC_ID gc)
       }
 #endif
    } 
+
+#if CPU==SIMNT
+	if ( captureTextID &&
+		  _textItem )
+	{
+		captureTextIDStr += captureScreenName;
+		captureTextIDStr += " ";
+		captureTextIDStr += _textItem->getId();
+		captureTextIDStr += "\n";
+	}
+#endif /* if CPU==SIMNT */
 
    uglBackgroundColorSet(gc, backgroundColor);
    uglForegroundColorSet(gc, _stylingRecord.color);

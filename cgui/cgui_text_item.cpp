@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.12  2006/07/12 23:36:08Z  rm10919
+ * Updates from adding cguiListBox class.
  * Revision 1.11  2006/05/31 19:51:09Z  rm10919
  * Fix _stringLength in setChar(StringChar), and the getAscii method.
  * Revision 1.10  2006/05/15 21:54:41Z  rm10919
@@ -75,6 +77,10 @@ CGUITextItem CGUITextItem::operator= (const CGUITextItem& textItem)
 
    // must allocate memory
    char * textId = new char[strlen(textItem._id)+1];
+
+   // check to see if initialized to NULL
+   if (_string == NULL)
+      _string = new StringChar[_stringLength];
    
    strcpy(textId, textItem._id);
    _id = textId;

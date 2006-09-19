@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.19  2006/06/16 16:10:07Z  MS10234
+ *   - add a variable to keep the state of the button based on the event callback
  *  Revision 1.18  2006/05/15 21:48:45Z  rm10919
  *  Add setTextColor method to change text color for all states of the button.
  *  Revision 1.17  2005/09/30 22:40:42Z  rm10919
@@ -170,6 +172,8 @@ public:
    // IS ENABLED
    // returns true if the button is enabled
    bool isEnabled() const {return _enabled;};
+
+   virtual void attach(CGUIWindow * window);
 
    // INVISIBLE
    // make the button invisible.  Uses CGUIWindow class to do this.
@@ -373,6 +377,7 @@ protected:
    // actions performed when button is made invisible.  Actions are:
    //  	if button is visible, reset to invisible internally and with parent
    virtual void doOnInvisible();
+
 
 private:
    bool _pressed;

@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.24  2006/07/12 23:36:07Z  rm10919
+ *  Updates from adding cguiListBox class.
  *  Revision 1.23  2006/06/16 16:10:07Z  MS10234
  *   - add a variable to keep the state of the button based on the event callback
  *  Revision 1.22  2006/06/13 14:33:43Z  MS10234
@@ -187,12 +189,7 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _pressedText = NULL;
    }
 
-   WIN_ATTRIB winAttrib = WIN_ATTRIB_NO_INPUT|WIN_ATTRIB_VISIBLE;
-   assert(parent);
-   attach(parent, winAttrib);
-
-   winCbAdd(_id, MSG_PTR_BTN1_DOWN, 0, &CGUIWindow::uglPointerCallback, UGL_NULL);
-   winCbAdd(_id, MSG_PTR_BTN1_UP, 0, &CGUIWindow::uglPointerCallback, UGL_NULL);
+   attach(parent);
 
    if (pressEventObject)
    {
@@ -207,7 +204,17 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _buttonMessagePointer = NULL;
    }
 
+}	
+
+void CGUIButton::attach(CGUIWindow * parent)
+{
+	WIN_ATTRIB winAttrib = WIN_ATTRIB_NO_INPUT|WIN_ATTRIB_VISIBLE;
+	CGUIWindow::attach(parent, winAttrib);
+
+	winCbAdd(_id, MSG_PTR_BTN1_DOWN, 0, &CGUIWindow::uglPointerCallback, UGL_NULL);
+	winCbAdd(_id, MSG_PTR_BTN1_UP, 0, &CGUIWindow::uglPointerCallback, UGL_NULL);
 }
+
 
 // DESTRUCTOR
 CGUIButton::~CGUIButton ()

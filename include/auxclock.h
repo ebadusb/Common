@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 2002 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/BCT_Development/vxWorks/Common/include/rcs/auxclock.h 1.10 2004/05/18 15:58:58Z jl11312 Exp jd11007 $
+ * $Header: Q:/BCT_Development/vxWorks/Common/include/rcs/auxclock.h 1.10 2004/05/18 15:58:58Z jl11312 Exp $
  * $Log: auxclock.h $
+ * Revision 1.10  2004/05/18 15:58:58Z  jl11312
+ * - added missing struct in argument declaration
  * Revision 1.9  2004/01/26 18:51:21Z  jl11312
  * - modifications for building under Tornado 2.2
  * Revision 1.8  2003/05/07 20:06:01Z  jl11312
@@ -50,6 +52,9 @@ extern "C" {
 /* Maximum number of tasks attached to an aux clock driven semaphore */
 enum { MaxAuxClockSemaphores = 3 };
 
+/* Maximum number of tasks attached to the clock ISR driven semaphore */
+enum { MaxISRSemaphores = 2 };
+
 /* Get the interrupt rate (in Hertz) for the auxClockTicks counter. */
 int auxClockRateGet(void);
 
@@ -70,6 +75,10 @@ typedef enum
 } AuxClockSemaphoreType;
 
 SEM_ID auxClockSemaphoreAttach(unsigned int microSecInterval, AuxClockSemaphoreType semaphoreType);
+
+/* semaphores that need to be toggled on every clock interrupt */
+SEM_ID isrSemaphoreAttach();
+void isrSemaphoreDetach(SEM_ID semaphreID);
 
 /* Enable the auxClock Message Packet queue to send auxClockMuSec every given number of microseconds. */
 void auxClockMsgPktEnable(unsigned int microSecInterval, const char * MsgPktQName);

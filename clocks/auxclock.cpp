@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 2002 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.14 2004/01/26 18:56:15Z jl11312 Exp jd11007 $
+ * $Header: Q:/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.14 2004/01/26 18:56:15Z jl11312 Exp $
  * $Log: auxclock.cpp $
+ * Revision 1.14  2004/01/26 18:56:15Z  jl11312
+ * - modifications for building under Tornado 2.2
  * Revision 1.13  2003/05/07 20:05:44Z  jl11312
  * - added option to use counting semaphore for aux clock notification
  * Revision 1.12  2003/04/24 19:04:09Z  jl11312
@@ -81,6 +83,7 @@ static volatile unsigned long auxClockQueueNotifyCount;
 
 /* Semaphore notification related data */
 static SEM_ID auxClockSemaphoreID[MaxAuxClockSemaphores];
+static SEM_ID isrSemaphoreID[MaxISRSemaphores];
 static bool   auxClockInitDone = false;
 
 static void auxClockISR( int arg )
@@ -93,6 +96,13 @@ static void auxClockISR( int arg )
 	{
 		auxClockTime.nanosec -= 1000000000;
 		auxClockTime.sec += 1;
+	}
+
+	/* call any ISR pending semaphores */
+	for ( int idx = 0; idx < MaxISRSemaphores; idx++)
+	{
+		if (isrSemaphoreID[idx]) 
+			semGive(isrSemaphoreID[idx]);
 	}
 
 	if ( auxClockSemaphoreNanoSecInterval > 0 )
@@ -142,6 +152,7 @@ void auxClockInit()
 	if ( !auxClockInitDone )
 	{
 		memset(auxClockSemaphoreID, 0, sizeof(auxClockSemaphoreID));
+		memset(isrSemaphoreID, 0, sizeof(isrSemaphoreID));
 		auxClockSemaphoreNanoSecInterval = 0;
 
 		auxClockMsgPktQDes = NULL;
@@ -216,6 +227,35 @@ SEM_ID auxClockSemaphoreAttach(unsigned int microSecInterval, AuxClockSemaphoreT
 	}
 
 	return result;
+}
+
+SEM_ID isrSemaphoreAttach()
+{
+	SEM_ID result = NULL;
+
+	for (int idx = 0; idx < MaxISRSemaphores && !result; idx++)
+	{
+		if (!isrSemaphoreID[idx])
+		{
+			isrSemaphoreID[idx] = semCCreate(SEM_Q_PRIORITY, SEM_EMPTY);
+			result = isrSemaphoreID[idx];
+		}
+	}
+
+	return result;
+}
+
+void isrSemaphoreDetach(SEM_ID semaphoreID)
+{
+	for (int idx = 0; idx < MaxISRSemaphores; idx++)
+	{
+		if (isrSemaphoreID[idx] == semaphoreID)
+		{
+			semDelete(semaphoreID);
+			isrSemaphoreID[idx] = NULL;
+			break;
+		}
+	}
 }
 
 /* Enable the auxClock Message Packet queue to send auxClockMuSec every given number of microseconds. */

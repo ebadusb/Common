@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.25  2006/09/18 23:38:27Z  cf10242
+ *  IT 56: allow button to be attached to root window
  *  Revision 1.24  2006/07/12 23:36:07Z  rm10919
  *  Updates from adding cguiListBox class.
  *  Revision 1.23  2006/06/16 16:10:07Z  MS10234
@@ -139,9 +141,22 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _enabledText = new CGUIText(display, buttonData.enabledTextItem, buttonData.enabledStylingRecord);
       _enabledText->setCaptureBackgroundColor();
       addObjectToFront(_enabledText);
+
+	  // establish button press logging ID
+	  strncpy(_buttonPressLogText, buttonData.enabledTextItem->getId(), MAX_BUTTON_LOG_SIZE); 
+	  _buttonPressLogText[MAX_BUTTON_LOG_SIZE+1] = 0;
    }
    else
    {
+	   // try alternate button press logging ID from ButtonData
+	   if(buttonData.alternateButtonId[0])
+	   {
+		   strncpy(_buttonPressLogText, buttonData.alternateButtonId, MAX_BUTTON_LOG_SIZE); 
+		   _buttonPressLogText[MAX_BUTTON_LOG_SIZE+1] = 0;
+	   }
+	   else
+		   strcpy (_buttonPressLogText, "NO ID");
+
       _enabledText = NULL;
    }
 
@@ -666,6 +681,9 @@ void CGUIButton::setEnabledText (CGUITextItem * textItem)
 {
    if (textItem)
    {
+	   // re-establish button press logging ID
+	   strncpy(_buttonPressLogText, textItem->getId(), MAX_BUTTON_LOG_SIZE); 
+	   _buttonPressLogText[MAX_BUTTON_LOG_SIZE+1] = 0;
       if (_enabledText)
       {
          _enabledText->setText(textItem);
@@ -675,13 +693,6 @@ void CGUIButton::setEnabledText (CGUITextItem * textItem)
          _enabledText = new CGUIText(_display, textItem);
          addObjectToFront(_enabledText);
       }      
-   }
-   if (!textItem)
-   {
-      // NOT GOOD!!! Nothing to do.
-   }
-   else
-   {
       if (_enabled)
       {
          _enabledText->setVisible(true);
@@ -1064,7 +1075,11 @@ void CGUIButton::doOnPress()
          _pressedText->setVisible(true);
       }
 
-      if (_enabledText)  _enabledText->setVisible(false);
+      if (_enabledText)  
+	  {
+		  _enabledText->setVisible(false);
+	  }
+
       if (_disabledText) _disabledText->setVisible(false);
 
       invalidateObjectRegion(_enabledBitmap);
@@ -1072,6 +1087,7 @@ void CGUIButton::doOnPress()
       _pressed = true;
 
       if (_audioMessagePointer) _audioMessagePointer->send();
+	  DataLog (log_level_cgui_button_press_info) << "BUTTON_NAME = " << _buttonPressLogText << endmsg;
    }
 }
 

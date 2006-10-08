@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.20  2006/09/18 23:38:28Z  cf10242
+ *  IT 56: allow button to be attached to root window
  *  Revision 1.19  2006/06/16 16:10:07Z  MS10234
  *   - add a variable to keep the state of the button based on the event callback
  *  Revision 1.18  2006/05/15 21:48:45Z  rm10919
@@ -54,6 +56,8 @@
 #include "cgui_window.h"
 #include "cgui_text.h"
 #include "cgui_bitmap.h"
+
+#define MAX_BUTTON_LOG_SIZE  64
 
 // CGUIButton is the parent class for all button styles.  Specialized buttons
 // can derive from this class and pick up many of the standard behaviors of
@@ -106,6 +110,8 @@ public:
       CGUITextItem * pressedTextItem;    // label text used in pressed state
       StylingRecord * pressedStylingRecord;// label text styling information in pressed state
 
+	  char alternateButtonId[MAX_BUTTON_LOG_SIZE+1];        // enabled text item ID is used.  If none, then this field is used
+
       ButtonBehavior type;               // button behavior  
    };
 
@@ -140,6 +146,8 @@ protected:
    ButtonBehavior           _behaviorType;         // how does button behave when pressed
    
    DataLog_Level           *_btnDataLogLevel;      // level at which to log button press events
+
+   char 				   _buttonPressLogText[MAX_BUTTON_LOG_SIZE+1];  // button press logging text
 
 public:
    // CONSTRUCTOR

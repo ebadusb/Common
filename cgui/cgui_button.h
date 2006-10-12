@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.21  2006/10/07 19:27:41Z  cf10242
+ *  IT 59: generic button press logging
  *  Revision 1.20  2006/09/18 23:38:28Z  cf10242
  *  IT 56: allow button to be attached to root window
  *  Revision 1.19  2006/06/16 16:10:07Z  MS10234
@@ -131,7 +133,10 @@ protected:
    
    CGUIText                *_pressedText;          // ptr to pressed text object
    CGUIBitmap              *_pressedBitmap;        // ptr to pressed bitmap object
-   
+
+   CGUIRegion              _textRegion;            // area in which text can appear, uses v and h margin
+   bool                    _haveTextRegion;        // flag to use textRegion member
+
    Message<long>           *_audioMessagePointer;  // ptr to audio message to send when button is pressed
    CallbackBase             _CBOnPressed;          // callback object to use when button is pressed
    CallbackBase             _CBOnReleased;         // callback object to use when button is released

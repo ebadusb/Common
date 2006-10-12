@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.26  2006/10/07 19:27:40Z  cf10242
+ *  IT 59: generic button press logging
  *  Revision 1.25  2006/09/18 23:38:27Z  cf10242
  *  IT 56: allow button to be attached to root window
  *  Revision 1.24  2006/07/12 23:36:07Z  rm10919
@@ -126,18 +128,42 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
    }
 	else
 		_pressedBitmap = NULL;
-   
+
+   //
+   // Text stuff
+   //
+   if (buttonData.hMargin > 0)
+   {
+      _textRegion.x = buttonData.hMargin;      
+      _textRegion.width = _enabledBitmap->getRegion().width - 2 * buttonData.hMargin;
+      _haveTextRegion = true;
+   }
+   if (buttonData.vMargin > 0 )
+   {
+      _textRegion.y = buttonData.vMargin;
+      _textRegion.height = _enabledBitmap->getRegion().height - 2 * buttonData.hMargin;
+      _haveTextRegion = true;
+   }
+
+   if (buttonData.vMargin < 1 || buttonData.hMargin < 1) _haveTextRegion = false;
+
    if (buttonData.enabledTextItem)
    {
       if (!buttonData.enabledStylingRecord)
       {
          buttonData.enabledStylingRecord = new StylingRecord(buttonData.enabledTextItem->getStylingRecord());
       }
-      if ((buttonData.enabledStylingRecord->region.width == 0) && (buttonData.enabledStylingRecord->region.height == 0))
+
+      if (_haveTextRegion)
+      {
+         buttonData.enabledStylingRecord->region = _textRegion;
+      }
+      else if ((buttonData.enabledStylingRecord->region.width == 0) && (buttonData.enabledStylingRecord->region.height == 0))
       {
          buttonData.enabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
          buttonData.enabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
       }
+
       _enabledText = new CGUIText(display, buttonData.enabledTextItem, buttonData.enabledStylingRecord);
       _enabledText->setCaptureBackgroundColor();
       addObjectToFront(_enabledText);
@@ -166,12 +192,17 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       {
          buttonData.disabledStylingRecord = new StylingRecord(buttonData.disabledTextItem->getStylingRecord());
       }
-      
-      if ((buttonData.disabledStylingRecord->region.width == 0) && (buttonData.disabledStylingRecord->region.height == 0))
+
+      if (_haveTextRegion)
+      {
+         buttonData.disabledStylingRecord->region = _textRegion;
+      }
+      else if ((buttonData.disabledStylingRecord->region.width == 0) && (buttonData.disabledStylingRecord->region.height == 0))
       {
          buttonData.disabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
          buttonData.disabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
       }
+
       _disabledText = new CGUIText(display, buttonData.disabledTextItem, buttonData.disabledStylingRecord);
       _disabledText->setCaptureBackgroundColor();
       _disabledText->setVisible(false);
@@ -188,12 +219,17 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       {
          buttonData.pressedStylingRecord = new StylingRecord(buttonData.pressedTextItem->getStylingRecord());
       }
-      
-      if ((buttonData.pressedStylingRecord->region.width == 0) && (buttonData.pressedStylingRecord->region.height == 0))
+
+      if (_haveTextRegion)
+      {
+         buttonData.pressedStylingRecord->region = _textRegion;
+      }
+      else if ((buttonData.pressedStylingRecord->region.width == 0) && (buttonData.pressedStylingRecord->region.height == 0))
       {
          buttonData.pressedStylingRecord->region.width = _enabledBitmap->getRegion().width;
          buttonData.pressedStylingRecord->region.height = _enabledBitmap->getRegion().height;
       }
+
       _pressedText = new CGUIText(display, buttonData.pressedTextItem, buttonData.pressedStylingRecord);
       _pressedText->setCaptureBackgroundColor();
       _pressedText->setVisible(false);

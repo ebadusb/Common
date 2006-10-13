@@ -3,6 +3,10 @@
 # Makefile - makefile for datalog library
 #
 # $Log: makefile.vx $
+# Revision 1.6  2003/02/06 20:41:31Z  jl11312
+# - added support for binary record type
+# - added support for symbolic node names in networked configurations
+# - enabled compression/encryption of log files
 # Revision 1.5  2002/08/22 20:19:11  jl11312
 # - added network support
 # Revision 1.4  2002/08/15 20:52:46  jl11312
@@ -45,7 +49,7 @@ LIB_C_FILES   =
 LIB_CXX_FILES = datalog.cpp datalog_buffer.cpp datalog_client.cpp datalog_init.cpp \
 		datalog_message.cpp datalog_message_binary.cpp datalog_message_print.cpp \
 		datalog_message_stream.cpp datalog_network.cpp datalog_output.cpp \
-		datalog_periodic.cpp datalog_port.cpp
+		datalog_periodic.cpp datalog_port.cpp datalog_reserved_stream.cpp
 LIB_S_FILES =
 
 #

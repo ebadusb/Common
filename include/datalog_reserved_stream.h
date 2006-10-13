@@ -30,7 +30,9 @@ class DataLogReserved
 {
 	public:
 		template < class T >
-		friend DataLogReserved & manipTaggedItem(DataLogReserved & stream, const char * tagName, T tagValue);
+			friend DataLogReserved & manipTaggedItem(DataLogReserved & stream, const char * tagName, T tagValue);
+		//Manipulator for settting precision
+		friend DataLogReserved & manipPrecision(DataLogReserved & stream, int tagValue);
 		friend DataLogReserved & endmsg(DataLogReserved & stream);
 		friend DataLogReserved & hex(DataLogReserved & stream);
 		friend DataLogReserved & dec(DataLogReserved & stream);
@@ -63,6 +65,13 @@ inline DataLogReserved & manipTaggedItem(DataLogReserved & stream, const char * 
 	return stream;
 }
 
+//This is the manipulator function that does the work
+inline DataLogReserved & manipPrecision(DataLogReserved & stream, int tagValue)
+{
+	DataLog(stream._logLevel).precision(tagValue);
+	return stream;
+}
+
 inline DataLogReserved & endmsg(DataLogReserved & stream)
 {
 	DataLog(stream._logLevel) << endmsg;
@@ -89,32 +98,63 @@ class DataLogReservedIManip
 {
 	S _value;
 	const char * _name;
+	//TaggedItem form for manipulator take a tag name and S tagValue
 	DataLogReserved & (* _func)(DataLogReserved & stream, const char * name, S value);
 
 public:
-	DataLogReservedIManip(	//Pointer to Stream Manipulator Function
+	//Pointer to Stream Manipulator Function for TaggedItem
+	DataLogReservedIManip(	
 		DataLogReserved & (* func)(DataLogReserved & stream, const char * name, S value),
-		const char * name,					//Tag Name
+		const char * name,			//Tag Name
 		S value)					//Tag Value
 	  : _func(func), _value(value), _name(name) { }
 
     template < class T >
-    friend DataLogReserved & operator << (DataLogReserved stream, const DataLogReservedIManip<T> & manip);
+		friend DataLogReserved & operator << (DataLogReserved stream, const DataLogReservedIManip<T> & manip);
 	template < class T >
-    friend DataLogReserved & manipTaggedItem(DataLogReserved & stream, const char * tagName, T tagValue);
+		friend DataLogReserved & manipTaggedItem(DataLogReserved & stream, const char * tagName, T tagValue);
 };
 
-//This calls the manipulator
+//This is the manipulator class for the Precision manipulator
+class DataLogReservedIManipP
+{
+	int _value;
+    //Precision form for manipulator takes an S precision value
+	DataLogReserved & (* _pFunc)(DataLogReserved & stream, int value);
+
+public:
+	//Pointer to Stream Manipulator Function for Precision
+	DataLogReservedIManipP(	
+		DataLogReserved & (* func)(DataLogReserved & stream, int value),
+        int value)					//Tag Value
+	  : _pFunc(func), _value(value) { }
+
+	friend DataLogReserved & operator << (DataLogReserved stream, const DataLogReservedIManipP & manip);
+	friend DataLogReserved & manipPrecision(DataLogReserved & stream, int tagValue);
+};
+
+//This calls the taggedItem manipulator
 template < class S >
 inline DataLogReservedIManip<S> taggedItem(const char * tagName, S tagValue)
 {
 	return DataLogReservedIManip<S>(manipTaggedItem, tagName, tagValue);
 }
 
+//This calls the precision manipulator manipulator
+inline DataLogReservedIManipP setPrecision(int tagValue)
+{
+	return DataLogReservedIManipP(manipPrecision, tagValue);
+}
+
 template < class S >
 inline DataLogReserved & operator << (DataLogReserved stream, const DataLogReservedIManip<S> & manip)
 {
 	return (manip._func)(stream, manip._name, manip._value);
+}
+
+inline DataLogReserved & operator << (DataLogReserved stream, const DataLogReservedIManipP & manip)
+{
+	return (manip._pFunc)(stream, manip._value);
 }
 
 #endif _DATALOG_RESERVED_

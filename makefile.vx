@@ -3,6 +3,8 @@
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.22  2005/11/14 13:12:23  jl11312
+# - modified for Windows XP (IT 1077)
 # Revision 1.21  2004/09/30 16:26:19Z  jl11312
 # - added cgui directory for vxworks versions 5.5 and up
 # Revision 1.20  2004/01/26 18:55:55Z  jl11312
@@ -58,7 +60,7 @@ endif
 MAINDIR = .
 include $(MAINDIR)/makefile.vxc
 
-DIR_LIST := cds clocks cmdline datalog debug dlm router socket++ softcrc statemachine zlib
+DIR_LIST := cds clocks cmdline datalog debug dlm grip router socket++ softcrc statemachine zlib
 ifeq ($(VXWORKS_VERSION),5.4)
   ifeq ($(CPU),I80486)
     DIR_LIST += drivers

@@ -1,8 +1,10 @@
-// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_file.h 1.1 2005/05/11 15:53:17Z jl11312 Exp jl11312 $
+// $Header: //bctquad3/home/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_file.h 1.2 2005/05/11 15:53:17Z jl11312 Exp $
 //
 // Configuration file class
 //
 // $Log: config_file.h $
+// Revision 1.2  2005/05/11 15:53:17Z  jl11312
+// - corrected archive types
 // Revision 1.3  2005/01/20 17:25:22Z  jl11312
 // - added suport for export file for shared enumeration types
 // Revision 1.2  2005/01/13 21:33:18Z  jl11312
@@ -72,6 +74,7 @@ public:
 	void generateNameList(FILE * fp, const char * outputName);
 	void generateSectionNameList(FILE * fp, const char * outputName);
 	void generateConstructors(FILE * fp, const char * outputName);
+	void generateLogDataFunction(FILE * fp, const char * outputName);
 	void generateParameterValidateFunctions(FILE * fp, const char * outputName);
 	void generateParameterRangeFunctions(FILE * fp, const char * outputName);
 	void generateParameterSetFunctions(FILE * fp, const char * outputName);

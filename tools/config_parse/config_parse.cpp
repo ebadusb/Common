@@ -1,8 +1,10 @@
-// $Header: //bctquad3/home/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_parse.cpp 1.3 2005/05/11 21:30:45Z ms10234 Exp MS10234 $
+// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_parse.cpp 1.4 2006/10/19 20:01:02Z MS10234 Exp jl11312 $
 //
 // Configuration file parse tool
 //
 // $Log: config_parse.cpp $
+// Revision 1.3  2005/05/11 21:30:45Z  ms10234
+// - added argument for file_names and config_helper header file locations
 // Revision 1.2  2005/05/11 16:10:39Z  jl11312
 // - corrected archive types
 // Revision 1.4  2005/01/20 19:22:15Z  jl11312
@@ -235,6 +237,7 @@ void generateSourceFile(FILE * fp, const char * outputName, const char * sourceF
 		configFile[file]->generateNameList(fp, outputName);
 		configFile[file]->generateSectionNameList(fp, outputName);
 		configFile[file]->generateConstructors(fp, outputName);
+		configFile[file]->generateLogDataFunction(fp, outputName);
 		configFile[file]->generateParameterValidateFunctions(fp, outputName);
 		configFile[file]->generateParameterRangeFunctions(fp, outputName);
 		configFile[file]->generateParameterSetFunctions(fp, outputName);

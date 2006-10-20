@@ -1,8 +1,10 @@
-// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_file.cpp 1.1 2005/05/11 16:36:02Z jl11312 Exp jl11312 $
+// $Header: //bctquad3/home/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_file.cpp 1.3 2006/10/19 20:01:01Z MS10234 Exp MS10234 $
 //
 // Configuration file class
 //
 // $Log: config_file.cpp $
+// Revision 1.2  2005/05/11 16:36:02Z  jl11312
+// - corrected archive types
 // Revision 1.5  2005/02/09 21:14:16Z  jl11312
 // - added default file name to list of parameters for config file read function
 // Revision 1.4  2005/01/24 16:56:26Z  jl11312
@@ -1221,6 +1223,9 @@ void ConfigFile::generateHeaderAccessClass(FILE * fp)
 
 
 	fprintf(fp,
+		"    void logData( DataLog_Level * level, ConfigFile::ReadStatus s );\n\n");
+
+	fprintf(fp,
 	   "  public:\n"
 		"    _C_%s(%s_Data & data);\n"
 		"    const char * name(void) { return \"%s\"; }\n"
@@ -1274,23 +1279,27 @@ void ConfigFile::generateHeaderAccessClass(FILE * fp)
 		"    {\n"
 		"      return ConfigFile::getSectionNameByRef(_dataMap, %d, value);\n"
 		"    }\n\n"
-		"    ReadStatus readFile(DataLog_Level * logLevel, DataLog_Level * errorLevel)\n"
-		"    {\n"
-		"      _logLevel = logLevel;\n"
-		"		 _errorLevel = errorLevel;\n"
-		"      return ConfigFile::readData(_dataMap, %d, fileName(), crcFileName(), backupFileName(), backupCRCFileName(), defaultFileName());\n"
-		"    }\n\n",
+		"	ReadStatus readFile(DataLog_Level * logLevel, DataLog_Level * errorLevel)\n"
+		"	{\n"
+		"		ConfigFile::ReadStatus status;\n"
+		"		_logLevel = logLevel;\n"
+		"		_errorLevel = errorLevel;\n"
+		"		status = ConfigFile::readData(_dataMap, %d, fileName(), crcFileName(), backupFileName(), backupCRCFileName(), defaultFileName());\n"
+		"		logData(&log_level_config_data_info, status);\n"
+		"		return status;\n"
+		"	}\n\n",
 		_parameter.size(), _parameter.size(), _parameter.size());
 
 	if ( _hasBackup )
 	{
 		fprintf(fp,
-			"    WriteStatus writeFile(DataLog_Level * logLevel, DataLog_Level * errorLevel)\n"
-			"    {\n"
-			"      _logLevel = logLevel;\n"
-			"		 _errorLevel = errorLevel;\n"
-			"      return ConfigFile::writeData(_dataMap, %d, fileName(), crcFileName(), backupFileName(), backupCRCFileName());\n"
-			"    }\n\n",
+			"	WriteStatus writeFile(DataLog_Level * logLevel, DataLog_Level * errorLevel)\n"
+			"	{\n"
+			"		_logLevel = logLevel;\n"
+			"		_errorLevel = errorLevel;\n"
+			"		logData(&log_level_config_data_info, ConfigFile::ReadFailed);\n"
+			"		return ConfigFile::writeData(_dataMap, %d, fileName(), crcFileName(), backupFileName(), backupCRCFileName());\n"
+			"	}\n\n",
 			_parameter.size());
 	}
 
@@ -1474,6 +1483,60 @@ void ConfigFile::generateConstructors(FILE * fp, const char * outputName)
 
 	}
 }
+
+void ConfigFile::generateLogDataFunction(FILE * fp, const char * outputName)
+{
+	fprintf(fp, 
+		"void %s::_C_%s::logData( DataLog_Level * level, ConfigFile::ReadStatus readStatus )\n",
+		outputName, _className.c_str(), _className.c_str(), _className.c_str());
+
+	fprintf(fp,
+		"{\n");
+
+	fprintf(fp,
+		"\tDataLog(*level) << \"%s data\";\n\n"
+		"\tif (readStatus == ConfigFile::ReadOK )\n"
+		"\t\tDataLog(*level) << \" from <\" << fileName() << \">:\";\n", _className.c_str());
+	if ( _hasBackup )
+	{
+		fprintf(fp,
+			"\telse if (readStatus == ConfigFile::ReadBackupOK)\n"
+			"\t\tDataLog(*level) << \" from <\" << backupFileName() << \">:\";\n"
+			"\telse if (readStatus == ConfigFile::ReadDefaultOK)\n"
+			"\t\tDataLog(*level) << \" from <\" << defaultFileName() << \">:\";\n");
+	}
+	fprintf(fp,
+		"\telse\n"
+		"\t\tDataLog(*level) << \" :\";\n\n");
+
+	fprintf(fp,
+		"\tDataLog(*level)\n");
+	for ( int sectIdx=0; sectIdx<_section.size(); sectIdx++ )
+	{
+		fprintf(fp,
+			"\t\t<< \" [%s]\"\n", _section[sectIdx]->name().c_str());
+
+		for ( int paramIdx=0; paramIdx<_parameter.size(); paramIdx++ )
+		{
+			if ( _section[sectIdx]->name() == _parameter[paramIdx]->sectionName() )
+			{
+				fprintf(fp,
+					"\t\t<< \" %s=\" << %s::%s().%s.%s%s\n", _parameter[paramIdx]->name().c_str(), 
+					outputName, _className.c_str(),
+					_section[sectIdx]->name().c_str(), _parameter[paramIdx]->name().c_str(),
+					_parameter[paramIdx]->indexString().c_str());
+			}
+		}
+		fprintf(fp, 
+			"\n");
+	}
+	fprintf(fp,	
+		"\t\t<< endmsg;\n\n");
+
+	fprintf(fp, 
+		"}\n\n");
+}
+
 
 void ConfigFile::generateParameterValidateFunctions(FILE * fp, const char * outputName)
 {

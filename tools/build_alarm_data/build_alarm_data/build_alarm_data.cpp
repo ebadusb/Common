@@ -57,6 +57,7 @@ typedef list<AlarmData> AlarmDataList;
 StringList			_stringInfoIDList;
 ButtonGroupList		_buttonGroupList;
 AlarmDataList		_alarmDataList;
+string				_buttonResponseTypeDef;
 
 // Loads in string IDs from a given string.info file
 bool loadStringInfo(char *stringInfoPath)
@@ -238,6 +239,7 @@ int readStringInfo(char *pStrPath, char *pStrButtons)
 {
 	int retVal = 0;
 	int lineNo = 0;
+	_buttonResponseTypeDef.clear();
 
 	// ----------------------------------------
 	// BUTTONS
@@ -262,6 +264,14 @@ int readStringInfo(char *pStrPath, char *pStrButtons)
 		if ( !firstToken || firstToken[0] == '#' )
 		{
 			// empty line or a comment
+			continue;
+		}
+
+		if (strncmp(firstToken, "BUTTON_RESPONSE_TYPE", 20) == 0)
+		{
+			// expected line is BUTTON_RESPONSE_TYPE=blahBlahblahTypeHere
+			firstToken += 21;
+			_buttonResponseTypeDef.assign(firstToken);
 			continue;
 		}
 
@@ -679,7 +689,11 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	fprintf(pFile, "struct ResponseArrayButtonsStruct\n");
 	fprintf(pFile, "{\n");
 	fprintf(pFile, "\tbool createMe;\n");
-	fprintf(pFile, "\tBaseResponseButton::BaseButtonId buttonName;\n");
+	// did the user specify a special base response type?
+	if (_buttonResponseTypeDef.size() == 0)
+		fprintf(pFile, "\tBaseResponseButton::BaseButtonId buttonName;\n");
+	else
+		fprintf(pFile, "\t%s;\n", _buttonResponseTypeDef.c_str());
 	fprintf(pFile, "\tbool available;\n");
 	fprintf(pFile, "\tAlarmResponseState responseState;\n");
 	fprintf(pFile, "\tAlarmResponseType responseType;\n");

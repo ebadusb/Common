@@ -147,30 +147,44 @@ int verifyString(AlarmData *alarm, int lineNo)
 		delete tempString;
 	}
 
-	bool bAllCauseOk[MAX_CAUSES];
-	for (int i = 0; i < MAX_CAUSES; i++) {bAllCauseOk[i] = false;}
-
-	for (iter = _stringInfoIDList.begin(); iter != _stringInfoIDList.end(); iter++)
+	// message bar verification
+	if (!bMsgOk)
 	{
-		if (!bMsgOk)
+		for (iter = _stringInfoIDList.begin(); iter != _stringInfoIDList.end(); iter++)
 		{
 			if ((*iter) == alarm->alarmMsg)
 			{
 				bMsgOk = true;
+				break;
 			}
 		}
+	}
 
-		if (!bTextOk)
+	// explanation text verification
+	if (!bTextOk)
+	{
+		for (iter = _stringInfoIDList.begin(); iter != _stringInfoIDList.end(); iter++)
 		{
 			if ((*iter) == alarm->alarmText)
 			{
 				bTextOk = true;
-			}
+				break;
+			}			
 		}
+	}
 
-		if (!bCauseActionOk)
+	// cause/action string verification
+	bool bAllCauseOk[MAX_CAUSES];
+	for (int i = 0; i < MAX_CAUSES; i++) 
+	{
+		bAllCauseOk[i] = false;
+	}
+
+	if (!bCauseActionOk)
+	{
+		for (int i = 0; i < arrayIndex; i++)
 		{
-			for (int i = 0; i < arrayIndex; i++)
+			for (iter = _stringInfoIDList.begin(); iter != _stringInfoIDList.end(); iter++)
 			{
 				if (strcmp((*iter).c_str(), &causeActionString[i][0]) == 0)
 				{
@@ -180,6 +194,7 @@ int verifyString(AlarmData *alarm, int lineNo)
 			}
 		}
 
+		// did we find a string for each and everyone of the cause/action strings?
 		bCauseActionOk = true;
 		for (int i = 0; i < arrayIndex; i++) 
 		{
@@ -188,11 +203,6 @@ int verifyString(AlarmData *alarm, int lineNo)
 				bCauseActionOk = false;
 				break;
 			}
-		}
-
-		if (bMsgOk && bTextOk && bCauseActionOk)
-		{
-			break;
 		}
 	}
 

@@ -1,3 +1,12 @@
+/*
+ * $Header: Z:/vxWorks/Common/datalog/unit_test/rcs/DataLogReservedStreamTest.cpp 1.2 2006/10/23 20:25:30Z jmedusb Exp jmedusb $ 
+ * This files defines methods that test the DataLogReserved calls
+ * with a Generated message file.
+ *
+ * $Log: DataLogReservedStreamTest.cpp $
+ *
+ */
+
 #include <vxworks.h>
 #include "datalog_reserved_stream.h"
 #include "alarm_messages_res.h"

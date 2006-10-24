@@ -1,31 +1,36 @@
+/*
+ * $Header: Z:/vxWorks/Common/include/rcs/datalog_reserved_stream.h 1.3 2006/10/23 20:29:48Z jmedusb Exp jmedusb $ 
+ *
+ *  This defined the DataLogReserved class constructor and stream
+ *  manipulator template functions, as well as the dec/hex and
+ *  precision stream manipulators needed for Reserved Message logging.
+ *
+ * 	This class simple forwards the Tag Name and Value to the DataLog_Stream class
+ *  using the format specified in the DLOG Reserved Message format
+ * 
+ *  USAGE:
+ *  DataLog_Reserved("MESSAGE_NAME", logLevel)
+ *  << taggedItem("X", Y) << dec
+ *  << taggedItem("Y", X) << hex
+ *  ...
+ *  << taggedItem("TAG_N", value) << precision(int)
+ *  << endmsg;
+ *
+ * $Log: datalog_reserved_stream.h $
+ *
+ */
+
 #ifndef _DATALOG_RESERVED_
 #define _DATALOG_RESERVED_
 
 #include "datalog_levels.h"
 #include "datalog.h"
 
-/** 
- * 
- *  USAGE:
- *  DataLog_Reserved("MESSAGE_NAME", logLevel)
- *  << TaggedItem("X", Y)
- *  << TaggedItem("Y", X)
- *  ...
- *  << TaggedItem("TAG_N", value)
- *  << endReservedMsg;
- * 
- */
-
 //This defines the function pointer that takes only one argument, the stream reference
 class DataLogReserved;
 typedef DataLogReserved & (* DataLogReservedManip)(DataLogReserved &);
 
-/** 
- * 
- * 	This class simple forwards the Tag Name and Value to the DataLog_Stream class
- *  using the format specified in the DLOG Reserved Message format
- *  
- **/
+
 class DataLogReserved
 {
 	public:

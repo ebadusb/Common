@@ -57,7 +57,9 @@ typedef list<AlarmData> AlarmDataList;
 StringList			_stringInfoIDList;
 ButtonGroupList		_buttonGroupList;
 AlarmDataList		_alarmDataList;
-string				_buttonResponseTypeDef;
+string				_buttonResponseClass;
+string				_buttonResponseMember;
+string				_buttonResponsePlaceHolder;
 
 // Loads in string IDs from a given string.info file
 bool loadStringInfo(char *stringInfoPath)
@@ -249,7 +251,8 @@ int readStringInfo(char *pStrPath, char *pStrButtons)
 {
 	int retVal = 0;
 	int lineNo = 0;
-	_buttonResponseTypeDef.clear();
+	_buttonResponseClass.clear();
+	_buttonResponseMember.clear();
 
 	// ----------------------------------------
 	// BUTTONS
@@ -277,11 +280,27 @@ int readStringInfo(char *pStrPath, char *pStrButtons)
 			continue;
 		}
 
-		if (strncmp(firstToken, "BUTTON_RESPONSE_TYPE", 20) == 0)
+		if (strncmp(firstToken, "BUTTON_RESPONSE_CLASS", 21) == 0)
 		{
-			// expected line is BUTTON_RESPONSE_TYPE=blahBlahblahTypeHere
-			firstToken += 21;
-			_buttonResponseTypeDef.assign(firstToken);
+			// expected line is BUTTON_RESPONSE_CLASS=blahBlahblahTypeHere
+			firstToken += 22;
+			_buttonResponseClass.assign(firstToken);
+			continue;
+		}
+
+		if (strncmp(firstToken, "BUTTON_RESPONSE_MEMBER", 22) == 0)
+		{
+			// expected line is BUTTON_RESPONSE_MEMBER=blahBlahblahTypeHere
+			firstToken += 23;
+			_buttonResponseMember.assign(firstToken);
+			continue;
+		}
+
+		if (strncmp(firstToken, "BUTTON_RESPONSE_PLACEHOLDER", 27) == 0)
+		{
+			// expected line is BUTTON_RESPONSE_PLACEHOLDER=blahBlahblahTypeHere
+			firstToken += 28;
+			_buttonResponsePlaceHolder.assign(firstToken);
 			continue;
 		}
 
@@ -699,11 +718,7 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	fprintf(pFile, "struct ResponseArrayButtonsStruct\n");
 	fprintf(pFile, "{\n");
 	fprintf(pFile, "\tbool createMe;\n");
-	// did the user specify a special base response type?
-	if (_buttonResponseTypeDef.size() == 0)
-		fprintf(pFile, "\tBaseResponseButton::BaseButtonId buttonName;\n");
-	else
-		fprintf(pFile, "\t%s;\n", _buttonResponseTypeDef.c_str());
+	fprintf(pFile, "\t%s::%s buttonName;\n", _buttonResponseClass.c_str(), _buttonResponseMember.c_str());
 	fprintf(pFile, "\tbool available;\n");
 	fprintf(pFile, "\tAlarmResponseState responseState;\n");
 	fprintf(pFile, "\tAlarmResponseType responseType;\n");
@@ -767,7 +782,8 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 			string buttonName = (*iterBtn).ButtonName;
 			if (buttonName == "NULL")
 			{
-				fprintf(pFile, ",{false,BaseResponseButton::Continue,false,ResponsePending,NoSafetyAction}");
+				fprintf(pFile, ",{false,%s::%s,false,ResponsePending,NoSafetyAction}",
+					_buttonResponseClass.c_str(), _buttonResponsePlaceHolder.c_str());
 			}
 			else
 			{
@@ -780,7 +796,8 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 		// fill in rest of buttons as NULL
 		for (int i = count; i < 10; i++)
 		{
-			fprintf(pFile, ",{false,BaseResponseButton::Continue,false,ResponsePending,NoSafetyAction}");
+			fprintf(pFile, ",{false,%s::%s,false,ResponsePending,NoSafetyAction}",
+				_buttonResponseClass.c_str(), _buttonResponsePlaceHolder.c_str());
 		}
 	
 		// fill in params information
@@ -849,16 +866,16 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	fprintf(pFile, "\t\t\tif (strcmp(responseArrayTable[y].arrayName, responseName.c_str()) == 0)\n");
 	fprintf(pFile, "\t\t\t{\n");
 	fprintf(pFile, "\t\t\t\tpResponseArray = AlarmResponseArray::createResponseObj(\n");
-	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response1.createMe) ? (new BaseResponseButton(responseArrayTable[y].response1.buttonName, responseArrayTable[y].response1.available, responseArrayTable[y].response1.responseState, responseArrayTable[y].response1.responseType)) : NULL,\n");
-	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response2.createMe) ? (new BaseResponseButton(responseArrayTable[y].response2.buttonName, responseArrayTable[y].response2.available, responseArrayTable[y].response2.responseState, responseArrayTable[y].response2.responseType)) : NULL,\n");
-	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response3.createMe) ? (new BaseResponseButton(responseArrayTable[y].response3.buttonName, responseArrayTable[y].response3.available, responseArrayTable[y].response3.responseState, responseArrayTable[y].response3.responseType)) : NULL,\n");
-	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response4.createMe) ? (new BaseResponseButton(responseArrayTable[y].response4.buttonName, responseArrayTable[y].response4.available, responseArrayTable[y].response4.responseState, responseArrayTable[y].response4.responseType)) : NULL,\n");
-	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response5.createMe) ? (new BaseResponseButton(responseArrayTable[y].response5.buttonName, responseArrayTable[y].response5.available, responseArrayTable[y].response5.responseState, responseArrayTable[y].response5.responseType)) : NULL,\n");
-	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response6.createMe) ? (new BaseResponseButton(responseArrayTable[y].response6.buttonName, responseArrayTable[y].response6.available, responseArrayTable[y].response6.responseState, responseArrayTable[y].response6.responseType)) : NULL,\n");
-	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response7.createMe) ? (new BaseResponseButton(responseArrayTable[y].response7.buttonName, responseArrayTable[y].response7.available, responseArrayTable[y].response7.responseState, responseArrayTable[y].response7.responseType)) : NULL,\n");
-	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response8.createMe) ? (new BaseResponseButton(responseArrayTable[y].response8.buttonName, responseArrayTable[y].response8.available, responseArrayTable[y].response8.responseState, responseArrayTable[y].response8.responseType)) : NULL,\n");
-	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response9.createMe) ? (new BaseResponseButton(responseArrayTable[y].response9.buttonName, responseArrayTable[y].response9.available, responseArrayTable[y].response9.responseState, responseArrayTable[y].response9.responseType)) : NULL,\n");
-	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response10.createMe) ? (new BaseResponseButton(responseArrayTable[y].response10.buttonName, responseArrayTable[y].response10.available, responseArrayTable[y].response10.responseState, responseArrayTable[y].response10.responseType)) : NULL\n");
+	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response1.createMe) ? (new %s(responseArrayTable[y].response1.buttonName, responseArrayTable[y].response1.available, responseArrayTable[y].response1.responseState, responseArrayTable[y].response1.responseType)) : NULL,\n", _buttonResponseClass.c_str());
+	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response2.createMe) ? (new %s(responseArrayTable[y].response2.buttonName, responseArrayTable[y].response2.available, responseArrayTable[y].response2.responseState, responseArrayTable[y].response2.responseType)) : NULL,\n", _buttonResponseClass.c_str());
+	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response3.createMe) ? (new %s(responseArrayTable[y].response3.buttonName, responseArrayTable[y].response3.available, responseArrayTable[y].response3.responseState, responseArrayTable[y].response3.responseType)) : NULL,\n", _buttonResponseClass.c_str());
+	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response4.createMe) ? (new %s(responseArrayTable[y].response4.buttonName, responseArrayTable[y].response4.available, responseArrayTable[y].response4.responseState, responseArrayTable[y].response4.responseType)) : NULL,\n", _buttonResponseClass.c_str());
+	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response5.createMe) ? (new %s(responseArrayTable[y].response5.buttonName, responseArrayTable[y].response5.available, responseArrayTable[y].response5.responseState, responseArrayTable[y].response5.responseType)) : NULL,\n", _buttonResponseClass.c_str());
+	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response6.createMe) ? (new %s(responseArrayTable[y].response6.buttonName, responseArrayTable[y].response6.available, responseArrayTable[y].response6.responseState, responseArrayTable[y].response6.responseType)) : NULL,\n", _buttonResponseClass.c_str());
+	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response7.createMe) ? (new %s(responseArrayTable[y].response7.buttonName, responseArrayTable[y].response7.available, responseArrayTable[y].response7.responseState, responseArrayTable[y].response7.responseType)) : NULL,\n", _buttonResponseClass.c_str());
+	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response8.createMe) ? (new %s(responseArrayTable[y].response8.buttonName, responseArrayTable[y].response8.available, responseArrayTable[y].response8.responseState, responseArrayTable[y].response8.responseType)) : NULL,\n", _buttonResponseClass.c_str());
+	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response9.createMe) ? (new %s(responseArrayTable[y].response9.buttonName, responseArrayTable[y].response9.available, responseArrayTable[y].response9.responseState, responseArrayTable[y].response9.responseType)) : NULL,\n", _buttonResponseClass.c_str());
+	fprintf(pFile, "\t\t\t\t\t(responseArrayTable[y].response10.createMe) ? (new %s(responseArrayTable[y].response10.buttonName, responseArrayTable[y].response10.available, responseArrayTable[y].response10.responseState, responseArrayTable[y].response10.responseType)) : NULL\n", _buttonResponseClass.c_str());
 	fprintf(pFile, "\t\t\t\t);\n");
 	fprintf(pFile, "\t\t\t\tlen += strlen(responseArrayTable[y].params) + 1;\n");
 	fprintf(pFile, "\t\t\t\tparameterString = new char[len];\n");

@@ -5,6 +5,8 @@
 *
 * Derived from Taos thedif.cpp Revision 1.5  2004/08/09 11:36:52  ms10234
 * $Log: gripif.cpp $
+* Revision 1.1  2006/10/18 12:47:18  pn02526
+* Initial revision
 */
 
 #include <string>
@@ -15,6 +17,13 @@
 #ifndef INITCRC_DEFAULT
 #define INITCRC_DEFAULT 0xFFFFFFFF
 #endif
+
+static unsigned long msgcrc32( unsigned char* blk_adr, unsigned long blk_len)
+{
+   unsigned long crc = INITCRC_DEFAULT;
+   crcgen32( &crc, blk_adr, blk_len );
+   return crc ^ INITCRC_DEFAULT;
+}
 
 //
 // Default Constructor
@@ -94,14 +103,10 @@ void GRIPIf::prepareMsg (void *msg, GRIP_MessageId messageId, unsigned long size
       unsigned char *msgptr = (unsigned char *)hdr + GRIP_HEADER_SIZE;
       const int MsgLength = sizeInBytes - GRIP_HEADER_SIZE;
 
-      hdr->bodyCRC = INITCRC_DEFAULT;
-      crcgen32 (&hdr->bodyCRC, msgptr, MsgLength);
-      hdr->bodyCRC = hdr->bodyCRC ^ INITCRC_DEFAULT;
+      hdr->bodyCRC = msgcrc32(msgptr, MsgLength);
    }
 
-   hdr->headerCRC = INITCRC_DEFAULT;
-   crcgen32 (&hdr->headerCRC, (unsigned char *)hdr, GRIP_HEADER_SIZE - sizeof(unsigned long));
-   hdr->headerCRC = hdr->headerCRC ^ INITCRC_DEFAULT;
+   hdr->headerCRC = msgcrc32((unsigned char *)hdr, GRIP_HEADER_SIZE - sizeof(unsigned long));
 }
 
 // This routine only checks for common message Ids.

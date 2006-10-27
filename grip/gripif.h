@@ -1,11 +1,16 @@
 /*
  * Copyright (c) 2006 by Gambro BCT, Inc.  All rights reserved.
  *
+ *  NOTE: MODIFICATIONS TO THIS FILE MAY NEED TO BE REFLECTED IN THE INTERFACE CONTROL DOCUMENT
+ *        SERVICE TOOLS SUITE, MAINTAINED BY THE START GROUP, AND IN THE STS SOFTWARE.
+ *
  * $Header: //bctquad3/HOME/BCT_Development/vxWorks/Common/grip/rcs/gripif.h 1.2 2006/10/26 18:16:04Z pn02526 Exp wtucusb $
  *
  * Derived from Taos thedif.h Revision 1.20  2005/06/01 09:23:01  jl11312
  *  and the STS ICD revision 1.4.
  * $Log: gripif.h $
+ * Revision 1.1  2006/10/18 16:25:22  pn02526
+ * Initial revision
  * Revision 1.1  2006/10/18 13:43:26  pn02526
  * Initial revision
  */

@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.27  2006/10/11 21:33:15Z  rm10919
+ *  Take account for vMargin and hMargin in determining text region.
  *  Revision 1.26  2006/10/07 19:27:40Z  cf10242
  *  IT 59: generic button press logging
  *  Revision 1.25  2006/09/18 23:38:27Z  cf10242
@@ -305,6 +307,37 @@ void CGUIButton::enable(void)
 
 		setDisabled(false);
 		setWindowVisibility(true);
+
+
+      if (_disabledText) _disabledText->setVisible(false);
+      if (_pressedText)  _pressedText->setVisible(false);
+
+      if (_enabledText)
+      {
+         _enabledText->setVisible(true);
+         _enabledText->setCaptureBackgroundColor();
+      }
+    }
+}
+
+// ENABLE when top bitmap is pressed but enabled state
+//   to put the enable bitmap back on top.
+//  Set the state of the button to enabled.  
+//  If currently invisible, the button is made visible.
+void CGUIButton::enableWhenPressed(void)
+{
+    if(!_enabled || _pressed)
+    {
+      _enabled = true;
+      _pressed = false;
+      if (_disabledBitmap) moveObjectToBack(_disabledBitmap);
+      if (_pressedBitmap) moveObjectToBack(_pressedBitmap);
+      if (_enabledBitmap) moveObjectToFront(_enabledBitmap);
+
+	  if (_iconPointer) moveObjectToFront(_iconPointer);
+
+      setDisabled(false);
+      setWindowVisibility(true);
 
 
       if (_disabledText) _disabledText->setVisible(false);

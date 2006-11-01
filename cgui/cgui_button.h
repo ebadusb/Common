@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.22  2006/10/11 21:33:15Z  rm10919
+ *  Take account for vMargin and hMargin in determining text region.
  *  Revision 1.21  2006/10/07 19:27:41Z  cf10242
  *  IT 59: generic button press logging
  *  Revision 1.20  2006/09/18 23:38:28Z  cf10242
@@ -174,6 +176,10 @@ public:
    // ENABLE
    // set the state of the button to enabled.  If currently invisible, the button is made visible
    void enable(void);
+
+   // ENABLEWHENPRESSED
+   // set the state of the button to enabled with enable bitmap on top.  If currently invisible, the button is made visible.
+   void enableWhenPressed(void);
 
 	// ENABLEPRESSED
 	void enablePressed(void);

@@ -3,6 +3,8 @@
  *
  * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.cpp 1.4 2006/11/01 15:35:19Z cf10242 Exp pn02526 $
  * $Log: cgui_adjustor.cpp $
+ * Revision 1.3  2005/08/11 22:31:31Z  pn02526
+ * Fix logic for sensing if a button is held by the operator.
  * Revision 1.2  2005/08/10 11:55:09  pn02526
  * Revision 1.1  2005/07/25 13:49:28  pn02526
  * Initial revision
@@ -318,6 +320,7 @@ void CGUIAdjustor::populateButtons()
     _increaseData.enabledBitmapId = _adjustorData.increaseEnabledBitmapId;
     _increaseData.disabledBitmapId = _adjustorData.increaseDisabledBitmapId;
     _increaseData.pressedBitmapId = _adjustorData.increasePressedBitmapId;
+	strcpy(_increaseData.alternateButtonId, "IncreaseAdjustor");
 
     // DECREASE BUTTON
     _decreaseData.left = _adjustorData.decreaseHMargin;
@@ -336,6 +339,7 @@ void CGUIAdjustor::populateButtons()
     _decreaseData.enabledBitmapId = _adjustorData.decreaseEnabledBitmapId;
     _decreaseData.disabledBitmapId = _adjustorData.decreaseDisabledBitmapId;
     _decreaseData.pressedBitmapId = _adjustorData.decreasePressedBitmapId;
+	strcpy(_decreaseData.alternateButtonId, "DecreaseAdjustor");
 }
 
 void CGUIAdjustor::populateAdjustor()

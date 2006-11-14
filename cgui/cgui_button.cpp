@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.28  2006/11/01 16:35:33Z  rm10919
+ *  Add enableWhenPressed to have enable bitmap move to front regardless of button state.
  *  Revision 1.27  2006/10/11 21:33:15Z  rm10919
  *  Take account for vMargin and hMargin in determining text region.
  *  Revision 1.26  2006/10/07 19:27:40Z  cf10242
@@ -154,6 +156,7 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       if (!buttonData.enabledStylingRecord)
       {
          buttonData.enabledStylingRecord = new StylingRecord(buttonData.enabledTextItem->getStylingRecord());
+			_enabledStylingRecordSaved = buttonData.enabledStylingRecord;
       }
 
       if (_haveTextRegion)
@@ -193,6 +196,7 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       if (!buttonData.disabledStylingRecord)
       {
          buttonData.disabledStylingRecord = new StylingRecord(buttonData.disabledTextItem->getStylingRecord());
+			_disabledStylingRecordSaved = buttonData.disabledStylingRecord;
       }
 
       if (_haveTextRegion)
@@ -220,6 +224,7 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       if (!buttonData.pressedStylingRecord)
       {
          buttonData.pressedStylingRecord = new StylingRecord(buttonData.pressedTextItem->getStylingRecord());
+			_pressedStylingRecordSaved = buttonData.pressedStylingRecord;
       }
 
       if (_haveTextRegion)
@@ -285,6 +290,9 @@ CGUIButton::~CGUIButton ()
    winCbRemove(_id, &CGUIWindow::uglPointerCallback);
    winCbRemove(_id, &CGUIWindow::uglPointerCallback);
 
+	if (_enabledStylingRecordSaved) {delete _enabledStylingRecordSaved;}
+	if (_disabledStylingRecordSaved) {delete _disabledStylingRecordSaved;}
+	if (_pressedStylingRecordSaved) {delete _pressedStylingRecordSaved;}
 }
 
 // ENABLE

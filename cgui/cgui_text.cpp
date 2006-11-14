@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.28 2006/08/21 18:17:18Z jl11312 Exp jd11007 $
+ * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.29 2006/11/13 20:21:14Z jd11007 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.28  2006/08/21 18:17:18Z  jl11312
+ * - added code to trap displayed string IDs (SIMNT build only)
  * Revision 1.27  2006/07/12 23:36:07Z  rm10919
  * Updates from adding cguiListBox class.
  * Revision 1.26  2006/05/15 21:54:40Z  rm10919
@@ -113,7 +115,7 @@ CGUIText::~CGUIText()
 {
    if (_textString)
    {
-      delete _textString;
+      delete[] _textString;
       _textString = NULL;
    }
 }
@@ -264,7 +266,7 @@ void CGUIText::setText(const StringChar * string)
          // find length of new string and compare to old
          if (newLength > _stringSize)
          {
-            delete _textString;                                  
+            delete[] _textString;                                  
 
             _stringSize = newLength+textBlockSize;
             _textString = new StringChar[_stringSize+1];
@@ -304,7 +306,7 @@ void CGUIText::setText(const char * string)
          // find length of new string and compare to old
          if (newLength > _stringSize)
          {
-            delete _textString;                                  
+            delete[] _textString;                                  
 
             _stringSize = newLength+textBlockSize;
             _textString = new StringChar[_stringSize+1];

@@ -1,8 +1,10 @@
-# @(#) $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/makefile.vx 1.13 2006/07/12 17:36:08 rm10919 Exp pn02526 $
+# @(#) $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/makefile.vx 1.17 2007/04/10 15:15:49Z wms10235 Exp rm10919 $
 #
 # Makefile - makefile for common GUI library
 #
 # $Log: makefile.vx $
+# Revision 1.13  2006/07/12 17:36:08  rm10919
+# Updates from adding cguiListBox class.
 # Revision 1.12  2005/11/22 00:36:27Z  rm10919
 # add data_item_file_reader to make list.
 # Revision 1.11  2005/08/30 21:44:19Z  jl11312
@@ -58,7 +60,7 @@ LIB_C_FILES   =
 LIB_CXX_FILES = cgui_adjustor.cpp cgui_bitmap_info.cpp cgui_bitmap.cpp cgui_button.cpp \
                 cgui_data_item.cpp cgui_data_item_file_reader.cpp cgui_frame.cpp \
                 cgui_graphics.cpp  cgui_list_box.cpp cgui_pool_allocator.cpp \
-                cgui_rectangle.cpp cgui_string_data.cpp cgui_string_data_container.cpp \
+                cgui_rectangle.cpp cgui_string_info.cpp cgui_string_data.cpp cgui_string_data_container.cpp \
                 cgui_text.cpp cgui_textbox.cpp cgui_text_item.cpp cgui_time_date.cpp \
                 cgui_variable_database.cpp cgui_variable_db_container.cpp \
 		cgui_window.cpp cgui_window_object.cpp

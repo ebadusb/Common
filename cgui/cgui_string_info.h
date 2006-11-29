@@ -4,6 +4,8 @@
  * Derived from cgui_string_data.h revision 1.2  2006/07/25 15:42:37  cf10242
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_info.h 1.6 2008/12/16 06:03:02Z rm10919 Exp wms10235 $
  * $Log: cgui_string_info.h $
+ * Revision 1.1  2006/11/27 15:27:50  pn02526
+ * Initial revision
  *
  */
 
@@ -49,7 +51,7 @@ public:
 
    int line() { return _line; };
 
-   bool endOfFile(void) { return _readingFileTable; }  // If false after a get, no more records, or searched for key and not found.
+   bool endOfFile(void) { return !_readingFileTable; }  // If false after a get, no more records, or searched for key and not found.
 
 private:
 

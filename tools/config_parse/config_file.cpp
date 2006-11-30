@@ -1,8 +1,10 @@
-// $Header: //bctquad3/home/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_file.cpp 1.3 2006/10/19 20:01:01Z MS10234 Exp MS10234 $
+// $Header: //bctquad3/home/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_file.cpp 1.4 2006/11/29 17:47:58Z MS10234 Exp MS10234 $
 //
 // Configuration file class
 //
 // $Log: config_file.cpp $
+// Revision 1.3  2006/10/19 20:01:01Z  MS10234
+// 63 - Add logging of the config files
 // Revision 1.2  2005/05/11 16:36:02Z  jl11312
 // - corrected archive types
 // Revision 1.5  2005/02/09 21:14:16Z  jl11312
@@ -589,9 +591,9 @@ void ConfigFile::processFileOptions(void)
 					element->_value = 0xffffffff;
 					crcgen32(&element->_value, (const unsigned char *)element->_name.c_str(), element->_name.size());
 
-					// Force high bit on first element value to ensure that sizeof(enum type) == sizeof(long)
+					// Force high bit on the crc value to ensure that sizeof(enum type) == sizeof(long)
 					//
-					if ( elementCount == 0 ) element->_value |= 0x80000000;
+					element->_value |= 0x80000000;
 					elementCount += 1;
 
 					for ( int i=0; i<eType->_id.size(); i++ )

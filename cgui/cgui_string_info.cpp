@@ -4,6 +4,8 @@
  * Derived from cgui_string_data.cpp revision 1.7  2006/07/25 15:42:37  cf10242
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_info.cpp 1.7 2008/12/16 22:01:41Z rm10919 Exp wms10235 $
  * $Log: cgui_string_info.cpp $
+ * Revision 1.1  2006/11/27 15:26:23  pn02526
+ * Initial revision
  *
  */
 
@@ -181,19 +183,21 @@ bool CGUIStringInfo::parseLine ( char * p, const CGUIFontId * fontId, CGUITextIt
                       // not UTF8, just copy the character.
                       wString[writeIndex++] = (unsigned char)(UGL_WCHAR)*text++;
 
-                } else
-                {
-                    text++;
+               } else
+               {
+                    text++;  // get past the slash
                     switch (*text)
                     {
-                    case '\0': break; // ignore slash at end of line
-                    case 'b':wString[writeIndex++] = '\b'; break;  // backspace
-                    case 'n':wString[writeIndex++] = '\n'; break;  // newline
-                    case 'r':wString[writeIndex++] = '\r'; break;  // return
-                    case 't':wString[writeIndex++] = '\t'; break;  // tab
-                    case '"':wString[writeIndex++] = '"'; break;   // double quote
-                    case 'x':                                      // hex
-                          text += 2;  // get past the slash and the x 
+                    case '\0': break; // ignore a slash at end of line
+
+                    case 'b':wString[writeIndex++] = '\b'; text++; break; // backspace
+                    case 'n':wString[writeIndex++] = '\n'; text++; break; // newline
+                    case 'r':wString[writeIndex++] = '\r'; text++; break; // return
+                    case 't':wString[writeIndex++] = '\t'; text++; break; // tab
+                    case '"':wString[writeIndex++] = '"'; text++;  break; // double quote
+
+                    case 'x':                               // hex
+                          text++;  // get past the x 
                           char unicode[5] ;
                           int  l;
 
@@ -208,9 +212,9 @@ bool CGUIStringInfo::parseLine ( char * p, const CGUIFontId * fontId, CGUITextIt
 
                           break;
 
-                    default:wString[writeIndex++] = (unsigned char)(UGL_WCHAR)*text;
+                    default:wString[writeIndex++] = (unsigned char)(UGL_WCHAR)*text++;
                     }
-                }
+               }
          }
          //
          // Null-terminate the new string.

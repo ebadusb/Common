@@ -4,10 +4,12 @@
 *  NOTE: MODIFICATIONS TO THIS FILE MAY NEED TO BE REFLECTED IN THE INTERFACE CONTROL DOCUMENT
 *        SERVICE TOOLS SUITE, MAINTAINED BY THE START GROUP, AND IN THE STS SOFTWARE.
 *
-* $Header: //bctquad3/HOME/BCT_Development/vxWorks/Common/grip/rcs/gripif.cpp 1.3 2006/10/26 18:15:01Z pn02526 Exp wtucusb $
+* $Header: //bctquad3/HOME/BCT_Development/vxWorks/Common/grip/rcs/gripif.cpp 1.4 2006/11/29 22:18:02Z wtucusb Exp wtucusb $
 *
 * Derived from Taos thedif.cpp Revision 1.5  2004/08/09 11:36:52  ms10234
 * $Log: gripif.cpp $
+* Revision 1.3  2006/10/26 18:15:01Z  pn02526
+* Add heading comment about STS & its ICD.
 * Revision 1.2  2006/10/24 14:39:17  pn02526
 * Add static msgcrc() function to stop compile warnings.
 * Revision 1.1  2006/10/18 12:47:18  pn02526
@@ -29,7 +31,7 @@ static unsigned long msgcrc32( unsigned char* blk_adr, unsigned long blk_len)
    crcgen32( &crc, blk_adr, blk_len );
    return crc ^ INITCRC_DEFAULT;
 }
-
+  
 //
 // Default Constructor
 //

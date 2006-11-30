@@ -4,11 +4,13 @@
  *  NOTE: MODIFICATIONS TO THIS FILE MAY NEED TO BE REFLECTED IN THE INTERFACE CONTROL DOCUMENT
  *        SERVICE TOOLS SUITE, MAINTAINED BY THE START GROUP, AND IN THE STS SOFTWARE.
  *
- * $Header: //bctquad3/HOME/BCT_Development/vxWorks/Common/grip/rcs/gripif.h 1.2 2006/10/26 18:16:04Z pn02526 Exp wtucusb $
+ * $Header: //bctquad3/HOME/BCT_Development/vxWorks/Common/grip/rcs/gripif.h 1.4 2006/11/30 19:35:01Z pn02526 Exp wtucusb $
  *
  * Derived from Taos thedif.h Revision 1.20  2005/06/01 09:23:01  jl11312
  *  and the STS ICD revision 1.4.
  * $Log: gripif.h $
+ * Revision 1.2  2006/10/26 18:16:04Z  pn02526
+ * Add heading comment about STS & its ICD.
  * Revision 1.1  2006/10/18 16:25:22  pn02526
  * Initial revision
  * Revision 1.1  2006/10/18 13:43:26  pn02526
@@ -28,24 +30,24 @@ typedef long GRIP_MessageId;
 
 enum GRIP_COMMON_MessageId 
 {
-   GRIP_FIRST_COMMON_MESSAGE = 6001, //First message in enumeration
-   GRIP_DISCOVER_REQUEST = GRIP_FIRST_COMMON_MESSAGE, //Used for acquiring user name, password, serial number and device type from device OS
-   GRIP_DISCOVER_REPLY = 6002, //See above
-   GRIP_CONNECT_REQUEST = 6003, //Request a connection
-   GRIP_HW_PERIODIC_STATUS_REQUEST = 6004, //Get periodic status
-   GRIP_END_SERVICE_MODE = 6005, //End service mode
-   GRIP_MOVE_CURSOR_CMD = 6006, //Used for moving cursor on screen calibration
-   GRIP_SET_TIME = 6007, //Set the system time
-   GRIP_END_CONNECTION = 6008, //Terminate the connection
-   GRIP_REPLY = 6009, //Acknowledge - for all messages
-   GRIP_REQUEST_CURSOR_POSITION = 6010, //Allows the caller to get the current position
-   GRIP_CURRENT_CURSOR_POSITION = 6011, //Gets the cursor location on the device
-   GRIP_BROADCAST_REQUEST = 6012, //Allows STS to get the broadcast message
-   GRIP_BROADCAST = 6013, //Sends broadcast message from device
-   GRIP_MACHINE_DATA_REQUEST = 6014, //Allows caller to request machine summary data from the device
-   GRIP_MACHINE_DATA_REPLY = 6015, //Has machine summary data in reply
-   GRIP_SCREEN_CALIBRATION_REQUEST = 6016,  // Allows STS to initiate a screen calibration request.
-   GRIP_LAST_COMMON_MESSAGE = GRIP_SCREEN_CALIBRATION_REQUEST //Last message in enumeration
+   GRIP_FIRST_COMMON_MESSAGE       = 11000, //First message in enumeration
+   GRIP_CONNECT_REQUEST            = 11001, //Request a connection
+   GRIP_HW_PERIODIC_STATUS_REQUEST = 11002, //Get periodic status
+   GRIP_END_SERVICE_MODE           = 11005, //End service mode
+   GRIP_MOVE_CURSOR_CMD            = 11006, //Used for moving cursor on screen calibration
+   GRIP_SET_TIME                   = 11007, //Set the system time
+   GRIP_END_CONNECTION             = 11008, //Terminate the connection
+   GRIP_REPLY                      = 11011, //Acknowledge - for all messages
+   GRIP_REQUEST_CURSOR_POSITION    = 11012, //Allows the caller to get the current position
+   GRIP_CURRENT_CURSOR_POSITION    = 11013, //Gets the cursor location on the device
+   GRIP_BROADCAST_REQUEST          = 11014, //Allows STS to get the broadcast message
+   GRIP_BROADCAST                  = 11015, //Sends broadcast message from device
+   GRIP_MACHINE_DATA_REQUEST       = 11016, //Allows caller to request machine summary data from the device
+   GRIP_MACHINE_DATA_REPLY         = 11017, //Has machine summary data in reply
+   GRIP_SCREEN_CALIBRATION_REQUEST = 11018,  // Allows STS to initiate a screen calibration request.
+   GRIP_DISCOVER_REQUEST           = 11019, //Used for acquiring user name, password, serial number and device type from device OS
+   GRIP_DISCOVER_REPLY             = 11020, //See above
+   GRIP_LAST_COMMON_MESSAGE = GRIP_DISCOVER_REPLY //Last message in enumeration
 };
 
 enum GRIP_Status
@@ -358,10 +360,10 @@ protected:
 
 public:
 
-   enum {GRIP_SOM = 0xF007BA11};
+   enum {GRIP_SOM            = 0x000DECAF};
    enum {GRIP_BROADCAST_PORT = 37002};
-   enum {GRIP_FTP_INFO_PORT = 33000};
-   enum {GRIP_COMMAND_PORT = 37000};
+   enum {GRIP_FTP_INFO_PORT  = 33000};
+   enum {GRIP_COMMAND_PORT   = 37000};
 
    GRIPIf();
 

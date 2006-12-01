@@ -1,5 +1,5 @@
 /*
- * $Header: Z:/vxWorks/Common/include/rcs/datalog_reserved_stream.h 1.6 2006/11/30 17:42:24Z jmedusb Exp jmedusb $ 
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_reserved_stream.h 1.7 2006/11/30 17:56:56Z jmedusb Exp MS10234 $ 
  *
  *  This defined the DataLogReserved class constructor and stream
  *  manipulator template functions, as well as the dec/hex and
@@ -32,7 +32,7 @@
 class DataLogRes;
 typedef DataLogRes & (* DataLogReservedManip)(DataLogRes &);
 
-#define DataLogReserved(name, level) DataLogRes(name, level, __FILE__, __LINE__)
+#define DataLogReserved(messageName, level) DataLogRes(messageName, level, __FILE__, __LINE__)
 
 class DataLogRes
 {
@@ -47,16 +47,15 @@ class DataLogRes
 
         virtual ~DataLogRes() {}
         //Keep track of the log level this way we can reference the parent stream
-		//Passes the line and file info of the calling location
-        DataLogRes(const char * messageName, DataLog_Level & level, const int file, const int line) : _logLevel(level)
+        DataLogRes(const char * messageName, DataLog_Level & level, const char * file, int line) : _logLevel(level)
         {
-            level(file, line) << RESERVED_HEADER << (messageName == NULL ? DEFAULT_NAME : messageName);
+            (level)(file, line) << RESERVED_HEADER << (messageName == NULL ? DEFAULT_NAME : messageName);
 		}
 
-		//Constructor uses the line and file of this header file
-		DataLogRes(const char * messageName, DataLog_Level & level) : _logLevel(level)
+		//This constructor uses the classes file/line for datalog output
+        DataLogRes(const char * messageName, DataLog_Level & level) : _logLevel(level)
         {
-            DataLogRes(messageName, level, __FILE__, __LINE__);
+			DataLogRes(messageName, level, __FILE__, __LINE__);
 		}
 
         //This is so we can use endmsg from from DataLog_Stream
@@ -94,7 +93,7 @@ inline DataLogRes & endmsg(DataLogRes & stream)
 }
 
 //Hex precision for integral values
-inline DataLogReserved & hex(DataLogReserved & stream)
+inline DataLogRes & hex(DataLogRes & stream)
 {
 	DataLog(stream._logLevel) << hex;
 	return stream;

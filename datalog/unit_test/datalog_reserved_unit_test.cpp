@@ -5,6 +5,8 @@
  * of the class where used, instead of the calling file
  *
  * $Log: datalog_reserved_unit_test.cpp $
+ * Revision 1.1  2006/11/30 17:52:02Z  jmedusb
+ * Initial revision
  */
 
 #include <vxworks.h>
@@ -61,7 +63,7 @@ const char * STRINGS[] = {
 	"RESERVED"
 };
 
-const char * FILE_NAME = "host:c:/temp/1A00001_2006MMDD_000_000001.dlog";
+const char * FILE_NAME = "host:c:/temp/1A00001_20061030_000_000001.dlog";
 ULONG FILE_SIZE = 4096;
 ULONG CRIT_SIZE = (FILE_SIZE / 4);
 

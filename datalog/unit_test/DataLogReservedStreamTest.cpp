@@ -1,19 +1,23 @@
 /*
- * $Header: Z:/vxWorks/Common/datalog/unit_test/rcs/DataLogReservedStreamTest.cpp 1.2 2006/10/23 20:25:30Z jmedusb Exp jmedusb $ 
+ * $Header: Z:/vxWorks/Common/datalog/unit_test/rcs/DataLogReservedStreamTest.cpp 1.2 2006/10/23 20:25:30Z jmedusb Exp $ 
  * This files defines methods that test the DataLogReserved calls
  * with a Generated message file.
  *
  * $Log: DataLogReservedStreamTest.cpp $
+ * Revision 1.2  2006/10/23 20:25:30Z  jmedusb
+ * Added Standard header
  *
  */
 
 #include <vxworks.h>
 #include "datalog_reserved_stream.h"
-#include "alarm_messages_res.h"
+#include "alarm_message_res.h"
+#include "alarm_header_text_message_res.h"
 #include <math.h>
 #include <time.h>
 
-using namespace AlarmMessagesReserved;
+using namespace AlarmMessageRes;
+using namespace AlarmHeaderTextMessageRes;
 
 typedef enum {
 	TAG_CCPTR = 0,	//0
@@ -154,7 +158,7 @@ bool testAllReserveTypes(void)
 bool testRandomType(void)
 {
 	DataLog_Level testRandomType("testRandomType");
-	DataLogReserved stream("MSG_testRandomType", testRandomType);
+	DataLogRes stream("MSG_testRandomType", testRandomType, __FILE__, __LINE__);
 
 	//Initialize the random generator with the current clock ticks, atleast 1
 	srand ( time(NULL) );

@@ -9,6 +9,9 @@
  * Derived from Taos thedif.h Revision 1.20  2005/06/01 09:23:01  jl11312
  *  and the STS ICD revision 1.4.
  * $Log: gripif.h $
+ * Revision 1.3  2006/11/29 15:18:02  wtucusb
+ * Added Service Tools Suite, Design Input, Interface Control Document  Revision 1.6  November 26, 2006 Changes
+ *  
  * Revision 1.2  2006/10/26 18:16:04Z  pn02526
  * Add heading comment about STS & its ICD.
  * Revision 1.1  2006/10/18 16:25:22  pn02526
@@ -254,7 +257,6 @@ struct GRIP_BroadcastMsg
 {
    GRIP_Header   header;
    int          BroadcastCount __attribute__ ((packed));                         // count of packets broadcasted
-   float        Version __attribute__ ((packed));                                // Floating point value for version of the interface being used
    char         HwRev[GRIP_HW_REV_SIZE];                // Control & Safety Hdw Revisions
    char         IpAddress[GRIP_IP_ADDRESS_SIZE];        // 172.80.90.34
    char         LogFile[GRIP_LOG_FILENAME_SIZE];        // T00015_0504_0033

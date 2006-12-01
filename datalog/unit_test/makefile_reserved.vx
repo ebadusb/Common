@@ -1,0 +1,84 @@
+# $Header: Z:/vxWorks/Common/datalog/unit_test/New Unit Test/rcs/makefile_reserved.vx 1.1 2006/11/30 17:18:26Z jmedusb Exp $
+#
+# Makefile - makefile for datalog unit test software
+#
+# $Log: makefile_reserved.vx $
+# Revision 1.1  2006/11/30 17:18:26Z  jmedusb
+# Initial revision
+# Revision 1.1  2006/04/24 20:16:11Z  jl11312
+# Initial revision
+#
+
+ifeq ($(BUILD_TYPE),CLEAN)
+.PHONY: all
+all: clean
+else
+.PHONY: all
+all: check_opt_change apps
+endif
+
+#
+# Define include directories needed for apps built in this directory
+#
+ADDN_INCDIR = -I ../.. -I ../../include
+
+#
+# MAINDIR should be set to the relative path from this makefile directory
+# to the base trima project directory.  MAINDIR must use \ (DOS/Windows
+# style) directory separators if they are needed.
+#
+MAINDIR = ..\..
+include $(MAINDIR)/makefile.vxc
+
+#
+# Define location for Trima libraries
+#
+LIBDIR = $(MAINDIR)/lib
+
+#
+# The following should define all of the source files of each type
+# to be compiled for the executable
+#
+APP_NAME := DataLogReservedStreamTest
+DataLogReservedStreamTest_dir = ..\bin
+DataLogReservedStreamTest_c_files =
+DataLogReservedStreamTest_cxx_files = DataLogReservedStreamTest.cpp
+DataLogReservedStreamTest_libs =
+include $(MAINDIR)/makefile.process_app
+
+APP_NAME := datalog_reserved_stream
+datalog_reserved_stream_dir = ..\bin
+datalog_reserved_stream_c_files =
+datalog_reserved_stream_cxx_files = datalog_reserved_stream.cpp
+datalog_reserved_stream_libs =
+include $(MAINDIR)/makefile.process_app
+
+APP_NAME := alarm_header_text_message_res
+alarm_header_text_message_res_dir = ..\bin
+alarm_header_text_message_res_c_files =
+alarm_header_text_message_res_cxx_files = alarm_header_text_message_res.cpp
+alarm_header_text_message_res_libs =
+include $(MAINDIR)/makefile.process_app
+
+APP_NAME := alarm_message_res
+alarm_message_res_dir = ..\bin
+alarm_message_res_c_files =
+alarm_message_res_cxx_files = alarm_message_res.cpp
+alarm_message_res_libs =
+include $(MAINDIR)/makefile.process_app
+
+APP_NAME := datalog_reserved_unit_test
+datalog_reserved_unit_test_dir = ..\bin
+datalog_reserved_unit_test_c_files =
+datalog_reserved_unit_test_cxx_files = datalog_reserved_unit_test.cpp
+datalog_reserved_unit_test_libs =
+include $(MAINDIR)/makefile.process_app
+
+
+apps : $(APP_LIST)
+
+#
+# This is the standard makefile for Trima applications
+#
+include $(MAINDIR)/makefile.build_apps
+

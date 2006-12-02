@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.13  2006/08/29 13:14:16  rm10919
+ * Check for null strings in copy.
  * Revision 1.12  2006/07/12 23:36:08Z  rm10919
  * Updates from adding cguiListBox class.
  * Revision 1.11  2006/05/31 19:51:09Z  rm10919
@@ -34,6 +36,7 @@
 #include "cgui_string_data_container.h"
 
 const int textBlockSize = 64;
+const int idSize = 256;  // Limit text id to 255 characters + a null byte;
 
 CGUIStringDataContainer CGUITextItem::_textMap;
 
@@ -45,20 +48,13 @@ CGUITextItem::CGUITextItem()
 }
 
 CGUITextItem::CGUITextItem(const char * id, StylingRecord * stylingRecord)
-:_id(id), _string(NULL), _stringSize(0), _stringLength(0)
+:_id(NULL), _string(NULL), _stringSize(0), _stringLength(0)
 {
+   setId(id);
+
    if (stylingRecord)
    {
       _stylingRecord = *stylingRecord;
-   }
-   int newLength = 0;
-
-   if (_string)
-   {
-      while (_string[newLength])
-         newLength += 1;
-
-      _stringLength = newLength;
    }
 }
 
@@ -75,16 +71,12 @@ CGUITextItem CGUITextItem::operator= (const CGUITextItem& textItem)
    _stringSize = textItem._stringSize;
    _stylingRecord = textItem._stylingRecord;
 
-   // must allocate memory
-   char * textId = new char[strlen(textItem._id)+1];
+    setId(textItem._id);
 
    // check to see if initialized to NULL
    if (_string == NULL)
       _string = new StringChar[_stringLength];
    
-   strcpy(textId, textItem._id);
-   _id = textId;
-
    memcpy(_string, textItem._string, _stringLength * sizeof(StringChar));
    return (*this);
 }
@@ -170,6 +162,8 @@ void CGUITextItem::setText(const StringChar * string, LanguageId = currentLangua
       }
       
       memcpy(_string, string, stringLength * sizeof(StringChar));
+      _string[stringLength] = (StringChar)0;
+
       _stringLength = stringLength + textBlockSize;
    }
 }
@@ -204,7 +198,22 @@ CGUITextItem * CGUITextItem::getTextItem(const char * id, LanguageId languageId 
 
 void CGUITextItem::setId(const char * id)
 {
-	_id = id;
+   if( id == NULL )  // test for NULL input.
+   {
+        if( _id != NULL ) delete [] _id;
+        _id = NULL;
+   }
+   else
+   {
+       if( _id == NULL ) _id = new char[idSize]; // must allocate memory
+
+       char *textId = (char *)_id; // purposely cast away the const.
+
+       int idLen = idSize-1;
+        // copy and truncate to max length + 1 null.
+       strncpy(textId, id, idLen);
+       textId[idLen] = '\0';  // make sure string is terminated.
+   }
 }
 
 bool CGUITextItem::isInitialized(void)

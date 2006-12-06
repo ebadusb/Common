@@ -8,6 +8,9 @@
 *
 * Derived from Taos thedif.cpp Revision 1.5  2004/08/09 11:36:52  ms10234
 * $Log: gripif.cpp $
+* Revision 1.4  2006/11/29 22:18:02Z  wtucusb
+* Added Service Tools Suite, Design Input, Interface Control Document  Revision 1.6  November 26, 2006 Changes
+*  
 * Revision 1.3  2006/10/26 18:15:01Z  pn02526
 * Add heading comment about STS & its ICD.
 * Revision 1.2  2006/10/24 14:39:17  pn02526
@@ -22,7 +25,7 @@
 #include "gripif.h"
 
 #ifndef INITCRC_DEFAULT
-#define INITCRC_DEFAULT 0xFFFFFFFF
+   #define INITCRC_DEFAULT 0xFFFFFFFF
 #endif
 
 static unsigned long msgcrc32( unsigned char* blk_adr, unsigned long blk_len)
@@ -31,7 +34,7 @@ static unsigned long msgcrc32( unsigned char* blk_adr, unsigned long blk_len)
    crcgen32( &crc, blk_adr, blk_len );
    return crc ^ INITCRC_DEFAULT;
 }
-  
+
 //
 // Default Constructor
 //
@@ -39,7 +42,7 @@ GRIPIf::GRIPIf()
 {
    memset (_errorString, 0, sizeof(_errorString));
 }
-   
+
 //
 // Default Destructor
 //
@@ -53,9 +56,9 @@ GRIPIf::~GRIPIf()
 //
 void GRIPIf::BroadcastPort(string &s)
 {
-    ostringstream os;
-    os << GRIP_BROADCAST_PORT; 
-    s = os.str();
+   ostringstream os;
+   os << GRIP_BROADCAST_PORT; 
+   s = os.str();
 }
 
 //
@@ -63,7 +66,7 @@ void GRIPIf::BroadcastPort(string &s)
 //
 unsigned short GRIPIf::BroadcastPort()
 {
-   return (unsigned short)GRIP_BROADCAST_PORT;
+   return(unsigned short)GRIP_BROADCAST_PORT;
 }
 
 //
@@ -71,9 +74,9 @@ unsigned short GRIPIf::BroadcastPort()
 //
 void GRIPIf::CommandPort(string &s)
 {
-    ostringstream os;
-    os << GRIP_COMMAND_PORT; 
-    s = os.str();
+   ostringstream os;
+   os << GRIP_COMMAND_PORT; 
+   s = os.str();
 }
 
 //
@@ -81,7 +84,7 @@ void GRIPIf::CommandPort(string &s)
 //
 unsigned short GRIPIf::CommandPort()
 {
-   return (unsigned short)GRIP_COMMAND_PORT;
+   return(unsigned short)GRIP_COMMAND_PORT;
 }
 
 
@@ -105,7 +108,7 @@ void GRIPIf::prepareMsg (void *msg, GRIP_MessageId messageId, unsigned long size
    hdr->bodyCRC        = 0;   // Initialize field before doing CRC.
 
    // Compute the CRC for the message body if there is one. 
-   if (sizeInBytes > GRIP_HEADER_SIZE)
+   if ( sizeInBytes > GRIP_HEADER_SIZE )
    {
       unsigned char *msgptr = (unsigned char *)hdr + GRIP_HEADER_SIZE;
       const int MsgLength = sizeInBytes - GRIP_HEADER_SIZE;
@@ -120,7 +123,36 @@ void GRIPIf::prepareMsg (void *msg, GRIP_MessageId messageId, unsigned long size
 // Supply one via class derivation to check for device-specific Ids.
 bool GRIPIf::validMsgId(const GRIP_Header *hdr)
 {
-    return(  hdr->msgId >= GRIP_FIRST_COMMON_MESSAGE && hdr->msgId <= GRIP_LAST_COMMON_MESSAGE );
+   bool result = false;
+
+   switch ( hdr->msgId )
+   {
+      case GRIP_CONNECT_REQUEST             :
+      case GRIP_HW_PERIODIC_STATUS_REQUEST  :
+      case GRIP_END_SERVICE_MODE            :
+      case GRIP_MOVE_CURSOR_CMD             :
+      case GRIP_SET_TIME                    :
+      case GRIP_END_CONNECTION              :
+      case GRIP_REPLY                       :
+      case GRIP_REQUEST_CURSOR_POSITION     :
+      case GRIP_CURRENT_CURSOR_POSITION     :
+      case GRIP_BROADCAST_REQUEST           :
+      case GRIP_BROADCAST_REPLY             :
+      case GRIP_MACHINE_DATA_REQUEST        :
+      case GRIP_MACHINE_DATA_REPLY          :
+      case GRIP_SCREEN_CALIBRATION_REQUEST  :
+      case GRIP_DISCOVER_REQUEST            :
+      case GRIP_DISCOVER_REPLY              :
+         {
+            result = true;
+         }
+         break;
+
+      default :
+         break;
+   }
+
+   return(result);
 }
 
 //
@@ -148,16 +180,16 @@ GRIP_BufferStatus GRIPIf::validHeader(const void *msg, unsigned long length)
    // Validate the Header.
 
    // If the size in bytes is less than the header size, then return BUFFER_UNDERFLOW
-   if (length < GRIP_HEADER_SIZE)
+   if ( length < GRIP_HEADER_SIZE )
    {
       ostringstream os;
       os << "Stream length less than size of header, value(" << length << "), expected(" << GRIP_HEADER_SIZE << ")"; 
       strcpy(_errorString, os.str().c_str() );
       return GRIP_BUFFER_UNDERRUN;
    }
-   
+
    // 1.  Check that the SOM is correct
-   if (hdr->som != GRIP_SOM)
+   if ( hdr->som != GRIP_SOM )
    {
       // Log event for later debugging.
       ostringstream os;
@@ -165,12 +197,12 @@ GRIP_BufferStatus GRIPIf::validHeader(const void *msg, unsigned long length)
       strcpy(_errorString, os.str().c_str() );
       return GRIP_BAD_SOM;
    }
-   
+
    // 2.  Check that the message header CRC is correct
    crcgen32 (&crcValue, (unsigned char *)msg, GRIP_HEADER_SIZE - sizeof (unsigned long));
    crcValue = crcValue ^ INITCRC_DEFAULT;
 
-   if (crcValue != hdr->headerCRC)
+   if ( crcValue != hdr->headerCRC )
    {
       // Log event for later debugging.
       ostringstream os;
@@ -184,11 +216,11 @@ GRIP_BufferStatus GRIPIf::validHeader(const void *msg, unsigned long length)
    {
       // Log event for later debugging.
       ostringstream os;
-      os << "Invalid Message ID in header, value(" << hex << hdr->msgId << "), expected(>=" << GRIP_FIRST_COMMON_MESSAGE << dec << ")"; 
+      os << "Invalid Message ID in header, value(" << hex << hdr->msgId << "), expected(>=" << GRIP_FIRST_MESSAGE<< dec << ")"; 
       strcpy(_errorString, os.str().c_str() );
       return GRIP_MESSAGE_ID_INVALID;
    }
-   
+
    // 4.  Check that the message length is valid
    if ( (length == GRIP_HEADER_SIZE) && (hdr->length != 0) )
    {
@@ -204,23 +236,23 @@ GRIP_BufferStatus GRIPIf::validHeader(const void *msg, unsigned long length)
       strcpy(_errorString, os.str().c_str() );
       return GRIP_BUFFER_OVERRUN;
    }
-   else if ( (hdr->length + GRIP_HEADER_SIZE) < length)
+   else if ( (hdr->length + GRIP_HEADER_SIZE) < length )
    {
       ostringstream os;
       os << "Stream Length greater than message length, value=" <<  length << ", expected" << hdr->length + GRIP_HEADER_SIZE << ")"; 
       strcpy(_errorString, os.str().c_str() );
       return GRIP_BUFFER_OVERRUN;
    }
-   else if ( (hdr->length + GRIP_HEADER_SIZE) > length)
+   else if ( (hdr->length + GRIP_HEADER_SIZE) > length )
    {
       ostringstream os;
       os << "Stream Length less than message length, value=" <<  length << ", expected" << hdr->length + GRIP_HEADER_SIZE << ")"; 
       strcpy(_errorString, os.str().c_str() );
       return GRIP_BUFFER_UNDERRUN;
    }
-   
+
    // 5.  Check that the message body checksum is correct
-   if (hdr->length > 0)
+   if ( hdr->length > 0 )
    {
       unsigned char *msgptr = (unsigned char *)msg + GRIP_HEADER_SIZE;
 
@@ -228,7 +260,7 @@ GRIP_BufferStatus GRIPIf::validHeader(const void *msg, unsigned long length)
       crcgen32 (&msgCRC, msgptr, hdr->length);
       msgCRC = msgCRC ^ INITCRC_DEFAULT;
 
-      if (msgCRC != hdr->bodyCRC)
+      if ( msgCRC != hdr->bodyCRC )
       {
          // Log event for later debugging.
          ostringstream os;
@@ -241,7 +273,7 @@ GRIP_BufferStatus GRIPIf::validHeader(const void *msg, unsigned long length)
    // Message Passed all validation.
    // Clear the error string
    _errorString[0] = 0;
-   
+
    // Return Success
    return GRIP_OK;
 }
@@ -255,14 +287,14 @@ int GRIPIf::findSOM(const void *msg, unsigned long length)
    const int *buffer = (int *)msg;
    const int bufferLength = (sizeof(int) - 1) / sizeof(int);
 
-   if (length < sizeof(int))
+   if ( length < sizeof(int) )
    {
       return 0;
    }
 
-   for (int i = 0; i < bufferLength; i++)
+   for ( int i = 0; i < bufferLength; i++ )
    {
-      if (buffer[i] == GRIP_SOM)
+      if ( buffer[i] == GRIP_SOM )
       {
          return i;
       }
@@ -278,35 +310,35 @@ int GRIPIf::findSOM(const void *msg, unsigned long length)
 //
 DataLog_Stream & operator << (DataLog_Stream &os, const GRIP_BufferStatus &status)
 {
-   switch (status)
+   switch ( status )
    {
-   case GRIP_BUFFER_UNDERRUN:
-      os << "BUFFER UNDERRUN";
-      break;
+      case GRIP_BUFFER_UNDERRUN:
+         os << "BUFFER UNDERRUN";
+         break;
 
-   case GRIP_BUFFER_OVERRUN:
-      os << "BUFFER OVERRUN";
-      break;
+      case GRIP_BUFFER_OVERRUN:
+         os << "BUFFER OVERRUN";
+         break;
 
-   case GRIP_HEADER_CRC_INVALID:
-      os << "HEADER CRC INVALID";
-      break;
+      case GRIP_HEADER_CRC_INVALID:
+         os << "HEADER CRC INVALID";
+         break;
 
-   case GRIP_BODY_CRC_INVALID:
-      os << "BODY CRC INVALID";
-      break;
+      case GRIP_BODY_CRC_INVALID:
+         os << "BODY CRC INVALID";
+         break;
 
-   case GRIP_BAD_SOM:
-      os << "BAD SOM";
-      break;
+      case GRIP_BAD_SOM:
+         os << "BAD SOM";
+         break;
 
-   case GRIP_MESSAGE_ID_INVALID:
-      os << "MESSAGE ID INVALID";
-      break;
+      case GRIP_MESSAGE_ID_INVALID:
+         os << "MESSAGE ID INVALID";
+         break;
 
-   case GRIP_OK:
-      os << "OK";
-      break;
+      case GRIP_OK:
+         os << "OK";
+         break;
    }
 
    os << "(" << (int)status << ")";
@@ -321,47 +353,47 @@ DataLog_Stream & operator << (DataLog_Stream &os, const GRIP_BufferStatus &statu
 //
 DataLog_Stream & operator << (DataLog_Stream &os, const GRIP_Status &status)
 {
-   switch (status)
+   switch ( status )
    {
-   case GRIP_CONNECTION_ALLOWED_OPERATIONAL:
-      os << "GRIP CONNECTION ALLOWED OPERATIONAL";
-      break;
+      case GRIP_CONNECTION_ALLOWED_OPERATIONAL:
+         os << "GRIP CONNECTION ALLOWED OPERATIONAL";
+         break;
 
-   case GRIP_CONNECTION_ALLOWED_SERVICE:
-      os << "GRIP CONNECTION ALLOWED SERVICE";
-      break;
+      case GRIP_CONNECTION_ALLOWED_SERVICE:
+         os << "GRIP CONNECTION ALLOWED SERVICE";
+         break;
 
-   case GRIP_CONNECTION_ALLOWED_SINGLE_STEP:
-      os << "GRIP CONNECTION ALLOWED SINGLE STEP";
-      break;
+      case GRIP_CONNECTION_ALLOWED_SINGLE_STEP:
+         os << "GRIP CONNECTION ALLOWED SINGLE STEP";
+         break;
 
-   case GRIP_CONNECTION_DENIED:
-      os << "GRIP CONNECTION DENIED";
-      break;
+      case GRIP_CONNECTION_DENIED:
+         os << "GRIP CONNECTION DENIED";
+         break;
 
-   case GRIP_REQUEST_ALLOWED:
-      os << "GRIP REQUEST ALLOWED";
-      break;
+      case GRIP_REQUEST_ALLOWED:
+         os << "GRIP REQUEST ALLOWED";
+         break;
 
-   case GRIP_REQUEST_ALLOWED_OVERRIDE:
-      os << "GRIP REQUEST ALLOWED OVERRIDE";
-      break;
+      case GRIP_REQUEST_ALLOWED_OVERRIDE:
+         os << "GRIP REQUEST ALLOWED OVERRIDE";
+         break;
 
-   case GRIP_REQUEST_DENIED_NOT_IN_SERVICE_MODE:
-      os << "GRIP REQUEST DENIED NOT IN SERVICE MODE";
-      break;
+      case GRIP_REQUEST_DENIED_NOT_IN_SERVICE_MODE:
+         os << "GRIP REQUEST DENIED NOT IN SERVICE MODE";
+         break;
 
-   case GRIP_REQUEST_DENIED_NOT_CLIENT:
-      os << "GRIP REQUEST DENIED NOT CLIENT";
-      break;
+      case GRIP_REQUEST_DENIED_NOT_CLIENT:
+         os << "GRIP REQUEST DENIED NOT CLIENT";
+         break;
 
-   case GRIP_BAD_MESSAGE_RECEIVED:
-      os << "GRIP BAD MESSAGE RECEIVED";
-      break;
+      case GRIP_BAD_MESSAGE_RECEIVED:
+         os << "GRIP BAD MESSAGE RECEIVED";
+         break;
 
-   case GRIP_OPERATION_FAILED:
-      os << "GRIP OPERATION FAILED";
-      break;
+      case GRIP_OPERATION_FAILED:
+         os << "GRIP OPERATION FAILED";
+         break;
    }
 
    os << "(" << (int)status << ")";
@@ -376,19 +408,19 @@ DataLog_Stream & operator << (DataLog_Stream &os, const GRIP_Status &status)
 //
 DataLog_Stream & operator << (DataLog_Stream &os, const GRIP_BoardType &type)
 {
-   switch (type)
+   switch ( type )
    {
-   case GRIP_CONTROL:
-      os << "CONTROL";
-      break;
+      case GRIP_CONTROL:
+         os << "CONTROL";
+         break;
 
-   case GRIP_SAFETY:
-      os << "SAFETY";
-      break;
+      case GRIP_SAFETY:
+         os << "SAFETY";
+         break;
 
-   case GRIP_AIM:
-	   os << "AIM";
-	   break;
+      case GRIP_AIM:
+         os << "AIM";
+         break;
    }
 
    os << "(" << (int)type << ")";

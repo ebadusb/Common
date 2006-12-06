@@ -4,12 +4,12 @@
  *  NOTE: MODIFICATIONS TO THIS FILE MAY NEED TO BE REFLECTED IN THE INTERFACE CONTROL DOCUMENT
  *        SERVICE TOOLS SUITE, MAINTAINED BY THE START GROUP, AND IN THE STS SOFTWARE.
  *
- * $Header: //bctquad3/HOME/BCT_Development/vxWorks/Common/grip/rcs/gripif.h 1.4 2006/11/30 19:35:01Z pn02526 Exp wtucusb $
+ * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/grip/rcs/gripif.h 1.5 2006/12/05 17:28:10Z wtucusb Exp pn02526 $
  *
  * Derived from Taos thedif.h Revision 1.20  2005/06/01 09:23:01  jl11312
  *  and the STS ICD revision 1.4.
  * $Log: gripif.h $
- * Revision 1.3  2006/11/29 15:18:02  wtucusb
+ * Revision 1.3  2006/11/29 22:18:02Z  wtucusb
  * Added Service Tools Suite, Design Input, Interface Control Document  Revision 1.6  November 26, 2006 Changes
  *  
  * Revision 1.2  2006/10/26 18:16:04Z  pn02526
@@ -31,9 +31,10 @@
 
 typedef long GRIP_MessageId;
 
+
 enum GRIP_COMMON_MessageId 
 {
-   GRIP_FIRST_COMMON_MESSAGE       = 11000, //First message in enumeration
+   GRIP_FIRST_MESSAGE              = 11000, //Used for debug
    GRIP_CONNECT_REQUEST            = 11001, //Request a connection
    GRIP_HW_PERIODIC_STATUS_REQUEST = 11002, //Get periodic status
    GRIP_END_SERVICE_MODE           = 11005, //End service mode
@@ -44,13 +45,12 @@ enum GRIP_COMMON_MessageId
    GRIP_REQUEST_CURSOR_POSITION    = 11012, //Allows the caller to get the current position
    GRIP_CURRENT_CURSOR_POSITION    = 11013, //Gets the cursor location on the device
    GRIP_BROADCAST_REQUEST          = 11014, //Allows STS to get the broadcast message
-   GRIP_BROADCAST                  = 11015, //Sends broadcast message from device
-   GRIP_MACHINE_DATA_REQUEST       = 11016, //Allows caller to request machine summary data from the device
-   GRIP_MACHINE_DATA_REPLY         = 11017, //Has machine summary data in reply
-   GRIP_SCREEN_CALIBRATION_REQUEST = 11018,  // Allows STS to initiate a screen calibration request.
-   GRIP_DISCOVER_REQUEST           = 11019, //Used for acquiring user name, password, serial number and device type from device OS
-   GRIP_DISCOVER_REPLY             = 11020, //See above
-   GRIP_LAST_COMMON_MESSAGE = GRIP_DISCOVER_REPLY //Last message in enumeration
+   GRIP_BROADCAST_REPLY            = 11015, //Sends broadcast message from device
+   GRIP_MACHINE_DATA_REQUEST       = 11018, //Allows caller to request machine summary data from the device
+   GRIP_MACHINE_DATA_REPLY         = 11019, //Has machine summary data in reply
+   GRIP_SCREEN_CALIBRATION_REQUEST = 11020,  // Allows STS to initiate a screen calibration request.
+   GRIP_DISCOVER_REQUEST           = 11021, //Used for acquiring user name, password, serial number and device type from device OS
+   GRIP_DISCOVER_REPLY             = 11022, //See above
 };
 
 enum GRIP_Status
@@ -243,29 +243,32 @@ const unsigned int GRIP_RequestBroadcastMsgSize = sizeof(GRIP_RequestBroadcastMs
 //
 // GRIP Broadcast Message
 //
-const int GRIP_HW_REV_SIZE          = 64;
-const int GRIP_IP_ADDRESS_SIZE      = 32;
-const int GRIP_LOG_FILENAME_SIZE    = 32;
-const int GRIP_SERIAL_NUMBER_SIZE   = 16;
-const int GRIP_CRC_SIZE             = 16;
-const int GRIP_RELEASE_SIZE         = 16;
-const int GRIP_BUILD_SIZE           = 16;
-const int GRIP_PORT_NUMBER_SIZE     =  8;
-const int GRIP_SEQUENCE_NUMBER_SIZE =  7;
+const int GRIP_HW_REV_SIZE           = 64;
+const int GRIP_IP_ADDRESS_SIZE       = 32;
+const int GRIP_LOG_FILENAME_SIZE     = 32;
+const int GRIP_SERIAL_NUMBER_SIZE    = 16;
+const int GRIP_CRC_SIZE              = 16;
+const int GRIP_RELEASE_SIZE          = 16;
+const int GRIP_BUILD_SIZE            = 16;
+const int GRIP_PORT_NUMBER_SIZE      =  8;
+const int GRIP_SEQUENCE_NUMBER_SIZE  =  7;
+const int GRIP_VISTA_IF_VERSION_SIZE = 32;
 
 struct GRIP_BroadcastMsg
 {
    GRIP_Header   header;
-   int          BroadcastCount __attribute__ ((packed));                         // count of packets broadcasted
-   char         HwRev[GRIP_HW_REV_SIZE];                // Control & Safety Hdw Revisions
-   char         IpAddress[GRIP_IP_ADDRESS_SIZE];        // 172.80.90.34
-   char         LogFile[GRIP_LOG_FILENAME_SIZE];        // T00015_0504_0033
-   char         SerialNumber[GRIP_SERIAL_NUMBER_SIZE];  // T00015
-   char         CRC[GRIP_CRC_SIZE];                     // 0xadcef73
-   char         Release[GRIP_RELEASE_SIZE];             // Optia 3.3a
-   char         Build[GRIP_BUILD_SIZE];                 // 1.191
-   char         Port[GRIP_PORT_NUMBER_SIZE];            // 37000
-   char         sequenceNumber[GRIP_SEQUENCE_NUMBER_SIZE];   // 000000
+   int          BroadcastCount __attribute__ ((packed));         // count of packets broadcasted
+   char         HwRev[GRIP_HW_REV_SIZE];                         // Control & Safety Hdw Revisions
+   char         IpAddress[GRIP_IP_ADDRESS_SIZE];                 // 172.80.90.34
+   char         LogFile[GRIP_LOG_FILENAME_SIZE];                 // T00015_0504_0033
+   char         SerialNumber[GRIP_SERIAL_NUMBER_SIZE];           // T00015
+   char         CRC[GRIP_CRC_SIZE];                              // 0xadcef73
+   char         Release[GRIP_RELEASE_SIZE];                      // Optia 3.3a
+   char         Build[GRIP_BUILD_SIZE];                          // 1.191
+   char         Port[GRIP_PORT_NUMBER_SIZE];                     // 37000
+   char         sequenceNumber[GRIP_SEQUENCE_NUMBER_SIZE];       // 000000
+   char         vipifVersionNumber[GRIP_VISTA_IF_VERSION_SIZE];  //
+   unsigned int biometricList __attribute__ ((packed));          // Trima only
 };
 
 const unsigned int GRIP_BroadcastMsgSize = sizeof(GRIP_BroadcastMsg);
@@ -325,10 +328,10 @@ const unsigned int GRIP_RequestDeviceSummaryDataMsgSize = sizeof(GRIP_RequestDev
 struct GRIP_DeviceSummaryDataReplyMsg
 {
    GRIP_Header   header;
-   float         TotalRunHours __attribute__ ((packed)); //Float for number of hours
-   int           NumProcedures __attribute__ ((packed)); //Integer for total number of procedures
+   float         TotalRunHours     __attribute__ ((packed)); //Float for number of hours
+   int           NumProcedures     __attribute__ ((packed)); //Integer for total number of procedures
    int           numCompProcedures __attribute__ ((packed)); //Integer for total number of completed procedures
-   int           NumCentHours __attribute__ ((packed)); //Integer for number of centrifuge hours
+   int           NumCentHours      __attribute__ ((packed)); //Integer for number of centrifuge hours
 };
 
 const unsigned int GRIP_DeviceSummaryDataReplyMsgSize = sizeof(GRIP_DeviceSummaryDataReplyMsg);

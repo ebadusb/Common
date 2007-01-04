@@ -1,8 +1,10 @@
-// $Header: //bctquad3/home/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_file.cpp 1.4 2006/11/29 17:47:58Z MS10234 Exp MS10234 $
+// $Header: Q:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_file.cpp 1.7 2007/10/29 17:18:35Z jl11312 Exp jd11007 $
 //
 // Configuration file class
 //
 // $Log: config_file.cpp $
+// Revision 1.4  2006/11/29 17:47:58Z  MS10234
+// force the high bit on every enumerated element instead of just the first element
 // Revision 1.3  2006/10/19 20:01:01Z  MS10234
 // 63 - Add logging of the config files
 // Revision 1.2  2005/05/11 16:36:02Z  jl11312
@@ -57,6 +59,11 @@ bool ConfigFile::parseFile(FILE * fp)
 	//
 	Section * versionSection = new Section("Version", 0);
 	_section.push_back(versionSection);
+
+	// Add empty file info section
+	//
+	Section * fileInfoSection = new Section("FileInfo", 0);
+	_section.push_back(fileInfoSection);
 
 	processFileOptions();
 
@@ -662,6 +669,20 @@ void ConfigFile::processFileOptions(void)
 			}
 	   }
 	}
+
+	Parameter * readOnlyParam;
+	if ( _readWrite )
+	{
+		readOnlyParam = new BoolParameter("FileInfo", "ReadOnly", "false", false);
+	}
+	else
+	{
+		readOnlyParam = new BoolParameter("FileInfo", "ReadOnly", "true", true);
+	}
+	addParameter(readOnlyParam);
+	Parameter * filenameParam = new StringParameter("FileInfo","FileName",_dataFileName.c_str());
+	addParameter(filenameParam);
+
 
 	if ( _noOutputFile &&
 		  ( !_dataFileName.empty() ||

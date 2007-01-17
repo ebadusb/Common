@@ -6,6 +6,8 @@
  * cgui_list_box.cpp
  *
  * $Log: cgui_list_box.cpp $
+ * Revision 1.3  2006/08/10 22:18:56Z  rm10919
+ * Make border around list box if using a background.
  * Revision 1.2  2006/07/26 23:30:15Z  rm10919
  * add virtual attach() to override CGUIWindow::attach().
  * Revision 1.1  2006/07/12 23:36:44Z  rm10919
@@ -196,11 +198,6 @@ void CGUIListBox::initializeData(CGUIDisplay & display, CGUIWindow * parent, con
 
 CGUIListBox::~CGUIListBox()
 {
-   if (_backgroundBitmapId)
-   {
-      delete _backgroundBitmapId;
-      _backgroundBitmapId = NULL;
-   }
    if (_backgroundBitmap)
    {
       delete _backgroundBitmap;

@@ -1,8 +1,9 @@
-# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.23 2006/10/18 19:20:05Z pn02526 Exp MS10234 $
+# @(#) $Header: H:/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.24 2007/01/18 21:52:10Z MS10234 Exp wms10235 $
 #
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.23  2006/10/18 19:20:05Z  pn02526
 # Revision 1.22  2005/11/14 13:12:23  jl11312
 # - modified for Windows XP (IT 1077)
 # Revision 1.21  2004/09/30 16:26:19Z  jl11312
@@ -60,7 +61,7 @@ endif
 MAINDIR = .
 include $(MAINDIR)/makefile.vxc
 
-DIR_LIST := cds clocks cmdline datalog debug dlm grip router socket++ softcrc statemachine zlib
+DIR_LIST := cds clocks cmdline config_file_support datalog debug dlm grip language_file_support router socket++ softcrc statemachine zlib
 ifeq ($(VXWORKS_VERSION),5.4)
   ifeq ($(CPU),I80486)
     DIR_LIST += drivers

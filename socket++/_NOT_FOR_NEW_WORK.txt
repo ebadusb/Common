@@ -1,0 +1,4 @@
+This package has been shown to be buggy, and is, therefore, not recommended for new development.
+Direct calls to the C sockets library are recommended, instead.
+
+-phil norisez  01/18/07

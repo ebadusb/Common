@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_levels.h 1.11 2006/10/19 19:40:30Z MS10234 Exp MS10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_levels.h 1.13 2007/02/26 23:28:29Z wms10235 Exp ssunusb $
  * $Log: datalog_levels.h $
+ * Revision 1.11  2006/10/19 19:40:30Z  MS10234
+ * 63 - add log level for configuration logging
  * Revision 1.10  2006/10/07 19:29:42Z  cf10242
  * IT 59: add button press log level
  * Revision 1.9  2005/04/26 23:14:56Z  rm10919
@@ -55,6 +57,9 @@ LOG_DEF DataLog_Level	log_level_message_system_error;
 LOG_DEF DataLog_Level   log_level_config_data_info;
 LOG_DEF DataLog_Level   log_level_config_data_error;
 
+LOG_DEF DataLog_Level   log_level_language_support_info;
+LOG_DEF DataLog_Level   log_level_language_support_error;
+
 LOG_DEF DataLog_Level	log_level_datalog_info;
 LOG_DEF DataLog_Level	log_level_datalog_error;
 
@@ -99,6 +104,9 @@ LOG_DEF DataLog_Handle	log_handle_message_system_error;
 
 LOG_DEF DataLog_Handle  log_handle_config_data_info;
 LOG_DEF DataLog_Handle  log_handle_config_data_error;
+
+LOG_DEF DataLog_Handle  log_handle_language_support_info;
+LOG_DEF DataLog_Handle  log_handle_language_support_error;
 
 LOG_DEF DataLog_Handle	log_handle_datalog_info;
 LOG_DEF DataLog_Handle	log_handle_datalog_error;
@@ -153,6 +161,9 @@ static DataLog_InitTable	initTable[] =
 
    { &log_level_config_data_info, &log_handle_config_data_info, "config_data_info", true },
    { &log_level_config_data_error, &log_handle_config_data_error, "config_data_error", true },
+
+   { &log_level_language_support_info, &log_handle_language_support_info, "language_support_info", true },
+   { &log_level_language_support_error, &log_handle_language_support_error, "language_support_error", true },
 
 	{ &log_level_datalog_info, &log_handle_datalog_info, "datalog_info", true },
 	{ &log_level_datalog_error, &log_handle_datalog_error, "datalog_error", true },

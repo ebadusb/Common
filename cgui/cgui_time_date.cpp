@@ -3,6 +3,8 @@
  *
  * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_time_date.cpp 1.7 2007/01/29 09:08:39 rm10919 Exp pn02526 $
  * $Log: cgui_time_date.cpp $
+ * Revision 1.6  2006/01/28 20:49:42Z  cf10242
+ * IT 49 - round time to nearest minute
  * Revision 1.5  2005/03/15 00:21:36Z  rm10919
  * Change CGUIText to not add object to window object list of parent in constructor.
  * Revision 1.4  2005/01/28 23:52:18Z  rm10919
@@ -74,7 +76,7 @@ void CGUITimeDate::update()
    // Date String using DateAttributes
    //
    
-   attribute = _displayAttributes & 0x0100;
+   attribute = _displayAttributes & 0x0F00;
 
    switch (attribute)
    {
@@ -99,7 +101,7 @@ void CGUITimeDate::update()
    // Time String using ClockAttributes
    //
 
-   attribute = _displayAttributes & 0x0010;
+   attribute = _displayAttributes & 0x00F0;
 
    switch (attribute)
    {
@@ -121,7 +123,7 @@ void CGUITimeDate::update()
    // Display and Order Attributes
    //
       
-   attribute = _displayAttributes & 0x0001;
+   attribute = _displayAttributes & 0x000F;
 
    switch(attribute)
    {

@@ -900,7 +900,8 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	fprintf(pFile, "\t\t\tattributesTable[i]._displayObj,\n");
 	fprintf(pFile, "\t\t\tattributesTable[i]._actionGenerator,\n");
 	fprintf(pFile, "\t\t\tparameterString,\n");
-	fprintf(pFile, "\t\t\tattributesTable[i]._alarmName.c_str()));\n");
+	fprintf(pFile, "\t\t\tattributesTable[i]._alarmName.c_str(),\n");
+	fprintf(pFile, "\t\t\tresponseName.c_str()));\n");
 	fprintf(pFile, "\t}\n");
 	fprintf(pFile, "}\n\n");
 

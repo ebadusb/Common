@@ -1,0 +1,52 @@
+# $Header$
+#
+# Firewire library make file
+#
+# $Log$
+#
+
+ifeq ($(BUILD_TYPE),CLEAN)
+.PHONY: all
+all: clean
+else
+.PHONY: all
+all: check_opt_change lib
+endif
+
+#
+# Define include directories needed for apps built in this directory
+#
+ADDN_INCDIR =
+
+#
+# MAINDIR should be set to the relative path from this makefile directory
+# to the base common project directory.  MAINDIR must use \ (DOS/Windows
+# style) directory separators if they are needed.
+#
+MAINDIR = ..
+COMDIR = $(MAINDIR)
+include $(MAINDIR)/makefile.vxc
+
+#
+# The following should define all of the source files of each type
+# to be compiled for the library
+#
+LIB_C_FILES = fw_bus_manager.c fw_client.c fw_config_rom.c fw_csr.c fw_data_list.c fw_data_map.c fw_dma_memory.c \
+              fw_driver.c fw_isochronous.c fw_link_layer.c fw_physical_layer.c fw_transaction_layer.c fw_transaction_list.c \
+              fw_utility.c fw_unit_test.c fw_vendor_specific.c
+LIB_CXX_FILES =
+LIB_S_FILES =
+
+#
+# The following should define the location of the resulting library.  Note
+# that ARCHIVE_DIR is used in DOS shell commands, and must use \ directory
+# separators.
+#
+ARCHIVE_NAME = libfirewire.a
+ARCHIVE_DIR = lib
+
+#
+# This is the standard makefile for vxWorks libraries
+#
+include $(MAINDIR)/makefile.lib
+

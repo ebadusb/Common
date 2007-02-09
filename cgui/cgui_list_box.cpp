@@ -6,6 +6,8 @@
  * cgui_list_box.cpp
  *
  * $Log: cgui_list_box.cpp $
+ * Revision 1.4  2007/01/17 14:31:23Z  rm10919
+ * Update to use a bitmap background.
  * Revision 1.3  2006/08/10 22:18:56Z  rm10919
  * Make border around list box if using a background.
  * Revision 1.2  2006/07/26 23:30:15Z  rm10919
@@ -404,10 +406,14 @@ void CGUIListBox::updateButtons()
       {
          // Get the text for the button.
          CGUITextItem * textItem = (*listIndex);
+         StylingRecord newStylingRecord;
+         newStylingRecord = textItem->getStylingRecord();
 
          if (!done)
          {
             _listButton[i]->setText(textItem);
+            _listButton[i]->setEnabledStylingRecord(&newStylingRecord);
+
             _listButton[i]->enable();
          } else  // Do not have a valid text item id.
          {

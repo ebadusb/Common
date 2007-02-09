@@ -4,6 +4,8 @@
  * Derived from cgui_string_data.cpp revision 1.7  2006/07/25 15:42:37  cf10242
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_info.cpp 1.7 2008/12/16 22:01:41Z rm10919 Exp wms10235 $
  * $Log: cgui_string_info.cpp $
+ * Revision 1.2  2006/11/29 17:57:38Z  pn02526
+ * Fix bugs found integrating with CGUIStringData.
  * Revision 1.1  2006/11/27 15:26:23  pn02526
  * Initial revision
  *
@@ -82,17 +84,17 @@ StringChar CGUIStringInfo::UTF8ToUnicode(StringChar utf8Char)
 }
 
 // get that returns false if caller provides a null pointer or string as the key.
-bool CGUIStringInfo::get( const char * stringKey, const CGUIFontId * fontId, CGUITextItem & result)
+bool CGUIStringInfo::get( const char * stringKey, const CGUIFontId * fontId, CGUITextItem & result, int fontIndex = 0)
 {
 //   DataLog( log_level_cgui_debug ) << "CGUIStringInfo::get(stringKey=\"" << stringKey << "\" fontId=" << (void *)fontId << " result=" << (void *)&result << ")" << endmsg;
     if( stringKey == NULL )
         return false;
     else
-        return get( fontId, result, stringKey ); 
+        return get( fontId, result, stringKey, fontIndex ); 
 }
 
 // main get routine called by all other gets.
-bool CGUIStringInfo::get ( const CGUIFontId * fontId, CGUITextItem & result, const char * stringKey )
+bool CGUIStringInfo::get ( const CGUIFontId * fontId, CGUITextItem & result, const char * stringKey, int fontIndex = 0 )
 {
 //   DataLog( log_level_cgui_debug ) << "CGUIStringInfo::get(fontId=" << (void *)fontId << " result=" << (void *)&result << " stringKey=\"" << stringKey << "\")" << endmsg;
    if(_stringInfo != NULL) while (fgets(_lineBuffer, LineBufferSize, _stringInfo) != NULL)
@@ -132,14 +134,14 @@ bool CGUIStringInfo::get ( const CGUIFontId * fontId, CGUITextItem & result, con
       {
          result.setId(firstToken);
 //         DataLog( log_level_cgui_debug ) << "CGUIStringInfo::get got \"" << firstToken << "\"" << endmsg;
-         return parseLine(p,fontId,result);
+         return parseLine( p, fontId, result, fontIndex);
       }
    }
    return false;
 }
 
 // Parse the line and populate the given CGUITextItem.
-bool CGUIStringInfo::parseLine ( char * p, const CGUIFontId * fontId, CGUITextItem & result)
+bool CGUIStringInfo::parseLine ( char * p, const CGUIFontId * fontId, CGUITextItem & result, int fontIndex = 0)
 {
          p = strchr(p, '"') + 1; // skip past first "
          char * text = strtok_r(p, "\"", &p);
@@ -159,7 +161,9 @@ bool CGUIStringInfo::parseLine ( char * p, const CGUIFontId * fontId, CGUITextIt
          sscanf(attributes, "%x", &stylingRecord.attributes);
          stylingRecord.region = CGUIRegion( atoi(x), atoi(y), atoi(width), atoi(height));
          stylingRecord.fontSize = atoi(fontSize);
-         stylingRecord.fontId = fontId[atoi(fontSize)];               
+
+         int fI = atoi(fontSize) + fontIndex * 50;
+         stylingRecord.fontId = fontId[fI];               
 
          int writeIndex = 0;
          // Allocate to maximum possible length (may be less due to slash sequences)

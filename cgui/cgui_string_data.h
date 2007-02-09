@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.h 1.6 2007/05/03 16:19:14Z jl11312 Exp wms10235 $
  * $Log: cgui_string_data.h $
+ * Revision 1.3  2006/11/28 20:42:55Z  pn02526
+ * Use CGUIStringInfo class to read string.info files.
  * Revision 1.2  2006/07/25 15:42:37  cf10242
  * IT 54: decode UTF8 into unicode
  * Revision 1.1  2005/04/27 13:40:46Z  rm10919
@@ -29,7 +31,7 @@ public:
    void addTextItem(const char * name, CGUITextItem * textItem);
    void deleteTextItem (const char * name);
 
-   void readDatabaseFile (const char * filename, CGUIFontId * fontId, LanguageId languageId = currentLanguage);
+   void readDatabaseFile (const char * filename, CGUIFontId * fontId, LanguageId languageId = currentLanguage, int fontIndex = 0);
    bool readDatabaseItem (CGUITextItem * LanguageName); //, Language language[0]);
 
 protected:

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.cpp 1.12 2007/06/14 19:34:11Z wms10235 Exp wms10235 $
  * $Log: cgui_string_data.cpp $
+ * Revision 1.8  2006/12/01 19:20:07Z  pn02526
+ * Use CGUIStringInfo class to read string.info files.
  * Revision 1.7  2006/07/25 15:42:37  cf10242
  * IT 54: decode UTF8 into unicode
  * Revision 1.6  2006/07/12 23:37:57Z  rm10919
@@ -36,7 +38,7 @@ CGUIStringData::~CGUIStringData(void)
 {
 }
 
-void CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontId, LanguageId languageId = currentLanguage)
+void CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontId, LanguageId languageId = currentLanguage, int fontIndex = 0)
 {
     CGUITextItem textItem;
     // Open file
@@ -47,7 +49,7 @@ void CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
 
    // Loop reading string info records, converting them to CGUTextItems,
    // and putting them in their proper places in the text map.
-   while ( stringInfo.get(fontId, textItem) )
+   while ( stringInfo.get(fontId, textItem, NULL, fontIndex) )
    {
 //            DataLog( log_level_cgui_info ) << "line " << stringInfo.line() << ": got record " << textItem.getId() << endmsg;
 
@@ -74,11 +76,11 @@ void CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
 //               DataLog( log_level_cgui_info ) << "line " << stringInfo.line() << ": copying to captive text item at " << hex << (unsigned int)result << dec << endmsg;
                result->setText(textItem.getText());
                result->setStylingRecord(textItem.getStylingRecord());
+               result->setLanguageId(currentLanguage);
             } else
             {
                DataLog( log_level_cgui_error ) << "line " << stringInfo.line() << ": Can't find string Id " << textItem.getId() << " in map!!!!! - " << filename << endmsg;
                printf("line %d: Can't find string Id %s in map!!!!!\n - %s", stringInfo.line(), textItem.getId(), filename);
-               exit(1);
             }
    }
 
@@ -87,7 +89,6 @@ void CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
    {
       DataLog( log_level_cgui_error ) << "line " << stringInfo.line() << ": bad entry in string info file - " << filename << endmsg;
       printf("line %d: bad entry in string info file\n - %s", stringInfo.line(), filename);
-      exit(1);
    }
 
    // Close file.

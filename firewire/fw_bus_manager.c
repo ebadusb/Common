@@ -6,6 +6,8 @@
  * This file contains the firewire routines for the Bus Manager.
  *
  * $Log: fw_bus_manager.c $
+ * Revision 1.1  2007/02/07 15:22:27Z  wms10235
+ * Initial revision
  *
  */
 
@@ -430,9 +432,9 @@ FWStatus fwProcessEvents(void)
 					/* Check for interrupts */
 					if( interruptMask == 0 && isoXmitInterruptMask == 0 && isoRecvInterruptMask == 0 ) break;
 
-					/* Process interrupts */
+					/* Process interrupts
 					FWLOGLEVEL9("Interrupt received from adapter %d intMask:0x%08X isoXmit:0x%08X isoRecv:0x%08X\n", index, interruptMask, isoXmitInterruptMask, isoRecvInterruptMask);
-
+					*/
 					if( interruptMask & 0x00000001 )
 					{
 						retVal = fwRequestTxCompleteIntHandler( pDriver );
@@ -932,20 +934,11 @@ static FWStatus fwBusResetIntHandler(FWDriverData *pDriver)
 static FWStatus fwSelfIdCompleteIntHandler(FWDriverData *pDriver)
 {
 	FWStatus retVal = FWInternalError;
-
-	FWLOGLEVEL9("fwSelfIdCompleteIntHandler called.\n");
-
-	return retVal;
-}
-
-static FWStatus fwSelfIdComplete2IntHandler(FWDriverData *pDriver)
-{
-	FWStatus retVal = FWInternalError;
 	unsigned short sourceID;
 	UINT32 selfIdCount;
 	int i;
 
-	FWLOGLEVEL9("fwSelfIdComplete2IntHandler called.\n");
+	FWLOGLEVEL9("fwSelfIdCompleteIntHandler called.\n");
 
 	selfIdCount = pDriver->ohci->selfIdCount;
 
@@ -994,6 +987,15 @@ static FWStatus fwSelfIdComplete2IntHandler(FWDriverData *pDriver)
 	if( pDriver->busManagerData->isBusManager )
 	{
 	}
+
+	return retVal;
+}
+
+static FWStatus fwSelfIdComplete2IntHandler(FWDriverData *pDriver)
+{
+	FWStatus retVal = FWInternalError;
+
+	FWLOGLEVEL9("fwSelfIdComplete2IntHandler called.\n");
 
 	return retVal;
 }

@@ -6,6 +6,8 @@
  * This file contains type definitions for the firewire routines.
  *
  * $Log: fw_types.h $
+ * Revision 1.1  2007/02/07 15:22:40Z  wms10235
+ * Initial revision
  *
  */
 
@@ -44,6 +46,19 @@ typedef struct FWAddressOffsetStruct
     UINT32		lowOffset;
 
 } FWAddressOffset;
+
+typedef struct FWNodeInfoStruct
+{
+	unsigned short		nodeID;				/* Node ID is the phy ID and the bus number */
+	FWSpeed				speed;				/* Maximum communications speed */
+	unsigned char		gapCount;			/* Gap count */
+	unsigned char		powerClass;			/* OHCI power class enum */
+	boolean				rootNode;			/* TRUE if this is the root node */
+	boolean				linkEnabled;		/* The node's link layer is enable */
+	boolean				contender;			/* TRUE is this node is a contender for isochronous manager */
+	boolean				initiatedReset;	/* TRUE if this node initiated the bus reset. */
+
+} FWNodeInfo;
 
 typedef struct FWAsyncTransactionCmdStruct
 {

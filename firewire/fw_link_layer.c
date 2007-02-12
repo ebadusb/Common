@@ -7,6 +7,8 @@
  * and manipulate the link layer.
  *
  * $Log: fw_link_layer.c $
+ * Revision 1.1  2007/02/07 15:22:36Z  wms10235
+ * Initial revision
  *
  */
 
@@ -2019,6 +2021,7 @@ FWStatus fwReadAsyncRequestMessage(FWDriverData *pDriver, FWTransaction *transac
 		if( readContext.reqCount < readContext.resCount )
 		{
 			/* Error total count cannot be less than the remaining! */
+			FWLOGLEVEL3("Warning request count:%d < resCount:%d\n", readContext.reqCount, readContext.resCount );
 			retVal = FWTransDataSizeError;
 			break;
 		}

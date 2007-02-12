@@ -6,6 +6,8 @@
  * This file contains the firewire driver level routines.
  *
  * $Log: fw_driver.h $
+ * Revision 1.1  2007/02/07 15:22:33Z  wms10235
+ * Initial revision
  *
  */
 
@@ -41,13 +43,29 @@ FWStatus fwReset(int adapter);
  */
 FWStatus fwInitialize(int adapter);
 
+/* Returns the number of firewire adapters detected.
+ */
+int fwGetAdapterCount(void);
+
 /* Enable a given adapter.
  */
 FWStatus fwEnableAdapter(int adapter);
 
-/* Determine if the specified device is present on the bus.
+/* Returns the number of devices present on the bus.
  */
-FWStatus fwDevicePresent(int adapter, int deviceID);
+unsigned int fwGetDeviceCount(int adapter);
+
+/* Returns the bus generation count.
+ */
+unsigned long fwGetBusGeneration(int adapter);
+
+/* Returns node info for a specified device.
+ */
+FWStatus fwGetNodeInfo(int adapter, unsigned int device, FWNodeInfo *info);
+
+/* Returns node info for the local device.
+ */
+FWStatus fwGetLocalNodeID(int adapter, unsigned short *localID);
 
 /* Request that the physical layer send a configuration packet.
  */

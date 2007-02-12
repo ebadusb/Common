@@ -7,6 +7,8 @@
  * to update and manage the standard CSRs.
  *
  * $Log: fw_csr.c $
+ * Revision 1.1  2007/02/07 15:22:29Z  wms10235
+ * Initial revision
  *
  */
 
@@ -186,6 +188,8 @@ FWStatus fwTopologyMapComplete(FWDriverData *pDriver, UINT32 generation)
 		{
 			if( pDriver->coreCSR->topologyMap )
 			{
+				semTake( pDriver->coreCSR->csrSemId, WAIT_FOREVER );
+
 				pDriver->coreCSR->topologyMap->nodeCount = 0;
 
 				for(nodeIndex=0; nodeIndex<64; nodeIndex++)
@@ -209,6 +213,8 @@ FWStatus fwTopologyMapComplete(FWDriverData *pDriver, UINT32 generation)
 
 				pDriver->coreCSR->topologyMap->crc = tcrc;
 
+				semGive( pDriver->coreCSR->csrSemId );
+
 				retVal = FWSuccess;
 			}
 		}
@@ -228,11 +234,15 @@ FWStatus fwTopologyMapAddSelfID(FWDriverData *pDriver, UINT32 selfIDQuadlet)
 		{
 			if( pDriver->coreCSR->topologyMap )
 			{
+				semTake( pDriver->coreCSR->csrSemId, WAIT_FOREVER );
+
 				nodeIndex = selfIDQuadlet >> 24;
 				nodeIndex &= 0x0000003F;
 				pDriver->coreCSR->topologyMap->nodes[nodeIndex]++;
 				pDriver->coreCSR->topologyMap->selfIDs[pDriver->coreCSR->topologyMap->selfIDCount] = selfIDQuadlet;
 				pDriver->coreCSR->topologyMap->selfIDCount++;
+
+				semGive( pDriver->coreCSR->csrSemId );
 
 				retVal = FWSuccess;
 			}
@@ -253,6 +263,8 @@ FWStatus fwTopologyMapReset(FWDriverData *pDriver)
 		{
 			if( pDriver->coreCSR->topologyMap )
 			{
+				semTake( pDriver->coreCSR->csrSemId, WAIT_FOREVER );
+
 				pDriver->coreCSR->topologyMap->length = 2;
 				pDriver->coreCSR->topologyMap->nodeCount = 0;
 				pDriver->coreCSR->topologyMap->selfIDCount = 0;
@@ -262,6 +274,8 @@ FWStatus fwTopologyMapReset(FWDriverData *pDriver)
 				{
 					pDriver->coreCSR->topologyMap->nodes[nodeIndex] = 0;
 				}
+
+				semGive( pDriver->coreCSR->csrSemId );
 
 				retVal = FWSuccess;
 			}
@@ -289,6 +303,8 @@ FWStatus fwGetTopologyMapData(FWDriverData *pDriver, UINT32 offset, UINT32 *data
 			break;
 		}
 
+		semTake( pDriver->coreCSR->csrSemId, WAIT_FOREVER );
+
 		if( offset == 0xF0001000 )
 		{
 			*data = (UINT32)pDriver->coreCSR->topologyMap->length << 16;
@@ -313,6 +329,8 @@ FWStatus fwGetTopologyMapData(FWDriverData *pDriver, UINT32 offset, UINT32 *data
 			retVal = FWAddressError;
 			break;
 		}
+
+		semGive( pDriver->coreCSR->csrSemId );
 
 		retVal = FWSuccess;
 

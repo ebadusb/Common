@@ -6,11 +6,14 @@
  * This file contains the firewire driver level routines.
  *
  * $Log: fw_driver.c $
+ * Revision 1.1  2007/02/07 15:22:33Z  wms10235
+ * Initial revision
  *
  */
 
 #include <vxWorks.h>
 #include <stdio.h>
+#include <string.h>
 #include <taskLib.h>
 #include "fw_utility.h"
 #include "fw_config_rom.h"
@@ -606,9 +609,176 @@ FWStatus fwEnableAdapter(int adapter)
 	return retVal;
 }
 
-FWStatus fwDevicePresent(int adapter, int deviceID)
+unsigned int fwGetDeviceCount(int adapter)
+{
+	unsigned int retVal = 0;
+
+	if( adapter >= 0 && adapter < fwGetAdapterCount() )
+	{
+		if( fwDriverDataArray[adapter] )
+		{
+			if( fwDriverDataArray[adapter]->coreCSR )
+			{
+				if( fwDriverDataArray[adapter]->coreCSR->topologyMap )
+				{
+					retVal = fwDriverDataArray[adapter]->coreCSR->topologyMap->nodeCount;
+				}
+			}
+		}
+	}
+
+	return retVal;
+}
+
+unsigned long fwGetBusGeneration(int adapter)
+{
+	unsigned long retVal = 0;
+
+	if( adapter >= 0 && adapter < fwGetAdapterCount() )
+	{
+		if( fwDriverDataArray[adapter] )
+		{
+			if( fwDriverDataArray[adapter]->physicalLayerData )
+			{
+            retVal = fwDriverDataArray[adapter]->physicalLayerData->busGeneration;
+			}
+		}
+	}
+
+	return retVal;
+}
+
+FWStatus fwGetNodeInfo(int adapter, unsigned int device, FWNodeInfo *info)
 {
 	FWStatus retVal = FWInternalError;
+	int adapterCount = fwGetAdapterCount();
+	FWDriverData *pDriver = NULL;
+	unsigned int selfIDCount = 0;
+	UINT32 *selfId = NULL;
+	unsigned short busID;
+	unsigned short phyId;
+	int i, speed;
+
+	do
+	{
+		if( info == NULL )
+		{
+			retVal = FWInvalidArg;
+			break;
+		}
+
+		info->contender = FALSE;
+		info->gapCount = 0;
+		info->initiatedReset = FALSE;
+		info->linkEnabled = FALSE;
+		info->nodeID = 0;
+		info->powerClass = 0;
+		info->rootNode = FALSE;
+		info->speed = FWS100;
+
+		/* Find the adapter */
+		if( adapter < 0 || adapter >= adapterCount )
+		{
+			retVal = FWInvalidAdapter;
+			break;
+		}
+
+		pDriver = fwDriverDataArray[adapter];
+
+		if( pDriver == NULL ) break;
+		if( pDriver->coreCSR == NULL ) break;
+		if( pDriver->coreCSR->topologyMap == NULL ) break;
+		if( pDriver->coreCSR->topologyMap->selfIDs == NULL ) break;
+
+		retVal = fwGetSourceID( pDriver, &busID );
+
+		if( retVal != FWSuccess )
+		{
+			break;
+		}
+
+		busID &= 0xFFC0;
+
+		/* lookup the topology information */
+		semTake( pDriver->coreCSR->csrSemId, WAIT_FOREVER );
+
+		if( pDriver->coreCSR->topologyMap->nodeCount > 0 )
+		{
+			selfIDCount = pDriver->coreCSR->topologyMap->selfIDCount;
+			selfId = (UINT32*)fwMalloc( selfIDCount * 4 );
+			memcpy( selfId, pDriver->coreCSR->topologyMap->selfIDs, selfIDCount * 4 );
+			retVal = FWSuccess;
+		}
+		else
+		{
+			retVal = FWNotFound;
+		}
+
+		semGive( pDriver->coreCSR->csrSemId );
+
+		if( retVal == FWSuccess )
+		{
+			retVal = FWNotFound;
+
+			/* Find the node in question */
+			for(i=0; i<selfIDCount; i++)
+			{
+				if( ( selfId[i] & 0x00800000 ) == 0 )
+				{
+					phyId = (unsigned short)((selfId[i] >> 24) & 0x0000003F);
+
+					if( phyId == device )
+					{
+						info->nodeID = busID | phyId;
+
+						if( (selfId[i] >> 11) & 0x00000001 ) info->contender = TRUE;
+						info->gapCount = (unsigned char)((selfId[i] >> 16) & 0x0000003F);
+						if( selfId[i] & 2 ) info->initiatedReset = TRUE;
+						if( (selfId[i] >> 22) & 0x00000001 ) info->linkEnabled = FALSE;
+						info->powerClass = (unsigned char)((selfId[i] >> 8) & 0x00000007);
+						if( i == selfIDCount - 1 ) info->rootNode = TRUE;
+						speed = (int)((selfId[i] >> 14) & 0x00000003);
+						if( speed == 1 ) info->speed = FWS200;
+						if( speed == 2 ) info->speed = FWS400;
+
+						retVal = FWSuccess;
+
+						break;
+					}
+				}
+			}
+		}
+
+	} while(0);
+
+	if( selfId ) fwFree( selfId );
+
+	return retVal;
+}
+
+FWStatus fwGetLocalNodeID(int adapter, unsigned short *localID)
+{
+	FWStatus retVal = FWInternalError;
+	int adapterCount = fwGetAdapterCount();
+
+	do
+	{
+		if( localID == NULL )
+		{
+			retVal = FWInvalidArg;
+			break;
+		}
+
+		/* Find the adapter */
+		if( adapter < 0 || adapter >= adapterCount )
+		{
+			retVal = FWInvalidAdapter;
+			break;
+		}
+
+		retVal = fwGetSourceID( fwDriverDataArray[adapter], localID );
+
+	} while(0);
 
 	return retVal;
 }

@@ -1,12 +1,14 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_client.c 1.1 2007/02/07 15:22:28Z wms10235 Exp wms10235 $
+ * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_client.c 1.1 2007/02/07 15:22:28Z wms10235 Exp $
  *
  * This file contains the client routines that
  * update or manage client resources.
  *
  * $Log: fw_client.c $
+ * Revision 1.1  2007/02/07 15:22:28Z  wms10235
+ * Initial revision
  *
  */
 
@@ -126,7 +128,13 @@ FWStatus fwDestroyClient(int clientHandle)
 		/* remove the structure from the list */
 		fwClientResourceRemove( fwClientRes );
 
-		/* Delete the client resources */
+		/* Delete the client's resources */
+		if( fwClientRes->swapBuffer )
+		{
+			fwFree( fwClientRes->swapBuffer );
+			fwClientRes->swapBuffer = NULL;
+		}
+
 		if( fwClientRes->asyncSendTrans )
 		{
 			/* Note don't free the databuffer in the

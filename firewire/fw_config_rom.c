@@ -1,11 +1,13 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_config_rom.c 1.1 2007/02/07 15:22:29Z wms10235 Exp wms10235 $
+ * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_config_rom.c 1.1 2007/02/07 15:22:29Z wms10235 Exp $
  *
  * This file contains the firewire configuration ROM routines.
  *
  * $Log: fw_config_rom.c $
+ * Revision 1.1  2007/02/07 15:22:29Z  wms10235
+ * Initial revision
  *
  */
 
@@ -275,6 +277,14 @@ static FWStatus fwBuildDefaultConfigROM(FWDriverData *pDriver, UINT32 *pConfigRO
 
 		pConfigROM[0] = 0x04000000 | crc; /* Bus info block has romLen entries with the CRC covering all entries */
 		pConfigROM[0] |= ((UINT32)romLen & 0x000000FF) << 16;
+
+		if( FW_BYTE_SWAP_ENABLED )
+		{
+			for( index=0; index<romLen; index++ )
+			{
+				pConfigROM[index] = fwByteSwap32( pConfigROM[index] );
+			}
+		}
 
 		retVal = FWSuccess;
 	}

@@ -1,12 +1,14 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_link_layer.c 1.2 2007/02/12 16:07:00Z wms10235 Exp wms10235 $
+ * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_link_layer.c 1.3 2007/02/13 22:46:47Z wms10235 Exp wms10235 $
  *
  * This file contains the firewire level routines to access
  * and manipulate the link layer.
  *
  * $Log: fw_link_layer.c $
+ * Revision 1.2  2007/02/12 16:07:00Z  wms10235
+ * IT74 - Add Firewire driver to common
  * Revision 1.1  2007/02/07 15:22:36Z  wms10235
  * Initial revision
  *
@@ -304,10 +306,6 @@ FWStatus fwInitializeLink(FWDriverData *pDriver)
 		/* Initialize OHCI register defaults */
 		pDriver->ohci->hcControlClr = 0x60040000;
 
-		/* Enable byte swapping */
-		if( FW_BYTE_SWAP_ENABLED )
-			pDriver->ohci->hcControlSet = 0x40000000;
-
 		/* set defaults for bus management CSR registers */
 		pDriver->ohci->initialBandwidthAvail = 4915;
 		pDriver->ohci->initialChannelsAvailHi = 0xFFFFFFFE;
@@ -423,16 +421,7 @@ FWStatus fwInitializeLink(FWDriverData *pDriver)
 			/* Now enable 1394a enhancements on the Link hardware */
 			pDriver->ohci->hcControlSet = 0x00400000;
 		}
-/* This is currently set in the config ROM
-		if( pDriver->configROM->selectedConfig == 1 )
-		{
-			pDriver->ohci->busOptions = pDriver->configROM->config1VirtualAddr[2];
-		}
-		else if( pDriver->configROM->selectedConfig == 2 )
-		{
-			pDriver->ohci->busOptions = pDriver->configROM->config2VirtualAddr[2];
-		}
-*/
+
 		/* Enable the cycle timer and allow self ID packets */
 		pDriver->ohci->linkControlSet = 0x00100200;
 
@@ -1616,7 +1605,10 @@ static FWStatus fwSendAsyncRequest(FWDriverData *pDriver, FWTransaction *transac
 				retVal = FWSuccess;
 			}
 			else
+			{
+				FWLOGLEVEL3("Error: write quadlet request made with data length %d.\n", transaction->dataLength );
 				retVal = FWTransDataSizeError;
+			}
 			break;
 
 		/* Write block request uses a single output immediate command

@@ -1,11 +1,13 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_utility.c 1.1 2007/02/07 15:22:41Z wms10235 Exp wms10235 $
+ * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_utility.c 1.2 2007/02/13 22:46:48Z wms10235 Exp wms10235 $
  *
  * This file contains firewire utility routines.
  *
  * $Log: fw_utility.c $
+ * Revision 1.1  2007/02/07 15:22:41Z  wms10235
+ * Initial revision
  *
  */
 
@@ -139,5 +141,4 @@ UINT32 fwByteSwap32(const UINT32 value)
 {
 	return (((value<<24) & 0xFF000000) | ((value<<8) & 0x00FF0000) | ((value>>8) & 0x0000FF00) | ((value>>24) & 0x000000FF));
 }
-
 

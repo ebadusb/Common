@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2005 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_pci_support.h 1.1 2007/02/07 15:22:37Z wms10235 Exp wms10235 $
+ * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_pci_support.h 1.1 2007/02/07 15:22:37Z wms10235 Exp $
  *
  * This file defines the firewire PCI hardware initialization routines.
  * These routines detect any OHCI v1.1 compatible firewire cards in
@@ -10,6 +10,8 @@
  * of MMU_DUMMY_ENTRY entries in the sysMmuMapTable
  *
  * $Log: fw_pci_support.h $
+ * Revision 1.1  2007/02/07 15:22:37Z  wms10235
+ * Initial revision
  *
  */
 
@@ -19,7 +21,7 @@
 #define FIREWIRE_MAX_PCI_ADAPTERS			4
 #define FIREWIRE_PCI_DEVICE_CLASS			0x0C0010
 #define FIREWIRE_PCI_MEMORY_MAP_SIZE		0x2000
-#define FW_BYTE_SWAP_ENABLED					1
+#define FW_BYTE_SWAP_ENABLED					TRUE			/* byte swap async data */
 
 /* Vendor IDs */
 #define FIREWIRE_PCI_TI						0x104C			/* Vendor ID for Texas Instruments */

@@ -1,11 +1,13 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_utility.h 1.1 2007/02/07 15:22:42Z wms10235 Exp wms10235 $
+ * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_utility.h 1.2 2007/02/13 22:46:48Z wms10235 Exp wms10235 $
  *
  * This file contains firewire utility routines.
  *
  * $Log: fw_utility.h $
+ * Revision 1.1  2007/02/07 15:22:42Z  wms10235
+ * Initial revision
  *
  */
 
@@ -40,7 +42,7 @@ void fwMemShow(void);
  */
 UINT16 fwComputeCRC16(UINT32 crcValue, UINT32 data);
 
-/* perform byte swapping on a 32-bit integer. Used
+/* perform byte swapping on a 32-bit integer value. Used
  * convert from/to little endian to big endian.
  */
 UINT32 fwByteSwap32(const UINT32 value);

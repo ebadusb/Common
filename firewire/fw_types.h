@@ -6,6 +6,8 @@
  * This file contains type definitions for the firewire routines.
  *
  * $Log: fw_types.h $
+ * Revision 1.2  2007/02/12 16:07:00Z  wms10235
+ * IT74 - Add Firewire driver to common
  * Revision 1.1  2007/02/07 15:22:40Z  wms10235
  * Initial revision
  *
@@ -63,12 +65,12 @@ typedef struct FWNodeInfoStruct
 typedef struct FWAsyncTransactionCmdStruct
 {
 	int					clientHandle;			/* A unique integer identifier for the client task. */
-	unsigned short		destinationID;			/* Destination ID for the IEEE-1394 device. */
-	FWAddressOffset	destinationOffset;	/* Destination offset for the IEEE-1394 device. */
 	unsigned long		dataLength;				/* The length in bytes of the data quadlets in the dataBuffer */
 	unsigned long		dataBufferSize;		/* Size in bytes of the data buffer. */
 	UINT32				*databuffer;			/* Data buffer allocated by client */
 	FWSpeed				speed;					/* Desired transfer speed of the request. */
+	FWAddressOffset	destinationOffset;	/* Destination offset for the IEEE-1394 device. */
+	unsigned short		destinationID;			/* Destination ID for the IEEE-1394 device. */
 
 } FWAsyncTransactionCmd;
 

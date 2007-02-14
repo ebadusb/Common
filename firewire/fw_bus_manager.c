@@ -1,11 +1,13 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_bus_manager.c 1.2 2007/02/12 16:06:58Z wms10235 Exp wms10235 $
+ * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_bus_manager.c 1.3 2007/02/13 22:46:46Z wms10235 Exp wms10235 $
  *
  * This file contains the firewire routines for the Bus Manager.
  *
  * $Log: fw_bus_manager.c $
+ * Revision 1.2  2007/02/12 16:06:58Z  wms10235
+ * IT74 - Add Firewire driver to common
  * Revision 1.1  2007/02/07 15:22:27Z  wms10235
  * Initial revision
  *
@@ -71,7 +73,7 @@ static FWStatus fwVendorSpecificIntHandler(FWDriverData *pDriver);
 static FWStatus fwBuildTopologyMap(FWDriverData *pDriver);
 static FWStatus fwDetermineIsochronousMgr(FWDriverData *pDriver);
 static FWStatus fwBusManagerAsyncTrans(FWDriverData *pDriver, FWBusMgrTransactionType type);
-static FWStatus fwProcessBusMgrAsyncTrans(void);
+static FWStatus fwProcessBusMgrAsyncTrans(FWDriverData *pDriver);
 static FWStatus fwIsoMgrIsCompatibleCompleted(FWDriverData *pDriver, FWBusMgrTransaction *busMgrTrans);
 static FWStatus fwCancelBusMgrAsyncTrans(FWDriverData *pDriver);
 
@@ -108,7 +110,7 @@ int fwBusManagerStartup(void)
 		}
 
 /* #ifdef DEBUG_BUILD */
-		retVal = fwOpenLog( "/machine/tmp/fw.log", 9 );
+		retVal = fwOpenLog( "/machine/tmp/fw.log", 7 );
 		if( retVal != 0 )
 		{
 			printf("Could not open log file.\n");
@@ -209,13 +211,6 @@ int fwBusManagerStartup(void)
 			}
 
 			fwStatus = fwProcessAsyncTransactions();
-
-			if( fwStatus != FWSuccess && fwStatus != FWNoTransactions )
-			{
-				FWLOGLEVEL3("IEEE-1394 driver could not process async transactions. Error:%d\n", fwStatus);
-			}
-
-			fwStatus = fwProcessBusMgrAsyncTrans();
 
 			if( fwStatus != FWSuccess && fwStatus != FWNoTransactions )
 			{
@@ -411,6 +406,7 @@ FWStatus fwProcessEvents(void)
 {
 	FWStatus retVal = FWInternalError;
 	int adapterCount = fwGetAdapterCount();
+	int timeoutKnt = 0;
 	int index;
 	FWDriverData *pDriver;
 	UINT32 interruptMask;
@@ -432,9 +428,9 @@ FWStatus fwProcessEvents(void)
 					/* Check for interrupts */
 					if( interruptMask == 0 && isoXmitInterruptMask == 0 && isoRecvInterruptMask == 0 ) break;
 
-					/* Process interrupts
+					/* Process interrupts */
 					FWLOGLEVEL9("Interrupt received from adapter %d intMask:0x%08X isoXmit:0x%08X isoRecv:0x%08X\n", index, interruptMask, isoXmitInterruptMask, isoRecvInterruptMask);
-					*/
+
 					if( interruptMask & 0x00000001 )
 					{
 						retVal = fwRequestTxCompleteIntHandler( pDriver );
@@ -562,7 +558,29 @@ FWStatus fwProcessEvents(void)
 
 				} while(0);
 			}
+
+			/* Clean up any completed responses */
+			retVal = fwCompleteAsyncResponseTransaction( pDriver );
+
+			/* Send next async response (if any) */
+			retVal = fwSendAsyncResponseTransaction( pDriver );
+
+			/* Send out any requests */
+			retVal = fwSendAsyncRequestTransaction( pDriver );
+
+			/* Send bus manager transactions */
+			retVal = fwProcessBusMgrAsyncTrans( pDriver );
+
+			if( pDriver->busManagerData->head != NULL )
+			{
+				timeoutKnt++;
+			}
 		}
+	}
+
+	if( timeoutKnt == 0 )
+	{
+		fwBusManagerTimeout = WAIT_FOREVER;
 	}
 
 	return retVal;
@@ -570,7 +588,7 @@ FWStatus fwProcessEvents(void)
 
 FWStatus fwProcessAsyncTransactions(void)
 {
-	FWStatus retVal = FWInternalError;
+	FWStatus retVal = FWSuccess;
 	int adapterCount = fwGetAdapterCount();
 	int index;
 	FWDriverData *pDriver;
@@ -584,14 +602,6 @@ FWStatus fwProcessAsyncTransactions(void)
 		{
 			pDriver = fwDriverDataArray[index];
 
-			/* Clean up any completed responses */
-			retVal = fwCompleteAsyncResponseTransaction( pDriver );
-
-			/* Send next async response (if any) */
-			retVal = fwSendAsyncResponseTransaction( pDriver );
-
-			/* Send out any requests */
-			retVal = fwSendAsyncRequestTransaction( pDriver );
 		}
 	}
 
@@ -661,6 +671,7 @@ void fwInterruptHandler(int adapterIndex)
 	UINT32 interruptMask;
 	UINT32 isoRecvInterruptMask;
 	UINT32 isoXmitInterruptMask;
+	UINT32 clearMask = 0xFFFDFFFF;
 
 	/* Bounds check the adapter index */
 	if( adapterIndex >=0 && adapterIndex < adapterCount )
@@ -677,8 +688,21 @@ void fwInterruptHandler(int adapterIndex)
 		pDriver->isoRecvInterruptMask |= isoRecvInterruptMask;
 		pDriver->isoXmitInterruptMask |= isoXmitInterruptMask;
 
+		/* Special handling for bus reset interrupt. (OHCI 7.2.3.2) */
+		if( interruptMask & 0x00020000 )
+		{
+			pDriver->ohci->asyncTxRequest.contextControlClr = 0x00008000;
+			pDriver->ohci->asyncTxResponse.contextControlClr = 0x00008000;
+
+			if( (pDriver->ohci->asyncTxRequest.contextControlClr & 0x00000400) == 0 &&
+				 (pDriver->ohci->asyncTxResponse.contextControlClr & 0x00000400) == 0 )
+			{
+				clearMask = 0xFFFFFFFF;
+			}
+		}
+
 		/* Clear the interrupt flags */
-		pDriver->ohci->intEventClr = interruptMask;
+		pDriver->ohci->intEventClr = interruptMask & clearMask;
 		pDriver->ohci->isoRecvIntEventClr = isoRecvInterruptMask;
 		pDriver->ohci->isoXmitIntEventClr = isoXmitInterruptMask;
 
@@ -919,12 +943,20 @@ static FWStatus fwBusResetIntHandler(FWDriverData *pDriver)
 {
 	FWStatus retVal = FWInternalError;
 
+	pDriver->ohci->asyncTxRequest.contextControlClr = 0x00008000;
+	pDriver->ohci->asyncTxResponse.contextControlClr = 0x00008000;
+
+	if( (pDriver->ohci->asyncTxRequest.contextControlClr & 0x00000400) == 0 &&
+		 (pDriver->ohci->asyncTxResponse.contextControlClr & 0x00000400) == 0 )
+	{
+		pDriver->ohci->intEventClr = 0x00020000;
+	}
+
 	FWLOGLEVEL9("fwBusResetIntHandler called.\n");
 
 	retVal = fwSetCycleMaster( pDriver, FALSE );
 	pDriver->physicalLayerData->busResetUnderway = TRUE;
 	pDriver->physicalLayerData->isRoot = FALSE;
-	fwTopologyMapReset( pDriver );
 
 	retVal = fwCancelBusMgrAsyncTrans( pDriver );
 
@@ -939,6 +971,8 @@ static FWStatus fwSelfIdCompleteIntHandler(FWDriverData *pDriver)
 	int i;
 
 	FWLOGLEVEL9("fwSelfIdCompleteIntHandler called.\n");
+
+	fwTopologyMapReset( pDriver );
 
 	selfIdCount = pDriver->ohci->selfIdCount;
 
@@ -1287,7 +1321,7 @@ static FWStatus fwDetermineIsochronousMgr(FWDriverData *pDriver)
 				 * If it is not, set the root hold off and initiate
 				 * a bus reset. FWIsoManagerDelay100ms
 				 */
-				retVal = fwBusManagerAsyncTrans( pDriver, FWIsoMgrIsCompatible );
+				retVal = fwBusManagerAsyncTrans( pDriver, FWIsoManagerDelay100ms );
 			}
 			else
 			{
@@ -1397,7 +1431,7 @@ static FWStatus fwBusManagerAsyncTrans(FWDriverData *pDriver, FWBusMgrTransactio
 
 			retVal = fwPostAsyncReadRequest( pDriver, busMgrTrans->transaction );
 
-			FWLOGLEVEL9("Sending bus manager transaction.\n");
+			FWLOGLEVEL9("Sending bus manager Iso manager transaction.\n");
 			fwBusManagerTimeout = FW_BUS_MANAGER_TIMEOUT_TICKS;
 			break;
 
@@ -1435,6 +1469,9 @@ static FWStatus fwBusManagerAsyncTrans(FWDriverData *pDriver, FWBusMgrTransactio
 			busMgrTrans->transType = type;
 
 			retVal = fwBusManagerDataPushBack( pDriver->busManagerData, busMgrTrans );
+
+			FWLOGLEVEL9("Sending bus manager delay 100ms transaction.\n");
+			fwBusManagerTimeout = FW_BUS_MANAGER_TIMEOUT_TICKS;
 			if( retVal != FWSuccess )
 			{
 				fwFree( busMgrTrans );
@@ -1450,106 +1487,88 @@ static FWStatus fwBusManagerAsyncTrans(FWDriverData *pDriver, FWBusMgrTransactio
 	return retVal;
 }
 
-static FWStatus fwProcessBusMgrAsyncTrans(void)
+static FWStatus fwProcessBusMgrAsyncTrans(FWDriverData *pDriver)
 {
 	FWStatus retVal = FWInternalError;
 	int adapterCount = fwGetAdapterCount();
-	int index;
 	int totalTransCount = 0;
 	unsigned long currentTick;
 	unsigned long compareTick;
-	FWDriverData *pDriver = NULL;
 	FWBusMgrTransaction *busMgrTrans;
 	FWBusMgrTransaction *busMgrTransReady;
 
-	/* Loop through the adapter list and
-	 * submit any pending transactions.
-	 */
-	for(index=0; index<adapterCount; index++)
+	retVal = fwGetDriverTick( pDriver, &currentTick );
+
+	busMgrTrans = pDriver->busManagerData->head;
+
+	while( busMgrTrans )
 	{
-		if( fwDriverDataArray[index] != NULL )
+		compareTick = currentTick;
+
+		if( currentTick < busMgrTrans->tick )
 		{
-			pDriver = fwDriverDataArray[index];
+			compareTick += 1024000;
+		}
 
-			retVal = fwGetDriverTick( pDriver, &currentTick );
+		if( busMgrTrans->transaction )
+		{
+			retVal = busMgrTrans->transaction->status;
+		}
+		else
+		{
+			retVal = FWNotFound;
+		}
 
-			busMgrTrans = pDriver->busManagerData->head;
+		/* Determine if the transaction is complete or timed out */
+		if( retVal == FWSuccess || (compareTick - busMgrTrans->tick) >= busMgrTrans->tickTimeout )
+		{
+			busMgrTransReady = busMgrTrans;
+			busMgrTrans = busMgrTrans->next;
 
-			while( busMgrTrans )
+			FWLOGLEVEL9("Checking bus manager transactions. Current tick:%d Trans tick:%d\n", compareTick, busMgrTransReady->tick );
+
+			/* Unlink this transaction from the list */
+			fwBusManagerDataUnlink( pDriver->busManagerData, busMgrTransReady );
+
+			/* The transaction is complete. Remove it from the waiting list. */
+			if( busMgrTransReady->transaction )
 			{
-				compareTick = currentTick;
-
-				if( currentTick < busMgrTrans->tick )
+				if( busMgrTransReady->transaction->status == FWSuccess )
 				{
-					compareTick += 1024000;
-				}
-
-				if( busMgrTrans->transaction )
-				{
-					retVal = busMgrTrans->transaction->status;
+					retVal = fwRemoveTransaction( pDriver, busMgrTransReady->transaction );
 				}
 				else
 				{
-					retVal = FWNotFound;
-				}
-
-				/* Determine if the transaction is complete or timed out */
-				if( retVal == FWSuccess || (compareTick - busMgrTrans->tick) >= busMgrTrans->tickTimeout )
-				{
-					busMgrTransReady = busMgrTrans;
-					busMgrTrans = busMgrTrans->next;
-
-					FWLOGLEVEL9("Checking bus manager transactions. Current tick:%d Trans tick:%d\n", currentTick, busMgrTransReady->tick );
-
-					/* Unlink this transaction from the list */
-					fwBusManagerDataUnlink( pDriver->busManagerData, busMgrTransReady );
-
-					/* The transaction is complete. Remove it from the waiting list. */
-					if( busMgrTransReady->transaction )
-					{
-						if( busMgrTransReady->transaction->status == FWSuccess )
-						{
-							retVal = fwRemoveTransaction( pDriver, busMgrTransReady->transaction );
-						}
-						else
-						{
-							/* The transaction timed out. Cancel the transaction. */
-							retVal = fwCancelTransaction( pDriver, busMgrTransReady->transaction );
-						}
-					}
-
-					FWLOGLEVEL9("Processing bus manager transaction type %d.\n", busMgrTransReady->transType);
-					switch( busMgrTransReady->transType )
-					{
-					case	FWNullTransaction:
-						break;
-
-					case	FWIsoMgrIsCompatible:
-						retVal = fwIsoMgrIsCompatibleCompleted( pDriver, busMgrTransReady );
-						break;
-
-					case	FWWriteBusMgrId:
-						break;
-
-					case	FWIsoManagerDelay100ms:
-						retVal = fwBusManagerAsyncTrans( pDriver, FWIsoMgrIsCompatible );
-						break;
-					}
-
-					fwBusManagerDataDelete( busMgrTransReady );
-				}
-				else
-				{
-					totalTransCount++;
-					busMgrTrans = busMgrTrans->next;
+					/* The transaction timed out. Cancel the transaction. */
+					retVal = fwCancelTransaction( pDriver, busMgrTransReady->transaction );
 				}
 			}
-		}
-	}
 
-	if( totalTransCount == 0 )
-	{
-		fwBusManagerTimeout = WAIT_FOREVER;
+			FWLOGLEVEL9("Processing bus manager transaction type %d.\n", busMgrTransReady->transType);
+			switch( busMgrTransReady->transType )
+			{
+			case	FWNullTransaction:
+				break;
+
+			case	FWIsoMgrIsCompatible:
+				retVal = fwIsoMgrIsCompatibleCompleted( pDriver, busMgrTransReady );
+				break;
+
+			case	FWWriteBusMgrId:
+				break;
+
+			case	FWIsoManagerDelay100ms:
+				retVal = fwBusManagerAsyncTrans( pDriver, FWIsoMgrIsCompatible );
+				break;
+			}
+
+			fwBusManagerDataDelete( busMgrTransReady );
+		}
+		else
+		{
+			totalTransCount++;
+			busMgrTrans = busMgrTrans->next;
+		}
 	}
 
 	return retVal;
@@ -1581,6 +1600,7 @@ static FWStatus fwCancelBusMgrAsyncTrans(FWDriverData *pDriver)
 static FWStatus fwIsoMgrIsCompatibleCompleted(FWDriverData *pDriver, FWBusMgrTransaction *busMgrTrans)
 {
 	FWStatus retVal = FWInternalError;
+	UINT32 mgrResponse;
 
 	FWLOGLEVEL9("IsoMgr complete called. Status:%d Response:%d Len:%d\n",
 					busMgrTrans->transaction->status,
@@ -1596,7 +1616,16 @@ static FWStatus fwIsoMgrIsCompatibleCompleted(FWDriverData *pDriver, FWBusMgrTra
 			{
 				if( busMgrTrans->transaction->dataLength == 4 )
 				{
-					if( *((UINT32*)busMgrTrans->transaction->databuffer) != 0 )
+					if( FW_BYTE_SWAP_ENABLED )
+					{
+						mgrResponse = fwByteSwap32( *((UINT32*)busMgrTrans->transaction->databuffer) );
+					}
+					else
+					{
+						mgrResponse = *((UINT32*)busMgrTrans->transaction->databuffer);
+					}
+
+					if( mgrResponse != 0 )
 					{
 						/* Isochronous manager responded appropriately
 						 * for a 1394a-2000 compliant manager.
@@ -1645,6 +1674,7 @@ static FWStatus fwIsoMgrIsCompatibleCompleted(FWDriverData *pDriver, FWBusMgrTra
 		if( pDriver->coreCSR->topologyMap->nodeCount <= 1 )
 		{
 			FWLOGLEVEL7("Node count is less than or equal to one.\n");
+			retVal = fwSetForceRoot( pDriver, FALSE );
 			break;
 		}
 

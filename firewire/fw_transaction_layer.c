@@ -1,12 +1,14 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_transaction_layer.c 1.1 2007/02/07 15:22:39Z wms10235 Exp wms10235 $
+ * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_transaction_layer.c 1.2 2007/02/13 22:46:48Z wms10235 Exp wms10235 $
  *
  * This file contains the firewire interface routines
  * to access the transaction layer.
  *
  * $Log: fw_transaction_layer.c $
+ * Revision 1.1  2007/02/07 15:22:39Z  wms10235
+ * Initial revision
  *
  */
 
@@ -580,10 +582,11 @@ FWStatus fwRecvAsyncResponseTransaction(FWDriverData *pDriver)
 			break;
 		}
 
-		FWLOGLEVEL9("Response received. Trans Label:%d Source ID:%d Dest ID:%d\n",
+		FWLOGLEVEL9("Response received. Trans Label:%d Source ID:0x%X Dest ID:0x%X tCode:%d\n",
 						responseTrans->transactionLabel,
 						responseTrans->sourceID,
-						responseTrans->destinationID );
+						responseTrans->destinationID,
+						responseTrans->transactionCode );
 
 		semTake( pDriver->transactionLayerData->transSemId, WAIT_FOREVER );
 
@@ -594,7 +597,8 @@ FWStatus fwRecvAsyncResponseTransaction(FWDriverData *pDriver)
 
 		if( requestTrans )
 		{
-			FWLOGLEVEL9("Request/response matched. Transaction ID:%d\n", requestTrans->transactionID );
+			FWLOGLEVEL9("Request/response matched. Transaction ID:%d Request tCode:%d Response tCode:%d\n",
+							requestTrans->transactionID, requestTrans->transactionCode, responseTrans->transactionCode );
 			/* Found the matching request. Populate the transaction
 			 * with response data and the status.
 			 */
@@ -787,7 +791,10 @@ FWStatus fwCompleteAsyncResponseTransaction(FWDriverData *pDriver)
 
 		while( transaction )
 		{
-			FWLOGLEVEL5("Transaction %d is complete with status %d.\n", transaction->transactionID, transaction->status );
+			if( transaction->status != FWQueuedWaiting )
+			{
+				FWLOGLEVEL5("Response transaction %d is complete with status %d.\n", transaction->transactionID, transaction->status );
+			}
 
 			if( transaction->databuffer )
 			{
@@ -798,6 +805,8 @@ FWStatus fwCompleteAsyncResponseTransaction(FWDriverData *pDriver)
 
 			transaction = fwTransactionListPopFront( pDriver->transactionLayerData->incommingRequestList );
 		}
+
+		retVal = FWSuccess;
 
 	} while(0);
 
@@ -1189,7 +1198,8 @@ int fwMatchResponseWithRequest(const FWTransaction *cmp1, const FWTransaction *c
 {
 	int retVal = -1;
 
-	if( cmp1->transactionLabel == cmp2->transactionLabel && cmp1->sourceID == cmp2->destinationID )
+	if( cmp1->transactionLabel == cmp2->transactionLabel &&
+		 cmp1->sourceID == cmp2->destinationID )
 	{
 		retVal = 0;
 	}
@@ -1957,6 +1967,7 @@ static FWStatus fwReadManagerCSR(FWDriverData *pDriver, FWTransaction *transacti
 	int index = 0;
 	UINT32 offset;
 	UINT32 upperBound;
+	UINT32 splitTimeout;
 	UINT32 tempValue;
 
 	offset = transaction->destinationOffset.lowOffset;
@@ -1982,11 +1993,11 @@ static FWStatus fwReadManagerCSR(FWDriverData *pDriver, FWTransaction *transacti
 				break;
 
 			case 0xF0000018:	/* Split timeout HI CSR */
-				retVal = fwGetSplitTimeoutCSR( pDriver, &dataBuffer[index], &tempValue );
+				retVal = fwGetSplitTimeoutCSR( pDriver, &dataBuffer[index], &splitTimeout );
 				break;
 
 			case 0xF000001C:	/* Split timeout LO CSR */
-				retVal = fwGetSplitTimeoutCSR( pDriver, &tempValue, &dataBuffer[index] );
+				retVal = fwGetSplitTimeoutCSR( pDriver, &splitTimeout, &dataBuffer[index] );
 				break;
 
 			case 0xF0000200:	/* Cycle time CSR */
@@ -2035,6 +2046,14 @@ static FWStatus fwReadManagerCSR(FWDriverData *pDriver, FWTransaction *transacti
 				retVal = fwGetTopologyMapData( pDriver, offset, &dataBuffer[index] );
 			}
 
+			if( retVal == FWSuccess )
+			{
+				if( FW_BYTE_SWAP_ENABLED )
+				{
+					dataBuffer[index] = fwByteSwap32( dataBuffer[index] );
+				}
+			}
+
 			offset += 4;
 			index++;
 		}
@@ -2054,6 +2073,7 @@ static FWStatus fwWriteManagerCSR(FWDriverData *pDriver, FWTransaction *transact
 	UINT32 splitLo;
 	UINT32 splitHi;
 	UINT32 *dataBuffer;
+	UINT32 tempValue;
 
 	offset = transaction->destinationOffset.lowOffset;
 	upperBound = offset + transaction->dataLength;
@@ -2070,50 +2090,59 @@ static FWStatus fwWriteManagerCSR(FWDriverData *pDriver, FWTransaction *transact
 
 		while( retVal == FWSuccess && offset < upperBound )
 		{
+			if( FW_BYTE_SWAP_ENABLED )
+			{
+				tempValue = fwByteSwap32( dataBuffer[index] );
+			}
+			else
+			{
+				tempValue = dataBuffer[index];
+			}
+
 			switch( offset )
 			{
 			case 0xF0000000:	/* State clear CSR */
-				retVal = fwSetStateClearCSR( pDriver, dataBuffer[index] );
+				retVal = fwSetStateClearCSR( pDriver, tempValue );
 				break;
 
 			case 0xF0000004:	/* State set CSR */
-				retVal = fwSetStateSetCSR( pDriver, dataBuffer[index] );
+				retVal = fwSetStateSetCSR( pDriver, tempValue );
 				break;
 
 			case 0xF0000008:	/* Node ID CSR */
-				retVal = fwSetNodeIDCSR( pDriver, dataBuffer[index] );
+				retVal = fwSetNodeIDCSR( pDriver, tempValue );
 				break;
 
 			case 0xF000000C:	/* Reset start CSR */
-				retVal = fwSetResetStartCSR( pDriver, dataBuffer[index] );
+				retVal = fwSetResetStartCSR( pDriver, tempValue );
 				break;
 
 			case 0xF0000018:	/* Split timeout HI CSR */
-				splitHi = dataBuffer[index];
+				splitHi = tempValue;
 				break;
 
 			case 0xF000001C:	/* Split timeout LO CSR */
-				splitLo = dataBuffer[index];
+				splitLo = tempValue;
 				break;
 
 			case 0xF0000200:	/* Cycle time CSR */
-				retVal = fwSetCycleTimeCSR( pDriver, dataBuffer[index] );
+				retVal = fwSetCycleTimeCSR( pDriver, tempValue );
 				break;
 
 			case 0xF0000204:	/* Bus time CSR */
-				retVal = fwSetBusTimeCSR( pDriver, dataBuffer[index] );
+				retVal = fwSetBusTimeCSR( pDriver, tempValue );
 				break;
 
 			case 0xF0000210:	/* Busy timeout CSR */
-				retVal = fwSetBusyTimeoutCSR( pDriver, dataBuffer[index] );
+				retVal = fwSetBusyTimeoutCSR( pDriver, tempValue );
 				break;
 
 			case 0xF0000214:	/* Priority Budget CSR */
-				retVal = fwSetPriorityBudgetCSR( pDriver, dataBuffer[index] );
+				retVal = fwSetPriorityBudgetCSR( pDriver, tempValue );
 				break;
 
 			case 0xF0000234:	/* Broadcast channel CSR */
-				retVal = fwSetBroadcastChannelCSR( pDriver, dataBuffer[index] );
+				retVal = fwSetBroadcastChannelCSR( pDriver, tempValue );
 				break;
 
 			default:
@@ -2155,8 +2184,16 @@ static FWStatus fwLockManagerCSR(FWDriverData *pDriver, FWTransaction *transacti
 			break;
 		}
 
-		compare = buffer[0];
-		swap = buffer[1];
+		if( FW_BYTE_SWAP_ENABLED )
+		{
+			compare = fwByteSwap32( buffer[0] );
+			swap = fwByteSwap32( buffer[1] );
+		}
+		else
+		{
+			compare = buffer[0];
+			swap = buffer[1];
+		}
 
 		/* Note that only quadlet compare swap is supported for the
 		 * standard CSR lock operations.
@@ -2186,6 +2223,11 @@ static FWStatus fwLockManagerCSR(FWDriverData *pDriver, FWTransaction *transacti
 		default:
 			retVal = FWAddressError;
 			break;
+		}
+
+		if( FW_BYTE_SWAP_ENABLED )
+		{
+			*dataBuffer = fwByteSwap32( *dataBuffer );
 		}
 
 	} while(0);
@@ -2394,6 +2436,4 @@ static FWStatus fwValidateManagerCSR(FWDriverData *pDriver, FWTransaction *trans
 
 	return retVal;
 }
-
-
 

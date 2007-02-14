@@ -1,11 +1,13 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_driver.c 1.2 2007/02/12 16:06:59Z wms10235 Exp wms10235 $
+ * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_driver.c 1.4 2007/02/15 21:10:28Z wms10235 Exp wms10235 $
  *
  * This file contains the firewire driver level routines.
  *
  * $Log: fw_driver.c $
+ * Revision 1.2  2007/02/12 16:06:59Z  wms10235
+ * IT74 - Add Firewire driver to common
  * Revision 1.1  2007/02/07 15:22:33Z  wms10235
  * Initial revision
  *
@@ -210,11 +212,19 @@ FWStatus fwInitialize(int adapter)
 			break;
 		}
 
-		/* TODO: Set physical layer options */
+		/* Set physical layer options */
 		retVal = fwSetContender( fwDriverDataArray[adapter], FALSE );
 		if( retVal != FWSuccess )
 		{
-			FWLOGLEVEL3("Could not set contender bit. Error:%d\n", retVal );
+			FWLOGLEVEL3("Could not disable the contender bit. Error:%d\n", retVal );
+			break;
+		}
+
+		/* Set root hold off options */
+		retVal = fwSetForceRoot( fwDriverDataArray[adapter], FALSE );
+		if( retVal != FWSuccess )
+		{
+			FWLOGLEVEL3("Could not disable the force root bit. Error:%d\n", retVal );
 			break;
 		}
 
@@ -258,6 +268,9 @@ FWStatus fwAsyncWrite(int adapter, const FWAsyncTransactionCmd *asyncCmd, int ti
 	FWClientResource *clientResource = NULL;
 	FWDriverData *pDriver = NULL;
 	STATUS errStatus = ERROR;
+	int i;
+	unsigned long len;
+	UINT32 *bufData;
 
 	do
 	{
@@ -288,9 +301,42 @@ FWStatus fwAsyncWrite(int adapter, const FWAsyncTransactionCmd *asyncCmd, int ti
 		/* Obtain the client's send transaction structure */
 
 		/* TODO: If the size is greater than the max_rec of
-		 * this node or the remote node, the operation may need
+		 * this node or the remote node, the operation needs
 		 * to be broken down into multiple transactions.
 		 */
+
+		/* Put the data in network byte order if necessary */
+		if( FW_BYTE_SWAP_ENABLED )
+		{
+			/* If byte swap enabled, byte swap into another buffer */
+			if( clientResource->swapBufferSize < asyncCmd->dataLength )
+			{
+				/* Allocate memory for the write buffer */
+				len = asyncCmd->dataLength;
+				if( len < 32 ) len = 32;
+				if( clientResource->swapBuffer )
+				{
+					fwFree( clientResource->swapBuffer );
+				}
+
+				clientResource->swapBufferSize = 0;
+
+				clientResource->swapBuffer = (UINT32*)fwMalloc( len );
+				if( clientResource->swapBuffer == NULL )
+				{
+					retVal = FWMemAllocateError;
+					break;
+				}
+
+				clientResource->swapBufferSize = len;
+			}
+
+			len = asyncCmd->dataLength / 4;
+			for(i=0; i<len; i++)
+			{
+				clientResource->swapBuffer[i] = fwByteSwap32( asyncCmd->databuffer[i] );
+			}
+		}
 
 		/* Fill in the transaction structure and add it to the pending queue */
 		retVal = fwInitializeAsyncRequestTransaction( pDriver, asyncCmd, clientResource->asyncSendTrans );
@@ -300,7 +346,15 @@ FWStatus fwAsyncWrite(int adapter, const FWAsyncTransactionCmd *asyncCmd, int ti
 			break;
 		}
 
+		/* If byte swapping, use the byte swapped buffer */
+		if( FW_BYTE_SWAP_ENABLED )
+		{
+			clientResource->asyncSendTrans->databuffer = (unsigned char*)clientResource->swapBuffer;
+		}
+
 		clientResource->asyncSendTrans->semId = clientResource->clientSem;
+
+		FWLOGLEVEL7("Write transaction %d started.\n", clientResource->asyncSendTrans->transactionID );
 
 		retVal = fwPostAsyncWriteRequest( pDriver, clientResource->asyncSendTrans );
 
@@ -317,6 +371,8 @@ FWStatus fwAsyncWrite(int adapter, const FWAsyncTransactionCmd *asyncCmd, int ti
 			/* The transaction is complete. Remove it from the waiting list. */
 			retVal = fwRemoveTransaction( pDriver, clientResource->asyncSendTrans );
 
+			FWLOGLEVEL7("Write transaction %d completed.\n", clientResource->asyncSendTrans->transactionID );
+
 			if( retVal == FWSuccess )
 			{
 				retVal = clientResource->asyncSendTrans->status;
@@ -350,6 +406,8 @@ FWStatus fwAsyncWrite(int adapter, const FWAsyncTransactionCmd *asyncCmd, int ti
 		{
 			/* The transaction timed out. Cancel the transaction. */
 			retVal = fwCancelTransaction( pDriver, clientResource->asyncSendTrans );
+			FWLOGLEVEL7("Write transaction %d timed out.\n", clientResource->asyncSendTrans->transactionID );
+			retVal = FWTimeout;
 		}
 
 	} while(0);
@@ -364,6 +422,9 @@ FWStatus fwAsyncRead(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout)
 	FWClientResource *clientResource = NULL;
 	FWDriverData *pDriver = NULL;
 	STATUS errStatus = ERROR;
+	int i;
+	unsigned long len;
+	UINT32 *bufData;
 
 	do
 	{
@@ -408,6 +469,8 @@ FWStatus fwAsyncRead(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout)
 
 		clientResource->asyncSendTrans->semId = clientResource->clientSem;
 
+		FWLOGLEVEL7("Read transaction %d started.\n", clientResource->asyncSendTrans->transactionID );
+
 		retVal = fwPostAsyncReadRequest( pDriver, clientResource->asyncSendTrans );
 
 		if( retVal != FWSuccess )
@@ -422,6 +485,7 @@ FWStatus fwAsyncRead(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout)
 		{
 			/* The transaction is complete. Remove it from the waiting list. */
 			retVal = fwRemoveTransaction( pDriver, clientResource->asyncSendTrans );
+			FWLOGLEVEL7("Read transaction %d completed.\n", clientResource->asyncSendTrans->transactionID );
 
 			asyncCmd->dataLength = clientResource->asyncSendTrans->dataLength;
 			asyncCmd->speed = clientResource->asyncSendTrans->speed;
@@ -435,6 +499,15 @@ FWStatus fwAsyncRead(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout)
 					switch( clientResource->asyncSendTrans->responseCode )
 					{
 					case	FWResponseComplete:
+						if( FW_BYTE_SWAP_ENABLED )
+						{
+							len = clientResource->asyncSendTrans->dataLength / 4;
+							bufData = (UINT32*)clientResource->asyncSendTrans->databuffer;
+							for(i=0; i<len; i++)
+							{
+								bufData[i] = fwByteSwap32( bufData[i] );
+							}
+						}
 						break;
 					case	FWResponseConflictError:
 						retVal = FWResponseError;
@@ -459,6 +532,8 @@ FWStatus fwAsyncRead(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout)
 		{
 			/* The transaction timed out. Cancel the transaction. */
 			retVal = fwCancelTransaction( pDriver, clientResource->asyncSendTrans );
+			FWLOGLEVEL7("Read transaction %d timed out.\n", clientResource->asyncSendTrans->transactionID );
+
 			retVal = FWTimeout;
 		}
 
@@ -501,7 +576,12 @@ FWStatus fwCompareSwap(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout
 			break;
 		}
 
-		/* Obtain the client's send transaction structure */
+		/* Put the data in network byte order if necessary */
+		if( FW_BYTE_SWAP_ENABLED )
+		{
+			asyncCmd->databuffer[0] = fwByteSwap32( asyncCmd->databuffer[0] );
+			asyncCmd->databuffer[1] = fwByteSwap32( asyncCmd->databuffer[1] );
+		}
 
 		/* Fill in the transaction structure and add it to the pending queue */
 		retVal = fwInitializeAsyncRequestTransaction( pDriver, asyncCmd, clientResource->asyncSendTrans );
@@ -541,6 +621,11 @@ FWStatus fwCompareSwap(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout
 					switch( clientResource->asyncSendTrans->responseCode )
 					{
 					case	FWResponseComplete:
+						if( FW_BYTE_SWAP_ENABLED )
+						{
+							asyncCmd->databuffer[0] = fwByteSwap32( asyncCmd->databuffer[0] );
+							asyncCmd->databuffer[1] = fwByteSwap32( asyncCmd->databuffer[1] );
+						}
 						break;
 					case	FWResponseConflictError:
 						retVal = FWResponseError;

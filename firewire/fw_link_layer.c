@@ -7,6 +7,8 @@
  * and manipulate the link layer.
  *
  * $Log: fw_link_layer.c $
+ * Revision 1.3  2007/02/13 22:46:47Z  wms10235
+ * IT74 - Changes from driver unit testing
  * Revision 1.2  2007/02/12 16:07:00Z  wms10235
  * IT74 - Add Firewire driver to common
  * Revision 1.1  2007/02/07 15:22:36Z  wms10235
@@ -68,6 +70,7 @@ static FWStatus fwStartAsyncRxResponse(FWDriverData *pDriver);
 static FWStatus fwStopAsyncRxResponse(FWDriverData *pDriver);
 static boolean  fwIsAsyncResponseBufferAvailable(FWDriverData *pDriver, unsigned long neededSize);
 static FWStatus fwIncrementContextReadBuffer(FWReadContextSupport *pReadContext, UINT32 *dataValue);
+static FWStatus fwAdvanceContextReadBuffer(FWReadContextSupport *pReadContext);
 
 /* API Implementation */
 FWStatus fwCreateLinkLayer(FWDriverData *pDriver)
@@ -2018,6 +2021,17 @@ FWStatus fwReadAsyncRequestMessage(FWDriverData *pDriver, FWTransaction *transac
 			break;
 		}
 
+		/* Check if the context buffer needs to be advanced. Note that
+		 * the current buffer needs to be complete AND the hardware
+		 * needs to be into the next buffer.
+		 */
+		retVal = fwAdvanceContextReadBuffer( &readContext );
+
+		if( retVal != FWSuccess )
+		{
+			break;
+		}
+
 		/* pBlock->length represents how much data was read from the buffer.
 		 * length acts as an index into the data area and tracks where the
 		 * last transaction left off.
@@ -2394,12 +2408,25 @@ FWStatus fwReadAsyncResponseMessage(FWDriverData *pDriver, FWTransaction *transa
 			break;
 		}
 
+		/* Check if the context buffer needs to be advanced. Note that
+		 * the current buffer needs to be complete AND the hardware
+		 * needs to be into the next buffer.
+		 */
+		retVal = fwAdvanceContextReadBuffer( &readContext );
+
+		if( retVal != FWSuccess )
+		{
+			break;
+		}
+
 		/* pBlock->length represents how much data was read from the buffer.
 		 * length acts as an index into the data area and tracks where the
 		 * last transaction left off.
 		 */
 		if( readContext.pBlock->length < readContext.reqCount - readContext.resCount )
 		{
+			FWLOGLEVEL9("New data available in async response context.\n");
+
 			/* Invalidate the memory to make sure we are reading current data */
 			fwInvalidateDMAMemPool( readContext.pBlock->data );
 
@@ -2662,6 +2689,7 @@ FWStatus fwReadAsyncResponseMessage(FWDriverData *pDriver, FWTransaction *transa
 		}
 		else
 		{
+			FWLOGLEVEL9("Response data not found. len:%d reqCount:%d resCount:%d\n", readContext.pBlock->length, readContext.reqCount, readContext.resCount );
 			retVal = FWNotFound;
 		}
 
@@ -2732,6 +2760,8 @@ static FWStatus fwIncrementContextReadBuffer(FWReadContextSupport *pReadContext,
 			 */
 			if( pReadContext->resCount == 0 )
 			{
+				FWLOGLEVEL9("Advancing response receive buffer.\n");
+
 				/* Determine the address of the next block */
 				branchAddr = pReadContext->cmdDesc[2] & 0xFFFFFFF0;
 
@@ -2762,8 +2792,11 @@ static FWStatus fwIncrementContextReadBuffer(FWReadContextSupport *pReadContext,
 
 					/* Update the branch address to 0 */
 					pReadContext->cmdDesc[2] = 0;
+					pReadContext->cmdDesc[3] = pReadContext->reqCount;
 					fwFlushDMAMemPool( pReadContext->pBlock->commandList );
 					pReadContext->pBlock->length = 0;
+
+
 
 					/* Set the command descriptor branch address of the last block to this block */
 					cmdDesc = (UINT32*)pLastBlock->commandList->virtualAddr;
@@ -2787,6 +2820,9 @@ static FWStatus fwIncrementContextReadBuffer(FWReadContextSupport *pReadContext,
 						pReadContext->reqCount = pReadContext->cmdDesc[0] & 0x0000FFFF;
 						pReadContext->resCount = pReadContext->cmdDesc[3] & 0x0000FFFF;
 						pReadContext->dataPtr = (UINT32*)(pReadContext->pBlock->data->virtualAddr);
+
+						FWLOGLEVEL8("New response context. Block:0x%08X Len:%d reqCount:%d resCount:%d\n", (UINT32)pNextBlock,
+										pReadContext->pBlock->length, pReadContext->reqCount, pReadContext->resCount );
 
 						if( pReadContext->pBlock->length < pReadContext->reqCount - pReadContext->resCount )
 						{
@@ -2826,6 +2862,7 @@ static FWStatus fwIncrementContextReadBuffer(FWReadContextSupport *pReadContext,
 			/* Increment the data pointer and length */
 			pReadContext->pBlock->length += 4;
 			pReadContext->dataPtr++;
+
 			retVal = FWSuccess;
 		}
 	}
@@ -2833,6 +2870,139 @@ static FWStatus fwIncrementContextReadBuffer(FWReadContextSupport *pReadContext,
 	return retVal;
 }
 
+/*
+ * fwAdvanceContextReadBuffer()
+ *
+ * This function checks and determines if the context read buffer needs
+ * to be advanced to the next buffer.
+ *
+ * Returns:
+ *    FWSuccess - data is valid
+ *    FWNoMoreData - the buffer is empty
+ *    FWInternalError - Bad pointer value
+ *    FWDescriptorNotAvailable - no descriptor blocks available (fatal)
+ *
+ */
+static FWStatus fwAdvanceContextReadBuffer(FWReadContextSupport *pReadContext)
+{
+	FWStatus retVal = FWInternalError;
+	FWDescriptorBlock *pNextBlock = NULL;
+	FWDescriptorBlock *pLastBlock = NULL;
+	FWDescriptorBlock *pIndexBlock = NULL;
+	UINT32 branchAddr;
+	UINT32 *cmdDesc;
+	UINT32 *nextCmdDesc;
+
+	if( pReadContext )
+	{
+		/* Check if we have read all the data from this buffer or if
+		 * there is a count problem.
+		 */
+		if( pReadContext->pBlock->length >= pReadContext->reqCount - pReadContext->resCount )
+		{
+			/* If resCount is zero move to the next data block.
+			 */
+			if( pReadContext->resCount == 0 )
+			{
+				FWLOGLEVEL9("End of buffer detected. Advancing response receive buffer.\n");
+
+				/* Determine the address of the next block */
+				branchAddr = pReadContext->cmdDesc[2] & 0xFFFFFFF0;
+
+				pIndexBlock = pReadContext->pContext->descriptorBlock;
+
+				while( pIndexBlock )
+				{
+					if( (UINT32)(pIndexBlock->commandList->physicalAddr) == branchAddr )
+					{
+						pNextBlock = pIndexBlock;
+					}
+
+					fwInvalidateDMAMemPool( pIndexBlock->commandList );
+					cmdDesc = (UINT32*)pIndexBlock->commandList->virtualAddr;
+
+					/* Check for the last block and don't self link */
+					if( cmdDesc[2] == 0 && pReadContext->pBlock->commandList->physicalAddr != pIndexBlock->commandList->physicalAddr )
+					{
+						pLastBlock = pIndexBlock;
+					}
+
+					pIndexBlock = pIndexBlock->next;
+				}
+
+				if( pNextBlock )
+				{
+					fwInvalidateDMAMemPool( pNextBlock->commandList );
+					nextCmdDesc = (UINT32*)pNextBlock->commandList->virtualAddr;
+
+					if( (nextCmdDesc[0] & 0x0000FFFF) == (nextCmdDesc[3] & 0x0000FFFF) )
+					{
+						/* if the resCount == reqCount, the buffer is not ready to be advanced */
+						retVal = FWSuccess;
+						FWLOGLEVEL9("Buffer is not ready to be advanced.\n");
+					}
+					else
+					{
+						if( pLastBlock )
+						{
+							/* Attach the current block to the last block */
+
+							/* Update the branch address to 0 */
+							pReadContext->cmdDesc[2] = 0;
+							pReadContext->cmdDesc[3] = pReadContext->reqCount;
+							fwFlushDMAMemPool( pReadContext->pBlock->commandList );
+							pReadContext->pBlock->length = 0;
+
+							/* Set the command descriptor branch address of the last block to this block */
+							cmdDesc = (UINT32*)pLastBlock->commandList->virtualAddr;
+							cmdDesc[2] = (UINT32)pReadContext->pBlock->commandList->physicalAddr | 1;
+							fwFlushDMAMemPool( pLastBlock->commandList );
+
+							/* Set the wake bit to restart processing */
+							pReadContext->pContextCtrl->contextControlSet = FWContextCtrlWake;
+
+							if( pNextBlock )
+							{
+								/* Update the first block */
+								pReadContext->pContext->firstBlock = pNextBlock;
+								pReadContext->pBlock = pNextBlock;
+
+								/* Obtain information on the new block. */
+								pReadContext->cmdDesc = (UINT32*)pReadContext->pBlock->commandList->virtualAddr;
+								pReadContext->reqCount = pReadContext->cmdDesc[0] & 0x0000FFFF;
+								pReadContext->resCount = pReadContext->cmdDesc[3] & 0x0000FFFF;
+								pReadContext->dataPtr = (UINT32*)(pReadContext->pBlock->data->virtualAddr);
+
+								FWLOGLEVEL8("Established new response context. Block:0x%08X Len:%d reqCount:%d resCount:%d\n", (UINT32)pNextBlock,
+												pReadContext->pBlock->length, pReadContext->reqCount, pReadContext->resCount );
+
+								retVal = FWSuccess;
+							}
+							else
+							{
+								retVal = FWDescriptorNotAvailable;
+							}
+						}
+						else
+						{
+							retVal = FWDescriptorNotAvailable;
+						}
+					}
+				}
+			}
+			else
+			{
+				retVal = FWSuccess;
+			}
+		}
+		else
+		{
+			retVal = FWSuccess;
+		}
+	}
+
+	return retVal;
+}
 
 /*
  * fwInitializeAsyncRxRequestContext()
@@ -3331,6 +3501,12 @@ static boolean fwIsAsyncResponseBufferAvailable(FWDriverData *pDriver, unsigned 
 			cmdDesc = (UINT32*)pBlock->commandList->virtualAddr;
 
 			available += cmdDesc[3] & 0x0000FFFF;
+
+			// Check for a chained descriptor block
+			if( (cmdDesc[2] & 0x0000000F) != 0 )
+			{
+				available += fwGetMaxPayload();
+			}
 
 			if( available >= neededSize )
 			{

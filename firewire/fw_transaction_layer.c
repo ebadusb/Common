@@ -7,6 +7,8 @@
  * to access the transaction layer.
  *
  * $Log: fw_transaction_layer.c $
+ * Revision 1.2  2007/02/13 22:46:48Z  wms10235
+ * IT74 - Changes from driver unit testing
  * Revision 1.1  2007/02/07 15:22:39Z  wms10235
  * Initial revision
  *
@@ -29,6 +31,7 @@ static unsigned long fwUniqueTransactionID = 1;
 /* local function prototypes */
 static unsigned long fwGetTransactionID(void);
 static FWStatus fwGetTransactionLabel(FWDriverData *pDriver, unsigned short destinationID, unsigned char *label);
+static FWStatus fwFreeTransactionLabel(FWDriverData *pDriver, unsigned short destinationID, unsigned char label);
 static FWStatus fwQueueTxRequestTransaction(FWDriverData *pDriver, FWTransaction *transaction);
 int fwMatchResponseWithRequest(const FWTransaction *cmp1, const FWTransaction *cmp2);
 static FWStatus fwProcessAsyncIndication(FWDriverData *pDriver, FWTransaction *transaction);
@@ -970,12 +973,12 @@ FWStatus fwRemoveTransaction(FWDriverData *pDriver, FWTransaction *transaction)
 
 			if( tempTrans )
 			{
-				retVal = FWSuccess;
+				retVal = fwFreeTransactionLabel( pDriver, tempTrans->destinationID, tempTrans->transactionLabel );
 			}
 		}
 		else
 		{
-			retVal = FWSuccess;
+			retVal = fwFreeTransactionLabel( pDriver, tempTrans->destinationID, tempTrans->transactionLabel );
 		}
 
 	} while(0);
@@ -1162,6 +1165,48 @@ static FWStatus fwGetTransactionLabel(FWDriverData *pDriver, unsigned short dest
 
 			retVal = FWSuccess;
 		}
+	}
+
+	/* End critical section */
+	semGive( pDriver->transactionLayerData->transSemId );
+
+	return retVal;
+}
+
+static FWStatus fwFreeTransactionLabel(FWDriverData *pDriver, unsigned short destinationID, unsigned char label)
+{
+	FWStatus retVal = FWInternalError;
+	unsigned short nodeID = destinationID & 0x003F;
+	FWTransactionLabel *transLabel;
+
+	/* Begin critical section */
+	semTake( pDriver->transactionLayerData->transSemId, WAIT_FOREVER );
+
+	transLabel = pDriver->transactionLayerData->transactionLabels;
+
+	while( transLabel )
+	{
+		if( transLabel->nodeID == nodeID )
+		{
+			break;
+		}
+
+		transLabel = transLabel->next;
+	}
+
+	if( transLabel )
+	{
+		/* Found the transaction label structure for this destination ID */
+		if( label < 64 )
+		{
+			transLabel->labelUsed[label] = 0;
+		}
+
+		retVal = FWSuccess;
+	}
+	else
+	{
+		FWLOGLEVEL3("Attempted to free transaction label for non-existing node %d.\n", nodeID);
 	}
 
 	/* End critical section */

@@ -6,6 +6,8 @@
  * This file contains the firewire driver level routines.
  *
  * $Log: fw_driver.h $
+ * Revision 1.2  2007/02/12 16:06:59Z  wms10235
+ * IT74 - Add Firewire driver to common
  * Revision 1.1  2007/02/07 15:22:33Z  wms10235
  * Initial revision
  *
@@ -128,6 +130,14 @@ FWStatus fwIsoStopChannel(int adapter, int channel);
 /* Read data from an isochronous receive channel.
  */
 FWStatus fwIsoReadRecvData(int adapter, int channel, unsigned char *pBuffer, unsigned long bufferSize, UINT32 *xferStatus);
+
+/*
+ * CRC-16 calculation, from the IEEE-1212 spec on page 28.
+ * This function is initially called with a crcValue of 0.
+ * A new CRC value is returned on each call for use in
+ * the next iteration.
+ */
+UINT16 fwComputeCRC16(UINT32 crcValue, UINT32 data);
 
 #ifdef __cplusplus
 }

@@ -6,6 +6,8 @@
  * This file contains the firewire driver level routines.
  *
  * $Log: fw_driver.c $
+ * Revision 1.3  2007/02/13 22:46:47Z  wms10235
+ * IT74 - Changes from driver unit testing
  * Revision 1.2  2007/02/12 16:06:59Z  wms10235
  * IT74 - Add Firewire driver to common
  * Revision 1.1  2007/02/07 15:22:33Z  wms10235
@@ -366,6 +368,8 @@ FWStatus fwAsyncWrite(int adapter, const FWAsyncTransactionCmd *asyncCmd, int ti
 		/* Wait for the transaction to complete */
 		errStatus = semTake( clientResource->clientSem, timeout );
 
+		semTake( pDriver->transactionLayerData->transSemId, WAIT_FOREVER );
+
 		if( errStatus == OK )
 		{
 			/* The transaction is complete. Remove it from the waiting list. */
@@ -409,6 +413,8 @@ FWStatus fwAsyncWrite(int adapter, const FWAsyncTransactionCmd *asyncCmd, int ti
 			FWLOGLEVEL7("Write transaction %d timed out.\n", clientResource->asyncSendTrans->transactionID );
 			retVal = FWTimeout;
 		}
+
+		semGive( pDriver->transactionLayerData->transSemId );
 
 	} while(0);
 
@@ -481,6 +487,8 @@ FWStatus fwAsyncRead(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout)
 		/* Wait for the transaction to complete */
 		errStatus = semTake( clientResource->clientSem, timeout );
 
+		semTake( pDriver->transactionLayerData->transSemId, WAIT_FOREVER );
+
 		if( errStatus == OK )
 		{
 			/* The transaction is complete. Remove it from the waiting list. */
@@ -536,6 +544,8 @@ FWStatus fwAsyncRead(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout)
 
 			retVal = FWTimeout;
 		}
+
+		semGive( pDriver->transactionLayerData->transSemId );
 
 	} while(0);
 
@@ -604,6 +614,8 @@ FWStatus fwCompareSwap(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout
 		/* Wait for the transaction to complete */
 		errStatus = semTake( clientResource->clientSem, timeout );
 
+		semTake( pDriver->transactionLayerData->transSemId, WAIT_FOREVER );
+
 		if( errStatus == OK )
 		{
 			/* The transaction is complete. Remove it from the waiting list. */
@@ -652,6 +664,8 @@ FWStatus fwCompareSwap(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout
 			retVal = fwCancelTransaction( pDriver, clientResource->asyncSendTrans );
 			retVal = FWTimeout;
 		}
+
+		semGive( pDriver->transactionLayerData->transSemId );
 
 	} while(0);
 

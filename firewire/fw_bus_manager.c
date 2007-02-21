@@ -1,11 +1,13 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_bus_manager.c 1.3 2007/02/13 22:46:46Z wms10235 Exp wms10235 $
+ * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_bus_manager.c 1.4 2007/02/20 22:53:01Z wms10235 Exp wms10235 $
  *
  * This file contains the firewire routines for the Bus Manager.
  *
  * $Log: fw_bus_manager.c $
+ * Revision 1.3  2007/02/13 22:46:46Z  wms10235
+ * IT74 - Changes from driver unit testing
  * Revision 1.2  2007/02/12 16:06:58Z  wms10235
  * IT74 - Add Firewire driver to common
  * Revision 1.1  2007/02/07 15:22:27Z  wms10235
@@ -133,8 +135,6 @@ int fwBusManagerStartup(void)
 
 		for(index=0; index<adapterCount; index++)
 		{
-			FWLOGLEVEL3("pDriver[%d] = %08X\n", index, fwDriverDataArray[index] );
-
 			/* Perform chip specific initialization */
 			errorStatus = sysFirewireChipSpecificConfig( index );
 			if( errorStatus != OK )
@@ -146,7 +146,7 @@ int fwBusManagerStartup(void)
 			errorStatus = fwInstallInterruptHandler( fwInterruptHandler, index );
 			if( errorStatus != OK )
 			{
-				FWLOGLEVEL3("Error setting vendor specific configuration parameters on adapter %d.\n", index);
+				FWLOGLEVEL3("Error installing interrupt handler for adapter %d.\n", index);
 			}
 		}
 

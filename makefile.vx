@@ -1,8 +1,10 @@
-# @(#) $Header: H:/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.24 2007/01/18 21:52:10Z MS10234 Exp wms10235 $
+# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.25 2007/02/20 22:53:56Z wms10235 Exp jl11312 $
 #
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.24  2007/01/18 21:52:10Z  MS10234
+#  - add language_file_support and config_file_support libraries
 # Revision 1.23  2006/10/18 19:20:05Z  pn02526
 # Revision 1.22  2005/11/14 13:12:23  jl11312
 # - modified for Windows XP (IT 1077)
@@ -67,7 +69,7 @@ ifeq ($(VXWORKS_VERSION),5.4)
     DIR_LIST += drivers
   endif
 else
-  DIR_LIST += cgui
+  DIR_LIST += cgui firewire
 endif
 
 .PHONY: libs

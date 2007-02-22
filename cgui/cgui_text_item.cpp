@@ -3,6 +3,10 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.14  2006/12/01 17:00:42Z  pn02526
+ * Change Id allocation so that destructor does not crash GUI.
+ * Null-teminate string buffer in setText(StringChar ...).
+ * Remove extraneous code from constructor.
  * Revision 1.13  2006/08/29 13:14:16  rm10919
  * Check for null strings in copy.
  * Revision 1.12  2006/07/12 23:36:08Z  rm10919
@@ -33,6 +37,7 @@
 
 #include <vxWorks.h>
 #include "cgui_text_item.h"
+#include "cgui_text.h"
 #include "cgui_string_data_container.h"
 
 const int textBlockSize = 64;
@@ -43,12 +48,12 @@ CGUIStringDataContainer CGUITextItem::_textMap;
 int CGUITextItem::_defaultLanguageId = 0;
 
 CGUITextItem::CGUITextItem()
-:_id(NULL), _string(NULL), _stringSize(0), _stringLength(0)
+:_id(NULL), _string(NULL), _stringSize(0), _stringLength(0), _languageId(0)
 {
 }
 
 CGUITextItem::CGUITextItem(const char * id, StylingRecord * stylingRecord)
-:_id(NULL), _string(NULL), _stringSize(0), _stringLength(0)
+:_id(NULL), _string(NULL), _stringSize(0), _stringLength(0), _languageId(0)
 {
    setId(id);
 
@@ -59,25 +64,36 @@ CGUITextItem::CGUITextItem(const char * id, StylingRecord * stylingRecord)
 }
 
 CGUITextItem::CGUITextItem(const CGUITextItem& textItem)
+:_id(NULL), _string(NULL), _stringSize(0), _stringLength(0), _languageId(0)
 {
    (*this) = textItem;
 }
 
-CGUITextItem CGUITextItem::operator= (const CGUITextItem& textItem)
+CGUITextItem& CGUITextItem::operator= (const CGUITextItem& textItem)
 {
-   _defaultLanguageId = textItem._defaultLanguageId;
-   _languageId = textItem._languageId;
-   _stringLength = textItem._stringLength;
-   _stringSize = textItem._stringSize;
-   _stylingRecord = textItem._stylingRecord;
+   if (_id != textItem._id)
+   {
+      _defaultLanguageId = textItem._defaultLanguageId;
+      _languageId = textItem._languageId;
+      _stringLength = textItem._stringLength;
+      _stringSize = textItem._stringSize;
+      _stylingRecord = textItem._stylingRecord;
 
-    setId(textItem._id);
+      setId(textItem._id);
 
-   // check to see if initialized to NULL
-   if (_string == NULL)
-      _string = new StringChar[_stringLength];
-   
-   memcpy(_string, textItem._string, _stringLength * sizeof(StringChar));
+      // check to see if initialized to NULL
+      if (_string == NULL)
+         _string = new StringChar[_stringLength];
+
+      int stringLength = 0;
+
+      while (textItem._string[stringLength] != '\0')
+      {
+         stringLength++;
+      }
+
+      memcpy(_string, textItem._string, stringLength * sizeof(StringChar) );
+   }
    return (*this);
 }
 
@@ -220,3 +236,123 @@ bool CGUITextItem::isInitialized(void)
 {
    return (_id != NULL);
 }
+
+
+int CGUITextItem::getStringCharLength(void)
+{
+   int stringLength = 0;
+
+   while (_string[stringLength] != '\0')
+   {
+//      _string[stringLength] = (unsigned char)(UGL_WCHAR)string[stringLength];
+      stringLength++;
+   }
+
+   return stringLength;
+}
+
+int CGUITextItem::getStringCharVariableLength(void)
+{
+   int stringLength = 0;
+
+   handleVariableSubstitution();
+
+   while (_string[stringLength] != '\0')
+   {
+      stringLength++;
+   }
+
+   return stringLength;
+}
+
+void CGUITextItem::handleVariableSubstitution()
+{
+   StringChar null_char = '\0';
+   bool changedText = false;
+   size_t newStringSize = _stringLength+1;
+   StringChar * newTextString = (StringChar *)malloc(newStringSize * sizeof(StringChar));
+   size_t newStringLength = 0;
+   size_t idx = 0;
+
+   while (_string[idx] != null_char &&
+          idx < _stringLength)
+   {
+      // Check for start of variable substitution string
+      //
+      if (_string[idx] == (wchar_t)'#' &&
+          _string[idx+1] == (wchar_t)'!' &&
+          _string[idx+2] == (wchar_t)'{')
+      {
+         // Find ending '}' character if any
+         //
+         size_t subStartIdx = idx+3;
+         size_t subEndIdx = subStartIdx;
+
+         while (_string[subEndIdx] != null_char &&
+                _string[subEndIdx] != (wchar_t)'}' &&
+                subEndIdx < _stringLength)
+         {
+            subEndIdx += 1;
+         }
+
+         if (_string[subEndIdx] == '}' &&
+             subEndIdx-subStartIdx > 0)
+         {
+            // Have a valid variable substitution string - lookup the value
+            //
+            changedText = true;
+
+            char  * variableName = new char[subEndIdx-subStartIdx+1];
+
+            for (int i=0; i<subEndIdx-subStartIdx; i++)
+            {
+               variableName[i] = (char)(_string[subStartIdx+i] & 0x00ff);
+
+            }
+
+            variableName[subEndIdx-subStartIdx] = '\0';
+            StringChar * variableText = CGUIText::_variableDictionary.variableLookUp(variableName);
+            delete[] variableName;
+
+            int variableTextLength = 0;
+            if (variableText)
+            {
+               while (variableText[variableTextLength])
+                  variableTextLength += 1;
+
+               // Value is present, copy to the string and setup to continue with
+               // next character after substitution string
+               //
+               newStringSize += (variableTextLength + textBlockSize);
+               newTextString = (StringChar *)realloc(newTextString, (newStringSize * sizeof(StringChar) + textBlockSize));
+
+               for (int i=0; i<variableTextLength; i++)
+               {
+                  newTextString[newStringLength++] = (StringChar)variableText[i];
+               }
+
+               idx = subEndIdx + 1;
+               continue;
+            }
+         }
+      }
+
+      newTextString[newStringLength++] = _string[idx++];
+   }
+
+   if (changedText)
+   {
+      if (_string) delete[] _string;
+
+      _stringSize = newStringLength + textBlockSize;
+      _string = new StringChar[_stringSize+1];
+
+      memcpy(_string, newTextString, newStringLength * sizeof(StringChar));
+      _string[newStringLength] = null_char;
+      _stringLength = newStringLength;
+   }
+
+   free(newTextString);
+   newTextString = NULL;
+}
+

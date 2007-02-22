@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.15 2009/04/13 22:34:00Z rm10919 Exp wms10235 $
  * $Log: cgui_text_item.h $
+ * Revision 1.10  2006/07/13 20:31:51Z  cf10242
+ * IT 1220: eliminate private copy contrstuctor
  * Revision 1.9  2006/07/12 23:36:08Z  rm10919
  * Updates from adding cguiListBox class.
  * Revision 1.8  2006/06/28 00:56:37Z  MS10234
@@ -50,10 +52,10 @@ class CGUITextItem
 {
 public:
    CGUITextItem();
-   CGUITextItem(const char * bvid, StylingRecord * stylingRecord = NULL);
+   CGUITextItem(const char * id, StylingRecord * stylingRecord = NULL);
    CGUITextItem(const CGUITextItem& textItem);
 
-   CGUITextItem operator= (const CGUITextItem& textItem);
+   CGUITextItem& operator= (const CGUITextItem& textItem);
 
    inline bool operator== (const CGUITextItem& textItem) {return (strcmp(_id, textItem._id)== 0);}
    virtual ~ CGUITextItem();
@@ -84,6 +86,11 @@ public:
    StylingRecord getStylingRecord(){return _stylingRecord;}
 
    int getLength(void) {return _stringLength;}
+
+   int getStringCharLength(void);
+   int getStringCharVariableLength(void);
+
+   void handleVariableSubstitution();
 
    static CGUIStringDataContainer _textMap;
 

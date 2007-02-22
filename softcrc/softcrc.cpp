@@ -4,8 +4,10 @@
  * FILENAME: softcrc.c
  * PURPOSE: main code for crc utilities
  * CHANGELOG:
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.cpp 1.10 2003/06/26 22:33:44Z jl11312 Exp MS10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.cpp 1.10 2003/06/26 22:33:44Z jl11312 Exp $
  * $Log: softcrc.cpp $
+ * Revision 1.10  2003/06/26 22:33:44Z  jl11312
+ * - moved base crc generation function into OS image
  * Revision 1.9  2003/06/23 19:40:01Z  jl11312
  * - added options for computing string and value list CRC's under Windows
  * Revision 1.8  2003/05/13 15:04:00Z  jl11312
@@ -91,6 +93,53 @@
 
 #include <dirent.h>
 #include <unistd.h>
+
+static int stricmp(const char *s, const char *t)
+{
+	int status = 0;
+
+	if ( s )
+	{
+		if ( t )
+		{
+			int i;
+			for ( i=0 ; s[i] != 0 ; i++ )
+			{
+				if ( t[i] == 0 ) 
+				{
+					status = 1;
+					break;
+				}
+				else 
+				{
+					int sI = tolower((int)s[i]);
+					int tI = tolower((int)t[i]);
+					if ( sI < tI ) 
+					{
+						status = -1;
+						break;
+					}
+					else if ( sI > tI )
+					{
+						status = 1;
+						break;
+					}
+				}
+			}
+			if ( s[i] == 0 && t[i] != 0 ) status = -1;
+		}
+		else
+		{
+			status = 1;	
+		}
+	}
+	else if ( t )
+	{
+		status = -1;
+	}
+
+	return status;
+}
 
 #else /* ifdef VXWORKS */
 
@@ -465,7 +514,7 @@ bool FileList::checkIgnore(const char * fileName)
 
    while ( !result && entry )
    {
-      result = ( strcmp(entry->_name, fileName) == 0 );
+      result = ( stricmp(entry->_name, fileName) == 0 );
       entry = entry->_next;
    }
 
@@ -515,10 +564,10 @@ void FileList::processDir(const char * dirName, unsigned long * crc)
             nameListSize += NameListBlockSize;
             nameList = (char **)realloc(nameList, nameListSize*sizeof(char *));
          }
-
+ 
          size_t nameListIdx = 0;
          while ( nameListIdx < nameListCount-1 &&
-                 strcmp(dirEntry->d_name, nameList[nameListIdx]) > 0 )
+                stricmp(dirEntry->d_name,nameList[nameListIdx]) > 0 ) 
          {
             nameListIdx += 1;
          }

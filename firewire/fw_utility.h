@@ -6,6 +6,8 @@
  * This file contains firewire utility routines.
  *
  * $Log: fw_utility.h $
+ * Revision 1.2  2007/02/13 22:46:48Z  wms10235
+ * IT74 - Changes from driver unit testing
  * Revision 1.1  2007/02/07 15:22:42Z  wms10235
  * Initial revision
  *
@@ -75,15 +77,15 @@ void fwSetLoggingLevel(int level);
  */
 void fwLogMsg(const char *format, ...);
 
-#define FWLOGLEVEL1 if(fwMsgLoggingLevel >= 1) printf
-#define FWLOGLEVEL2 if(fwMsgLoggingLevel >= 2) printf
-#define FWLOGLEVEL3 if(fwMsgLoggingLevel >= 3) printf
-#define FWLOGLEVEL4 if(fwMsgLoggingLevel >= 4) printf
-#define FWLOGLEVEL5 if(fwMsgLoggingLevel >= 5) printf
-#define FWLOGLEVEL6 if(fwMsgLoggingLevel >= 6) printf
-#define FWLOGLEVEL7 if(fwMsgLoggingLevel >= 7) printf
-#define FWLOGLEVEL8 if(fwMsgLoggingLevel >= 8) printf
-#define FWLOGLEVEL9 if(fwMsgLoggingLevel >= 9) printf
+#define FWLOGLEVEL1 if(fwMsgLoggingLevel >= 1) fwLogMsg
+#define FWLOGLEVEL2 if(fwMsgLoggingLevel >= 2) fwLogMsg
+#define FWLOGLEVEL3 if(fwMsgLoggingLevel >= 3) fwLogMsg
+#define FWLOGLEVEL4 if(fwMsgLoggingLevel >= 4) fwLogMsg
+#define FWLOGLEVEL5 if(fwMsgLoggingLevel >= 5) fwLogMsg
+#define FWLOGLEVEL6 if(fwMsgLoggingLevel >= 6) fwLogMsg
+#define FWLOGLEVEL7 if(fwMsgLoggingLevel >= 7) fwLogMsg
+#define FWLOGLEVEL8 if(fwMsgLoggingLevel >= 8) fwLogMsg
+#define FWLOGLEVEL9 if(fwMsgLoggingLevel >= 9) fwLogMsg
 
 #ifdef __cplusplus
 }

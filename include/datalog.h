@@ -3,6 +3,8 @@
  *
  * $Header: H:/BCT_Development/vxWorks/Common/include/rcs/datalog.h 1.30 2005/09/29 21:58:52Z ms10234 Exp wms10235 $
  * $Log: datalog.h $
+ * Revision 1.30  2005/09/29 21:58:52Z  ms10234
+ * IT42 - allow generation of new log files without rebooting
  * Revision 1.29  2004/10/26 20:49:21Z  rm70006
  * Make compile with windows.
  * Revision 1.28  2003/12/09 14:15:02Z  jl11312
@@ -94,7 +96,7 @@ typedef struct DataLog_SetInfo *		DataLog_SetHandle;
 
 #define DATALOG_NULL_HANDLE NULL
 #define DATALOG_NULL_SET_HANDLE NULL
- 
+
 #include "datalog_port.h"
 
 /*
@@ -103,20 +105,6 @@ typedef struct DataLog_SetInfo *		DataLog_SetHandle;
 #ifdef __cplusplus
 extern "C" {
 #endif /* ifdef __cplusplus */
-
-/*
- * Data log initialization routines
- */
-#ifdef DATALOG_NETWORK_SUPPORT
-
-DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * nodeName, const char * platformInfo, bool allowReset=false);
-DataLog_Result datalog_InitNet(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * ipAddress, int port, long connectTimeout, const char * nodeName);
-
-#else /* ifdef DATALOG_NETWORK_SUPPORT */
-
-DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * platformInfo, bool allowReset=false);
-
-#endif /* ifdef DATALOG_NETWORK_SUPPORT */
 
 typedef DataLog_BufferData * DataLog_EncryptFunc(DataLog_BufferData * input, size_t inputLength, size_t * outputLength);
 DataLog_Result datalog_SetEncryptFunc(DataLog_EncryptFunc * func);
@@ -152,7 +140,6 @@ DataLog_Result datalog_PrintToDefault(const char * file, int line, const char * 
 DataLog_Result datalog_CreatePeriodicSet(const char * setName, DataLog_SetHandle * handle);
 DataLog_Result datalog_GetPeriodicOutputInterval(DataLog_SetHandle handle, long * milliSeconds);
 DataLog_Result datalog_SetPeriodicOutputInterval(DataLog_SetHandle handle, long milliSeconds);
-DataLog_Result datalog_ForcePeriodicOutput(DataLog_SetHandle handle, bool writeAllItems=false);
 DataLog_Result datalog_DisablePeriodicOutput(DataLog_SetHandle handle);
 DataLog_Result datalog_EnablePeriodicOutput(DataLog_SetHandle handle);
 
@@ -207,6 +194,22 @@ unsigned long datalog_GetAvgCriticalBufferBytes(void);
 #include <string>
 
 /*
+ * Data log initialization routines
+ */
+#ifdef DATALOG_NETWORK_SUPPORT
+
+DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * nodeName, const char * platformInfo, bool allowReset=false);
+DataLog_Result datalog_InitNet(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * ipAddress, int port, long connectTimeout, const char * nodeName);
+
+#else /* ifdef DATALOG_NETWORK_SUPPORT */
+
+DataLog_Result datalog_Init(size_t bufferSizeKBytes, size_t criticalReserveKBytes, const char * logPath, const char * platformName, const char * platformInfo, bool allowReset=false);
+
+#endif /* ifdef DATALOG_NETWORK_SUPPORT */
+
+DataLog_Result datalog_ForcePeriodicOutput(DataLog_SetHandle handle, bool writeAllItems=false);
+
+/*
  * The DataLog_Stream class supports only two types of manipulators:
  * those taking no arguments and those taking a single integer argument.
  * More general support using templates similar to that provided by
@@ -243,7 +246,7 @@ public:
 
 inline DataLog_Stream & operator << (DataLog_Stream & stream, const DataLog_StreamIManip & manip)
 {
-	return (*manip._func)(stream, manip._value); 
+	return (*manip._func)(stream, manip._value);
 }
 
 struct DataLog_StreamOutputRecord;
@@ -280,7 +283,7 @@ public:
 	{
 		// General numeric format control
 		f_showpos = 0x0001,		// print explicit '+' on output of positive values
- 
+
 		// Integer format control
 		f_dec = 0x0010,			// output integers as decimal values
 		f_hex = 0x0020,			// output integers as hexadecimal values
@@ -351,7 +354,7 @@ private:
 
 	DataLog_UINT16 _flags, _initialFlags;
 	DataLog_UINT8  _precision, _initialPrecision;
-	bool _flagsChanged, _precisionChanged; 
+	bool _flagsChanged, _precisionChanged;
 };
 
 /*
@@ -443,7 +446,7 @@ protected:
 		ExitImmediately
 	};
 
-	State _state;	
+	State _state;
 	int _outputFD;
 	DataLog_SignalInfo * _outputSignal;
 	DataLog_SignalInfo * _dataLostSignal;
@@ -514,7 +517,7 @@ public:
 	void main(void);
 
 private:
-	int  _port; 
+	int  _port;
 };
 
 struct DataLog_NetworkPacket;

@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_levels.h 1.13 2007/02/26 23:28:29Z wms10235 Exp ssunusb $
  * $Log: datalog_levels.h $
+ * Revision 1.12  2007/01/18 22:51:51Z  MS10234
+ * - add log level for language support library
  * Revision 1.11  2006/10/19 19:40:30Z  MS10234
  * 63 - add log level for configuration logging
  * Revision 1.10  2006/10/07 19:29:42Z  cf10242
@@ -87,6 +89,7 @@ LOG_DEF DataLog_Level	log_level_cgui_info;
 LOG_DEF DataLog_Level	log_level_cgui_button_press_info;
 LOG_DEF DataLog_Level	log_level_cgui_error;
 
+LOG_DEF DataLog_Level	log_level_ieee1394_info;
 
 #endif /* ifdef __cplusplus */
 
@@ -135,6 +138,7 @@ LOG_DEF DataLog_Handle	log_handle_cgui_info;
 LOG_DEF DataLog_Handle	log_handle_cgui_button_press_info;
 LOG_DEF DataLog_Handle	log_handle_cgui_error;
 
+LOG_DEF DataLog_Handle	log_handle_ieee1394_info;
 
 #ifdef DATALOG_LEVELS_INIT_TABLE
 
@@ -185,10 +189,12 @@ static DataLog_InitTable	initTable[] =
 	{ &log_level_state_machine_info, &log_handle_state_machine_info, "state_machine_info", true },
 	{ &log_level_spoofer_error, &log_handle_spoofer_error, "spoofer_error", true },
     { &log_level_spoofer_info, &log_handle_spoofer_info, "spoofer_info", true },
-    
+
     { &log_level_cgui_error, &log_handle_cgui_error, "cgui_error", true },
 	{ &log_level_cgui_info, &log_handle_cgui_info, "cgui_info", true },
 	{ &log_level_cgui_button_press_info, &log_handle_cgui_button_press_info, "cgui_button_press_info", true },
+
+	{ &log_level_ieee1394_info, &log_handle_ieee1394_info, "IEEE_1394_info", true },
 };
 
 #endif /* ifdef DATALOG_LEVELS_INIT_TABLE */

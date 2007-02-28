@@ -6,6 +6,8 @@
  * This file contains the firewire driver level routines.
  *
  * $Log: fw_driver.c $
+ * Revision 1.4  2007/02/15 21:10:28Z  wms10235
+ * IT74 - Fixed transaction bug found during unit testing
  * Revision 1.3  2007/02/13 22:46:47Z  wms10235
  * IT74 - Changes from driver unit testing
  * Revision 1.2  2007/02/12 16:06:59Z  wms10235
@@ -356,7 +358,7 @@ FWStatus fwAsyncWrite(int adapter, const FWAsyncTransactionCmd *asyncCmd, int ti
 
 		clientResource->asyncSendTrans->semId = clientResource->clientSem;
 
-		FWLOGLEVEL7("Write transaction %d started.\n", clientResource->asyncSendTrans->transactionID );
+		FWLOGLEVEL8("Write transaction %d started.\n", clientResource->asyncSendTrans->transactionID );
 
 		retVal = fwPostAsyncWriteRequest( pDriver, clientResource->asyncSendTrans );
 
@@ -375,14 +377,14 @@ FWStatus fwAsyncWrite(int adapter, const FWAsyncTransactionCmd *asyncCmd, int ti
 			/* The transaction is complete. Remove it from the waiting list. */
 			retVal = fwRemoveTransaction( pDriver, clientResource->asyncSendTrans );
 
-			FWLOGLEVEL7("Write transaction %d completed.\n", clientResource->asyncSendTrans->transactionID );
-
 			if( retVal == FWSuccess )
 			{
 				retVal = clientResource->asyncSendTrans->status;
 
 				if( retVal == FWSuccess )
 				{
+					FWLOGLEVEL7("Write transaction %d completed. Response code:%d\n", clientResource->asyncSendTrans->transactionID, clientResource->asyncSendTrans->responseCode );
+
 					switch( clientResource->asyncSendTrans->responseCode )
 					{
 					case	FWResponseComplete:
@@ -403,6 +405,10 @@ FWStatus fwAsyncWrite(int adapter, const FWAsyncTransactionCmd *asyncCmd, int ti
 						retVal = FWResponseFormatError;
 						break;
 					}
+				}
+				else
+				{
+					FWLOGLEVEL7("Write transaction %d completed. Status:%d\n", clientResource->asyncSendTrans->transactionID, retVal );
 				}
 			}
 		}
@@ -475,7 +481,7 @@ FWStatus fwAsyncRead(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout)
 
 		clientResource->asyncSendTrans->semId = clientResource->clientSem;
 
-		FWLOGLEVEL7("Read transaction %d started.\n", clientResource->asyncSendTrans->transactionID );
+		FWLOGLEVEL8("Read transaction %d started.\n", clientResource->asyncSendTrans->transactionID );
 
 		retVal = fwPostAsyncReadRequest( pDriver, clientResource->asyncSendTrans );
 
@@ -493,7 +499,6 @@ FWStatus fwAsyncRead(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout)
 		{
 			/* The transaction is complete. Remove it from the waiting list. */
 			retVal = fwRemoveTransaction( pDriver, clientResource->asyncSendTrans );
-			FWLOGLEVEL7("Read transaction %d completed.\n", clientResource->asyncSendTrans->transactionID );
 
 			asyncCmd->dataLength = clientResource->asyncSendTrans->dataLength;
 			asyncCmd->speed = clientResource->asyncSendTrans->speed;
@@ -504,6 +509,8 @@ FWStatus fwAsyncRead(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout)
 
 				if( retVal == FWSuccess )
 				{
+					FWLOGLEVEL7("Read transaction %d completed. Response code:%d\n", clientResource->asyncSendTrans->transactionID, clientResource->asyncSendTrans->responseCode );
+
 					switch( clientResource->asyncSendTrans->responseCode )
 					{
 					case	FWResponseComplete:
@@ -533,6 +540,10 @@ FWStatus fwAsyncRead(int adapter, FWAsyncTransactionCmd *asyncCmd, int timeout)
 						retVal = FWResponseFormatError;
 						break;
 					}
+				}
+				else
+				{
+					FWLOGLEVEL7("Read transaction %d completed. Status:%d\n", clientResource->asyncSendTrans->transactionID, retVal );
 				}
 			}
 		}
@@ -1048,10 +1059,5 @@ FWStatus fwIsoReadRecvData(int adapter, int channel, unsigned char *pBuffer, uns
 
 	return retVal;
 }
-
-
-/*
- *  Local functions
- */
 
 

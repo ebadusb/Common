@@ -1,9 +1,11 @@
 /*
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/language_file_support/rcs/module_languages.cpp 1.1 2007/01/18 21:44:03Z MS10234 Exp MS10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/language_file_support/rcs/module_languages.cpp 1.2 2007/02/28 21:10:05Z MS10234 Exp MS10234 $
  *
  * Utility for loading language information
  *
  * $Log: module_languages.cpp $
+ * Revision 1.1  2007/01/18 21:44:03Z  MS10234
+ * Initial revision
  *
  */
 
@@ -18,8 +20,18 @@
 
 
 
-ModuleLanguages::ModuleLanguages(const char *englishFile,const char *dropInFilePath, const char *dropInFilePrefix)
- : _englishFile(englishFile)
+ModuleLanguages::ModuleLanguages(const char *defaultCodeString, 
+											const char *defaultId,
+											const char *defaultFile,
+											const char *languageIdTag,
+											const char *formatVersionTag,
+											const char *dropInFilePath, 
+											const char *dropInFilePrefix)
+ : _defaultLangCode(defaultCodeString)
+ , _defaultId(defaultId)
+ , _defaultFile(defaultFile)
+ , _languageIdTag(languageIdTag)
+ , _formatVersionTag(formatVersionTag)
  , _languagePath(dropInFilePath)
  , _filePrefix(dropInFilePrefix)
  , _languageInfoMap()
@@ -34,22 +46,20 @@ ModuleLanguages::~ModuleLanguages()
 
 void ModuleLanguages::loadLanguageInfo()
 {
-	// Add English first ...
+	// Add Default language first ...
 	//
-	string english("english");
-	ModuleLanguages::LanguageInfo englishLanguage;
-	englishLanguage.languageId = "English";
-	englishLanguage.filePath = _englishFile; 
-	_languageInfoMap[english] = englishLanguage;
+	ModuleLanguages::LanguageInfo defaultLanguage;
+	defaultLanguage.languageId = _defaultId;
+	defaultLanguage.filePath = _defaultFile; 
+	_languageInfoMap[_defaultLangCode] = defaultLanguage;
 
 	// Get current string revision ...
 	//
-	FILE * fp = openLanguageFile(_englishFile.c_str());
+	FILE * fp = openLanguageFile(_defaultFile.c_str());
 	if ( fp )
 	{
-		string token("formatVersion");
 		string tokenValue;
-		if ( findToken(fp,token,tokenValue) )
+		if ( findToken(fp,_formatVersionTag,tokenValue) )
 		{
 			ConfigFileTools tools;
 			if ( !tools.getParamDouble(tokenValue.c_str(),&_languageFileRevision) )
@@ -65,7 +75,7 @@ void ModuleLanguages::loadLanguageInfo()
 		else
 		{
 			DataLog(log_level_language_support_error) << "Language file revision not found for file: \"" 
-														<< _englishFile << "\"" << endmsg;
+														<< _defaultFile << "\"" << endmsg;
 		}
 		fclose(fp);
 	}
@@ -173,7 +183,7 @@ ModuleLanguages::FileProcessStatus ModuleLanguages::loadLanguageFile(const char 
 			// If valid CRC ...
 			//
 			{
-				// Parse the file name and grab the English representation for
+				// Parse the file name and grab the code representation for
 				//  the language ...
 				char * nextToken;
 				char workingString[NAME_MAX+1];
@@ -192,9 +202,8 @@ ModuleLanguages::FileProcessStatus ModuleLanguages::loadLanguageFile(const char 
 	  				string languageIdValue;
 	  				if ( findToken(fp,languageIdToken,languageIdValue) )
 					{
-						string formatToken("formatVersion");
 						string formatTokenValue;
-						if ( findToken(fp,formatToken,formatTokenValue) )
+						if ( findToken(fp,_formatVersionTag,formatTokenValue) )
 						{
 							ConfigFileTools tools;
 							double revision;

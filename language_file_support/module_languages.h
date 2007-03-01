@@ -1,9 +1,11 @@
 /*
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/language_file_support/rcs/module_languages.h 1.1 2007/01/18 21:44:03Z MS10234 Exp MS10234 $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/language_file_support/rcs/module_languages.h 1.1 2007/01/18 21:44:03Z MS10234 Exp $
  *
  * Utility for loading language information
  *
  * $Log: module_languages.h $
+ * Revision 1.1  2007/01/18 21:44:03Z  MS10234
+ * Initial revision
  *
  */
 
@@ -36,7 +38,13 @@ public:
 
 public:
 
-	ModuleLanguages(const char * englishFile, const char * dropInFilePath, const char * dropInFilePrefix );
+	ModuleLanguages(const char * defaultCodeString,
+						 const char * defaultId,
+						 const char * defaultFile, 
+						 const char * languageIdTag,
+						 const char * formatVersionTag,
+						 const char * dropInFilePath, 
+						 const char * dropInFilePrefix );
 	virtual ~ModuleLanguages();
 
 	//
@@ -61,7 +69,11 @@ public:
 
 protected:
 
-	string _englishFile;
+	string _defaultLangCode;
+	string _defaultId;
+	string _defaultFile;
+	string _languageIdTag;
+	string _formatVersionTag;
 	string _languagePath;
 	string _filePrefix;
 

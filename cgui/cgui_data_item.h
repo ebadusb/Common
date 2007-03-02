@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.h 1.8 2010/04/27 21:26:08Z rm10919 Exp jl11312 $
  * $Log: cgui_data_item.h $
+ * Revision 1.1  2005/04/27 13:40:44Z  rm10919
+ * Initial revision
  *
  */
 
@@ -70,7 +72,9 @@ public:
 
    StringChar * convertToString(void);
 
-   void setValue(CGUITextItem * value);
+   void setValue (CGUITextItem * value);
+   void setValue (StringChar * value);
+   void setValue (char * value);
 
 protected:
    CGUITextItem * _value;

@@ -2,6 +2,8 @@
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item_file_reader.cpp 1.5 2009/06/24 18:41:45Z wms10235 Exp wms10235 $
  *
  * $Log: cgui_data_item_file_reader.cpp $
+ * Revision 1.1  2005/11/22 00:37:26Z  rm10919
+ * Initial revision
  *
  */
 //static bool readDataItemFile (const char * filename, CGUIVariableDatabase * variableDictionary, unsigned int linkLevel = 0);
@@ -58,7 +60,6 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
             printf("line %d: unexpected DATA_ITEM_FILE_TABLE_START\n - %s", line, filename);
             exit(1);
          }
-
          readingFileTable = true;
          continue;
       }
@@ -71,7 +72,6 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
             printf("line %d: unexpected DATA_ITEM_FILE_TABLE_END\n - %s", line, filename);
             exit(1);
          }
-
          readingFileTable = false;
          continue;
       }
@@ -104,9 +104,26 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
                }
                else
                {
+                  DataLog( log_level_cgui_error ) << "line " << line << ": unknown Text Item DATA ITEM - " << filename << "\n" << endmsg;
+                  printf("line %d: unknown Text Item DATA ITEM\n - %s - %s \n", line, filename, entry->id);
+//                  exit(1);
+               }
+            }
+            else if (strcmp(entry->type, "Text") == 0)
+            {
+               // Declare variables for string - text.
+//               CGUITextItem textItem = NULL;
+               CGUIDataItemText * dataItemText = new CGUIDataItemText(entry->initialize);
+
+               if (dataItemText)
+               {
+                  variableDictionary->addDataItem(entry->id, dataItemText);
+               }
+               else
+               {
                   DataLog( log_level_cgui_error ) << "line " << line << ": unknown Text Item DATA ITEM - " << filename << endmsg;
-                  printf("line %d: unknown Text Item DATA ITEM\n - %s - %s", line, filename, entry->id);
-                  exit(1);
+                  printf("line %d: unknown Text DATA ITEM\n - %s - %s \n", line, filename, entry->id);
+//                  exit(1);
                }
             }
             else if ( strcmp(entry->type, "Double") == 0)
@@ -121,9 +138,9 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
                }
                else
                {
-                  DataLog( log_level_cgui_error ) << "line " << line << ": unknown Double DATA ITEM - " << filename << endmsg;
-                  printf("line %d: unknown Double DATA ITEM\n - %s - %s", line, filename, entry->id);
-                  exit(1);
+                  DataLog( log_level_cgui_error ) << "line " << line << ": unknown Double DATA ITEM - " << filename << " \n" << endmsg;
+                  printf("line %d: unknown Double DATA ITEM\n - %s - %s \n", line, filename, entry->id);
+//                  exit(1);
                }
             }
             else if (strcmp(entry->type, "Integer") == 0)
@@ -136,23 +153,23 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
                }
                else
                {
-                  DataLog( log_level_cgui_error ) << "line " << line << ": unknown Integer DATA ITEM - " << filename << endmsg;
-                  printf("line %d: unknown Integer DATA ITEM\n - %s - %s", line, filename, entry->id);
-                  exit(1);
+                  DataLog( log_level_cgui_error ) << "line " << line << ": unknown Integer DATA ITEM - " << filename << "\n" << endmsg;
+                  printf("line %d: unknown Integer DATA ITEM\n - %s - %s \n", line, filename, entry->id);
+//                  exit(1);
                }
             }
             else
             {
-               DataLog( log_level_cgui_error ) << "line " << line << ": unknown DATA ITEM TYPE - " << filename << endmsg;
-               printf("line %d: unknown DATA ITEM TYPE\n - %s - type - %s", line, filename, entry->type);
+               DataLog( log_level_cgui_error ) << "line " << line << ": unknown DATA ITEM TYPE - " << filename << "\n" << endmsg;
+               printf("line %d: unknown DATA ITEM TYPE\n - %s - type - %s \n", line, filename, entry->type);
                exit(1);
             }
          }
          else
          {
-            DataLog( log_level_cgui_error ) << "line " << line << ": bad entry in string info file - " << filename << endmsg;
-            printf("line %d: bad entry in string info file\n - %s", line, filename);
-            exit(1);
+            DataLog( log_level_cgui_error ) << "line " << line << ": bad entry in string info file - " << filename << "\n" << endmsg;
+            printf("line %d: bad entry in string info file\n - %s \n", line, filename);
+//            exit(1);
          }
       }
    }

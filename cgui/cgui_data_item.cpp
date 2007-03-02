@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.cpp 1.9 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
  * $Log: cgui_data_item.cpp $
+ * Revision 1.5  2006/07/31 16:03:30Z  rm10919
+ * Update presicion in double to handle numbers less than 0.
  * Revision 1.4  2006/05/15 21:49:43Z  rm10919
  * update for change in convertToStringChar in cgui_graphics.
  * Revision 1.3  2005/11/22 00:34:42Z  rm10919
@@ -179,7 +181,7 @@ CGUIDataItemTextItem::~CGUIDataItemTextItem()
 
 StringChar * CGUIDataItemTextItem::convertToString()
 {
-   if (_valueChanged || !_string)
+   if (_valueChanged && _value != NULL)
    {
       if (_string) delete _string;
       _string =  new StringChar[_value->getLength()+1];
@@ -198,6 +200,26 @@ void CGUIDataItemTextItem::setValue(CGUITextItem * value)
    if (_value != value)
    {
       _value = value;
+
+      _valueChanged = true;
+   }
+}
+
+void CGUIDataItemTextItem::setValue(StringChar * value)
+{
+   if (value != NULL && _value != NULL)
+   {
+      _value->setText(value);
+
+      _valueChanged = true;
+   }
+}
+
+void CGUIDataItemTextItem::setValue(char * value)
+{
+   if (value != NULL && _value != NULL)
+   {
+      _value->setText(value);
 
       _valueChanged = true;
    }

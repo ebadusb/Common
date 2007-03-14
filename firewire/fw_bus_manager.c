@@ -6,6 +6,8 @@
  * This file contains the firewire routines for the Bus Manager.
  *
  * $Log: fw_bus_manager.c $
+ * Revision 1.4  2007/02/20 22:53:01Z  wms10235
+ * IT74 - Updated some of the logging messages
  * Revision 1.3  2007/02/13 22:46:46Z  wms10235
  * IT74 - Changes from driver unit testing
  * Revision 1.2  2007/02/12 16:06:58Z  wms10235
@@ -989,7 +991,7 @@ static FWStatus fwSelfIdCompleteIntHandler(FWDriverData *pDriver)
 		retVal = fwBuildTopologyMap( pDriver );
 	}
 
-	FWLOGLEVEL8("New bus generation %d.\n", pDriver->physicalLayerData->busGeneration);
+	printf("New bus generation %d.\n", pDriver->physicalLayerData->busGeneration);
 
 	retVal = fwGetSourceID( pDriver, &sourceID );
 	if( retVal == FWSuccess )
@@ -1215,8 +1217,8 @@ static FWStatus fwBuildTopologyMap(FWDriverData *pDriver)
 							contender = (int)((selfId >> 11) & 0x00000001);
 							power = (int)((selfId >> 8) & 0x00000007);
 
-							FWLOGLEVEL7("ID:0x%X GapCnt:%d Speed:%d LinkActive:%d Contender:%d Power:%d Initiated:%d More:%d\n",
-											phyId, gapCnt, speed, linkActive, contender, power, selfId & 2, selfId & 1);
+							printf("ID:0x%X GapCnt:%d Speed:%d LinkActive:%d Contender:%d Power:%d Initiated:%d More:%d\n",
+											phyId, gapCnt, speed, linkActive, contender, power, ((selfId & 2) >> 1), selfId & 1);
 
 							retVal = FWSuccess;
 						}

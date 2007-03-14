@@ -4,6 +4,8 @@
  * Utility for loading language information
  *
  * $Log: module_languages.cpp $
+ * Revision 1.3  2007/03/13 22:27:58Z  MS10234
+ * - fixed tag name for languageId to use the configured value in the file search
  * Revision 1.2  2007/02/28 21:10:05Z  MS10234
  * - added more configuration variables to make it more generic between projects
  * Revision 1.1  2007/01/18 21:44:03Z  MS10234
@@ -200,7 +202,7 @@ ModuleLanguages::FileProcessStatus ModuleLanguages::loadLanguageFile(const char 
 					// Find the UTF8 representation for the language
 					//
 	  				string languageIdValue;
-	  				if ( findToken(fp,languageIdTag,languageIdValue) )
+	  				if ( findToken(fp,_languageIdTag,languageIdValue) )
 					{
 						string formatTokenValue;
 						if ( findToken(fp,_formatVersionTag,formatTokenValue) )

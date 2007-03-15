@@ -3,6 +3,8 @@
 # Makefile - makefile for common GUI library
 #
 # $Log: makefile.vx $
+# Revision 1.14  2006/11/28 20:43:39Z  pn02526
+# Add cgui_string_info.cpp per IT 68.
 # Revision 1.13  2006/07/12 17:36:08  rm10919
 # Updates from adding cguiListBox class.
 # Revision 1.12  2005/11/22 00:36:27Z  rm10919
@@ -30,9 +32,13 @@
 # Initial revision
 #
 
+RMSG_MESSAGES = gui_button_press_message_res
+RMSG_GEN_C_FILES = $(addsuffix .cpp, $(RMSG_MESSAGES))
+RMSG_GEN_H_FILES = $(addsuffix .h, $(RMSG_MESSAGES))
+
 ifeq ($(BUILD_TYPE),CLEAN)
 .PHONY: all
-all: clean
+all: clean clean_generated_files
 else
 .PHONY: all
 all: check_opt_change lib
@@ -52,18 +58,30 @@ MAINDIR = ..
 COMDIR = $(MAINDIR)
 include $(MAINDIR)/makefile.vxc
 
+RMSG_PATH = $(RMSGDIR)/Shared/
+RMSG_FILES = $(subst \,/, $(addprefix $(RMSG_PATH), $(addsuffix .xml, $(RMSG_MESSAGES))))
+RMSG_TOOL = $(subst \,/, $(RMSGDIR)/MessageGenerator.exe)
+$(RMSG_GEN_C_FILES) $(RMSG_GEN_H_FILES) : $(RMSG_FILES) $(RMSG_TOOL)
+	@echo Generating reserved messages
+	@$(RMSG_TOOL) $(RMSG_FILES) $(shell cmd /c cd)
+
+.PHONY: clean_generated_files
+clean_generated_files:
+	@echo Removing generated source files
+	@rm -f $(RMSG_GEN_C_FILES) $(RMSG_GEN_H_FILES)
+
 #
 # The following should define all of the source files of each type
 # to be compiled for the library
 #
 LIB_C_FILES   = 
-LIB_CXX_FILES = cgui_adjustor.cpp cgui_bitmap_info.cpp cgui_bitmap.cpp cgui_button.cpp \
+LIB_CXX_FILES = $(RMSG_GEN_C_FILES) cgui_adjustor.cpp cgui_bitmap_info.cpp cgui_bitmap.cpp cgui_button.cpp \
                 cgui_data_item.cpp cgui_data_item_file_reader.cpp cgui_frame.cpp \
                 cgui_graphics.cpp  cgui_list_box.cpp cgui_pool_allocator.cpp \
                 cgui_rectangle.cpp cgui_string_info.cpp cgui_string_data.cpp cgui_string_data_container.cpp \
                 cgui_text.cpp cgui_textbox.cpp cgui_text_item.cpp cgui_time_date.cpp \
                 cgui_variable_database.cpp cgui_variable_db_container.cpp \
-		cgui_window.cpp cgui_window_object.cpp
+		    cgui_window.cpp cgui_window_object.cpp
 		
 LIB_S_FILES =
 

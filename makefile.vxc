@@ -3,6 +3,8 @@
 # Makefile.vxc - common makefile for common/vxWorks
 #
 # $Log: makefile.vxc $
+# Revision 1.7  2007/02/20 22:54:02Z  wms10235
+# IT74 - Adding the firewire driver to the common build
 # Revision 1.6  2005/11/14 20:12:31Z  jl11312
 # - modified for Windows XP (IT 1077)
 # Revision 1.5  2004/12/02 22:05:09Z  jl11312
@@ -17,6 +19,21 @@
 # Revision 1.1  2002/04/18 14:27:46  jl11312
 # Initial revision
 #
+
+#
+# After execution of these assignments, RMSGDIR_STATUS will hold
+# a status message indicating the reserved messages directory location
+# (either that the default was used or that a local override
+# was used).  RMSGDIR will hold the path of the reserved messages directory
+# to be used.
+#
+ifndef RMSGDIR
+	RMSGDIR_STATUS := $(shell cmd /c 'cd $(MAINDIR) && $(MAKE) -f makefile.frm find_rmsg')
+	RMSGDIR := $(strip $(shell cat $(MAINDIR)/.rmsg/latest_rmsg_build_dir.mk))
+	CHECK_RMSGDIR_STATUS := $(shell cmd /c 'cd $(MAINDIR) && $(MAKE) -f makefile.frm RMSGDIR=$(RMSGDIR) verify_rmsg')
+else
+	CHECK_RMSGDIR_STATUS := OK
+endif
 
 #
 # Get compile commands and flags which must be shared between the common

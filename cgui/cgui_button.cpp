@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.29  2006/11/13 20:21:14Z  jd11007
+ *  IT 65 - Memory leak fixes.
  *  Revision 1.28  2006/11/01 16:35:33Z  rm10919
  *  Add enableWhenPressed to have enable bitmap move to front regardless of button state.
  *  Revision 1.27  2006/10/11 21:33:15Z  rm10919
@@ -69,6 +71,10 @@
 #include "cgui_window_object.h"
 #include "cgui_button.h"
 #include "cgui_bitmap_info.h"
+#include "datalog_reserved_stream.h"
+#include "gui_button_press_message_res.h"
+
+using namespace GuiButtonPressMessageRes;
 
 
 // CONSTRUCTOR
@@ -1164,7 +1170,10 @@ void CGUIButton::doOnPress()
       _pressed = true;
 
       if (_audioMessagePointer) _audioMessagePointer->send();
-	  DataLog (log_level_cgui_button_press_info) << "BUTTON_NAME = " << _buttonPressLogText << endmsg;
+	  //DataLog (log_level_cgui_button_press_info) << "BUTTON_NAME = " << _buttonPressLogText << endmsg;
+	  DataLogReserved( guiButtonMessage.name, log_level_cgui_button_press_info )
+			<< taggedItem( guiButtonMessage.buttonName, _buttonPressLogText )
+			<< endmsg;
    }
 }
 

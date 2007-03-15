@@ -1,8 +1,10 @@
-# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.25 2007/02/20 22:53:56Z wms10235 Exp jl11312 $
+# @(#) $Header: H:/BCT_Development/vxWorks/Common/rcs/makefile.vx 1.26 2007/03/15 13:22:06Z jl11312 Exp wms10235 $
 #
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.25  2007/02/20 22:53:56Z  wms10235
+# IT74 - Adding the firewire driver to the common build
 # Revision 1.24  2007/01/18 21:52:10Z  MS10234
 #  - add language_file_support and config_file_support libraries
 # Revision 1.23  2006/10/18 19:20:05Z  pn02526
@@ -79,7 +81,7 @@ libs: $(DIR_LIST)
 force: ;
 
 $(DIR_LIST) : force
-	@cd $@ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE)
+	@cd $@ && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) RMSGDIR=$(RMSGDIR)
 
 COMMON_BUILD_DIR := $(strip $(subst \,/, $(shell cmd /c cd)))
 

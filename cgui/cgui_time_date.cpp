@@ -3,6 +3,13 @@
  *
  * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_time_date.cpp 1.8 2007/03/21 12:59:54 pn02526 Exp pn02526 $
  * $Log: cgui_time_date.cpp $
+ * Revision 1.8  2007/03/21 12:59:54  pn02526
+ * Add two CGUITextItem pointers for AM  and PM strings (suffixes for 12-hour time strings) to the calling sequence of the constructor, plus functions to get and set them post-construction. The two new constructor arguments are transparent to existing code. If NULL in the constructor or the set function, the class does not attempt to append anything to twelve-hour time strings. To internationalize this, the string handling within the class has been changed to use the wide character type StringChar used internally in the CGUIText and CGUITextItem classes.  The stringCharxxxx functions have been added for this.  
+ * Change the date separator character must be changed to hyphen for internationalizing date strings.
+ * 
+ * 
+ * --- Added comments ---  pn02526 [2007/03/22 18:34:57Z]
+ * IT 77.
  * Revision 1.7  2007/01/29 09:08:39  rm10919
  * Fix getting single atrribute to look at the full range.
  * Revision 1.6  2006/01/28 20:49:42Z  cf10242
@@ -147,16 +154,22 @@ void CGUITimeDate::setDisplayAttributes(unsigned int displayAttributes)
 
 void CGUITimeDate::update()
 {
+   const time_t current_time = time(NULL);
+   update(current_time);
+}
+
+void CGUITimeDate::update(const time_t the_timeval)
+{
    unsigned int displayType = _displayAttributes & DISPLAY_TYPE_ATTRIBUTES_MASK;
    unsigned int attribute;
 
    StringChar * timeStringChar=NULL;
    StringChar * dateStringChar=NULL;
    
-   time_t currentdate = time(NULL);
    struct tm   local_tm;
 
-   localtime_r(&currentdate, &local_tm);
+   time_t my_timeval = (time_t)the_timeval;
+   localtime_r(&my_timeval, &local_tm);  // give it a timeval variable to trash, if that is its pleasure
    
    // round up if 30 seconds past the minute or more
    if(local_tm.tm_sec >= 30)

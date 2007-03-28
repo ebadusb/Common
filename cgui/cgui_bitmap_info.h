@@ -1,10 +1,12 @@
 /*
-* $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info.h 1.7 2006/05/15 21:47:36Z rm10919 Exp wms10235 $ 
+* $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info.h 1.8 2007/03/28 15:18:28Z wms10235 Exp jl11312 $
 * This file defines the class that defines the bitmaps compiled into the application.
 * Each bitmap will have automatically generated an object of this type via the
 * build_bitmap_info file.
 *
 * $Log: cgui_bitmap_info.h $
+* Revision 1.7  2006/05/15 21:47:36Z  rm10919
+* Update to handle trima bitmaps.
 * Revision 1.6  2005/07/07 19:33:12Z  pn02526
 * Add dynamic bitmaps.
 * Revision 1.5  2005/02/21 10:17:10  cf10242
@@ -43,42 +45,26 @@ public:
    CGUIBitmapInfo (const unsigned char bmp_data[],
                    unsigned long size,
                    unsigned short width,
-                   unsigned short height) :
-                   _myHeight (height),
-                   _myWidth (width),
-                   _loadCount (0),
-                   _loadState (UNLOADED),
-                   _myId(UGL_NULL_ID),
-                   _compressed(true)
-   {
-      _mySize = size;
-      _myBitmap = (unsigned char *)bmp_data; 
-   };
+                   unsigned short height);
 
    // CONSTRUCTOR - accepts a pointer to the input bitmap.  Expects that the data is in
    // uncompressed format.
    CGUIBitmapInfo (const unsigned short bmp_data[],
                    unsigned long size,
                    unsigned short width,
-                   unsigned short height) :
-                   _myHeight (height),
-                   _myWidth (width),
-                   _loadCount (0),
-                   _loadState (UNLOADED),
-                   _myId(UGL_NULL_ID),
-                   _compressed(false)
-   {
-      _mySize = size;
-      _myBitmap = (unsigned char *)bmp_data; 
-   };
+                   unsigned short height);
 
    // CONSTRUCTOR - accepts a file path and name as input.  This constructor will open and
    // read in the file to _myBitmap, set _myHeight and _myWidth as well.  THIS IS A FUTURE
    // CAPABILITY AND IS NOT YET AVAILABLE!!!
-   CGUIBitmapInfo (char * fileName); 
+   CGUIBitmapInfo (char * fileName);
 
    // DESTRUCTOR - doesn't need to do anything at this point
-   virtual ~CGUIBitmapInfo() {};
+   virtual ~CGUIBitmapInfo();
+
+	CGUIBitmapInfo(const CGUIBitmapInfo& rhs);
+
+	CGUIBitmapInfo& operator=(const CGUIBitmapInfo& rhs);
 
    // getRawData -  return the pointer to the raw compressed data
    unsigned char * getRawData (void){ return _myBitmap; };
@@ -98,7 +84,11 @@ public:
    // getId - return my CGUIBitmapId
    CGUIBitmapId getId()   { return _myId;};
 
+	unsigned short getLoadCount(void) const { return _loadCount; }
+
 private:
+	CGUIBitmapInfo(void);
+
    unsigned char * _myBitmap;
    unsigned long   _mySize;
    unsigned short  _myHeight,_myWidth;
@@ -108,7 +98,4 @@ private:
    bool           _compressed;
 };
 #endif
-
-
-
 

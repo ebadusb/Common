@@ -4,8 +4,10 @@
  *  Bitmap display manager for the common GUI.  Uses the CGUIBitmapInfo class to keep track
  *  of the bitmap information and do the actual display of the graphics.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap.h 1.4 2004/11/18 22:34:09Z rm10919 Exp wms10235 $
+ * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap.h 1.5 2007/03/28 15:18:28Z wms10235 Exp rm10919 $
  * $Log: cgui_bitmap.h $
+ * Revision 1.4  2004/11/18 22:34:09Z  rm10919
+ * Naming conventions.
  * Revision 1.3  2004/10/14 14:27:39Z  cf10242
  * First working bitmap class
  * Revision 1.2  2004/09/30 17:00:52Z  cf10242
@@ -55,10 +57,14 @@ private:
    virtual bool clipSiblings(void) const { return true;}
 
 private:
+	CGUIBitmap(void);
+	CGUIBitmap(const CGUIBitmap& rhs);
+	CGUIBitmap& operator=(const CGUIBitmap& rhs);
+
    CGUIRegion _region;
    unsigned short _width;
    unsigned short _height;
-   CGUIBitmapInfo & _bitmapObject;
+   CGUIBitmapInfo * _bitmapObject;
    CGUIDisplay & _display;
 };
 

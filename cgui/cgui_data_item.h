@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.h 1.8 2010/04/27 21:26:08Z rm10919 Exp jl11312 $
  * $Log: cgui_data_item.h $
+ * Revision 1.2  2007/03/01 12:09:55  rm10919
+ * Add DataItemText to file reader and setText(char *) to DITextItem.
  * Revision 1.1  2005/04/27 13:40:44Z  rm10919
  * Initial revision
  *
@@ -51,16 +53,26 @@ class CGUIDataItemDouble: public CGUIDataItem
 public:
    CGUIDataItemDouble();
    CGUIDataItemDouble(double value, int precision );
+   CGUIDataItemDouble(double value, int precision, CGUITextItem * separator );
    ~CGUIDataItemDouble();
 
    StringChar * convertToString(void);
 
    void setValue(double value);
    void setPrecision(int precision);
+   void setDecimalSeparator( CGUITextItem * separator ) { _separator = separator; _valueChanged=true; };
 
 protected:   
    double _value;
    int _precision;
+   CGUITextItem * _separator;
+
+   size_t stringCharLen( const StringChar * s );
+   size_t stringCharAllocation(const size_t len);
+   size_t stringCharAllocation(const StringChar * s);
+   StringChar * stringChar( const char * string );
+   void stringCharCpy( StringChar ** ps1, const StringChar * s2 );
+   void stringCharCat( StringChar ** ps1, const StringChar * s2 );
 };
 
 class CGUIDataItemTextItem: public CGUIDataItem

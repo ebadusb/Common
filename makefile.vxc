@@ -1,8 +1,10 @@
-# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.vxc 1.8 2007/03/14 21:07:47Z jmedusb Exp jl11312 $
+# @(#) $Header: K:/BCT_Development/vxWorks/Common/rcs/makefile.vxc 1.8 2007/03/14 21:07:47Z jmedusb Exp $
 #
 # Makefile.vxc - common makefile for common/vxWorks
 #
 # $Log: makefile.vxc $
+# Revision 1.8  2007/03/14 21:07:47Z  jmedusb
+# Added Check for reserved messages directory.
 # Revision 1.7  2007/02/20 22:54:02Z  wms10235
 # IT74 - Adding the firewire driver to the common build
 # Revision 1.6  2005/11/14 20:12:31Z  jl11312
@@ -119,19 +121,28 @@ ifdef OPT_ERROR
 	@echo $(OPT_ERROR)
 	@exit 1
 else
- ifdef COMDIR_STATUS
+  ifneq ($(strip $(CHECK_RMSGDIR_STATUS)),OK)
+	@echo Invalid reserved messages directory: $(RMSGDIR)
+	@echo $(CHECK_RMSGDIR_STATUS)
+	@echo Check that the reserved messages directory has been built properly. 
+	@echo Note that the file latest_rmsg_build_dir.mk can be used to override
+	@echo the location of the reserved messages directory.
+	@exit 1
+  else
+    ifdef COMDIR_STATUS
 	@echo $(COMDIR_STATUS): $(COMDIR)
- endif
- ifdef FORCE_REBUILD
+    endif
+    ifdef FORCE_REBUILD
 	@echo Build settings changed - forcing rebuild of all targets
-   ifeq ($(ADDN_OPT_TEST),)
+      ifeq ($(ADDN_OPT_TEST),)
 	@echo Current build: "$(BUILD_TYPE)" "$(CPU)"
 	@echo Previous build: $(OLD_BUILD_TYPE) $(OLD_CPU)
-   else
+      else
 	@echo Current build: "$(BUILD_TYPE)" "$(CPU)" "$(ADDN_OPT_TEST)"
 	@echo Previous build: $(OLD_BUILD_TYPE) $(OLD_CPU) $(OLD_ADDN_OPT_TEST)
-   endif
- endif
+      endif
+    endif
+  endif
 endif
 
 .DEFAULT:

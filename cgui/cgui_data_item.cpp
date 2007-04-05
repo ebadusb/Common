@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.cpp 1.9 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
  * $Log: cgui_data_item.cpp $
+ * Revision 1.7  2007/03/28 12:39:07  pn02526
+ * Add ability to specify a decimal separator.
  * Revision 1.6  2007/03/01 12:09:54  rm10919
  * Add DataItemText to file reader and setText(char *) to DITextItem.
  * Revision 1.5  2006/07/31 16:03:30Z  rm10919
@@ -322,7 +324,7 @@ void CGUIDataItemTextItem::setValue(CGUITextItem * value)
    }
 }
 
-void CGUIDataItemTextItem::setValue(StringChar * value)
+void CGUIDataItemTextItem::setValue(const StringChar * value)
 {
    if (value != NULL && _value != NULL)
    {

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.h 1.8 2010/04/27 21:26:08Z rm10919 Exp jl11312 $
  * $Log: cgui_data_item.h $
+ * Revision 1.3  2007/03/28 12:03:12  pn02526
+ * Add ability to specify a decimal separator.
  * Revision 1.2  2007/03/01 12:09:55  rm10919
  * Add DataItemText to file reader and setText(char *) to DITextItem.
  * Revision 1.1  2005/04/27 13:40:44Z  rm10919
@@ -85,7 +87,7 @@ public:
    StringChar * convertToString(void);
 
    void setValue (CGUITextItem * value);
-   void setValue (StringChar * value);
+   void setValue (const StringChar * value);
    void setValue (char * value);
 
 protected:

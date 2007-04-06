@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.22 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
+ * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.27 2007/05/10 16:35:46Z jl11312 Exp rm10919 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.22  2006/05/15 21:51:42Z  rm10919
+ * Fix memory bug in convertToStringChar and handle trima palette.
  * Revision 1.21  2005/10/21 16:45:37Z  rm10919
  * Correct use of _stringSize and adding null string terminator.
  * Revision 1.20  2005/09/30 22:40:52Z  rm10919
@@ -10,7 +12,7 @@
  * Revision 1.19  2005/07/27 22:27:57Z  cf10242
  * increase winApp stack size
  * Revision 1.18  2005/04/26 23:16:47Z  rm10919
- * Made changes to cgui_text and cgui_text_item, plus added 
+ * Made changes to cgui_text and cgui_text_item, plus added
  * classes for variable substitution in text strings.
  * Revision 1.17  2005/01/28 23:52:17Z  rm10919
  * CGUITextItem class changed and put into own file.
@@ -58,14 +60,14 @@ UGL_ARGB deviceClut[CGUIPaletteSize];
 
 //
 // String Management
-//  
+//
 void convertToStringChar(const char * string, StringChar ** stringChar)
 {
    if (string)
    {
       int stringLength = strlen(string) + 1;   // add 1 for the NULL
 
-      *stringChar = new UGL_WCHAR[stringLength];  
+      *stringChar = new UGL_WCHAR[stringLength];
 
       for (int i=0; i<stringLength; i++)
          (*stringChar)[i] = (unsigned char)(UGL_WCHAR)string[i];
@@ -78,6 +80,10 @@ void convertToStringChar(const char * string, StringChar ** stringChar)
 extern void (* winAppStartupTask)(void);
 extern void (* winAppIdleTask)(void);
 MessageSystem * msgSys = NULL;
+
+UGL_DDB_ID drawBitMap = UGL_NULL_ID;
+UGL_DDB_ID offscreenBitMap = UGL_NULL_ID;
+UGL_GC_ID uglOffscreenGc;
 
 static CallbackBase guiStartCB;
 static CallbackBase guiWakeupCB;
@@ -129,7 +135,7 @@ CGUIDisplay::CGUIDisplay(const CallbackBase & startCB, const CallbackBase & wake
    uglInfo(_uglDisplay, UGL_MODE_INFO_REQ, &modeInfo);
    _height = modeInfo.height;
    _width = modeInfo.width;
-   
+
    if ((modeInfo.colorModel != UGL_DIRECT) && (modeInfo.colorModel != UGL_INDEXED_8))
    {
       fprintf(stderr, "UGL reports color model %d - expected %d or %d \n", (int)modeInfo.colorModel, (int)UGL_DIRECT, (int)UGL_INDEXED_8);
@@ -146,10 +152,10 @@ CGUIDisplay::CGUIDisplay(const CallbackBase & startCB, const CallbackBase & wake
    // END MESSAGE_SYSTEM_IN_WIN_MGR
 
 
-   _uglApp = winAppCreate("winApp", 0, 64000, 0, UGL_NULL);     
+   _uglApp = winAppCreate("winApp", 0, 64000, 0, UGL_NULL);
 
-   _uglRootWindow = winCreate(_uglApp, UGL_NULL_ID,         
-                              WIN_ATTRIB_VISIBLE,             // list window attributes 
+   _uglRootWindow = winCreate(_uglApp, UGL_NULL_ID,
+                              WIN_ATTRIB_VISIBLE,             // list window attributes
                               0, 0, _width, _height, UGL_NULL, 0, UGL_NULL);
 
    winDataSet(_uglRootWindow, NULL, NULL, 0);
@@ -182,12 +188,171 @@ void CGUIDisplay::flush(void)
    drawRootWindow();
 }
 
+void CGUIDisplay::offscreenFlush(const char * filename)
+{
+	uglCursorOff(_uglDisplay);   // Remove mouse from display for snapshot.
+
+	typedef unsigned char  BMP_BYTE;
+	typedef unsigned short BMP_WORD;
+	typedef unsigned long  BMP_DWORD;
+
+	const int bmpWidth = 800;
+	const int bmpHeight = 600;
+
+	struct BITMAPFILEHEADER
+	{
+		BMP_WORD    bfType;
+		BMP_DWORD   bfSize;
+		BMP_WORD    bfReserved1;
+		BMP_WORD    bfReserved2;
+		BMP_DWORD   bfOffBits;
+	} __attribute__((packed));
+
+	struct BITMAPINFOHEADER
+	{
+		BMP_DWORD   biSize;
+		BMP_DWORD   biWidth;
+		BMP_DWORD   biHeight;
+		BMP_WORD    biPlanes;
+		BMP_WORD    biBitCount;
+		BMP_DWORD   biCompression;
+		BMP_DWORD   biSizeImage;
+		BMP_DWORD   biXPelsPerMeter;
+		BMP_DWORD   biYPelsPerMeter;
+		BMP_DWORD   biClrUsed;
+		BMP_DWORD   biClrImportant;
+	} __attribute__((packed));
+
+	BITMAPFILEHEADER bmpFileHeader;
+	BITMAPINFOHEADER bmpInfoHeader;
+
+	size_t bmpSize = bmpWidth * bmpHeight;
+
+	//
+	//  Set fileheader information.
+	//
+	bmpFileHeader.bfType      = 0x4D42;
+	bmpFileHeader.bfSize      = sizeof(bmpFileHeader) + sizeof(bmpInfoHeader) + bmpSize * 3;
+	bmpFileHeader.bfReserved1 = 0x0000;
+	bmpFileHeader.bfReserved2 = 0x0000;
+	bmpFileHeader.bfOffBits   = sizeof(bmpFileHeader) + sizeof(bmpInfoHeader);
+
+	bmpInfoHeader.biSize          = sizeof(bmpInfoHeader);
+	bmpInfoHeader.biWidth         = bmpWidth;
+	bmpInfoHeader.biHeight        = bmpHeight;
+	bmpInfoHeader.biPlanes        = 1;
+	bmpInfoHeader.biBitCount      = 24;
+	bmpInfoHeader.biCompression   = 0;
+	bmpInfoHeader.biSizeImage     = bmpSize * 3;
+	bmpInfoHeader.biXPelsPerMeter = 0x0EC4;
+	bmpInfoHeader.biYPelsPerMeter = 0x0EC4;
+	bmpInfoHeader.biClrUsed       = 0;
+	bmpInfoHeader.biClrImportant  = 0;
+
+	//
+	//  Put current screen image information
+	//  into a dib structure. (Device Independent Bitmap)
+	//
+	UGL_DIB *pDib     = (UGL_DIB *)UGL_MALLOC(sizeof(UGL_DIB));
+	pDib->width       = bmpWidth;
+	pDib->height      = bmpHeight;
+	pDib->stride      = bmpWidth;
+	pDib->colorFormat = UGL_DEVICE_COLOR_32; //ARGB8888;//DEVICE_COLOR_32;
+	pDib->imageFormat = UGL_DIRECT;
+	pDib->clutSize    = UGL_NULL;
+	pDib->pClut       = NULL;
+	pDib->pImage      = UGL_MALLOC( bmpSize * 4 );
+
+	memset( pDib->pImage, 0, bmpSize * 4 );
+
+	if( drawBitMap == UGL_NULL_ID )
+	{
+		// Create an offscreen bitmap and graphics context
+		uglOffscreenGc = uglGcCreate( _uglDisplay );
+		uglGcCopy( _uglGc, uglOffscreenGc );
+		drawBitMap = uglBitmapCreate(_uglDisplay, pDib, UGL_DIB_INIT_DATA, 0, UGL_NULL);
+	}
+
+	// Enable the offscreen bitmap
+	offscreenBitMap = drawBitMap;
+
+	// Draw the screen
+	list<CGUIWindow *>::iterator windowIter = _windowList.begin();
+	while (windowIter != _windowList.end())
+	{
+		(*windowIter)->draw( uglOffscreenGc );
+		++windowIter;
+		//DataLog( log_level_cgui_info ) << "Drawing window." << endmsg;
+	}
+
+	// Disable the offscreen bitmap
+	offscreenBitMap = UGL_NULL_ID;
+
+	// Read the offscreen bitmap into a DIB
+	uglBitmapRead(_uglDisplay, drawBitMap, 0, 0, bmpWidth-1, bmpHeight-1, pDib, 0, 0);
+
+	//
+	//  Create and open the bmp file.
+	//
+	FILE * bmpFile = fopen(filename, "wb");
+
+	if( bmpFile != NULL )
+	{
+		fwrite(&bmpFileHeader, sizeof(bmpFileHeader), 1, bmpFile);
+		fwrite(&bmpInfoHeader, sizeof(bmpInfoHeader), 1, bmpFile);
+
+		//
+		// Now convert color to RGB value and invert bitmap.
+		//
+		unsigned int stride = bmpWidth * 4;
+
+		unsigned char * buffer = new unsigned char [bmpSize * 3];
+		unsigned char * copyto = buffer;
+		unsigned char * copyfrom = (unsigned char *)pDib->pImage + bmpWidth * (bmpHeight - 1) * 4;
+		unsigned char * placeholder = copyfrom;
+
+		for (int row =  0; row <= bmpHeight-1; row++)
+		{
+			for (int column = 0; column <= bmpWidth - 1; column++)
+			{
+				int color = *((int *)copyfrom);
+
+				copyto[2] = (color & 0xf800) >> 8;
+				copyto[1] = (color & 0x7e0) >> 3;
+				copyto[0] = (color & 0x1f) << 3;
+
+				copyto += 3;
+				copyfrom += 4;
+			}
+			placeholder -= stride;
+			copyfrom = placeholder;
+		}
+
+		//  Write bitmap image to file.
+		fwrite(buffer, bmpSize * 3, 1, bmpFile);
+
+		fclose(bmpFile);  //Close file.
+
+		UGL_FREE(pDib->pImage);
+		UGL_FREE(pDib);
+
+		delete buffer;
+	}
+	else
+	{
+		DataLog( log_level_cgui_error ) << "Off screen bitmap error. Could not open file:'" << filename << "'" << endmsg;
+	}
+
+	// Shouldn't need if running on a taos machine.
+	uglCursorOn(_uglDisplay);  //Reactivate mouse.
+}
+
 CGUIFontId CGUIDisplay::createFont(const char * familyName, unsigned char pixelSize)
 {
    static const char fontStringTemplate[] = "familyName=%s; pixelSize=%d";
    char * fontString = new char[strlen(familyName)+sizeof(fontStringTemplate)+3];
    UGL_FONT_DEF fontDef;
-   CGUIFontId font; 
+   CGUIFontId font;
 
    sprintf(fontString, fontStringTemplate, familyName, pixelSize);
    uglFontFindString(_uglFontDriver, fontString, &fontDef);
@@ -218,24 +383,24 @@ void CGUIDisplay::cursorInit(void)
 #define T UGL_CURSOR_COLOR_TRANSPARENT,
 #define B 0,
 #define W 1,
-      B T T T T T T T T T T 
-      B B T T T T T T T T T 
-      B W B T T T T T T T T 
-      B W W B T T T T T T T 
-      B W W W B T T T T T T 
-      B W W W W B T T T T T 
-      B W W W W W B T T T T 
-      B W W W W W W B T T T 
-      B W W W W W W W B T T 
-      B W W W W W W W W B T 
-      B W W W W W B B B B B 
-      B W W B W W B T T T T 
-      B W B T B W W B T T T 
-      B B T T B W W B T T T 
-      B T T T T B W W B T T 
-      T T T T T B W W B T T 
-      T T T T T T B W W B T 
-      T T T T T T B W W B T 
+      B T T T T T T T T T T
+      B B T T T T T T T T T
+      B W B T T T T T T T T
+      B W W B T T T T T T T
+      B W W W B T T T T T T
+      B W W W W B T T T T T
+      B W W W W W B T T T T
+      B W W W W W W B T T T
+      B W W W W W W W B T T
+      B W W W W W W W W B T
+      B W W W W W B B B B B
+      B W W B W W B T T T T
+      B W B T B W W B T T T
+      B B T T B W W B T T T
+      B T T T T B W W B T T
+      T T T T T B W W B T T
+      T T T T T T B W W B T
+      T T T T T T B W W B T
       T T T T T T T B B T T
 #undef T
 #undef B
@@ -290,7 +455,7 @@ void CGUIDisplay::getCursorPos(int &x, int &y)
 {
    uglCursorPositionGet (_uglDisplay, &x, &y);
 }
-     
+
 void CGUIDisplay::setPaletteColor(CGUIColor index, const CGUIPaletteEntry & entry)
 {
 	//

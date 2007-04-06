@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.21 2010/04/02 16:26:25Z agauusb Exp agauusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.15  2006/06/17 17:42:32Z  cf10242
+ * IT 52: insure button release event is sent to window even if disabled
  * Revision 1.14  2005/11/22 00:36:01Z  rm10919
  * Invalidate window region to redraw when setting window visibility.
  * Revision 1.13  2005/08/15 18:47:43Z  cf10242
@@ -37,7 +39,9 @@
 #include "cgui_window.h"
 #include "cgui_window_object.h"
 
-bool CGUIWindow::_needRelease = false; 
+extern UGL_DDB_ID offscreenBitMap;
+
+bool CGUIWindow::_needRelease = false;
 
 CGUIWindow::CGUIWindow(CGUIDisplay & display)
 : _display(display)
@@ -70,9 +74,9 @@ void CGUIWindow::initializeData(void)
    //
    _defaultTextStylingRecord.color = UGL_NULL;   // If a set of standard colors is defined, set to an actual color????
    _defaultTextStylingRecord.attributes = 0x0000;
-   _defaultTextStylingRecord.region = CGUIRegion(0, 0, 10, 10);     
-   _defaultTextStylingRecord.fontSize = 14;   
-   _defaultTextStylingRecord.fontId = UGL_NULL_ID;     
+   _defaultTextStylingRecord.region = CGUIRegion(0, 0, 10, 10);
+   _defaultTextStylingRecord.fontSize = 14;
+   _defaultTextStylingRecord.fontId = UGL_NULL_ID;
 }
 
 CGUIWindow::~CGUIWindow()
@@ -139,8 +143,8 @@ void CGUIWindow::attach(CGUIWindow * window, WIN_ATTRIB winAttrib /* = WIN_ATTRI
       // Create the underlying UGL window
       //
       void * data = (void *) this;
-      _id = winCreate(_display.app(), UGL_NULL, winAttrib, 
-                      _region.x, _region.y, _region.width, 
+      _id = winCreate(_display.app(), UGL_NULL, winAttrib,
+                      _region.x, _region.y, _region.width,
                       _region.height, (void *)&data, sizeof(void *), UGL_NULL);
 
       winCbAdd(_id, MSG_DRAW, 0, CGUIWindow::uglDrawCallback, UGL_NULL);
@@ -429,7 +433,7 @@ void CGUIWindow::setWindowVisibility (bool newVisible)
    {
       UGL_RECT rect;
       _region.convertToUGLRect(rect);
-      
+
       winVisibleSet(_id, newVisible);
       winRectInvalidate(_id, &rect);
    }
@@ -515,7 +519,7 @@ UGL_STATUS CGUIWindow::uglPointerCallback (WIN_ID id, WIN_MSG * pMsg, void * pDa
       {
         // DataLog( log_level_cgui_info ) << "Ungrabbing pointer " << endmsg;
          winPointerUngrab (windowId);
-         ptEvent.eventType = CGUIWindow::PointerEvent::ButtonRelease;  
+         ptEvent.eventType = CGUIWindow::PointerEvent::ButtonRelease;
       }
 
       ptEvent.x = pMsg->data.ptr.position.x;
@@ -528,7 +532,7 @@ UGL_STATUS CGUIWindow::uglPointerCallback (WIN_ID id, WIN_MSG * pMsg, void * pDa
          window->pointerEvent(ptEvent);
       }
 
-	  if (ptEvent.eventType == CGUIWindow::PointerEvent::ButtonRelease) 
+	  if (ptEvent.eventType == CGUIWindow::PointerEvent::ButtonRelease)
 		  _needRelease = false;
      // DataLog( log_level_cgui_info ) << "Completed pointer event processing " << endmsg;
    }
@@ -607,7 +611,17 @@ void CGUIWindow::drawObjects(UGL_GC_ID gc)
    uglRegionCopy(_activeDrawRegion, clippedDrawRegion);
 
    winDrawStart(_id, gc, false);
-   uglClipRegionSet(gc, clippedDrawRegion);
+
+	// This allows a screen to be drawn to an offscreen bitmap.
+	if( offscreenBitMap != UGL_NULL_ID )
+	{
+		UGL_POS top, bottom, left, right;
+		uglViewPortGet( gc, &left, &top, &right, &bottom );
+		uglDefaultBitmapSet( gc, offscreenBitMap );
+		uglViewPortSet( gc, left, top, right, bottom );
+	}
+
+	uglClipRegionSet(gc, clippedDrawRegion);
 
 #if CPU == SIMNT
    uglRectangle(_display.gc(), 0, 0, _display.width(), _display.height());

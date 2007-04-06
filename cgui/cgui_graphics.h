@@ -1,10 +1,12 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.13 2006/05/15 21:51:42Z rm10919 Exp wms10235 $
+ * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.19 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
  * $Log: cgui_graphics.h $
+ * Revision 1.13  2006/05/15 21:51:42Z  rm10919
+ * Fix memory bug in convertToStringChar and handle trima palette.
  * Revision 1.12  2005/04/26 23:16:47Z  rm10919
- * Made changes to cgui_text and cgui_text_item, plus added 
+ * Made changes to cgui_text and cgui_text_item, plus added
  * classes for variable substitution in text strings.
  * Revision 1.11  2005/01/28 23:52:17Z  rm10919
  * CGUITextItem class changed and put into own file.
@@ -130,6 +132,9 @@ public:
    //
    void flush(void);
 
+	// The save function is used to save the screen to an off-screen bitmap
+	void offscreenFlush(const char * filename);
+
    //
    // Font management
    //
@@ -160,7 +165,7 @@ public:
    UGL_WINDOW_ID rootWindow(void) const { return _uglRootWindow;}
 
    //
-   // These functions get and set the cursor position. 
+   // These functions get and set the cursor position.
    // Only used in Service Mode.
    //
    void setCursorPos(int x, int y);
@@ -178,6 +183,7 @@ private:
    UGL_INPUT_SERVICE_ID _uglEventService;
    WIN_APP_ID           _uglApp;
    UGL_GC_ID            _uglGc;
+	UGL_GC_ID            _uglOffscreenGc;
    UGL_WINDOW_ID        _uglRootWindow;
    UGL_FONT_DRIVER_ID   _uglFontDriver;
 
@@ -224,7 +230,7 @@ public:
    ~CGUIPalette(void);
 
    UGL_ARGB colorPallette [256];
-   
+
    void setPaletteColor(CGUIColor index, const CGUIPaletteEntry & entry);
    void getPaletteColor(int red, int green, int blue);
 };

@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.27 2007/05/10 16:35:46Z jl11312 Exp rm10919 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.23  2007/04/05 18:39:38Z  wms10235
+ * IT2354 - Added a preliminary version of the off-screen flush
  * Revision 1.22  2006/05/15 21:51:42Z  rm10919
  * Fix memory bug in convertToStringChar and handle trima palette.
  * Revision 1.21  2005/10/21 16:45:37Z  rm10919
@@ -52,6 +54,7 @@
 
 #include "cgui_graphics.h"
 #include "cgui_window.h"
+#include "bmepsoe.h"
 //#include "datalogger.h"
 
 #if CPU==SIMNT
@@ -188,8 +191,9 @@ void CGUIDisplay::flush(void)
    drawRootWindow();
 }
 
-void CGUIDisplay::offscreenFlush(const char * filename)
+int CGUIDisplay::offscreenBitmapFlush(const char * filename)
 {
+	int retVal = -1;
 	uglCursorOff(_uglDisplay);   // Remove mouse from display for snapshot.
 
 	typedef unsigned char  BMP_BYTE;
@@ -337,6 +341,8 @@ void CGUIDisplay::offscreenFlush(const char * filename)
 		UGL_FREE(pDib);
 
 		delete buffer;
+
+		retVal = 0;
 	}
 	else
 	{
@@ -345,6 +351,220 @@ void CGUIDisplay::offscreenFlush(const char * filename)
 
 	// Shouldn't need if running on a taos machine.
 	uglCursorOn(_uglDisplay);  //Reactivate mouse.
+
+	return retVal;
+}
+
+int CGUIDisplay::offscreenPostscriptFlush(const char * filename)
+{
+	int retVal = -1;
+
+	uglCursorOff(_uglDisplay);   // Remove mouse from display for snapshot.
+
+	typedef unsigned char  BMP_BYTE;
+	typedef unsigned short BMP_WORD;
+	typedef unsigned long  BMP_DWORD;
+
+	const int bmpWidth = 800;
+	const int bmpHeight = 600;
+
+	struct bmepsoe
+	{
+		Output_Encoder * oeP;
+		int * rleBuffer;
+		Byte * flateInBuffer;
+		Byte * flateOutBuffer;
+	};
+
+	struct BITMAPFILEHEADER
+	{
+		BMP_WORD    bfType;
+		BMP_DWORD   bfSize;
+		BMP_WORD    bfReserved1;
+		BMP_WORD    bfReserved2;
+		BMP_DWORD   bfOffBits;
+	} __attribute__((packed));
+
+	struct BITMAPINFOHEADER
+	{
+		BMP_DWORD   biSize;
+		BMP_DWORD   biWidth;
+		BMP_DWORD   biHeight;
+		BMP_WORD    biPlanes;
+		BMP_WORD    biBitCount;
+		BMP_DWORD   biCompression;
+		BMP_DWORD   biSizeImage;
+		BMP_DWORD   biXPelsPerMeter;
+		BMP_DWORD   biYPelsPerMeter;
+		BMP_DWORD   biClrUsed;
+		BMP_DWORD   biClrImportant;
+	} __attribute__((packed));
+
+	BITMAPFILEHEADER bmpFileHeader;
+	BITMAPINFOHEADER bmpInfoHeader;
+
+	size_t bmpSize = bmpWidth * bmpHeight;
+
+	//
+	//  Set fileheader information.
+	//
+	bmpFileHeader.bfType      = 0x4D42;
+	bmpFileHeader.bfSize      = sizeof(bmpFileHeader) + sizeof(bmpInfoHeader) + bmpSize * 3;
+	bmpFileHeader.bfReserved1 = 0x0000;
+	bmpFileHeader.bfReserved2 = 0x0000;
+	bmpFileHeader.bfOffBits   = sizeof(bmpFileHeader) + sizeof(bmpInfoHeader);
+
+	bmpInfoHeader.biSize          = sizeof(bmpInfoHeader);
+	bmpInfoHeader.biWidth         = bmpWidth;
+	bmpInfoHeader.biHeight        = bmpHeight;
+	bmpInfoHeader.biPlanes        = 1;
+	bmpInfoHeader.biBitCount      = 24;
+	bmpInfoHeader.biCompression   = 0;
+	bmpInfoHeader.biSizeImage     = bmpSize * 3;
+	bmpInfoHeader.biXPelsPerMeter = 0x0EC4;
+	bmpInfoHeader.biYPelsPerMeter = 0x0EC4;
+	bmpInfoHeader.biClrUsed       = 0;
+	bmpInfoHeader.biClrImportant  = 0;
+
+	//
+	//  Put current screen image information
+	//  into a dib structure. (Device Independent Bitmap)
+	//
+	UGL_DIB *pDib     = (UGL_DIB *)UGL_MALLOC(sizeof(UGL_DIB));
+	pDib->width       = bmpWidth;
+	pDib->height      = bmpHeight;
+	pDib->stride      = bmpWidth;
+	pDib->colorFormat = UGL_DEVICE_COLOR_32; //ARGB8888;//DEVICE_COLOR_32;
+	pDib->imageFormat = UGL_DIRECT;
+	pDib->clutSize    = UGL_NULL;
+	pDib->pClut       = NULL;
+	pDib->pImage      = UGL_MALLOC( bmpSize * 4 );
+
+	if( drawBitMap == UGL_NULL_ID )
+	{
+		// Create an offscreen bitmap and graphics context
+		uglOffscreenGc = uglGcCreate( _uglDisplay );
+		uglGcCopy( _uglGc, uglOffscreenGc );
+		drawBitMap = uglBitmapCreate(_uglDisplay, pDib, UGL_DIB_INIT_DATA, 0, UGL_NULL);
+	}
+
+	// Enable the offscreen bitmap
+	offscreenBitMap = drawBitMap;
+
+	// Draw the screen
+	list<CGUIWindow *>::iterator windowIter = _windowList.begin();
+	while (windowIter != _windowList.end())
+	{
+		(*windowIter)->draw( uglOffscreenGc );
+		++windowIter;
+		//DataLog( log_level_cgui_info ) << "Drawing window." << endmsg;
+	}
+
+	// Disable the offscreen bitmap
+	offscreenBitMap = UGL_NULL_ID;
+
+	// Read the offscreen bitmap into a DIB
+	uglBitmapRead(_uglDisplay, drawBitMap, 0, 0, bmpWidth-1, bmpHeight-1, pDib, 0, 0);
+
+	//
+	//  Create and open the bmp file.
+	//
+	FILE * psFile = fopen(filename, "wb");
+
+	if( psFile != NULL )
+	{
+		fprintf(psFile, "%%!PS-Adobe-2.0 EPSF-2.0\n");
+		fprintf(psFile, "%%%%Creator: pnmtops\n");
+		fprintf(psFile, "%%%%Title: pnmScreen.ps\n");
+		fprintf(psFile, "%%%%Pages: 1\n");
+		fprintf(psFile, "%%%%BoundingBox: 9 0 603 792\n");
+		fprintf(psFile, "%%%%EndComments\n");
+		fprintf(psFile, "%%%%Page: Image0 1\n");
+		fprintf(psFile, "/picstr\n");
+		fprintf(psFile, "   2400 string\n");
+		fprintf(psFile, "def\n");
+		fprintf(psFile, "   /inputf\n");
+		fprintf(psFile, "   currentfile\n");
+		fprintf(psFile, "   /ASCII85Decode filter\n");
+		fprintf(psFile, "   /FlateDecode filter\n");
+		fprintf(psFile, "def\n");
+		fprintf(psFile, "%%%%EndProlog\n");
+		fprintf(psFile, "%%%%Page: 1 1\n");
+		fprintf(psFile, "gsave\n");
+		fprintf(psFile, "9 0 translate\n");
+		fprintf(psFile, "594 792 scale\n");
+		fprintf(psFile, "0.5 0.5 translate  90 rotate  -0.5 -0.5 translate\n");
+		fprintf(psFile, "800 600 8\n");
+		fprintf(psFile, "[ 800 0 0 -600 0 600 ]\n");
+		fprintf(psFile, "{ inputf picstr readstring pop }\n");
+		fprintf(psFile, "false 3\n");
+		fprintf(psFile, "colorimage\n");
+
+		unsigned int stride = bmpWidth * 4;
+		const char* const hexits = "0123456789abcdef";
+		unsigned char * copyfrom = (unsigned char *)pDib->pImage;;
+		unsigned char * placeholder = copyfrom;
+		int color;
+		struct bmepsoe *bmepsoeP;
+		unsigned int const FLATE_IN_SIZE = 16384;
+		unsigned int const FLATE_OUT_SIZE = 17408;
+		int mode;
+
+		bmepsoeP = (struct bmepsoe *)malloc(sizeof(struct bmepsoe));
+		bmepsoeP->oeP = (Output_Encoder *)malloc(sizeof(Output_Encoder));
+		bmepsoeP->rleBuffer = (int *)malloc(129);
+		bmepsoeP->flateInBuffer = (Byte *)malloc(FLATE_IN_SIZE);
+		bmepsoeP->flateOutBuffer = (Byte *)malloc(FLATE_OUT_SIZE);
+
+		mode = OE_FLATE | OE_ASC85;
+
+		oe_init(bmepsoeP->oeP, psFile, mode, 9, bmepsoeP->rleBuffer, bmepsoeP->flateInBuffer, FLATE_IN_SIZE,
+				  bmepsoeP->flateOutBuffer, FLATE_OUT_SIZE);
+
+		for (int row=0; row<bmpHeight; row++)
+		{
+			for (int column=0; column<bmpWidth; column++)
+			{
+				color = *((int *)copyfrom);
+
+				oe_byte_add(bmepsoeP->oeP, (unsigned char)((color & 0xf800) >> 8));
+				oe_byte_add(bmepsoeP->oeP, (unsigned char)((color & 0x7e0) >> 3));
+				oe_byte_add(bmepsoeP->oeP, (unsigned char)((color & 0x1f) << 3));
+
+				copyfrom += 4;
+			}
+			placeholder += stride;
+			copyfrom = placeholder;
+		}
+
+		oe_byte_flush(bmepsoeP->oeP);
+
+		free(bmepsoeP->rleBuffer);
+		free(bmepsoeP->flateInBuffer);
+		free(bmepsoeP->flateOutBuffer);
+		free(bmepsoeP);
+
+		fprintf(psFile, "\n~>\n");
+		fprintf(psFile, "grestore\n" );
+		fprintf(psFile, "showpage\n" );
+		fprintf(psFile, "%%%%Trailer\n" );
+
+		fclose(psFile);  //Close file.
+
+		UGL_FREE(pDib->pImage);
+		UGL_FREE(pDib);
+
+		retVal = 0;
+	}
+	else
+	{
+		DataLog( log_level_cgui_error ) << "Off screen bitmap error. Could not open file:'" << filename << "'" << endmsg;
+	}
+
+	// Shouldn't need if running on a taos machine.
+	uglCursorOn(_uglDisplay);  //Reactivate mouse.
+
+	return retVal;
 }
 
 CGUIFontId CGUIDisplay::createFont(const char * familyName, unsigned char pixelSize)

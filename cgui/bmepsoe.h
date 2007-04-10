@@ -1,4 +1,4 @@
-/* 
+/*
  * libbmeps - Bitmap to EPS conversion library
  * Copyright (C) 2000 - Dirk Krause
  *
@@ -68,8 +68,8 @@ extern "C" {
 #endif
 
 void oe_init(Output_Encoder *o, FILE *out, int mode, int rate, int *buf,
-  Bytef *flib, size_t flis, Bytef *flob, size_t flos
-);
+  Bytef *flib, size_t flis, Bytef *flob, size_t flos);
+
 void oe_byte_add(Output_Encoder *o, int b);
 void oe_byte_flush(Output_Encoder *o);
 void oe_bit_add(Output_Encoder *o, int b);

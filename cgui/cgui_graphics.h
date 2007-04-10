@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.19 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
  * $Log: cgui_graphics.h $
+ * Revision 1.14  2007/04/05 18:39:38Z  wms10235
+ * IT2354 - Added a preliminary version of the off-screen flush
  * Revision 1.13  2006/05/15 21:51:42Z  rm10919
  * Fix memory bug in convertToStringChar and handle trima palette.
  * Revision 1.12  2005/04/26 23:16:47Z  rm10919
@@ -132,8 +134,11 @@ public:
    //
    void flush(void);
 
-	// The save function is used to save the screen to an off-screen bitmap
-	void offscreenFlush(const char * filename);
+	// These off screen function are used to save the screen to an off-screen bitmap
+	// then write the bitmap out to a file in either bitmap or postscript format.
+	// Return 0 on success and -1 on failure.
+	int offscreenBitmapFlush(const char * filename);
+	int offscreenPostscriptFlush(const char * filename);
 
    //
    // Font management

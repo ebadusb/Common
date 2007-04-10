@@ -3,6 +3,8 @@
 # Makefile - makefile for common GUI library
 #
 # $Log: makefile.vx $
+# Revision 1.16  2007/04/05 20:59:09Z  wms10235
+# IT2354 - Adding bitmap to postscript conversion library to common GUI
 # Revision 1.15  2007/03/14 21:09:40Z  jmedusb
 # Added dependancy for button presses and check for reserved messages.
 # Revision 1.14  2006/11/28 20:43:39Z  pn02526
@@ -77,7 +79,7 @@ clean_generated_files:
 # to be compiled for the library
 #
 LIB_C_FILES   =
-LIB_CXX_FILES = $(RMSG_GEN_C_FILES) bmepsoe.cpp cgui_adjustor.cpp cgui_bitmap_info.cpp cgui_bitmap.cpp cgui_button.cpp \
+LIB_CXX_FILES = $(RMSG_GEN_C_FILES) cgui_adjustor.cpp cgui_bitmap_info.cpp cgui_bitmap.cpp cgui_button.cpp \
                 cgui_data_item.cpp cgui_data_item_file_reader.cpp cgui_frame.cpp \
                 cgui_graphics.cpp  cgui_list_box.cpp cgui_pool_allocator.cpp \
                 cgui_rectangle.cpp cgui_string_info.cpp cgui_string_data.cpp cgui_string_data_container.cpp \

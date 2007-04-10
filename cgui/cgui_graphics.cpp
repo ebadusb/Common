@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.27 2007/05/10 16:35:46Z jl11312 Exp rm10919 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.24  2007/04/09 21:12:31Z  wms10235
+ * IT2354 - Added postscript save capability
  * Revision 1.23  2007/04/05 18:39:38Z  wms10235
  * IT2354 - Added a preliminary version of the off-screen flush
  * Revision 1.22  2006/05/15 21:51:42Z  rm10919
@@ -191,6 +193,7 @@ void CGUIDisplay::flush(void)
    drawRootWindow();
 }
 
+/*
 int CGUIDisplay::offscreenBitmapFlush(const char * filename)
 {
 	int retVal = -1;
@@ -354,9 +357,53 @@ int CGUIDisplay::offscreenBitmapFlush(const char * filename)
 
 	return retVal;
 }
+*/
 
-int CGUIDisplay::offscreenPostscriptFlush(const char * filename)
+UGL_DIB * CGUIDisplay::offscreenFlush(void)
 {
+	//
+	//  Put current screen image information
+	//  into a dib structure. (Device Independent Bitmap)
+	//
+	UGL_DIB *pDib     = (UGL_DIB *)UGL_MALLOC(sizeof(UGL_DIB));
+	pDib->width       = _width;
+	pDib->height      = _height;
+	pDib->stride      = _width;
+	pDib->colorFormat = UGL_DEVICE_COLOR_32; //ARGB8888;//DEVICE_COLOR_32;
+	pDib->imageFormat = UGL_DIRECT;
+	pDib->clutSize    = UGL_NULL;
+	pDib->pClut       = NULL;
+	pDib->pImage      = UGL_MALLOC( pDib->width * pDib->height * 4 );
+
+	if( drawBitMap == UGL_NULL_ID )
+	{
+		// Create an offscreen bitmap and graphics context
+		uglOffscreenGc = uglGcCreate( _uglDisplay );
+		uglGcCopy( _uglGc, uglOffscreenGc );
+		drawBitMap = uglBitmapCreate(_uglDisplay, pDib, UGL_DIB_INIT_DATA, 0, UGL_NULL);
+	}
+
+	// Enable the offscreen bitmap
+	offscreenBitMap = drawBitMap;
+
+	// Draw the screen
+	list<CGUIWindow *>::iterator windowIter = _windowList.begin();
+	while (windowIter != _windowList.end())
+	{
+		(*windowIter)->draw( uglOffscreenGc );
+		++windowIter;
+	}
+
+	// Disable the offscreen bitmap
+	offscreenBitMap = UGL_NULL_ID;
+
+	// Read the offscreen bitmap into a DIB
+	uglBitmapRead(_uglDisplay, drawBitMap, 0, 0, _width-1, _height-1, pDib, 0, 0);
+
+	return pDib;
+}
+
+/*
 	int retVal = -1;
 
 	uglCursorOff(_uglDisplay);   // Remove mouse from display for snapshot.
@@ -566,7 +613,7 @@ int CGUIDisplay::offscreenPostscriptFlush(const char * filename)
 
 	return retVal;
 }
-
+*/
 CGUIFontId CGUIDisplay::createFont(const char * familyName, unsigned char pixelSize)
 {
    static const char fontStringTemplate[] = "familyName=%s; pixelSize=%d";

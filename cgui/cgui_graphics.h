@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.19 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
  * $Log: cgui_graphics.h $
+ * Revision 1.16  2007/04/10 15:12:02Z  wms10235
+ * IT2354 - Removing postscript generation
  * Revision 1.15  2007/04/09 21:12:31Z  wms10235
  * IT2354 - Added postscript save capability
  * Revision 1.14  2007/04/05 18:39:38Z  wms10235
@@ -139,7 +141,7 @@ public:
 	// The off screen flush function is used to save the screen to an off-screen bitmap
 	// then allocate a device independent bitmap to store the resulting screen. Note
 	// That the caller is responsible for freeing the memory allocated.
-	UGL_DIB * CGUIDisplay::offscreenFlush(void);
+	UGL_DIB * offscreenFlush(void);
 
    //
    // Font management

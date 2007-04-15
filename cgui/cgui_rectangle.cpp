@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_rectangle.cpp 1.3 2005/04/15 21:35:18Z cf10242 Exp jl11312 $
  * $Log: cgui_rectangle.cpp $
+ * Revision 1.3  2005/04/15 21:35:18Z  cf10242
+ * override region method for rectangle
  * Revision 1.2  2004/09/28 19:47:27Z  rm10919
  * Missed naming changes to CGUI.
  * Revision 1.1  2004/09/20 18:18:06Z  rm10919

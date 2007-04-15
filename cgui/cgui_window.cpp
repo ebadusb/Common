@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.21 2010/04/02 16:26:25Z agauusb Exp agauusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.16  2007/04/05 18:39:38Z  wms10235
+ * IT2354 - Added a preliminary version of the off-screen flush
  * Revision 1.15  2006/06/17 17:42:32Z  cf10242
  * IT 52: insure button release event is sent to window even if disabled
  * Revision 1.14  2005/11/22 00:36:01Z  rm10919
@@ -81,24 +83,34 @@ void CGUIWindow::initializeData(void)
 
 CGUIWindow::~CGUIWindow()
 {
-    UGL_STATUS status;
-    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+	if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
+      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
 
-	status = winCbRemove(_id, CGUIWindow::uglDrawCallback);
-    if(status != UGL_STATUS_OK)
-        DataLog( log_level_cgui_info ) << "winCbRemove failed = " << status << endmsg;
+	winCbRemove(_id, CGUIWindow::uglDrawCallback);
 
-    // NULL out the window
-    winDataSet(_id, UGL_NULL, UGL_NULL, 0);
-    if(winPointerGrabGet(NULL) == _id)
-    {
-        status = winPointerUngrab (_id);
-        if(status != UGL_STATUS_OK)
-            DataLog( log_level_cgui_info ) << "winPointerUngrab failed = " << status << endmsg;
-    }
+   // NULL out the window
+   winDataSet(_id, UGL_NULL, UGL_NULL, 0);
+   if (winPointerGrabGet(NULL) == _id)
+   {
+		winPointerUngrab (_id);
+   }
 
    detach();
+
+	// Clear owner for any window objects still assigned to this window
+	//
+   list<CGUIWindowObject *>::iterator objIter;
+   for (objIter = _clippedObjects.begin(); objIter != _clippedObjects.end(); ++objIter)
+   {
+      CGUIWindowObject * obj = *objIter;
+      if ( obj ) obj->_owner = NULL;
+   }
+
+   for (objIter = _nonClippedObjects.begin(); objIter != _nonClippedObjects.end(); ++objIter)
+   {
+      CGUIWindowObject * obj = *objIter;
+      if ( obj ) obj->_owner = NULL;
+   }
 }
 
 void CGUIWindow::setPosition(short x, short y)
@@ -295,32 +307,31 @@ void CGUIWindow::addObjectToBack(CGUIWindowObject * obj)
 
 void CGUIWindow::deleteObject(CGUIWindowObject * obj)
 {
-    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
-	if(obj)
-	{
-		if (obj->_owner == this)
-		{
-			//
-			// Can't check clipSiblings method since deleteObject is
-			// called from CGUIWindowObject destructor, and clipSiblings()
-			// is defined only by classes derived from CGUIWindowObject.  So
-			// here we just attempt to remove the object from both lists.
-			//
-			_clippedObjects.remove(obj);
-			_nonClippedObjects.remove(obj);
+   if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
+      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
 
-			invalidateObjectRegion(obj);
-			obj->_owner = NULL;
-		}
+	if ( obj &&
+		  obj->_owner == this )
+	{
+		//
+		// Can't check clipSiblings method since deleteObject is
+		// called from CGUIWindowObject destructor, and clipSiblings()
+		// is defined only by classes derived from CGUIWindowObject.  So
+		// here we just attempt to remove the object from both lists.
+		//
+		_clippedObjects.remove(obj);
+		_nonClippedObjects.remove(obj);
+
+		invalidateObjectRegion(obj);
+		obj->_owner = NULL;
 	}
 }
 
 void CGUIWindow::moveObjectToFront(CGUIWindowObject * obj)
 {
-    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
-   //
+   if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
+      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+
    // Order is important only for clipped objects
    //
 	if(obj)
@@ -337,9 +348,9 @@ void CGUIWindow::moveObjectToFront(CGUIWindowObject * obj)
 
 void CGUIWindow::moveObjectToBack(CGUIWindowObject * obj)
 {
-    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
-   //
+   if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
+      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+
    // Order is important only for clipped objects
    //
 	if(obj)
@@ -357,9 +368,9 @@ void CGUIWindow::moveObjectToBack(CGUIWindowObject * obj)
 
 void CGUIWindow::setObjectRegion(CGUIWindowObject * obj, const CGUIRegion & newRegion)
 {
-    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
-   //
+   if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
+      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+
    // Since we may be resizing/moving the object, we need to invalidate
    // both the old object position and the new position.
    //
@@ -374,11 +385,11 @@ void CGUIWindow::setObjectRegion(CGUIWindowObject * obj, const CGUIRegion & newR
 
 void CGUIWindow::setObjectVisible(CGUIWindowObject * obj, bool newVisible)
 {
-    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+   if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
+      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+
    if (obj && (obj->_visible != newVisible) )
    {
-      //
       // Force _visible to true for call to invalidateObjectRegion to insure
       // we really invalidate the region.
       //
@@ -392,8 +403,9 @@ void CGUIWindow::setObjectVisible(CGUIWindowObject * obj, bool newVisible)
 
 void CGUIWindow::invalidateObjectRegion(CGUIWindowObject * obj)
 {
-    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+   if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
+      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+
    if (_id != UGL_NULL_ID && obj &&
        obj->isVisible())
    {

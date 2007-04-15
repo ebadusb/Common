@@ -1,8 +1,9 @@
 /*
- *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.29 2006/11/13 20:21:14Z jd11007 Exp jl11312 $
  * $Log: cgui_text.cpp $
+ * Revision 1.29  2006/11/13 20:21:14Z  jd11007
+ * IT 65 - Memory leak fixes.
  * Revision 1.28  2006/08/21 18:17:18Z  jl11312
  * - added code to trap displayed string IDs (SIMNT build only)
  * Revision 1.27  2006/07/12 23:36:07Z  rm10919
@@ -371,9 +372,7 @@ void CGUIText::getSize(CGUIRegion & region, int startIndex, int length)
 
       if (_stylingRecord.attributes & BOLD)
       {
-//         option = AGFA_ITYPE_BOLD_OFF;
          option = 0;
-
          uglFontInfo(_stylingRecord.fontId, UGL_FONT_WEIGHT_SET, &option);
       }
       uglTextSizeGetW(_stylingRecord.fontId, &width, &height, uglLength, &_textString[uglStartIndex]);

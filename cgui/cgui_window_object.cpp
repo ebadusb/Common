@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window_object.cpp 1.5 2005/03/02 01:37:51Z cf10242 Exp jl11312 $
  * $Log: cgui_window_object.cpp $
+ * Revision 1.5  2005/03/02 01:37:51Z  cf10242
+ * deleting objects that are already deleted causing issues on TAOS
  * Revision 1.4  2005/02/21 17:17:13Z  cf10242
  * IT 133 - delete all allocated memory to avoid unrecovered memory
  * Revision 1.3  2005/01/03 20:40:56Z  cf10242
@@ -43,7 +45,7 @@ CGUIWindowObject::~CGUIWindowObject()
 {
    if (_owner)
    {
-		//_owner->deleteObject(this);
+		_owner->deleteObject(this);
       _owner = NULL;
    }
 }
@@ -68,7 +70,8 @@ void CGUIWindowObject::setRegion(const CGUIRegion & newRegion)
       if (_owner)
       {
          _owner->setObjectRegion(this, newRegion);
-      } else
+      }
+      else
       {
          _region = newRegion;
       }
@@ -82,7 +85,8 @@ void CGUIWindowObject::setVisible(bool newVisible)
       if (_owner)
       {
          _owner->setObjectVisible(this, newVisible);
-      } else
+      }
+      else
       {
          _visible = newVisible;
       }

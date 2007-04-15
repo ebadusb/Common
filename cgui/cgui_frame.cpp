@@ -1,12 +1,11 @@
 /*
-*	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
-*
-*  Implement the class to create an empty non-filled frame.
-*
-* $Header $
-* $Log $
-*
-*/
+ * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_frame.cpp 1.6 2007/11/15 21:01:51Z rm10919 Exp rm10919 $
+ *
+ * Implement the class to create an empty non-filled frame.
+ *
+ * $Log: cgui_frame.cpp $
+ *
+ */
 #include "cgui_frame.h"
 
 

@@ -1,10 +1,12 @@
 /*
-* $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info.h 1.8 2007/03/28 15:18:28Z wms10235 Exp jl11312 $
+* $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info.h 1.9 2007/04/14 18:04:41Z jl11312 Exp rm10919 $
 * This file defines the class that defines the bitmaps compiled into the application.
 * Each bitmap will have automatically generated an object of this type via the
 * build_bitmap_info file.
 *
 * $Log: cgui_bitmap_info.h $
+* Revision 1.8  2007/03/28 15:18:28Z  wms10235
+* IT2888 - Correcting GUI memory leak
 * Revision 1.7  2006/05/15 21:47:36Z  rm10919
 * Update to handle trima bitmaps.
 * Revision 1.6  2005/07/07 19:33:12Z  pn02526
@@ -24,8 +26,6 @@
 #ifndef _CGUIBITMAPINFO_INCLUDE
 #define _CGUIBITMAPINFO_INCLUDE
 
-#include <stdio.h>
-
 #include <ugl/ugl.h>
 #include <ugl/uglwin.h>
 #include <ugl/uglinput.h>
@@ -35,67 +35,56 @@
 class CGUIBitmapInfo
 {
 public:
+	typedef UGL_DDB_ID	CGUIBitmapId;  // create a CGUI type for the UGL ID associated with a bitmap
 
-   enum CGUIBitmapState{ UNLOADED, LOADED };
+	// CONSTRUCTOR - accepts a pointer to the input bitmap.  Expects that the data is in
+	// compressed format.
+	CGUIBitmapInfo (const unsigned char bmp_data[],
+						 unsigned long size,
+						 unsigned short width,
+						 unsigned short height);
 
-   typedef UGL_DDB_ID   CGUIBitmapId;  // create a CGUI type for the UGL ID associated with a bitmap
+	// CONSTRUCTOR - accepts a pointer to the input bitmap.  Expects that the data is in
+	// uncompressed format.
+	CGUIBitmapInfo (const unsigned short bmp_data[],
+						 unsigned long size,
+						 unsigned short width,
+						 unsigned short height);
 
-   // CONSTRUCTOR - accepts a pointer to the input bitmap.  Expects that the data is in
-   // compressed format.
-   CGUIBitmapInfo (const unsigned char bmp_data[],
-                   unsigned long size,
-                   unsigned short width,
-                   unsigned short height);
+	virtual ~CGUIBitmapInfo();
 
-   // CONSTRUCTOR - accepts a pointer to the input bitmap.  Expects that the data is in
-   // uncompressed format.
-   CGUIBitmapInfo (const unsigned short bmp_data[],
-                   unsigned long size,
-                   unsigned short width,
-                   unsigned short height);
+	// createDisplay - decompress the bitmap loaded at construction and display the image
+	virtual void createDisplay (CGUIDisplay & display);
 
-   // CONSTRUCTOR - accepts a file path and name as input.  This constructor will open and
-   // read in the file to _myBitmap, set _myHeight and _myWidth as well.  THIS IS A FUTURE
-   // CAPABILITY AND IS NOT YET AVAILABLE!!!
-   CGUIBitmapInfo (char * fileName);
+	// removeDisplay - remove the image from the display
+	virtual void removeDisplay(CGUIDisplay & display);
 
-   // DESTRUCTOR - doesn't need to do anything at this point
-   virtual ~CGUIBitmapInfo();
+	// getRawData -  return the pointer to the raw compressed data
+	inline unsigned char * getRawData (void){ return _myBitmap; }
 
+	// getSize - return the width and height of the bitmap
+	inline void getSize(unsigned short & width, unsigned short & height) { width = _myWidth;height = _myHeight; }
+	inline int getWidth(void) { return _myWidth; }
+	inline int getHeight(void) { return _myHeight; }
+
+	// getId - return my CGUIBitmapId
+	inline CGUIBitmapId getId() { return _myId; }
+
+private:
+	// Declare copy constructor and assigned operator private to avoid use
+	//
 	CGUIBitmapInfo(const CGUIBitmapInfo& rhs);
-
 	CGUIBitmapInfo& operator=(const CGUIBitmapInfo& rhs);
-
-   // getRawData -  return the pointer to the raw compressed data
-   unsigned char * getRawData (void){ return _myBitmap; };
-
-   // getSize - return the width and height of the bitmap
-   void getSize(unsigned short & width, unsigned short & height){ width = _myWidth;height = _myHeight;};
-
-   int getWidth(void) { return _myWidth;}
-   int getHeight(void) { return _myHeight;}
-
-   // createDisplay - decompress the bitmap loaded at construction and display the image
-   virtual void createDisplay (CGUIDisplay & display);
-
-   // removeDisplay - remove the image from the display
-   virtual void removeDisplay(CGUIDisplay & display);
-
-   // getId - return my CGUIBitmapId
-   CGUIBitmapId getId()   { return _myId;};
-
-	unsigned short getLoadCount(void) const { return _loadCount; }
 
 private:
 	CGUIBitmapInfo(void);
 
-   unsigned char * _myBitmap;
-   unsigned long   _mySize;
-   unsigned short  _myHeight,_myWidth;
-   CGUIBitmapState _loadState;
-   unsigned short  _loadCount;
-   CGUIBitmapId    _myId;
-   bool           _compressed;
+	unsigned char *	_myBitmap;
+	unsigned long  	_mySize;
+	unsigned short 	_myHeight,_myWidth;
+	unsigned short 	_loadCount;
+	CGUIBitmapId		_myId;
+	bool  				_compressed;
 };
-#endif
 
+#endif /* ifndef _CGUIBITMAPINFO_INCLUDE */

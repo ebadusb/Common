@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.h 1.12 2007/04/20 14:58:26Z wms10235 Exp rm10919 $
  * $Log: cgui_window.h $
+ * Revision 1.10  2006/06/17 17:42:32Z  cf10242
+ * IT 52: insure button release event is sent to window even if disabled
  * Revision 1.9  2005/08/11 16:26:13Z  cf10242
  * TAOS IT 674 - ungrab when deleting to prevent page fault
  * Revision 1.8  2005/04/12 18:13:40Z  cf10242
@@ -78,9 +80,11 @@ public:
    void setWindowVisibility(bool newVisible);
    bool getWindowVisibility(void){ return winVisibleGet(_id);}
 
+	void invalidateWindow(void);
+	void bringToTop(void);
+
    virtual void setDisabled(bool newDisabled) { _disabled = newDisabled;}
    virtual bool disabled(void);
-
 
    virtual void draw(void);
    virtual void draw(UGL_GC_ID gc);
@@ -106,7 +110,7 @@ private:
 	CGUIWindow operator=(CGUIWindow &obj);
    void initializeData(void);
    void addObject(CGUIWindowObject * obj);
-   void addChildWindow(CGUIWindow * child); 
+   void addChildWindow(CGUIWindow * child);
    void deleteChildWindow(CGUIWindow * child);
    void preDrawObjects(void);
    void drawObjects(UGL_GC_ID gc);
@@ -134,9 +138,9 @@ private:
    // bitmaps).  The list is sorted by z-order, with the first element at the
    // top of the z-order.  These objects must be drawn in order, with clipping
    // applied to insure overlapping objects are drawn correctly.
-   // 
+   //
    // The second list contains window objects for which clipSiblings() is false
-   // (e.g. text).  These objects are drawn after all objects in the 
+   // (e.g. text).  These objects are drawn after all objects in the
    // clippedObjects list are drawn, and so effectively stay at the top of
    // the z-order.
    //

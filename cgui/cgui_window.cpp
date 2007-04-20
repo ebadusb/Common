@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.21 2010/04/02 16:26:25Z agauusb Exp agauusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.18  2007/04/18 16:28:30Z  wms10235
+ * IT2354 - Added screen/display functions for reports
  * Revision 1.17  2007/04/14 18:05:19Z  jl11312
  * - handle deletion of objects referenced by an active screen (common IT 81)
  * Revision 1.16  2007/04/05 18:39:38Z  wms10235
@@ -459,14 +461,6 @@ void CGUIWindow::invalidateWindow(void)
 		DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
 
 	winRectInvalidate( _id, NULL );
-}
-
-void CGUIWindow::bringToTop(void)
-{
-	if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-		DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
-
-	winRaise( _id );
 }
 
 bool CGUIWindow::disabled(void)

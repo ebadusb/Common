@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.h 1.12 2007/04/20 14:58:26Z wms10235 Exp rm10919 $
  * $Log: cgui_window.h $
+ * Revision 1.11  2007/04/18 16:28:30Z  wms10235
+ * IT2354 - Added screen/display functions for reports
  * Revision 1.10  2006/06/17 17:42:32Z  cf10242
  * IT 52: insure button release event is sent to window even if disabled
  * Revision 1.9  2005/08/11 16:26:13Z  cf10242
@@ -81,7 +83,6 @@ public:
    bool getWindowVisibility(void){ return winVisibleGet(_id);}
 
 	void invalidateWindow(void);
-	void bringToTop(void);
 
    virtual void setDisabled(bool newDisabled) { _disabled = newDisabled;}
    virtual bool disabled(void);

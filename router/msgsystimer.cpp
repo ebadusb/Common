@@ -1,7 +1,10 @@
 /*
  * Copyright (c) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * TITLE:      msgsystimer.cpp, Message System Timer 
+ * TITLE:      msgsystimer.cpp, Message System Timer
+ *
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/msgsystimer.cpp 1.30 2007/04/22 17:29:09Z jl11312 Exp jsylusb $
+ * $Log: msgsystimer.cpp $
  *
  */
 
@@ -24,13 +27,18 @@ MsgSysTimer *MsgSysTimer::_TheTimer=0;
 int MsgSysTimer::_ReadyToReceiveTimeMsg=0;
 int MilliSecPerTick = 50;
 
-int MsgSysTimer::MsgSysTimer_main()
+int MsgSysTimer::MsgSysTimer_main(void)
+{
+	return MsgSysTimer_main(DefaultQSize);
+}
+
+int MsgSysTimer::MsgSysTimer_main(unsigned int qSize)
 {
    if ( _TheTimer )
       return !OK;
 
    MsgSysTimer msgSysTimer;
-   msgSysTimer.init();
+   msgSysTimer.init(qSize);
 
    msgSysTimer.maintainTimers();
 
@@ -56,7 +64,7 @@ int MsgSysTimer::taskDeleteHook( WIND_TCB *pTcb )
 {
    if ( _TheTimerTid == pTcb )
    {
-      delete _TheTimer; 
+      delete _TheTimer;
       _TheTimer = 0;
       _TheTimerTid = 0;
    }
@@ -65,13 +73,13 @@ int MsgSysTimer::taskDeleteHook( WIND_TCB *pTcb )
    {
       _TheTimer->deregisterTimersOfTask( (unsigned long) pTcb );
    }
-   
+
    return 1;
 }
 
-void MsgSysTimer::datalogErrorHandler( const char * file, int line, 
-                                       DataLog_ErrorType error, 
-                                       const char * msg, 
+void MsgSysTimer::datalogErrorHandler( const char * file, int line,
+                                       DataLog_ErrorType error,
+                                       const char * msg,
                                        int continuable )
 {
    if ( !continuable )
@@ -81,7 +89,7 @@ void MsgSysTimer::datalogErrorHandler( const char * file, int line,
    cerr << "Data log error - " << error << " : " << msg << endl;
 }
 
-MsgSysTimer::MsgSysTimer() 
+MsgSysTimer::MsgSysTimer()
  : _Ticks( 0 ),
    _TimerMsgMap(),
    _TimerQueue(),
@@ -103,13 +111,13 @@ MsgSysTimer::~MsgSysTimer()
 }
 
 
-bool MsgSysTimer::init()
+bool MsgSysTimer::init(unsigned int qSize)
 {
    if ( _TheTimer )
       return false;
 
    //
-   // Add the task delete hooks to catch all task deletion and 
+   // Add the task delete hooks to catch all task deletion and
    //  keep the timer lists up to date ...
    taskDeleteHookAdd( (FUNCPTR) &MsgSysTimer::taskDeleteHook );
 
@@ -119,11 +127,11 @@ bool MsgSysTimer::init()
 
    //
    // Set up my queue ...
-   struct mq_attr attr;                                      // message queue attributes 
-   attr.mq_maxmsg = 15; 
-   attr.mq_msgsize = sizeof( MessagePacket );                // set message size 
+   struct mq_attr attr;                        // message queue attributes
+   attr.mq_maxmsg = qSize;
+   attr.mq_msgsize = sizeof( MessagePacket );  // set message size
    attr.mq_flags = 0;
-   
+
    //
    // Open the message queue for read-only ...
    unsigned int retries=0;
@@ -132,7 +140,7 @@ bool MsgSysTimer::init()
       _TimerMQ = mq_open( "timertask", O_RDONLY | O_CREAT, 0666, &attr);
       nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
    }
-   while (    _TimerMQ == (mqd_t)ERROR 
+   while (    _TimerMQ == (mqd_t)ERROR
            && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
 
    if ( _TimerMQ == (mqd_t)ERROR )
@@ -179,8 +187,8 @@ void MsgSysTimer::maintainTimers()
       //
       // Read the queue entry ...
       unsigned int retries=0;
-      while (    ( size = mq_receive( _TimerMQ, &mp, sizeof( MessagePacket ), 0 ) ) == ERROR 
-              && ++retries < MessageSystemConstant::MAX_NUM_RETRIES ) 
+      while (    ( size = mq_receive( _TimerMQ, &mp, sizeof( MessagePacket ), 0 ) ) == ERROR
+              && ++retries < MessageSystemConstant::MAX_NUM_RETRIES )
          nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
       if ( size == ERROR )
       {
@@ -196,11 +204,11 @@ void MsgSysTimer::maintainTimers()
          // Error ...
          unsigned long crc = mp.crc();
          mp.updateCRC();
-         DataLog( log_level_critical ) << "Maintain timers - message CRC validation failed for MsgId=" << hex << mp.msgData().msgId() 
+         DataLog( log_level_critical ) << "Maintain timers - message CRC validation failed for MsgId=" << hex << mp.msgData().msgId()
                               << ", CRC=" << crc << " and should be " << mp.crc() << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "CRC check failed" );
          return;
-      }  
+      }
 
       processMessage( mp );
 
@@ -213,7 +221,7 @@ void MsgSysTimer::maintainTimers()
          _MessageHighWaterMark = _MessageHighWaterMarkPerPeriod = qattributes.mq_curmsgs;
          DataLog( log_level_message_system_info ) << "mqueue max: " << _MessageHighWaterMark << "/" << qattributes.mq_maxmsg << endmsg;
       }
-      else 
+      else
       {
          if ( qattributes.mq_curmsgs > _MessageHighWaterMarkPerPeriod )
             _MessageHighWaterMarkPerPeriod = qattributes.mq_curmsgs;
@@ -238,10 +246,10 @@ void MsgSysTimer::dump( DataLog_Stream &outs )
    outs << "??????????????????????? MsgSysTimer DUMP ??????????????????????????" << endmsg;
    // mq_attr qattributes;
    // if ( _TimerMQ != (mqd_t)0 ) mq_getattr( _TimerMQ, &qattributes );
-   outs << " MsgSysTimerQueue: " << hex << (long)_TimerMQ 
+   outs << " MsgSysTimerQueue: " << hex << (long)_TimerMQ
         // << "  flags " << qattributes.mq_flags
         // << "  size " << qattributes.mq_curmsgs
-        // << "  maxsize " << qattributes.mq_maxmsg 
+        // << "  maxsize " << qattributes.mq_maxmsg
         << endmsg;
 
    outs << "   Task Queue Map: size " << dec << _TaskQueueMap.size() << endmsg;
@@ -254,10 +262,10 @@ void MsgSysTimer::dump( DataLog_Stream &outs )
       outs << "    Tid " << hex << (*tqiter).first << " " << hex << (long)(*tqiter).second << " " << (bool)_TaskQueueActiveMap[ (*tqiter).first ]
            // << "  flags " << qattributes.mq_flags
            // << "  size " << qattributes.mq_curmsgs
-           // << "  maxsize " << qattributes.mq_maxmsg 
+           // << "  maxsize " << qattributes.mq_maxmsg
            << endmsg;
    }
-   outs << endmsg 
+   outs << endmsg
         << " Ticks: " << dec << _Ticks << endmsg;
    outs << " StopLoop: " << _StopLoop << endmsg;
 
@@ -267,7 +275,7 @@ void MsgSysTimer::dump( DataLog_Stream &outs )
          miter != _TimerMsgMap.end() ;
          ++miter )
    {
-      outs << "  Mid " << hex << (*miter).first << " interval: " << dec << ((*miter).second)->_Interval << "msecs" 
+      outs << "  Mid " << hex << (*miter).first << " interval: " << dec << ((*miter).second)->_Interval << "msecs"
                        << hex << " message_pckt: " << ((*miter).second)->_TimerMessage << dec << endmsg;
       if ( ((*miter).second)->_TimerMessage )
          ((*miter).second)->_TimerMessage->dump( outs );
@@ -315,8 +323,8 @@ void MsgSysTimer::processMessage( const MessagePacket &mp )
          _TaskQueueActiveMap[ mp.msgData().taskId() ] = false;
       break;
    case MessageData::TIME_UPDATE:
-      memmove( (char *) &ticks , 
-               (char *) mp.msgData().msg(), 
+      memmove( (char *) &ticks ,
+               (char *) mp.msgData().msg(),
                sizeof( ticks ) );
       updateTicks( ticks );
       break;
@@ -325,8 +333,8 @@ void MsgSysTimer::processMessage( const MessagePacket &mp )
    case MessageData::DISTRIBUTE_GLOBALLY:
    case MessageData::SPOOFED_LOCALLY:
    case MessageData::SPOOFED_GLOBALLY:
-      memmove( (char *) &interval , 
-               (char *) mp.msgData().msg(), 
+      memmove( (char *) &interval ,
+               (char *) mp.msgData().msg(),
                sizeof( unsigned long ) );
       if ( interval == 0 )
          deregisterTimer( mp.msgData().msgId() );
@@ -359,11 +367,11 @@ void MsgSysTimer::registerTask( unsigned long tId, const char *qName )
    if ( _TaskQueueMap.find( tId ) == _TaskQueueMap.end() )
    {
       //
-      // The task is not registered, 
+      // The task is not registered,
       //  so try to open the given queue ...
       mqd_t tQueue = (mqd_t)ERROR;
       unsigned int retries=0;
-      while ( ( tQueue = mq_open( qName, O_RDWR ) ) == (mqd_t)ERROR 
+      while ( ( tQueue = mq_open( qName, O_RDWR ) ) == (mqd_t)ERROR
               && ++retries < MessageSystemConstant::MAX_NUM_RETRIES ) nanosleep( &MessageSystemConstant::RETRY_DELAY, 0 );
 
       //
@@ -385,7 +393,7 @@ void MsgSysTimer::registerTask( unsigned long tId, const char *qName )
          //  before connecting to the router.
          //
          // Error ...
-         DataLog( log_level_critical ) << "Register task=" << hex << tId << "(" << taskName( tId ) << ") - message queue open failed" 
+         DataLog( log_level_critical ) << "Register task=" << hex << tId << "(" << taskName( tId ) << ") - message queue open failed"
                               << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "mq_open failed" );
       }
@@ -402,9 +410,9 @@ void MsgSysTimer::deregisterTask( unsigned long tId )
    if ( titer != _TaskQueueMap.end() )
    {
       //
-      // If found ...  
+      // If found ...
       //    remove the task and close the queue
-      // 
+      //
       mq_close( (mqd_t)(*titer).second );
       _TaskQueueMap.erase( titer );
       _TaskQueueActiveMap.erase( tId );
@@ -418,7 +426,7 @@ void MsgSysTimer::registerTimer( const MessagePacket &mp, const unsigned long in
    deregisterTimer( mp.msgData().msgId() );
 
    //
-   // Create a new Map Entry 
+   // Create a new Map Entry
    MapEntry *mePtr = new MapEntry;
    MessagePacket *mpPtr = new MessagePacket( mp );
    mePtr->_TimerMessage = mpPtr;
@@ -462,7 +470,7 @@ void MsgSysTimer::deregisterTimer( const unsigned long mId )
    {
       //
       // Set the map entry object to have an interval
-      //  of zero, which will disable the map and queue entry 
+      //  of zero, which will disable the map and queue entry
       MapEntry *meOldPtr = (*miter).second;
       meOldPtr->_Interval = 0;
       meOldPtr->_IntervalInTicks = 0;
@@ -481,12 +489,12 @@ void MsgSysTimer::deregisterTimersOfTask( const unsigned long tId )
    //  which belong the the given tId ...
    MapEntry *mePtr;
    map< unsigned long, MapEntry* >::iterator miter;
-   for ( miter = _TimerMsgMap.begin() ; 
-         miter != _TimerMsgMap.end() ; 
+   for ( miter = _TimerMsgMap.begin() ;
+         miter != _TimerMsgMap.end() ;
          ++miter )
    {
       mePtr = (*miter).second;
-      if (    mePtr->_TimerMessage 
+      if (    mePtr->_TimerMessage
            && mePtr->_TimerMessage->msgData().taskId() == tId )
       {
          //
@@ -501,7 +509,7 @@ void MsgSysTimer::deregisterTimersOfTask( const unsigned long tId )
 
 void MsgSysTimer::checkTimers()
 {
-   // 
+   //
    // Check the top of the priority queue for entries which
    //  have expired ...
    QueueEntry qe;
@@ -534,8 +542,8 @@ void MsgSysTimer::checkTimers()
          {
             //
             // Error ...
-            DataLog( log_level_critical ) << "Sending message=" << hex << mpPtr->msgData().msgId() 
-                                 << "- Task Id=" << mpPtr->msgData().taskId() 
+            DataLog( log_level_critical ) << "Sending message=" << hex << mpPtr->msgData().msgId()
+                                 << "- Task Id=" << mpPtr->msgData().taskId()
                                  << "(" << taskName( mpPtr->msgData().taskId() ) << ")"
                                  << " not found in task list" << endmsg;
             _FATAL_ERROR( __FILE__, __LINE__, "Task lookup failed" );
@@ -557,10 +565,10 @@ void MsgSysTimer::checkTimers()
                // The task's queue is full!
                //
                // Error ...
-               DataLog( log_level_critical ) << "Sending message=" << hex << mpPtr->msgData().msgId() 
-                                    << "- Task Id=" << mpPtr->msgData().taskId() 
+               DataLog( log_level_critical ) << "Sending message=" << hex << mpPtr->msgData().msgId()
+                                    << "- Task Id=" << mpPtr->msgData().taskId()
                                     << "(" << taskName( mpPtr->msgData().taskId() ) << ")"
-                                    << " queue full (" << dec << qattributes.mq_curmsgs << " messages)" 
+                                    << " queue full (" << dec << qattributes.mq_curmsgs << " messages)"
                                     << ", (" << errnoMsg << ")"
                                     << endmsg;
                DBG_DumpData();
@@ -575,10 +583,10 @@ void MsgSysTimer::checkTimers()
 #if MESSAGE_SYSTEM_STATISTICS
             else if ( qattributes.mq_curmsgs >= qattributes.mq_maxmsg/10 )
             {
-               DataLog( log_level_message_system_timer_info ) << "Sending message=" << hex << mpPtr->msgData().msgId() 
-                                    << "- Task Id=" << mpPtr->msgData().taskId() 
+               DataLog( log_level_message_system_timer_info ) << "Sending message=" << hex << mpPtr->msgData().msgId()
+                                    << "- Task Id=" << mpPtr->msgData().taskId()
                                     << "(" << taskName( mpPtr->msgData().taskId() ) << ")"
-                                    << " contains " << dec << qattributes.mq_curmsgs << " messages" 
+                                    << " contains " << dec << qattributes.mq_curmsgs << " messages"
                                     << endmsg;
             }
 #endif
@@ -587,18 +595,18 @@ void MsgSysTimer::checkTimers()
             //
             // Send the message packet ...
             unsigned int retries=0;
-            while (    mq_send( (*tqiter).second, mpPtr, sizeof( MessagePacket ), 
+            while (    mq_send( (*tqiter).second, mpPtr, sizeof( MessagePacket ),
                                 MessageSystemConstant::DEFAULT_TIMER_MESSAGE_PRIORITY ) == ERROR
                     && ++retries < MessageSystemConstant::MAX_NUM_RETRIES );
             if ( retries >= MessageSystemConstant::MAX_NUM_RETRIES )
             {
-               DataLog( log_level_critical ) << "Check timers - timer Id=" << hex << mpPtr->msgData().msgId() 
+               DataLog( log_level_critical ) << "Check timers - timer Id=" << hex << mpPtr->msgData().msgId()
                                     << ", send failed for error-" << errnoMsg << endmsg;
                _FATAL_ERROR( __FILE__, __LINE__, "mq_send failed" );
             }
          }
       }
-      else 
+      else
       {
          //
          // Delete the map entry object that the queue entry points to...
@@ -613,8 +621,8 @@ void MsgSysTimer::checkTimers()
 
 void MsgSysTimer::dumpQueue( mqd_t mqueue, DataLog_Stream &out )
 {
-   struct mq_attr old_attr;                                    // message queue attributes 
-   struct mq_attr attr;                                    // message queue attributes 
+   struct mq_attr old_attr;                                    // message queue attributes
+   struct mq_attr attr;                                    // message queue attributes
    attr.mq_flags = O_NONBLOCK;
    mq_setattr( mqueue, &attr, &old_attr );
 
@@ -635,11 +643,11 @@ void MsgSysTimer::dumpQueue( mqd_t mqueue, DataLog_Stream &out )
 
       out << " Message# " << dec << count << " priority " << priority << " msgId " << hex << mp.msgData().msgId()
                                                                       << " p# "    << hex << mp.msgData().seqNum()
-                                                                      << " tot# "  << hex << mp.msgData().totalNum()  
+                                                                      << " tot# "  << hex << mp.msgData().totalNum()
                                                                       << " msg -> ";
       for (int i=0;i<30;++i)
       {
-         out << hex << (int)(unsigned char)buffer[i] << " "; 
+         out << hex << (int)(unsigned char)buffer[i] << " ";
       }
       out << endmsg;
 #endif // #if BUILD_TYPE!=DEBUG && CPU!=SIMNT
@@ -704,13 +712,13 @@ void MsgSysTimer::cleanup()
 }
 
 MsgSysTimer::QueueEntry::QueueEntry()
- : _ExpirationTick( 0 ), 
+ : _ExpirationTick( 0 ),
    _MapEntryPtr( 0 )
 {
 }
 
 MsgSysTimer::QueueEntry::QueueEntry( const QueueEntry &qe )
- : _ExpirationTick( qe._ExpirationTick ), 
+ : _ExpirationTick( qe._ExpirationTick ),
    _MapEntryPtr( qe._MapEntryPtr )
 {
 }
@@ -719,36 +727,36 @@ MsgSysTimer::QueueEntry::~QueueEntry()
 {
 }
 
-MsgSysTimer::QueueEntry &MsgSysTimer::QueueEntry::operator=( const MsgSysTimer::QueueEntry &qe ) 
+MsgSysTimer::QueueEntry &MsgSysTimer::QueueEntry::operator=( const MsgSysTimer::QueueEntry &qe )
 {
    if ( &qe != this )
    {
       _ExpirationTick = qe._ExpirationTick;
-      _MapEntryPtr = qe._MapEntryPtr; 
+      _MapEntryPtr = qe._MapEntryPtr;
    }
-   return *this; 
+   return *this;
 }
 
-int MsgSysTimer::QueueEntry::operator==( const MsgSysTimer::QueueEntry &qe ) const 
+int MsgSysTimer::QueueEntry::operator==( const MsgSysTimer::QueueEntry &qe ) const
 {
    if ( _ExpirationTick == qe._ExpirationTick )
       return 1;
    return 0;
 }
 
-int MsgSysTimer::QueueEntry::operator==( unsigned long l ) const 
+int MsgSysTimer::QueueEntry::operator==( unsigned long l ) const
 {
    if ( _ExpirationTick == l )
       return 1;
    return 0;
 }
 
-int MsgSysTimer::QueueEntry::operator<( const MsgSysTimer::QueueEntry &qe ) const 
+int MsgSysTimer::QueueEntry::operator<( const MsgSysTimer::QueueEntry &qe ) const
 {
-   return( _ExpirationTick < qe._ExpirationTick ); 
+   return( _ExpirationTick < qe._ExpirationTick );
 }
 
-int MsgSysTimer::QueueEntry::operator<( unsigned long l ) const 
+int MsgSysTimer::QueueEntry::operator<( unsigned long l ) const
 {
    return( _ExpirationTick < l );
 }
@@ -758,12 +766,12 @@ int MsgSysTimer::QueueEntry::operator<=( unsigned long l ) const
    return ( _ExpirationTick <= l );
 }
 
-int MsgSysTimer::QueueEntry::operator>( const MsgSysTimer::QueueEntry &qe ) const 
+int MsgSysTimer::QueueEntry::operator>( const MsgSysTimer::QueueEntry &qe ) const
 {
-   return( _ExpirationTick > qe._ExpirationTick ); 
+   return( _ExpirationTick > qe._ExpirationTick );
 }
 
-int MsgSysTimer::QueueEntry::operator>( unsigned long l ) const 
+int MsgSysTimer::QueueEntry::operator>( unsigned long l ) const
 {
    return( _ExpirationTick > l );
 }

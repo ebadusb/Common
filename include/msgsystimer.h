@@ -1,12 +1,16 @@
 /*
  * Copyright (c) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * TITLE:      msgsystimer.h, Message System Timer 
+ * TITLE:      msgsystimer.h, Message System Timer
  *
  * ABSTRACT:   These classes support message system timer messages. The message
- *             system timer class interfaces with the message system and the 
- *             hardware clock to manage the timers.   Only one timer task should 
- *             created per processor.   
+ *             system timer class interfaces with the message system and the
+ *             hardware clock to manage the timers.   Only one timer task should
+ *             created per processor.
+ *
+ * $Header$
+ * $Log$
+ *
  */
 
 #ifndef _MSGSYSTIMER_H_
@@ -25,10 +29,11 @@ class MsgSysTimer
 public:
 
    //
-   // This function will act as the main entry point for the message system timer task.  
-   //  This function will create the message system timer object.  When this function 
+   // This function will act as the main entry point for the message system timer task.
+   //  This function will create the message system timer object.  When this function
    //  exits, the message system timer task will also be considered finished.
    static int MsgSysTimer_main();
+   static int MsgSysTimer_main(unsigned int qSize);
 
    //
    // Function to get the global message system timer task ...
@@ -44,9 +49,9 @@ public:
 
    //
    // Function to handle task level datalog errors ...
-   static void datalogErrorHandler( const char * file, int line, 
-                                    DataLog_ErrorType error, 
-                                    const char * msg, 
+   static void datalogErrorHandler( const char * file, int line,
+                                    DataLog_ErrorType error,
+                                    const char * msg,
                                     int continuable );
 
 private:
@@ -62,16 +67,17 @@ public:
    virtual ~MsgSysTimer();
 
    //
-   // Function which will create the message queue, and set up all the 
-   //  necessary structures to start the processing.  
-   bool init();
+   // Function which will create the message queue, and set up all the
+   //  necessary structures to start the processing.
+	enum {DefaultQSize = 15 };
+   bool init(unsigned int qSize = DefaultQSize);
 
    //
    // This function will continue processing indefinitely while it is blocked on the
    //  timer semaphore.
    void maintainTimers();
    void stopLoop() { _StopLoop=true; }
-  
+
    //
    // Dump the contents of this class
    void dump( DataLog_Stream &outs );
@@ -79,11 +85,11 @@ public:
 protected:
 
    //
-   // Receive a message packet and determine its function 
+   // Receive a message packet and determine its function
    void processMessage( const MessagePacket &mp );
-   
+
    //
-   // Function to update the current time 
+   // Function to update the current time
    void updateTicks( unsigned long ticks );
 
    //
@@ -117,7 +123,7 @@ protected:
    void shutdown();
 
    //
-   // Cleanup the priority queue and the map ... 
+   // Cleanup the priority queue and the map ...
    void cleanup();
 
 private:
@@ -162,7 +168,7 @@ private:
    priority_queue< QueueEntry, vector< QueueEntry >, greater< QueueEntry > > _TimerQueue;
 
    //
-   // This structure will map the task Id with it's associated Posix message queue. The 
+   // This structure will map the task Id with it's associated Posix message queue. The
    //  router will open a queue for each task as a write only queue.  The task must create
    //  the queue before registering itself with the router.
    map< unsigned long, mqd_t >                                  _TaskQueueMap;
@@ -185,10 +191,10 @@ private:
 
 };
 
-#ifdef __cplusplus 
+#ifdef __cplusplus
 extern "C" void msgsystimerInit();
 extern "C" void msgsystimerDump();
-#else 
+#else
 void msgsystimerInit();
 void msgsystimerDump();
 #endif

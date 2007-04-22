@@ -174,7 +174,7 @@ void Gateway::receiveLoop()
 		int totalByteCount = 0;
 		while ( totalByteCount < sizeof( int ) )
       {
-         int byteCount = recv( _ClientSocket, (char*)((&msgSize)+totalByteCount), sizeof( int )-totalByteCount, 0 );
+         int byteCount = recv( _ClientSocket, ((char*)&msgSize)+totalByteCount, sizeof( int )-totalByteCount, 0 );
    
          if ( byteCount == ERROR )
          {
@@ -184,7 +184,8 @@ void Gateway::receiveLoop()
          }
 		   totalByteCount += byteCount;
       }
-      if ( msgSize <= 0 )
+
+      if ( msgSize <= 3*sizeof(unsigned long) )
       {
          DataLog( log_level_critical ) << "Gateway::receiveLoop : invalid message size" << endmsg;
          _FATAL_ERROR( __FILE__, __LINE__, "invalid message size" );

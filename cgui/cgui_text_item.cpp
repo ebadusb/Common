@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.15  2007/02/21 21:06:52Z  rm10919
+ * Add methods for variable substitution and stringLength.  Fix copy constructor and equals operator.
  * Revision 1.14  2006/12/01 17:00:42Z  pn02526
  * Change Id allocation so that destructor does not crash GUI.
  * Null-teminate string buffer in setText(StringChar ...).
@@ -26,7 +28,7 @@
  * fix text of existing string
  * Revision 1.4  2005/08/01 23:31:39Z  cf10242
  * Revision 1.3  2005/04/26 23:16:48Z  rm10919
- * Made changes to cgui_text and cgui_text_item, plus added 
+ * Made changes to cgui_text and cgui_text_item, plus added
  * classes for variable substitution in text strings.
  * Revision 1.2  2005/02/21 17:17:12Z  cf10242
  * IT 133 - delete all allocated memory to avoid unrecovered memory
@@ -99,7 +101,7 @@ CGUITextItem& CGUITextItem::operator= (const CGUITextItem& textItem)
 
 CGUITextItem::~ CGUITextItem()
 {
-   if(_string) 
+   if(_string)
 	{
 		delete[] _string;
 		_string = NULL;
@@ -120,7 +122,7 @@ void CGUITextItem::setText(const char * string, LanguageId = currentLanguage)
       {
          int newLength = strlen(string);
          if(!_string)
-         {         
+         {
             _stringSize = newLength;
             if(newLength < textBlockSize)
                _stringSize = textBlockSize;
@@ -135,7 +137,7 @@ void CGUITextItem::setText(const char * string, LanguageId = currentLanguage)
                _stringSize = newLength + textBlockSize;
             }
          }
-         
+
          int stringLength = 0;
 
          while (string[stringLength] != '\0')
@@ -161,7 +163,7 @@ void CGUITextItem::setText(const StringChar * string, LanguageId = currentLangua
       }
 
       if(!_string)
-      {         
+      {
          _stringSize = stringLength;
          if(stringLength < textBlockSize)
             _stringSize = textBlockSize;
@@ -176,7 +178,7 @@ void CGUITextItem::setText(const StringChar * string, LanguageId = currentLangua
             _stringSize = stringLength + textBlockSize;
          }
       }
-      
+
       memcpy(_string, string, stringLength * sizeof(StringChar));
       _string[stringLength] = (StringChar)0;
 
@@ -274,8 +276,7 @@ void CGUITextItem::handleVariableSubstitution()
    size_t newStringLength = 0;
    size_t idx = 0;
 
-   while (_string[idx] != null_char &&
-          idx < _stringLength)
+   while( idx < _stringLength && _string[idx] != null_char )
    {
       // Check for start of variable substitution string
       //

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.16  2007/04/23 23:54:37Z  wms10235
+ * IT2354 - Found text item bug while debugging reports
  * Revision 1.15  2007/02/21 21:06:52Z  rm10919
  * Add methods for variable substitution and stringLength.  Fix copy constructor and equals operator.
  * Revision 1.14  2006/12/01 17:00:42Z  pn02526
@@ -65,37 +67,73 @@ CGUITextItem::CGUITextItem(const char * id, StylingRecord * stylingRecord)
    }
 }
 
-CGUITextItem::CGUITextItem(const CGUITextItem& textItem)
-:_id(NULL), _string(NULL), _stringSize(0), _stringLength(0), _languageId(0)
+CGUITextItem::CGUITextItem(const CGUITextItem& textItem) :
+   _stringLength(textItem._stringLength),
+	_languageId(textItem._languageId),
+	_stylingRecord(textItem._stylingRecord)
 {
-   (*this) = textItem;
+	_id = NULL;
+
+	setId(textItem._id);
+
+	if( textItem._string )
+	{
+		_stringSize = _stringLength;
+		if( _stringSize < textBlockSize )
+			_stringSize = textBlockSize;
+
+      _string = new StringChar[_stringSize + 1];
+		memcpy( _string, textItem._string, (_stringLength + 1) * sizeof(StringChar) );
+	}
+	else
+	{
+		_string = NULL;
+		_stringSize = 0;
+		_stringLength = 0;
+	}
 }
 
 CGUITextItem& CGUITextItem::operator= (const CGUITextItem& textItem)
 {
-   if (_id != textItem._id)
-   {
-      _defaultLanguageId = textItem._defaultLanguageId;
-      _languageId = textItem._languageId;
-      _stringLength = textItem._stringLength;
-      _stringSize = textItem._stringSize;
-      _stylingRecord = textItem._stylingRecord;
+	if( this != &textItem ) // Protect against self assignment
+	{
+		if (_id != textItem._id)
+		{
+			_languageId = textItem._languageId;
+			_stringLength = textItem._stringLength;
+			_stylingRecord = textItem._stylingRecord;
 
-      setId(textItem._id);
+			setId(textItem._id);
 
-      // check to see if initialized to NULL
-      if (_string == NULL)
-         _string = new StringChar[_stringLength];
+			// check to see if initialized to NULL
+			if( textItem._string && _stringLength > 0 )
+			{
+				// Check the current size against what is needed
+				if( _stringSize < _stringLength )
+				{
+					if( _string )
+						delete [] _string;
+					_stringSize = _stringLength;
+					if( _stringSize < textBlockSize )
+						_stringSize = textBlockSize;
 
-      int stringLength = 0;
+					_string = new StringChar[_stringSize + 1];
+				}
 
-      while (textItem._string[stringLength] != '\0')
-      {
-         stringLength++;
-      }
+				memcpy( _string, textItem._string, _stringLength * sizeof(StringChar) );
+				_string[_stringLength] = 0;
+			}
+			else
+			{
+				if( _string )
+					delete [] _string;
+				_string = NULL;
+				_stringSize = 0;
+				_stringLength = 0;
+			}
+		}
+	}
 
-      memcpy(_string, textItem._string, stringLength * sizeof(StringChar) );
-   }
    return (*this);
 }
 
@@ -239,12 +277,11 @@ bool CGUITextItem::isInitialized(void)
    return (_id != NULL);
 }
 
-
 int CGUITextItem::getStringCharLength(void)
 {
    int stringLength = 0;
 
-   while (_string[stringLength] != '\0')
+   while( _string != NULL && _string[stringLength] != '\0')
    {
 //      _string[stringLength] = (unsigned char)(UGL_WCHAR)string[stringLength];
       stringLength++;
@@ -259,7 +296,7 @@ int CGUITextItem::getStringCharVariableLength(void)
 
    handleVariableSubstitution();
 
-   while (_string[stringLength] != '\0')
+   while( _string != NULL && _string[stringLength] != '\0')
    {
       stringLength++;
    }

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.15 2009/04/13 22:34:00Z rm10919 Exp wms10235 $
  * $Log: cgui_text_item.h $
+ * Revision 1.11  2007/02/21 21:06:53Z  rm10919
+ * Add methods for variable substitution and stringLength.  Fix copy constructor and equals operator.
  * Revision 1.10  2006/07/13 20:31:51Z  cf10242
  * IT 1220: eliminate private copy contrstuctor
  * Revision 1.9  2006/07/12 23:36:08Z  rm10919
@@ -13,7 +15,7 @@
  * Get data item database to work with software layers.
  * Revision 1.6  2005/08/01 23:31:39Z  cf10242
  * Revision 1.5  2005/04/26 23:16:48Z  rm10919
- * Made changes to cgui_text and cgui_text_item, plus added 
+ * Made changes to cgui_text and cgui_text_item, plus added
  * classes for variable substitution in text strings.
  * Revision 1.4  2005/04/04 18:03:53Z  rm10919
  * Add int getLength(void) method for text string.
@@ -44,14 +46,14 @@ struct StylingRecord
 //
 // This class will access the strings from the database
 // or the file that holds all of the string information
-// (both string id and the actual string text).  The 
+// (both string id and the actual string text).  The
 // string id is the key to accessing this information.
 //
 
 class CGUITextItem
 {
 public:
-   CGUITextItem();
+   CGUITextItem(void);
    CGUITextItem(const char * id, StylingRecord * stylingRecord = NULL);
    CGUITextItem(const CGUITextItem& textItem);
 
@@ -82,7 +84,7 @@ public:
    bool isInitialized(void);
 
    void setStylingRecord(StylingRecord stylingRecord){_stylingRecord = stylingRecord;}
-   
+
    StylingRecord getStylingRecord(){return _stylingRecord;}
 
    int getLength(void) {return _stringLength;}
@@ -96,15 +98,14 @@ public:
 
 protected:
 
-   unsigned short _stringLength;
-
-   unsigned short _stringSize;
+   unsigned short _stringLength;	// Number of characters in the string not counting the NULL terminator
+   unsigned short _stringSize;	// Number of characters allocated for _string not counting the NULL terminator
 
 private:
    //
    // All the methods and routines to manipulate getting the string id's and text go here.
    // These will be defined as the text string database is designed. A balance between
-   // cacheing and reading the database will need to be developed. As this part is being 
+   // cacheing and reading the database will need to be developed. As this part is being
    // developed a method to create dynamic string id's (for dymanic data, e.g. numeric
    // values) will need to be done.
    //

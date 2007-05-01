@@ -2,6 +2,8 @@
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item_file_reader.cpp 1.5 2009/06/24 18:41:45Z wms10235 Exp wms10235 $
  *
  * $Log: cgui_data_item_file_reader.cpp $
+ * Revision 1.2  2007/03/01 19:09:55Z  rm10919
+ * Add DataItemText to file reader and setText(char *) to DITextItem.
  * Revision 1.1  2005/11/22 00:37:26Z  rm10919
  * Initial revision
  *
@@ -27,7 +29,7 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
       char * type;
       char * initialize;
       char * precision;
-   }; 
+   };
 
    static char lineBuffer[LineBufferSize];
    bool  readingFileTable = false;
@@ -42,7 +44,7 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
    while (fgets(lineBuffer, LineBufferSize, dataItemInfo) != NULL)
    {
       line += 1;
-      
+
       //
       // Get first token. (space, tab, newline, return)
       char * firstToken = strtok_r(lineBuffer, " \t\n\r", &p);
@@ -94,10 +96,10 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
             {
                //
                // Declare variables for string - text item mapping.
-               CGUITextItem textItem = NULL;
-               CGUIDataItemTextItem * dataItemTextItem = new CGUIDataItemTextItem(textItem.getTextItem(entry->id));   
+//               CGUITextItem textItem = NULL;
+               CGUIDataItemTextItem * dataItemTextItem = new CGUIDataItemTextItem(CGUITextItem::getTextItem(entry->id));
 //               CGUIDataItemTextItem * label = new CGUIDataItemTextItem(CGUITextItem::_textMap.findString(entry->id));
-               
+
                if (dataItemTextItem)
                {
                   variableDictionary->addDataItem(entry->id, dataItemTextItem);
@@ -129,9 +131,9 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
             else if ( strcmp(entry->type, "Double") == 0)
             {
                entry->precision = strtok_r(NULL," \t\n\r", &p);
-               
+
                CGUIDataItemDouble * dataItemDouble = new CGUIDataItemDouble(atof(entry->initialize), atoi(entry->precision));
-               
+
                if (dataItemDouble)
                {
                   variableDictionary->addDataItem(entry->id, dataItemDouble);
@@ -146,7 +148,7 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
             else if (strcmp(entry->type, "Integer") == 0)
             {
                CGUIDataItemInteger * dataItemInteger = new CGUIDataItemInteger(atoi(entry->initialize));
-               
+
                if (dataItemInteger)
                {
                   variableDictionary->addDataItem(entry->id, dataItemInteger);

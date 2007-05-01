@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.15 2009/04/13 22:34:00Z rm10919 Exp wms10235 $
  * $Log: cgui_text_item.h $
+ * Revision 1.12  2007/04/26 16:47:20Z  wms10235
+ * IT2354 - Updated the assignment operator and copy contructor
  * Revision 1.11  2007/02/21 21:06:53Z  rm10919
  * Add methods for variable substitution and stringLength.  Fix copy constructor and equals operator.
  * Revision 1.10  2006/07/13 20:31:51Z  cf10242
@@ -71,7 +73,7 @@ public:
    const StringChar * getText(LanguageId languageId = currentLanguage);
    void getAscii( char * myString, LanguageId languageId = currentLanguage);
 
-   CGUITextItem * getTextItem(const char * id, LanguageId languageId = currentLanguage);
+   static CGUITextItem * getTextItem(const char * id, LanguageId languageId = currentLanguage);
 
    void setText(const char * string, LanguageId = currentLanguage);
    void setText(const StringChar * texString, LanguageId = currentLanguage);

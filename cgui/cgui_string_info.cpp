@@ -4,6 +4,8 @@
  * Derived from cgui_string_data.cpp revision 1.7  2006/07/25 15:42:37  cf10242
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_info.cpp 1.7 2008/12/16 22:01:41Z rm10919 Exp wms10235 $
  * $Log: cgui_string_info.cpp $
+ * Revision 1.3  2007/02/08 19:28:05Z  rm10919
+ * Updates to add languages to string data.
  * Revision 1.2  2006/11/29 17:57:38Z  pn02526
  * Fix bugs found integrating with CGUIStringData.
  * Revision 1.1  2006/11/27 15:26:23  pn02526
@@ -133,102 +135,154 @@ bool CGUIStringInfo::get ( const CGUIFontId * fontId, CGUITextItem & result, con
       else if (_readingFileTable && (stringKey == NULL || (strcmp(firstToken, stringKey) == 0) ) )
       {
          result.setId(firstToken);
-//         DataLog( log_level_cgui_debug ) << "CGUIStringInfo::get got \"" << firstToken << "\"" << endmsg;
          return parseLine( p, fontId, result, fontIndex);
       }
    }
+
    return false;
+}
+
+bool CGUIStringInfo::getQuotedString(char *&data, StringChar *& wString)
+{
+   wString = new StringChar[strlen(data)];
+	bool 	started = false;
+	bool 	done = false;
+
+	int	writeIdx = 0;
+	while ( !done )
+	{
+		if ( *data == '\0' ||
+			  ( started && *data == '"' ))
+		{
+			done = true;
+		}
+		else if ( !started )
+		{
+			if ( *data == '"' ) started = true;
+			data++;
+		}
+		else if ( started )
+		{
+			if ( *data == '\\' )
+			{
+				data++;
+				switch ( *data )
+				{
+				case '\0':
+					break;
+
+            case 'b':
+					wString[writeIdx++] = '\b';
+					data++;
+					break;
+
+            case 'n':
+					wString[writeIdx++] = '\n';
+					data++;
+					break;
+
+            case 'r':
+					wString[writeIdx++] = '\r';
+					data++;
+					break;
+
+            case 't':
+					wString[writeIdx++] = '\t';
+					data++;
+					break;
+
+            case '"':
+					wString[writeIdx++] = '"';
+					data++;
+					break;
+  
+            case 'x':
+               char unicode[5];
+               int  l;
+
+               data++;
+               unicode[0] = (*data != '\0') ? *data++ : '\0';
+               unicode[1] = (*data != '\0') ? *data++ : '\0';
+               unicode[2] = (*data != '\0') ? *data++ : '\0';
+               unicode[3] = (*data != '\0') ? *data++ : '\0';
+               unicode[4] = '\0';
+
+               sscanf(unicode, "%x", &l);
+               wString[writeIdx++] = (StringChar)l;
+               break;
+
+				default:
+					wString[writeIdx++] = (StringChar)*data++;
+					break;
+				}
+			}
+			else
+         {
+            // not a backslash sequence, check for UTF8 sequence and convert.
+            StringChar * nextWord = (StringChar *)data;
+            if ( (*nextWord & 0x80C0) == 0x80C0 )
+            {
+					wString[writeIdx++] = (unsigned char)UTF8ToUnicode(*nextWord);
+               data += 2;
+            }
+            else
+				{
+					// not UTF8, just copy the character.
+               wString[writeIdx++] = (StringChar)*data++;
+				}
+			}
+		}
+	}
+
+	bool	result = false;
+	if ( *data == '"' )
+	{
+		result = true;
+		data++;
+	}
+	else
+	{
+		DataLog( log_level_cgui_error ) << "line " << _line << ": unterminated string - " << _filename << endmsg;
+	}
+
+	return result;
 }
 
 // Parse the line and populate the given CGUITextItem.
 bool CGUIStringInfo::parseLine ( char * p, const CGUIFontId * fontId, CGUITextItem & result, int fontIndex = 0)
 {
-         p = strchr(p, '"') + 1; // skip past first "
-         char * text = strtok_r(p, "\"", &p);
-         char * red = strtok_r(NULL," \t\n\r", &p);
-         char * green = strtok_r(NULL," \t\n\r", &p);
-         char * blue = strtok_r(NULL," \t\n\r", &p);
-         char * attributes = strtok_r(NULL," \t\n\r", &p);
-         char * x = strtok_r(NULL," \t\n\r", &p);
-         char * y = strtok_r(NULL," \t\n\r", &p);
-         char * width = strtok_r(NULL," \t\n\r", &p);
-         char * height = strtok_r(NULL," \t\n\r", &p);
-         char * fontSize = strtok_r(NULL," \t\n\r", &p);
+	bool status = true;
+   StringChar * wString = NULL;
+	status &= getQuotedString(p, wString);
 
-         // Create Styling Record from line information.
-         StylingRecord stylingRecord;
-         stylingRecord.color = MakeCGUIColor( atoi(red), atoi(green), atoi(blue));
-         sscanf(attributes, "%x", &stylingRecord.attributes);
-         stylingRecord.region = CGUIRegion( atoi(x), atoi(y), atoi(width), atoi(height));
-         stylingRecord.fontSize = atoi(fontSize);
+	int	red, green, blue;
+	unsigned int attributes;
+	int	x, y, width, height, fontSize;
 
-         int fI = atoi(fontSize) + fontIndex * 50;
-         stylingRecord.fontId = fontId[fI];               
+	if ( status &&
+		  sscanf(p, "%d %d %d %x %d %d %d %d %d", &red, &green, &blue, &attributes, &x, &y, &width, &height, &fontSize) != 9 )
+	{
+		status = false;
+		DataLog( log_level_cgui_error ) << "line " << _line << ": missing parameters - " << _filename << endmsg;
+	}
 
-         int writeIndex = 0;
-         // Allocate to maximum possible length (may be less due to slash sequences)
-         StringChar wString[strlen(text)+2];
+   // Create Styling Record from line information.
+   //
+   if ( status )
+	{
+		StylingRecord stylingRecord;
+		stylingRecord.color = MakeCGUIColor(red, green, blue);
+		stylingRecord.attributes = attributes;
+		stylingRecord.region = CGUIRegion(x, y, width, height);
+		stylingRecord.fontSize = fontSize;
+		stylingRecord.fontId = fontId[fontSize + fontIndex*50];
 
-         // Scan string, replacing slash sequences as necessary
-         //
-         while (*text != '\0')
-         {
-               // check for slash sequence.
-               if (*text != '\\')
-               {
-                  // not slash sequence, check for UTF8 sequence and convert.
-                  StringChar * nextWord = (StringChar *)text;
-                  if( (*nextWord & 0x80C0) == 0x80C0 )
-                  {
-                     wString[writeIndex++] = (unsigned char)UTF8ToUnicode(*nextWord);
-                     text+=2;
-                  }
-                  else
-                      // not UTF8, just copy the character.
-                      wString[writeIndex++] = (unsigned char)(UGL_WCHAR)*text++;
+		// Populate the CGUITextItem class.
+		//
+		result.setText(wString); // setText copies the string into its own string buffer.
+		result.setStylingRecord(stylingRecord); // setStylingRecord copies the styling record into its own styling record.
+	}
 
-               } else
-               {
-                    text++;  // get past the slash
-                    switch (*text)
-                    {
-                    case '\0': break; // ignore a slash at end of line
-
-                    case 'b':wString[writeIndex++] = '\b'; text++; break; // backspace
-                    case 'n':wString[writeIndex++] = '\n'; text++; break; // newline
-                    case 'r':wString[writeIndex++] = '\r'; text++; break; // return
-                    case 't':wString[writeIndex++] = '\t'; text++; break; // tab
-                    case '"':wString[writeIndex++] = '"'; text++;  break; // double quote
-
-                    case 'x':                               // hex
-                          text++;  // get past the x 
-                          char unicode[5] ;
-                          int  l;
-
-                          unicode[0] = (*text != '\0') ? *text++ : '\0';
-                          unicode[1] = (*text != '\0') ? *text++ : '\0';
-                          unicode[2] = (*text != '\0') ? *text++ : '\0';
-                          unicode[3] = (*text != '\0') ? *text++ : '\0';
-                          unicode[4] = '\0';
-
-                          sscanf(unicode, "%x",&l);
-                          wString[writeIndex++] = (StringChar)l;
-
-                          break;
-
-                    default:wString[writeIndex++] = (unsigned char)(UGL_WCHAR)*text++;
-                    }
-               }
-         }
-         //
-         // Null-terminate the new string.
-         //
-         wString[writeIndex] = '\0';
-
-         //
-         // Populate the CGUITextItem class.
-         //            
-         result.setText(wString); // setText copies the string into its own string buffer.
-         result.setStylingRecord(stylingRecord); // setStylingRecord copies the styling record into its own styling record.
-         return true;
+	if ( wString ) delete[] wString;
+   return status;
 }

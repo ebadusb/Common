@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.cpp 1.12 2007/06/14 19:34:11Z wms10235 Exp wms10235 $
  * $Log: cgui_string_data.cpp $
+ * Revision 1.9  2007/02/08 19:28:05Z  rm10919
+ * Updates to add languages to string data.
  * Revision 1.8  2006/12/01 19:20:07Z  pn02526
  * Use CGUIStringInfo class to read string.info files.
  * Revision 1.7  2006/07/25 15:42:37  cf10242
@@ -38,64 +40,58 @@ CGUIStringData::~CGUIStringData(void)
 {
 }
 
-void CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontId, LanguageId languageId = currentLanguage, int fontIndex = 0)
+bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontId, LanguageId languageId = currentLanguage, int fontIndex = 0)
 {
-    CGUITextItem textItem;
-    // Open file
-    CGUIStringInfo stringInfo( filename );
+	CGUITextItem textItem;
+	CGUIStringInfo stringInfo( filename );
+	bool  result = true;
 
-//   taskSuspend(taskIdSelf());
-    DataLog( log_level_cgui_info ) << "Entering CGUIStringData::readDatabaseFile for " << filename << endmsg;
+	DataLog( log_level_cgui_info ) << "Entering CGUIStringData::readDatabaseFile for " << filename << endmsg;
 
-   // Loop reading string info records, converting them to CGUTextItems,
-   // and putting them in their proper places in the text map.
-   while ( stringInfo.get(fontId, textItem, NULL, fontIndex) )
-   {
-//            DataLog( log_level_cgui_info ) << "line " << stringInfo.line() << ": got record " << textItem.getId() << endmsg;
+	// Loop reading string info records, converting them to CGUTextItems,
+	// and putting them in their proper places in the text map.
+	while ( stringInfo.get(fontId, textItem, NULL, fontIndex) )
+	{
+		// Define a pointer for a map entry's CGUITextItem.
+		CGUITextItem * result;
 
-            // Define a pointer for a map entry's CGUITextItem.
-            CGUITextItem * result;
+		// Define an iterator for the text map.
+		map<string, CGUITextItem *>::iterator iter;
 
-            // Define an iterator for the text map.
-            map<string, CGUITextItem *>::iterator iter;
+		// Do the lookup thing for the textItem.
+		//
+		iter = _textMap.find(textItem.getId());
+		result = iter->second;
 
-            //
-            // Do the lookup thing for the textItem.
-            //
-            iter = _textMap.find(textItem.getId());
-//            DataLog( log_level_cgui_info ) << "line " << stringInfo.line() << ": found " << textItem.getId() << endmsg;
-            result = iter->second;
+		// If found the corresponding text item in map,
+		// correct the formatting sequences in the text.
+		if (iter != _textMap.end() && result)
+		{
+			// put text item information in corresponding _textMap[id].
+			//            
+			result->setText(textItem.getText());
+			result->setStylingRecord(textItem.getStylingRecord());
+			result->setLanguageId(currentLanguage);
+		}
+		else
+		{
+			DataLog( log_level_cgui_error ) << "line " << stringInfo.line() << ": Can't find string Id " << textItem.getId() << " in map!!!!! - " << filename << endmsg;
+			result = false;
+		}
+	}
 
-            // If found the corresponding text item in map,
-            // correct the formatting sequences in the text.
-            if (iter != _textMap.end() && result)
-            {
-               //
-               // put text item information in corresponding _textMap[id].
-               //            
-//               DataLog( log_level_cgui_info ) << "line " << stringInfo.line() << ": copying to captive text item at " << hex << (unsigned int)result << dec << endmsg;
-               result->setText(textItem.getText());
-               result->setStylingRecord(textItem.getStylingRecord());
-               result->setLanguageId(currentLanguage);
-            } else
-            {
-               DataLog( log_level_cgui_error ) << "line " << stringInfo.line() << ": Can't find string Id " << textItem.getId() << " in map!!!!! - " << filename << endmsg;
-               printf("line %d: Can't find string Id %s in map!!!!!\n - %s", stringInfo.line(), textItem.getId(), filename);
-            }
-   }
+	// Check for premature end.
+	if( !stringInfo.endOfFile() )
+	{
+		DataLog( log_level_cgui_error ) << "line " << stringInfo.line() << ": bad entry in string info file - " << filename << endmsg;
+		result = false;
+	}
 
-   // Check for premature end.
-   if( !stringInfo.endOfFile() )
-   {
-      DataLog( log_level_cgui_error ) << "line " << stringInfo.line() << ": bad entry in string info file - " << filename << endmsg;
-      printf("line %d: bad entry in string info file\n - %s", stringInfo.line(), filename);
-   }
+	// Close file.
+	DataLog( log_level_cgui_info ) << "line " << stringInfo.line() << ": closing string info file - " << filename << endmsg;
+	stringInfo.close();
 
-   // Close file.
-   DataLog( log_level_cgui_info ) << "line " << stringInfo.line() << ": closing string info file - " << filename << endmsg;
-   stringInfo.close();
-
-   return;
+	return result;
 }
 
 bool CGUIStringData::readDatabaseItem (CGUITextItem * LanguageName) //, Language language[0]);

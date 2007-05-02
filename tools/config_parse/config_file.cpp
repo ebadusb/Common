@@ -3,6 +3,8 @@
 // Configuration file class
 //
 // $Log: config_file.cpp $
+// Revision 1.5  2007/01/04 16:42:56Z  MS10234
+// 57 - add in file information fields that describe read-only and location attributes of the file
 // Revision 1.4  2006/11/29 17:47:58Z  MS10234
 // force the high bit on every enumerated element instead of just the first element
 // Revision 1.3  2006/10/19 20:01:01Z  MS10234
@@ -1517,44 +1519,8 @@ void ConfigFile::generateLogDataFunction(FILE * fp, const char * outputName)
 		"{\n");
 
 	fprintf(fp,
-		"\tDataLog(*level) << \"%s data\";\n\n"
-		"\tif (readStatus == ConfigFile::ReadOK )\n"
-		"\t\tDataLog(*level) << \" from <\" << fileName() << \">:\";\n", _className.c_str());
-	if ( _hasBackup )
-	{
-		fprintf(fp,
-			"\telse if (readStatus == ConfigFile::ReadBackupOK)\n"
-			"\t\tDataLog(*level) << \" from <\" << backupFileName() << \">:\";\n"
-			"\telse if (readStatus == ConfigFile::ReadDefaultOK)\n"
-			"\t\tDataLog(*level) << \" from <\" << defaultFileName() << \">:\";\n");
-	}
-	fprintf(fp,
-		"\telse\n"
-		"\t\tDataLog(*level) << \" :\";\n\n");
-
-	fprintf(fp,
-		"\tDataLog(*level)\n");
-	for ( int sectIdx=0; sectIdx<_section.size(); sectIdx++ )
-	{
-		fprintf(fp,
-			"\t\t<< \" [%s]\"\n", _section[sectIdx]->name().c_str());
-
-		for ( int paramIdx=0; paramIdx<_parameter.size(); paramIdx++ )
-		{
-			if ( _section[sectIdx]->name() == _parameter[paramIdx]->sectionName() )
-			{
-				fprintf(fp,
-					"\t\t<< \" %s=\" << %s::%s().%s.%s%s\n", _parameter[paramIdx]->name().c_str(), 
-					outputName, _className.c_str(),
-					_section[sectIdx]->name().c_str(), _parameter[paramIdx]->name().c_str(),
-					_parameter[paramIdx]->indexString().c_str());
-			}
-		}
-		fprintf(fp, 
-			"\n");
-	}
-	fprintf(fp,	
-		"\t\t<< endmsg;\n\n");
+		"   ConfigFile::logData(level, _dataMap, %d, readStatus);\n",
+		_parameter.size());
 
 	fprintf(fp, 
 		"}\n\n");

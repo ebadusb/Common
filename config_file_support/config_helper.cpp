@@ -4,6 +4,8 @@
  * Utilities for managing configuration files
  *
  * $Log: config_helper.cpp $
+ * Revision 1.1  2007/01/18 21:44:36Z  MS10234
+ * Initial revision
  * Revision 1.1  2005/05/16 22:31:37Z  ms10234
  * Initial revision
  *
@@ -258,6 +260,58 @@ ConfigFile::WriteStatus ConfigFile::writeData(const ConfigData::DataMap * const 
 	return retVal;
 }
 
+void ConfigFile::logData(DataLog_Level * level, const ConfigData::DataMap * const dataMap, int dataMapSize, ConfigFile::ReadStatus readStatus)
+{ 
+	if (readStatus == ConfigFile::ReadOK )
+		DataLog(*level) << "config read OK from <" << fileName() << ">:" << endmsg;
+	else if (readStatus == ConfigFile::ReadBackupOK)
+		DataLog(*level) << "config backup read OK from <" << backupFileName() << ">:" << endmsg;
+	else if (readStatus == ConfigFile::ReadDefaultOK)
+		DataLog(*level) << "config default read OK from <" << defaultFileName() << ">:" << endmsg;
+
+	DataLog(*level) << "ConfigFileData <" << fileName() << ">:";
+
+	const char * sectionName = NULL;
+	for ( int idx=0; idx<dataMapSize; idx+=1 )
+	{
+		if ( !sectionName || strcmp(sectionName, dataMap[idx]._sectionName) != 0 )
+		{
+			sectionName = dataMap[idx]._sectionName;
+			DataLog(*level) << " [" << sectionName << "]";
+		}
+
+		DataLog(*level) << " " << dataMap[idx]._paramName << "=";
+		switch ( dataMap[idx]._type )
+		{
+		case ConfigData::TLong:
+			DataLog(*level) << *(long *)dataMap[idx]._value;
+			break;
+
+		case ConfigData::TDouble:
+			DataLog(*level) << precision(5) << *(double *)dataMap[idx]._value;
+			break;
+
+		case ConfigData::TString:
+			logString(level, dataMap[idx], *(const char **)dataMap[idx]._value);
+			break;
+
+		case ConfigData::TBool:
+			DataLog(*level) << *(bool *)dataMap[idx]._value;
+			break;
+
+		case ConfigData::TEnum:
+			logEnum(level, dataMap[idx], *(long *)dataMap[idx]._value);
+			break;
+
+		default:
+			DataLog(*level) << "unknown-type";
+			break;
+		}
+	}
+
+	DataLog(*level) << endmsg;
+}
+
 bool ConfigFile::getParamValueByName(const ConfigData::DataMap * const dataMap, int dataMapSize, const char * sectionName, const char * paramName, ConfigData::ParamValue & value)
 {
 	int idx = getParamByName(dataMap, dataMapSize, sectionName, paramName);
@@ -385,6 +439,55 @@ bool ConfigFile::writeEnum(FILE * fp, const ConfigData::DataMap & dataMap, long 
 	}
 
 	return retVal;
+}
+
+void ConfigFile::logString(DataLog_Level * level, const ConfigData::DataMap & dataMap, const char * str)
+{
+	const char * currCh = str;
+
+   DataLog(*level) << '"';
+   while ( *currCh )
+	{
+		switch ( *currCh )
+		{
+		case '\b': DataLog(*level) << "\\b"; 	break;
+		case '\n': DataLog(*level) << "\\n"; 	break;
+		case '\r': DataLog(*level) << "\\r";	break;
+		case '\t': DataLog(*level) << "\\t"; 	break;
+		case '"':  DataLog(*level) << "\\\""; 	break;
+		default:   DataLog(*level) << *currCh; break;
+		}
+
+		currCh++;
+	}
+
+	DataLog(*level) << '"';
+}
+
+void ConfigFile::logEnum(DataLog_Level * level, const ConfigData::DataMap & dataMap, long value)
+{
+	int	idx = 0;
+	while ( dataMap._enumMap[idx]._name )
+	{
+		if ( dataMap._enumMap[idx]._value == value )
+		{
+			break;
+		}
+		else
+		{
+			idx += 1;
+		}
+	}
+
+	bool retVal;
+	if ( dataMap._enumMap[idx]._name )
+	{
+		DataLog(*level) << dataMap._enumMap[idx]._name;
+	}
+	else
+	{
+		DataLog(*level) << value;
+	}
 }
 
 bool ConfigFile::checkRange(const ConfigData::DataMap * const dataMap, const char * fileName, int line, int idx)

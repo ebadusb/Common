@@ -4,6 +4,8 @@
  * Utilities for managing configuration files
  *
  * $Log: config_helper.h $
+ * Revision 1.1  2007/01/18 21:44:37Z  MS10234
+ * Initial revision
  * Revision 1.1  2005/05/16 22:31:38Z  ms10234
  * Initial revision
  *
@@ -92,6 +94,10 @@ protected:
 	bool getParamEnum(const char * data, const ConfigData::EnumMap * enumMap, long * ref);
 	bool writeEnum(FILE * fp, const ConfigData::DataMap & dataMap, long value);
 	bool writeString(FILE * fp, const ConfigData::DataMap & dataMap, const char * str);
+
+	void logData(DataLog_Level * level, const ConfigData::DataMap * const dataMap, int dataMapSize, ConfigFile::ReadStatus readStatus);
+	void logEnum(DataLog_Level * level, const ConfigData::DataMap & dataMap, long value);
+	void logString(DataLog_Level * level, const ConfigData::DataMap & dataMap, const char * str);
 
 private:
 	bool readDataFromFile(const ConfigData::DataMap * const dataMap, int dataMapSize, const char * fileName, const char * crcName);

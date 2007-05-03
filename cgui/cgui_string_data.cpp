@@ -1,8 +1,10 @@
 /*
- *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
+ * Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.cpp 1.12 2007/06/14 19:34:11Z wms10235 Exp wms10235 $
  * $Log: cgui_string_data.cpp $
+ * Revision 1.10  2007/04/30 18:26:07Z  jl11312
+ * - additional error checking when reading string info files (Taos IT 3102)
  * Revision 1.9  2007/02/08 19:28:05Z  rm10919
  * Updates to add languages to string data.
  * Revision 1.8  2006/12/01 19:20:07Z  pn02526
@@ -33,7 +35,8 @@
 
 CGUIStringData::CGUIStringData(unsigned int linkLevel): LinkElement()
 {
-   do_link((LinkGroup *)&CGUITextItem::_textMap, (LinkElement**)&CGUITextItem::_textMap._textTable, linkLevel, LT_Exclusive);
+	_lock = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE);
+	do_link((LinkGroup *)&CGUITextItem::_textMap, (LinkElement**)&CGUITextItem::_textMap._textTable, linkLevel, LT_Exclusive);
 }
 
 CGUIStringData::~CGUIStringData(void)
@@ -50,6 +53,7 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
 
 	// Loop reading string info records, converting them to CGUTextItems,
 	// and putting them in their proper places in the text map.
+	semTake(_lock, WAIT_FOREVER);
 	while ( stringInfo.get(fontId, textItem, NULL, fontIndex) )
 	{
 		// Define a pointer for a map entry's CGUITextItem.
@@ -68,7 +72,7 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
 		if (iter != _textMap.end() && result)
 		{
 			// put text item information in corresponding _textMap[id].
-			//            
+			//
 			result->setText(textItem.getText());
 			result->setStylingRecord(textItem.getStylingRecord());
 			result->setLanguageId(currentLanguage);
@@ -79,6 +83,8 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
 			result = false;
 		}
 	}
+
+	semGive(_lock);
 
 	// Check for premature end.
 	if( !stringInfo.endOfFile() )
@@ -96,45 +102,42 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
 
 bool CGUIStringData::readDatabaseItem (CGUITextItem * LanguageName) //, Language language[0]);
 {
-   return true;
+	return true;
 }
 
 CGUITextItem * CGUIStringData::findString(const char * id)
 {
-   CGUITextItem * result = NULL;
+	CGUITextItem * result = NULL;
+	map<string, CGUITextItem *>::iterator iter;
 
-   map<string, CGUITextItem *>::iterator iter;
+	semTake(_lock, WAIT_FOREVER);
+	iter = _textMap.find(id);
 
-   //
-   // Do the lookup thing for textItem.
-   //
-   iter = _textMap.find(id);
+	if (iter != _textMap.end())
+	{
+		result = iter->second;
 
-   if (iter != _textMap.end())
-   {
-      result = iter->second;
+		if (strcmp(result->getId(), id) != 0)
+		{
+			result = NULL;
+		}
 
-      if (strcmp(result->getId(), id) != 0)
-      {
-         result = NULL;
-      }
+	}
 
-   }
-
-   // if can't find name return NULL.
-   return result;
+	semGive(_lock);
+	return result;
 }
 
 void CGUIStringData::addTextItem(const char * name, CGUITextItem * textItem)
 {
-   _textMap[name] = textItem;
-
+	semTake(_lock, WAIT_FOREVER);
+	_textMap[name] = textItem;
+	semGive(_lock);
 }
 
 void CGUIStringData::deleteTextItem(const char * name)
 {
-
-   _textMap.erase(name);
+	semTake(_lock, WAIT_FOREVER);
+	_textMap.erase(name);
+	semGive(_lock);
 }
-
-

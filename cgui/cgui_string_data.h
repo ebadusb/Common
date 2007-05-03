@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.h 1.6 2007/05/03 16:19:14Z jl11312 Exp wms10235 $
  * $Log: cgui_string_data.h $
+ * Revision 1.5  2007/04/30 18:26:07Z  jl11312
+ * - additional error checking when reading string info files (Taos IT 3102)
  * Revision 1.4  2007/02/08 19:28:05Z  rm10919
  * Updates to add languages to string data.
  * Revision 1.3  2006/11/28 20:42:55Z  pn02526
@@ -17,7 +19,7 @@
 #ifndef _CGUI_STRING_DATA_INCLUDE
 #define _CGUI_STRING_DATA_INCLUDE
                     
-                    
+#include <semLib.h>
 #include "link_element.h"
 #include "link_group.h"
 #include "cgui_text_item.h"
@@ -37,6 +39,7 @@ public:
    bool readDatabaseItem (CGUITextItem * LanguageName); //, Language language[0]);
 
 protected:
+	SEM_ID _lock;
    map<string, CGUITextItem *> _textMap;
 
 private:

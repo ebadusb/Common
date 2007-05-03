@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.17  2007/04/26 16:47:20Z  wms10235
+ * IT2354 - Updated the assignment operator and copy contructor
  * Revision 1.16  2007/04/23 23:54:37Z  wms10235
  * IT2354 - Found text item bug while debugging reports
  * Revision 1.15  2007/02/21 21:06:52Z  rm10919
@@ -220,7 +222,7 @@ void CGUITextItem::setText(const StringChar * string, LanguageId = currentLangua
       memcpy(_string, string, stringLength * sizeof(StringChar));
       _string[stringLength] = (StringChar)0;
 
-      _stringLength = stringLength + textBlockSize;
+      _stringLength = stringLength;
    }
 }
 
@@ -316,65 +318,66 @@ void CGUITextItem::handleVariableSubstitution()
    while( idx < _stringLength && _string[idx] != null_char )
    {
       // Check for start of variable substitution string
-      //
-      if (_string[idx] == (wchar_t)'#' &&
-          _string[idx+1] == (wchar_t)'!' &&
-          _string[idx+2] == (wchar_t)'{')
-      {
-         // Find ending '}' character if any
-         //
-         size_t subStartIdx = idx+3;
-         size_t subEndIdx = subStartIdx;
-
-         while (_string[subEndIdx] != null_char &&
-                _string[subEndIdx] != (wchar_t)'}' &&
-                subEndIdx < _stringLength)
-         {
-            subEndIdx += 1;
-         }
-
-         if (_string[subEndIdx] == '}' &&
-             subEndIdx-subStartIdx > 0)
-         {
-            // Have a valid variable substitution string - lookup the value
-            //
-            changedText = true;
-
-            char  * variableName = new char[subEndIdx-subStartIdx+1];
-
-            for (int i=0; i<subEndIdx-subStartIdx; i++)
-            {
-               variableName[i] = (char)(_string[subStartIdx+i] & 0x00ff);
-
-            }
-
-            variableName[subEndIdx-subStartIdx] = '\0';
-            StringChar * variableText = CGUIText::_variableDictionary.variableLookUp(variableName);
-            delete[] variableName;
-
-            int variableTextLength = 0;
-            if (variableText)
-            {
-               while (variableText[variableTextLength])
-                  variableTextLength += 1;
-
-               // Value is present, copy to the string and setup to continue with
-               // next character after substitution string
-               //
-               newStringSize += (variableTextLength + textBlockSize);
-               newTextString = (StringChar *)realloc(newTextString, (newStringSize * sizeof(StringChar) + textBlockSize));
-
-               for (int i=0; i<variableTextLength; i++)
-               {
-                  newTextString[newStringLength++] = (StringChar)variableText[i];
-               }
-
-               idx = subEndIdx + 1;
-               continue;
-            }
-         }
-      }
-
+      //  check for valid length before accessing next elements of the array
+      if (_string[idx] == (wchar_t)'#' &&  idx+2 < _stringLength)
+	  {
+		 if( _string[idx+1] == (wchar_t)'!' && _string[idx+2] == (wchar_t)'{')
+		 {
+			 // Find ending '}' character if any
+			 //
+			 size_t subStartIdx = idx+3;
+			 size_t subEndIdx = subStartIdx;
+	
+			 while (_string[subEndIdx] != null_char &&
+					_string[subEndIdx] != (wchar_t)'}' &&
+					subEndIdx < _stringLength)
+			 {
+				subEndIdx += 1;
+			 }
+	
+			 if (_string[subEndIdx] == '}' &&
+				 subEndIdx-subStartIdx > 0)
+			 {
+				// Have a valid variable substitution string - lookup the value
+				//
+				changedText = true;
+	
+				char  * variableName = new char[subEndIdx-subStartIdx+1];
+	
+				for (int i=0; i<subEndIdx-subStartIdx; i++)
+				{
+				   variableName[i] = (char)(_string[subStartIdx+i] & 0x00ff);
+	
+				}
+	
+				variableName[subEndIdx-subStartIdx] = '\0';
+				StringChar * variableText = CGUIText::_variableDictionary.variableLookUp(variableName);
+				delete[] variableName;
+	
+				int variableTextLength = 0;
+				if (variableText)
+				{
+				   while (variableText[variableTextLength])
+					  variableTextLength += 1;
+	
+				   // Value is present, copy to the string and setup to continue with
+				   // next character after substitution string
+				   //
+				   //newStringSize += (variableTextLength + textBlockSize);
+				   newStringSize += variableTextLength;
+				   newTextString = (StringChar *)realloc(newTextString, (newStringSize * sizeof(StringChar) ));
+	
+				   for (int i=0; i<variableTextLength; i++)
+				   {
+					  newTextString[newStringLength++] = (StringChar)variableText[i];
+				   }
+	
+				   idx = subEndIdx + 1;
+				   continue;
+				}
+			 }
+		  }
+	  }
       newTextString[newStringLength++] = _string[idx++];
    }
 

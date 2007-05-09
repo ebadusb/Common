@@ -4,6 +4,8 @@
  * Derived from cgui_string_data.h revision 1.2  2006/07/25 15:42:37  cf10242
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_info.h 1.6 2008/12/16 06:03:02Z rm10919 Exp wms10235 $
  * $Log: cgui_string_info.h $
+ * Revision 1.4  2007/04/30 18:26:07Z  jl11312
+ * - additional error checking when reading string info files (Taos IT 3102)
  * Revision 1.3  2007/02/08 19:28:06Z  rm10919
  * Updates to add languages to string data.
  * Revision 1.2  2006/11/29 00:48:12Z  pn02526
@@ -67,7 +69,7 @@ private:
 
 	void initialize();
 
-	StringChar UTF8ToUnicode(StringChar utf8Char);
+	void UTF8ToUnicode(char *&data, StringChar * wString, int &writeIdx);
 	bool getQuotedString(char *&data, StringChar *& str);
 	bool parseLine ( char * p, const CGUIFontId * fontId, CGUITextItem & result, int fontIndex = 0 );
 };

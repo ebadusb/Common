@@ -4,6 +4,8 @@
  * Derived from cgui_string_data.cpp revision 1.7  2006/07/25 15:42:37  cf10242
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_info.cpp 1.7 2008/12/16 22:01:41Z rm10919 Exp wms10235 $
  * $Log: cgui_string_info.cpp $
+ * Revision 1.4  2007/04/30 18:26:07Z  jl11312
+ * - additional error checking when reading string info files (Taos IT 3102)
  * Revision 1.3  2007/02/08 19:28:05Z  rm10919
  * Updates to add languages to string data.
  * Revision 1.2  2006/11/29 17:57:38Z  pn02526
@@ -69,20 +71,86 @@ void CGUIStringInfo::initialize()
 }
 
 // convert UTF8 encoding to Unicode
-StringChar CGUIStringInfo::UTF8ToUnicode(StringChar utf8Char)
+void CGUIStringInfo::UTF8ToUnicode( char *&data, StringChar * wString, int &writeIdx )
 {
-	StringChar unicodeChar = utf8Char;
-	unsigned char firstByte = utf8Char & 0xff;
-	unsigned char secondByte = (utf8Char & 0xff00) >> 8;
-	// get number of bytes in UTF8 shows up in both bytes to make sure this is not
-	// just an extended ASCII character
-	unsigned char numBytes1 = firstByte & 0x60 ;
-	unsigned char numBytes2 = secondByte & 0xc0 ;
-	if (numBytes1 == 0x40 && numBytes2 == 0x80)  // corresponds to 2 bytes utf8 in both bytes
-		unicodeChar = ((firstByte & 0x3) << 6) | (secondByte & 0x30) | (secondByte & 0xf);
-	else
-		DataLog( log_level_cgui_error ) << "Found possible non-2 byte UTF8 sequence in line " << _line << "   1st byte = " << hex << firstByte << "  second byte = " << secondByte << dec << "  continuing" << endmsg;
-	return unicodeChar;
+   if ( (*data & 0xf0) == 0xe0 &&
+        (*(data + 1) & 0xc0) == 0x80 &&
+        (*(data + 2) & 0xc0) == 0x80 )
+   {
+      StringChar ch1 = *data++ & 0x0f;
+      StringChar ch2 = *data++ & 0x3f;
+      StringChar ch3 = *data++ & 0x3f;
+
+      wString[writeIdx++] = ( ch1 << 12 ) | ( ch2 << 6 ) | ch3;
+   } 
+   else if ( (*data & 0xe0) == 0xc0 &&
+               (*(data + 1) & 0xc0) == 0x80 )
+   {
+      StringChar ch1 = *data++ & 0x1f;
+      StringChar ch2 = *data++ & 0x3f;
+
+      wString[writeIdx++] = ( ch1 << 6 ) | ch2;
+   } 
+   else
+   {
+      if ( *data == '\\' )
+      {
+         data++;
+         switch ( *data )
+         {
+         case '\0':
+            break;
+
+         case 'b':
+            wString[writeIdx++] = '\b';
+            data++;
+            break;
+
+         case 'n':
+            wString[writeIdx++] = '\n';
+            data++;
+            break;
+
+         case 'r':
+            wString[writeIdx++] = '\r';
+            data++;
+            break;
+
+         case 't':
+            wString[writeIdx++] = '\t';
+            data++;
+            break;
+
+         case '"':
+            wString[writeIdx++] = '"';
+            data++;
+            break;
+
+         case 'x':
+            char unicode[5];
+            int  l;
+
+            data++;
+            unicode[0] = (*data != '\0') ? *data++ : '\0';
+            unicode[1] = (*data != '\0') ? *data++ : '\0';
+            unicode[2] = (*data != '\0') ? *data++ : '\0';
+            unicode[3] = (*data != '\0') ? *data++ : '\0';
+            unicode[4] = '\0';
+
+            sscanf(unicode, "%x", &l);
+            wString[writeIdx++] = (StringChar)l;
+            break;
+
+         default:
+            wString[writeIdx++] = (StringChar)*data++;
+            break;
+         }
+      }
+      else
+      {
+         wString[writeIdx++] = (StringChar)*data++;
+      }
+   }
 }
 
 // get that returns false if caller provides a null pointer or string as the key.
@@ -161,76 +229,9 @@ bool CGUIStringInfo::getQuotedString(char *&data, StringChar *& wString)
 			if ( *data == '"' ) started = true;
 			data++;
 		}
-		else if ( started )
+		else if ( started ) 
 		{
-			if ( *data == '\\' )
-			{
-				data++;
-				switch ( *data )
-				{
-				case '\0':
-					break;
-
-            case 'b':
-					wString[writeIdx++] = '\b';
-					data++;
-					break;
-
-            case 'n':
-					wString[writeIdx++] = '\n';
-					data++;
-					break;
-
-            case 'r':
-					wString[writeIdx++] = '\r';
-					data++;
-					break;
-
-            case 't':
-					wString[writeIdx++] = '\t';
-					data++;
-					break;
-
-            case '"':
-					wString[writeIdx++] = '"';
-					data++;
-					break;
-  
-            case 'x':
-               char unicode[5];
-               int  l;
-
-               data++;
-               unicode[0] = (*data != '\0') ? *data++ : '\0';
-               unicode[1] = (*data != '\0') ? *data++ : '\0';
-               unicode[2] = (*data != '\0') ? *data++ : '\0';
-               unicode[3] = (*data != '\0') ? *data++ : '\0';
-               unicode[4] = '\0';
-
-               sscanf(unicode, "%x", &l);
-               wString[writeIdx++] = (StringChar)l;
-               break;
-
-				default:
-					wString[writeIdx++] = (StringChar)*data++;
-					break;
-				}
-			}
-			else
-         {
-            // not a backslash sequence, check for UTF8 sequence and convert.
-            StringChar * nextWord = (StringChar *)data;
-            if ( (*nextWord & 0x80C0) == 0x80C0 )
-            {
-					wString[writeIdx++] = (unsigned char)UTF8ToUnicode(*nextWord);
-               data += 2;
-            }
-            else
-				{
-					// not UTF8, just copy the character.
-               wString[writeIdx++] = (StringChar)*data++;
-				}
-			}
+           UTF8ToUnicode(data, wString, writeIdx);
 		}
 	}
 

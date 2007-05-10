@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.27 2007/05/10 16:35:46Z jl11312 Exp rm10919 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.26  2007/04/10 15:15:48Z  wms10235
+ * IT2354 - Removing the postscript generation from common gui
  * Revision 1.25  2007/04/10 15:12:02Z  wms10235
  * IT2354 - Removing postscript generation
  * Revision 1.24  2007/04/09 21:12:31Z  wms10235
@@ -85,6 +87,8 @@ void convertToStringChar(const char * string, StringChar ** stringChar)
 #include "messagesystem.h"
 extern void (* winAppStartupTask)(void);
 extern void (* winAppIdleTask)(void);
+extern int winAppIdleTimeoutMSec;
+
 MessageSystem * msgSys = NULL;
 
 UGL_DDB_ID drawBitMap = UGL_NULL_ID;
@@ -116,7 +120,7 @@ static void cguiWinAppIdleTask(void)
 }
 // END MESSAGE_SYSTEM_IN_WIN_MGR
 
-CGUIDisplay::CGUIDisplay(const CallbackBase & startCB, const CallbackBase & wakeupCB)
+CGUIDisplay::CGUIDisplay(const CallbackBase & startCB, const CallbackBase & wakeupCB, unsigned int idleTimeoutMSec)
 {
    //
    // Perform basic UGL initialization
@@ -155,6 +159,7 @@ CGUIDisplay::CGUIDisplay(const CallbackBase & startCB, const CallbackBase & wake
    // START MESSAGE_SYSTEM_IN_WIN_MGR
    winAppStartupTask = cguiWinAppStartupTask;
    winAppIdleTask = cguiWinAppIdleTask;
+   winAppIdleTimeoutMSec = idleTimeoutMSec;
    // END MESSAGE_SYSTEM_IN_WIN_MGR
 
 

@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.19 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
  * $Log: cgui_graphics.h $
+ * Revision 1.17  2007/04/10 20:47:34Z  adalusb
+ * IT2354 - Fixed prototype
  * Revision 1.16  2007/04/10 15:12:02Z  wms10235
  * IT2354 - Removing postscript generation
  * Revision 1.15  2007/04/09 21:12:31Z  wms10235
@@ -127,7 +129,7 @@ public:
 
    CGUIFontId     _font[MAX_FONTS];
 
-   CGUIDisplay(const CallbackBase & startCB=CallbackBase(), const CallbackBase & wakeupCB=CallbackBase());
+   CGUIDisplay(const CallbackBase & startCB=CallbackBase(), const CallbackBase & wakeupCB=CallbackBase(), unsigned int idleTimeoutMSec = 100);
    virtual ~CGUIDisplay();
 
    //

@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.30  2007/03/14 21:08:51Z  jmedusb
+ *  Added included headers for reserved messages and a datalog reserved stream call for button presses.
  *  Revision 1.29  2006/11/13 20:21:14Z  jd11007
  *  IT 65 - Memory leak fixes.
  *  Revision 1.28  2006/11/01 16:35:33Z  rm10919
@@ -181,7 +183,7 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
 
 	  // establish button press logging ID
 	  strncpy(_buttonPressLogText, buttonData.enabledTextItem->getId(), MAX_BUTTON_LOG_SIZE); 
-	  _buttonPressLogText[MAX_BUTTON_LOG_SIZE+1] = 0;
+	  _buttonPressLogText[MAX_BUTTON_LOG_SIZE] = 0;
    }
    else
    {
@@ -189,7 +191,7 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
 	   if(buttonData.alternateButtonId[0])
 	   {
 		   strncpy(_buttonPressLogText, buttonData.alternateButtonId, MAX_BUTTON_LOG_SIZE); 
-		   _buttonPressLogText[MAX_BUTTON_LOG_SIZE+1] = 0;
+		   _buttonPressLogText[MAX_BUTTON_LOG_SIZE] = 0;
 	   }
 	   else
 		   strcpy (_buttonPressLogText, "NO ID");
@@ -766,7 +768,7 @@ void CGUIButton::setEnabledText (CGUITextItem * textItem)
    {
 	   // re-establish button press logging ID
 	   strncpy(_buttonPressLogText, textItem->getId(), MAX_BUTTON_LOG_SIZE); 
-	   _buttonPressLogText[MAX_BUTTON_LOG_SIZE+1] = 0;
+	   _buttonPressLogText[MAX_BUTTON_LOG_SIZE] = 0;
       if (_enabledText)
       {
          _enabledText->setText(textItem);

@@ -3,6 +3,8 @@
 # Makefile.vx - common build makefile
 #
 # $Log: makefile.vx $
+# Revision 1.26  2007/03/15 13:22:06Z  jl11312
+# - added RMSGDIR to sub-directory make commands
 # Revision 1.25  2007/02/20 22:53:56Z  wms10235
 # IT74 - Adding the firewire driver to the common build
 # Revision 1.24  2007/01/18 21:52:10Z  MS10234
@@ -65,7 +67,7 @@ endif
 MAINDIR = .
 include $(MAINDIR)/makefile.vxc
 
-DIR_LIST := cds clocks cmdline config_file_support datalog debug dlm grip language_file_support router socket++ softcrc statemachine zlib
+DIR_LIST := cds clocks cmdline config_file_support datalog debug dlm grip language_file_support router socket++ softcrc statemachine unicode_string zlib
 ifeq ($(VXWORKS_VERSION),5.4)
   ifeq ($(CPU),I80486)
     DIR_LIST += drivers

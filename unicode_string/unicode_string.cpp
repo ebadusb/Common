@@ -6,6 +6,8 @@
  *	Wide character string class
  *
  * $Log: unicode_string.cpp $
+ * Revision 1.1  2007/05/18 16:19:19Z  wms10235
+ * Initial revision
  *
  */
 
@@ -47,10 +49,13 @@ UnicodeString::UnicodeString(const StringChar c, unsigned int n)
 	_data = NULL;
 	_length = _allocatedSize = 0;
 
-	allocate( n );
+	if( c != 0 && n > 0 )
+	{
+		allocate( n );
 
-	for (unsigned int i=0; i<n; i++ ) _data[i]=c;
-	_data[n]=0;
+		for (unsigned int i=0; i<n; i++ ) _data[i]=c;
+		_data[n]=0;
+	}
 }
 
 UnicodeString::UnicodeString(const StringChar * ucsStr)
@@ -492,7 +497,10 @@ const StringChar UnicodeString::operator[](int i) const
 
 	if( _data )
 	{
-		unsigned int index = indexCheck(i);
+		unsigned int index = i;
+		// Allow the NULL terminator to be read.
+		if( index > _length )
+			index = _length;
 		retVal = _data[index];
 	}
 

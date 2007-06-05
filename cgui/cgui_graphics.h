@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.19 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
  * $Log: cgui_graphics.h $
+ * Revision 1.18  2007/05/10 16:35:46Z  jl11312
+ * - add option to specify timeout in waiting for UGL events in message loop (Taos IT 3315)
  * Revision 1.17  2007/04/10 20:47:34Z  adalusb
  * IT2354 - Fixed prototype
  * Revision 1.16  2007/04/10 15:12:02Z  wms10235
@@ -60,6 +62,7 @@
 #include <ugl/uglinput.h>
 
 #include "callback.h"
+#include "unicode_string/unicode_string_types.h"
 
 //
 // Window Attributes
@@ -96,11 +99,6 @@ struct CGUIPaletteEntry
 #if CPU==SIMNT
 extern UGL_ARGB deviceClut[CGUIPaletteSize];
 #endif /* if CPU==SIMNT */
-
-//
-// make text strings a wide char for standard
-//
-typedef UGL_WCHAR StringChar;
 
 enum
 {

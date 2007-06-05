@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.cpp 1.9 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
  * $Log: cgui_data_item.cpp $
+ * Revision 1.8  2007/04/05 17:36:06Z  pn02526
+ * Make StringChar * arg a const StringChar *
  * Revision 1.7  2007/03/28 12:39:07  pn02526
  * Add ability to specify a decimal separator.
  * Revision 1.6  2007/03/01 12:09:54  rm10919
@@ -25,293 +27,184 @@
 #include <iostream>
 #include <sstream>
 
-
-const size_t textBlockSize = 16;  // minimum StringChar string allocation in bytes.
-
-const StringChar null_char = '\0';
-const StringChar zero_char = '0';
-const StringChar space_char = ' ';
-const StringChar space_string[2] = { space_char , null_char }; 
-const StringChar newline_string[2] = { '\n', null_char }; 
-
-// Return the length of a StringChar string.
-size_t CGUIDataItemDouble::stringCharLen( const StringChar * s )
-{
-    size_t l=0;
-    if( s != NULL ) while( *s++!=null_char ) l++;
-    return l;
-} 
-
-// Compute allocations needed for StringChar strings.
-size_t CGUIDataItemDouble::stringCharAllocation(const size_t len) { return ((len+textBlockSize)/textBlockSize)*textBlockSize; };
-size_t CGUIDataItemDouble::stringCharAllocation(const StringChar * s) { return (s == NULL) ? 0 : stringCharAllocation(stringCharLen(s)); };
-
-// Form a StringChar string from a const char string.
-StringChar * CGUIDataItemDouble::stringChar( const char * string )
-{
-   StringChar * s =  NULL;
-   if (string != NULL)
-   {
-      int stringLength = strlen(string);
-      s = new StringChar[stringCharAllocation(stringLength)];  
-      for (int i=0; i<=stringLength; i++) s[i] = (unsigned char)(StringChar)string[i];
-   }
-   return s;
-}
-
-// Copy a StringChar string into another, reallocating the destination if necessary.
-void CGUIDataItemDouble::stringCharCpy( StringChar ** ps1, const StringChar * s2 )
-{
-    if( ps1 != NULL )  // Do nothing if we have no pointer to an s1.
-    {
-        StringChar * s1 = *ps1;
-        size_t s1size = stringCharAllocation( s1 );
-        size_t s2size = stringCharAllocation( s2 );
-        if( s1 != NULL && s1size == s2size )
-        {
-            // Don't need to (re)allocate, just copy the string.
-            if( s2 != NULL ) while( *s2 != null_char && --s1size > 0) { *s1++ = *s2++; }
-            *s1 = null_char;
-        }
-        else
-        {
-            //(Re)allocate *ps1.  Degenerative case is s1==NULL;
-            if( s1 != NULL ) delete[] s1;
-            *ps1 = new StringChar[s2size];
-            stringCharCpy( ps1, s2 );
-        }
-    }
-}
-
-// Destructively Cat s2 to the end of *ps1, reallocating *ps1 if necessary.
-void CGUIDataItemDouble::stringCharCat( StringChar ** ps1, const StringChar * s2 )
-{
-    if( ps1 != NULL )  // Do nothing if we have no pointer to an s1.
-    {
-        StringChar * s1 = *ps1;
-        if( s1 != NULL )
-        {
-            size_t s1len = stringCharLen(s1);
-            size_t s1size = stringCharAllocation( s1len );
-            size_t newSize = stringCharAllocation( s1len + stringCharLen(s2));
-            if( newSize != s1size )
-            {
-                // Reallocate to fit cat'ed string
-                StringChar * sNew = new StringChar[newSize]; // This does the new allocation
-                stringCharCpy( &sNew, s1 );  // Copy s1 into the new allocation.
-                delete[] s1;  // Get rid of old allocation.
-                s1 = sNew;    // Point to new.
-                *ps1 = sNew;  //   "    "  "
-            }
-            s1 += s1len;
-            stringCharCpy( &s1, s2);
-        }
-        else
-            // Degenerate to a newly allocated string copy.
-            stringCharCpy( ps1, s2 );
-    }
-}
-
 //
 // Void Constructor
 //
-CGUIDataItem::CGUIDataItem() : _string(NULL), _valueChanged(false)
+CGUIDataItem::CGUIDataItem(void) :
+	_valueChanged(false)
 {
 }
 
-CGUIDataItem::CGUIDataItem(bool valueChanged) : _string(NULL), _valueChanged(valueChanged)
+CGUIDataItem::CGUIDataItem(bool valueChanged) :
+	_valueChanged(valueChanged)
 {
-
 }
 
 
 CGUIDataItem::~CGUIDataItem()
 {
-   delete _string;
 }
 
 //
 // Void Constructor
 //
-CGUIDataItemInteger::CGUIDataItemInteger()
+CGUIDataItemInteger::CGUIDataItemInteger(void) :
+	_value(0)
 {
-
 }
 
-CGUIDataItemInteger::CGUIDataItemInteger(int value):  CGUIDataItem(true), _value(value) 
+CGUIDataItemInteger::CGUIDataItemInteger(int value) :
+	CGUIDataItem(true),
+	_value(value)
 {
-
 }
 
 CGUIDataItemInteger::~CGUIDataItemInteger()
 {
-
 }
 
-StringChar * CGUIDataItemInteger::convertToString(void)
+const StringChar * CGUIDataItemInteger::convertToString(void)
 {
-   if (_valueChanged || !_string)
-   {
-      const char * string = NULL;
-      ostringstream textStream;
+	if( _valueChanged )
+	{
+		const char * intString = NULL;
+		ostringstream textStream;
 
-      textStream.setf(ios::fixed);
-      textStream.precision(0);
-      textStream << _value;
-      
-      string = textStream.str().c_str();
+		textStream.setf(ios::fixed);
+		textStream.precision(0);
+		textStream << _value;
 
-      //
-      // Clear _string
-      //
-      if (_string) delete _string;
+		intString = textStream.str().c_str();
 
-      //
-      // Copy value (string) into _string
-      //
-      convertToStringChar(string, &_string);
-      
-      _valueChanged = false;
-   }
-   return _string;
+		//
+		// Copy value (string) into _string
+		//
+		if( intString )
+			_string = intString;
+		else
+			_string.empty();
+
+		_valueChanged = false;
+	}
+
+	return _string.getString();
 }
 
 void CGUIDataItemInteger::setValue(int value)
 {
-   if (_value != value)
-   {
-      _value = value;
-      _valueChanged = true;
-   }
+	if (_value != value)
+	{
+		_value = value;
+		_valueChanged = true;
+	}
 }
 
 //
 // Void Constructor
 //
-CGUIDataItemDouble::CGUIDataItemDouble() : _separator(NULL)
+CGUIDataItemDouble::CGUIDataItemDouble(void) :
+	_separator(NULL),
+	_value(0.0),
+	_precision(0)
 {
 }
 
-CGUIDataItemDouble::CGUIDataItemDouble(double value, int precision): CGUIDataItem(true),
-_value(value), _precision(precision), _separator(NULL)
+CGUIDataItemDouble::CGUIDataItemDouble(double value, int precision) :
+	CGUIDataItem(true),
+	_value(value),
+	_precision(precision),
+	_separator(NULL)
 {
-
 }
 
-CGUIDataItemDouble::CGUIDataItemDouble(double value, int precision, CGUITextItem * separator): CGUIDataItem(true),
-_value(value), _precision(precision), _separator(separator)
+CGUIDataItemDouble::CGUIDataItemDouble(double value, int precision, CGUITextItem * separator) :
+	CGUIDataItem(true),
+	_value(value),
+	_precision(precision),
+	_separator(separator)
 {
-
 }
 
 CGUIDataItemDouble::~CGUIDataItemDouble()
 {
 }
 
-StringChar * CGUIDataItemDouble::convertToString(void)
+const StringChar * CGUIDataItemDouble::convertToString(void)
 {
-   if (_valueChanged || _string)
-   {
+	if( _valueChanged )
+	{
+		ostringstream textStream;
 
-      ostringstream textStream;
+		textStream.setf(ios::fixed);
+		if (_precision < 0)
+			textStream.precision(0);
+		else
+			textStream.precision(_precision);
 
-      textStream.setf(ios::fixed);
-      if (_precision < 0)
-         textStream.precision(0);
-      else
-         textStream.precision(_precision);
+		textStream << _value;
 
-      textStream << _value;
-      const char * string = textStream.str().c_str();
-      
-      char * cString = new char[strlen(string)+1];
-      strcpy( cString, string );
+		_string = textStream.str().c_str();
 
+		if( _separator != NULL )
+		{
+			// replace 1st period with the given separator.
+			int seperatorPos = _string.find( (StringChar)'.' );
 
-      //
-      // Clear _string
-      //
-      if (_string) delete _string;
+			if( seperatorPos >= 0 )
+			{
+				_string.deleteChar( seperatorPos, 1 );
+				_string.insert( _separator->getTextObj(), seperatorPos );
+			}
+		}
 
-      //
-      // Copy value (cString) into _string
-      //
-      convertToStringChar(cString, &_string);
-      delete cString;
+		_valueChanged = false;
+	}
 
-      if( _separator != NULL )
-      {
-        // replace 1st period with the given separator.
-        size_t pos=0;
-        // Find first non-numeric character or end of string.
-        while (_string[pos] != '\0' && _string[pos] <= '9' && _string[pos] >= '0' ) pos++;
-        // Is it the "normal" decimal point (period)?
-        if( _string[pos] == '.' )
-        {
-             // Yes, replace it.
-             StringChar * right=NULL;
-             stringCharCpy( &right, &_string[pos+1] ); // save characters to right of decimal point.
-             _string[pos] = '\0';                      // split the string.
-             stringCharCat( &_string, _separator->getText() );  // insert the given separator.
-             stringCharCat( &_string, right );          // restore rightmost characters.
-             delete right;
-        }
-      }
-
-      _valueChanged = false;
-   }
-   return _string;
+	return _string.getString();
 }
 
 void CGUIDataItemDouble::setValue(double value)
 {
-   if (_value != value)
-   {
-      _value = value;
-      _valueChanged = true;
-   }
+	if (_value != value)
+	{
+		_value = value;
+		_valueChanged = true;
+	}
 }
 
 void CGUIDataItemDouble::setPrecision(int precision)
 {
-   _precision = precision;
-   _valueChanged = true;
+	_precision = precision;
+	_valueChanged = true;
 }
-
 
 //
 // Void Constructor
 //
-CGUIDataItemTextItem::CGUIDataItemTextItem()
+CGUIDataItemTextItem::CGUIDataItemTextItem(void) :
+	_value(NULL)
 {
-
 }
 
-
-CGUIDataItemTextItem::CGUIDataItemTextItem(CGUITextItem * value): CGUIDataItem(true), _value(value)
+CGUIDataItemTextItem::CGUIDataItemTextItem(CGUITextItem * value) :
+	CGUIDataItem(true),
+	_value(value)
 {
-
 }
 
 CGUIDataItemTextItem::~CGUIDataItemTextItem()
 {
-   delete _value;
 }
 
-StringChar * CGUIDataItemTextItem::convertToString()
+const StringChar * CGUIDataItemTextItem::convertToString()
 {
-   if (_valueChanged && _value != NULL)
-   {
-      if (_string) delete _string;
-      _string =  new StringChar[_value->getLength()+1];
+	if (_valueChanged && _value != NULL)
+	{
+		_string = _value->getTextObj();
+		_valueChanged = false;
+	}
 
-      memcpy (_string, _value->getText(), _value->getLength() * sizeof(StringChar));
-
-      _string[_value->getLength()] = '\0';
-
-      _valueChanged = false;
-   }
-   return _string;
+	return _string.getString();
 }
 
 void CGUIDataItemTextItem::setValue(CGUITextItem * value)
@@ -347,41 +240,32 @@ void CGUIDataItemTextItem::setValue(char * value)
 //
 // Void Constructor
 //
-CGUIDataItemText::CGUIDataItemText()
+CGUIDataItemText::CGUIDataItemText(void)
 {
-
 }
 
-
-CGUIDataItemText::CGUIDataItemText(char * value): CGUIDataItem(true), _value(value)
+CGUIDataItemText::CGUIDataItemText(const char * value) :
+	CGUIDataItem(true)
 {
-
+	_string = value;
 }
 
 CGUIDataItemText::~CGUIDataItemText()
 {
-   delete _value;
 }
 
-StringChar * CGUIDataItemText::convertToString()
-{  
-   if (_valueChanged || !_string)
-   {
-      if (_string) delete _string;
-
-      convertToStringChar(_value, &_string);
-
-      _valueChanged = false;
-   }
-   return _string;
-}
-
-void CGUIDataItemText::setValue(char * value)
+const StringChar * CGUIDataItemText::convertToString()
 {
-   if (_value != value)
-   {
-      _value = value;
+   return _string.getString();
+}
 
+void CGUIDataItemText::setValue(const char * value)
+{
+	UnicodeString uValue = value;
+
+   if( _string != uValue )
+   {
+      _string = value;
       _valueChanged = true;
    }
 }

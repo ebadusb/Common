@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_variable_database.cpp 1.4 2007/06/04 22:04:21Z wms10235 Exp wms10235 $
  * $Log: cgui_variable_database.cpp $
+ * Revision 1.3  2007/05/03 16:19:14Z  jl11312
+ * - added semaphore protection for map structures
  * Revision 1.2  2005/09/30 22:40:54Z  rm10919
  * Get the variable database working!
  * Revision 1.1  2005/04/27 13:40:48Z  rm10919
@@ -14,6 +16,7 @@
 #include "cgui_variable_database.h"
 #include "cgui_variable_db_container.h"
 #include "cgui_text.h"
+#include "cgui_data_item.h"
 
 
 CGUIVariableDatabase::CGUIVariableDatabase(unsigned int linkLevel) : LinkElement()
@@ -27,9 +30,9 @@ CGUIVariableDatabase::~CGUIVariableDatabase()
 	_variableDictionary.clear();
 }
 
-StringChar * CGUIVariableDatabase::variableLookUp(const char * name)
+const StringChar * CGUIVariableDatabase::variableLookUp(const char * name)
 {
-	StringChar * result = NULL;
+	const StringChar * result = NULL;
 	map<string, CGUIDataItem *>::iterator iter;
 
 	semTake(_lock, WAIT_FOREVER);
@@ -38,10 +41,11 @@ StringChar * CGUIVariableDatabase::variableLookUp(const char * name)
 	if (iter!=_variableDictionary.end())
 	{
 		CGUIDataItem * dataItem = iter->second;
-		result= dataItem->convertToString();
+		result = dataItem->convertToString();
 	}
 
 	semGive(_lock);
+
 	return result;
 }
 

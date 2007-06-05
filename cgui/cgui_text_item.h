@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.15 2009/04/13 22:34:00Z rm10919 Exp wms10235 $
  * $Log: cgui_text_item.h $
+ * Revision 1.13  2007/04/30 21:18:28Z  wms10235
+ * IT2354 - Updated the getTextItem() method to be a static
  * Revision 1.12  2007/04/26 16:47:20Z  wms10235
  * IT2354 - Updated the assignment operator and copy contructor
  * Revision 1.11  2007/02/21 21:06:53Z  rm10919
@@ -33,16 +35,17 @@
 #ifndef _CGUI_TEXT_ITEM_INCLUDE
 #define _CGUI_TEXT_ITEM_INCLUDE
 
+#include "unicode_string/unicode_string.h"
 #include "cgui_graphics.h"
 #include "cgui_string_data_container.h"
 
 struct StylingRecord
 {
-   CGUIColor     color;       // color of the text as applied to whole string
-   unsigned int  attributes;  // attributes from the attribute enums above
-   CGUIRegion    region;      // placement in window or _owner relative
-   CGUIFontId    fontId;      // font used, this should use the _owner default value
-   int           fontSize;    // size of font most of the time
+	CGUIColor     color;       // color of the text as applied to whole string
+	unsigned int  attributes;  // attributes from the attribute enums above
+	CGUIRegion    region;      // placement in window or _owner relative
+	CGUIFontId    fontId;      // font used, this should use the _owner default value
+	int           fontSize;    // size of font most of the time
 };
 
 //
@@ -55,69 +58,76 @@ struct StylingRecord
 class CGUITextItem
 {
 public:
-   CGUITextItem(void);
-   CGUITextItem(const char * id, StylingRecord * stylingRecord = NULL);
-   CGUITextItem(const CGUITextItem& textItem);
+	CGUITextItem(void);
+	CGUITextItem(const char * id, StylingRecord * stylingRecord = NULL);
+	CGUITextItem(const CGUITextItem& textItem);
 
-   CGUITextItem& operator= (const CGUITextItem& textItem);
+	CGUITextItem& operator= (const CGUITextItem& textItem);
 
-   inline bool operator== (const CGUITextItem& textItem) {return (strcmp(_id, textItem._id)== 0);}
-   virtual ~ CGUITextItem();
+	inline bool operator== (const CGUITextItem& textItem) {return (_id == textItem._id);}
+	virtual ~CGUITextItem();
 
-   void setId(const char * id);
-   const char * getId(){return _id;}
-   //
-   // The method will retrun the text string
-   //
-   //
-   const StringChar * getText(LanguageId languageId = currentLanguage);
-   void getAscii( char * myString, LanguageId languageId = currentLanguage);
+	// Set the string's database ID
+	void setId(const char * id);
+	const char * getId(void) const;
 
-   static CGUITextItem * getTextItem(const char * id, LanguageId languageId = currentLanguage);
+	// The method returns a pointer to the text string
+	const StringChar * getText(LanguageId languageId = currentLanguage);
 
-   void setText(const char * string, LanguageId = currentLanguage);
-   void setText(const StringChar * texString, LanguageId = currentLanguage);
+	// Returns a unicode string object of the string
+	const UnicodeString& getTextObj(LanguageId languageId = currentLanguage);
 
-   LanguageId getLanguageId(void){ return _languageId;}
+	// Get a UTF8 (ASCII) representation of the string
+	void getAscii(string& myString, LanguageId languageId = currentLanguage);
 
-   void setLanguageId(LanguageId languageId){_languageId = languageId;}
-   void setDefaultLanguage(LanguageId languageId){_defaultLanguageId = languageId;}
+	// Helper function that looks up a CGUITextItem for the given ID.
+	// Returns NULL if the item is not found.
+	static CGUITextItem * getTextItem(const char * id, LanguageId languageId = currentLanguage);
 
-   bool isInitialized(void);
+	// Set the text for this CGUITextItem using a UTF8 string. The UTF8
+	// string is converted to wide character unicode.
+	void setText(const char * utf8String, LanguageId = currentLanguage);
 
-   void setStylingRecord(StylingRecord stylingRecord){_stylingRecord = stylingRecord;}
+	// Set the text for this CGUITextItem using a wide character string.
+	void setText(const StringChar * texString, LanguageId = currentLanguage);
 
-   StylingRecord getStylingRecord(){return _stylingRecord;}
+	// Get the language ID
+	LanguageId getLanguageId(void) const { return _languageId;}
 
-   int getLength(void) {return _stringLength;}
+	// Set the language ID or default language ID
+	void setLanguageId(LanguageId languageId){_languageId = languageId;}
+	void setDefaultLanguage(LanguageId languageId){_defaultLanguageId = languageId;}
 
-   int getStringCharLength(void);
-   int getStringCharVariableLength(void);
+	// Returns true if the text item ID is set
+	bool isInitialized(void) const;
 
-   void handleVariableSubstitution();
+	// Set the GUI styling record.
+	void setStylingRecord(StylingRecord stylingRecord) {_stylingRecord = stylingRecord;}
 
-   static CGUIStringDataContainer _textMap;
+	// Get the GUI styling record.
+	StylingRecord getStylingRecord(void) const {return _stylingRecord;}
 
-protected:
+	// Returns the length of the string in characters
+	int getLength(void) const;
 
-   unsigned short _stringLength;	// Number of characters in the string not counting the NULL terminator
-   unsigned short _stringSize;	// Number of characters allocated for _string not counting the NULL terminator
+	// Returns the length of the string in characters and
+	// performs variable substitution.
+	int getStringCharVariableLength(void);
+
+	// Perform variable substitution in the text.
+	void handleVariableSubstitution(void);
+
+	static CGUIStringDataContainer _textMap; // String database
 
 private:
-   //
-   // All the methods and routines to manipulate getting the string id's and text go here.
-   // These will be defined as the text string database is designed. A balance between
-   // cacheing and reading the database will need to be developed. As this part is being
-   // developed a method to create dynamic string id's (for dymanic data, e.g. numeric
-   // values) will need to be done.
-   //
-   const char * _id;
-   StringChar * _string;
-   LanguageId   _languageId;
+	string			_id;						// Non-translated internal string ID
+   UnicodeString	_string;					// String with variables substituted
+	UnicodeString	_template;				// String template with variable placeholders
+   LanguageId		_languageId;			// Language ID
+   StylingRecord	_stylingRecord;		// GUI styling information
+	bool				_hasVariables;			// Indicates that the template cantains variables
 
-   static int   _defaultLanguageId;
-
-   StylingRecord _stylingRecord;
+	static int		_defaultLanguageId;
 };
 
 #endif /* #ifndef _CGUI_TEXT_ITEM_INCLUDE */

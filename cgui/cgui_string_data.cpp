@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.cpp 1.12 2007/06/14 19:34:11Z wms10235 Exp wms10235 $
  * $Log: cgui_string_data.cpp $
+ * Revision 1.11  2007/05/03 16:19:13Z  jl11312
+ * - added semaphore protection for map structures
  * Revision 1.10  2007/04/30 18:26:07Z  jl11312
  * - additional error checking when reading string info files (Taos IT 3102)
  * Revision 1.9  2007/02/08 19:28:05Z  rm10919
@@ -57,7 +59,7 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
 	while ( stringInfo.get(fontId, textItem, NULL, fontIndex) )
 	{
 		// Define a pointer for a map entry's CGUITextItem.
-		CGUITextItem * result;
+		CGUITextItem * pTextItem;
 
 		// Define an iterator for the text map.
 		map<string, CGUITextItem *>::iterator iter;
@@ -65,17 +67,25 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
 		// Do the lookup thing for the textItem.
 		//
 		iter = _textMap.find(textItem.getId());
-		result = iter->second;
 
 		// If found the corresponding text item in map,
 		// correct the formatting sequences in the text.
-		if (iter != _textMap.end() && result)
+		if (iter != _textMap.end())
 		{
-			// put text item information in corresponding _textMap[id].
-			//
-			result->setText(textItem.getText());
-			result->setStylingRecord(textItem.getStylingRecord());
-			result->setLanguageId(currentLanguage);
+			pTextItem = iter->second;
+
+			if( pTextItem )
+			{
+				// Update the text item information in corresponding _textMap[id].
+				//
+				*pTextItem = textItem;
+				pTextItem->setLanguageId(languageId);
+			}
+			else
+			{
+				DataLog( log_level_cgui_error ) << "line " << stringInfo.line() << ": Text item is NULL for string ID " << textItem.getId() << " in map!!!!! - " << filename << endmsg;
+				result = false;
+			}
 		}
 		else
 		{

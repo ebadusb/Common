@@ -1,9 +1,11 @@
 /*
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/config_file_support/rcs/config_helper.cpp 1.2 2007/05/02 14:08:22Z jl11312 Exp MS10234 $
+ * $Header: Q:/BCT_Development/vxWorks/Common/config_file_support/rcs/config_helper.cpp 1.4 2007/10/29 17:22:49Z jl11312 Exp jd11007 $
  *
  * Utilities for managing configuration files
  *
  * $Log: config_helper.cpp $
+ * Revision 1.2  2007/05/02 14:08:22Z  jl11312
+ * - changed logging to correctly log string and enum values (Taos IT 3234)
  * Revision 1.1  2007/01/18 21:44:36Z  MS10234
  * Initial revision
  * Revision 1.1  2005/05/16 22:31:37Z  ms10234
@@ -443,25 +445,28 @@ bool ConfigFile::writeEnum(FILE * fp, const ConfigData::DataMap & dataMap, long 
 
 void ConfigFile::logString(DataLog_Level * level, const ConfigData::DataMap & dataMap, const char * str)
 {
-	const char * currCh = str;
-
-   DataLog(*level) << '"';
-   while ( *currCh )
+	if ( str )
 	{
-		switch ( *currCh )
+		const char * currCh = str;
+
+		DataLog(*level) << '"';
+		while ( *currCh )
 		{
-		case '\b': DataLog(*level) << "\\b"; 	break;
-		case '\n': DataLog(*level) << "\\n"; 	break;
-		case '\r': DataLog(*level) << "\\r";	break;
-		case '\t': DataLog(*level) << "\\t"; 	break;
-		case '"':  DataLog(*level) << "\\\""; 	break;
-		default:   DataLog(*level) << *currCh; break;
+			switch ( *currCh )
+			{
+			case '\b': DataLog(*level) << "\\b"; 	break;
+			case '\n': DataLog(*level) << "\\n"; 	break;
+			case '\r': DataLog(*level) << "\\r";	break;
+			case '\t': DataLog(*level) << "\\t"; 	break;
+			case '"':  DataLog(*level) << "\\\""; 	break;
+			default:   DataLog(*level) << *currCh; break;
+			}
+	
+			currCh++;
 		}
 
-		currCh++;
+		DataLog(*level) << '"';
 	}
-
-	DataLog(*level) << '"';
 }
 
 void ConfigFile::logEnum(DataLog_Level * level, const ConfigData::DataMap & dataMap, long value)

@@ -3,11 +3,13 @@
 # Makefile
 #
 # $Log: makefile.vx $
+# Revision 1.1  2007/05/18 16:19:17Z  wms10235
+# Initial revision
 #
 
 ifeq ($(BUILD_TYPE),CLEAN)
 .PHONY: all
-all: clean clean_generated_files
+all: clean
 else
 .PHONY: all
 all: check_opt_change lib

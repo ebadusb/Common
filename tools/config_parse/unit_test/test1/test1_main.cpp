@@ -3,6 +3,8 @@
 // Main program for config_parse unit test 1
 //
 // $Log: test1_main.cpp $
+// Revision 1.1  2005/05/11 15:15:03Z  jl11312
+// Initial revision
 // Revision 1.2  2005/01/24 16:01:26Z  jl11312
 // - updated for new version of configuration parse utility
 // Revision 1.1  2004/07/21 19:00:38Z  jl11312
@@ -128,7 +130,7 @@ int test1_main(void)
 	// Check file read operation
 	//
 	fprintf(stderr, "Test 1.5 ...\n");
-	if ( Test1::Test1_A_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadOK )
+	if ( Test1::Test1_A_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadOK )
 	{
 		fprintf(stderr, "test failed\n");
 		return -1;
@@ -189,9 +191,9 @@ int test1_main(void)
 	// Test range check, validate check fails as expected
 	//
 	fprintf(stderr, "Test 1.11 ...\n");
-	if ( Test1::Test1_D_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadFailed ||
-		  Test1::Test1_E_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadFailed ||
-		  Test1::Test1_F_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadFailed )
+	if ( Test1::Test1_D_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadFailed ||
+		  Test1::Test1_E_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadFailed ||
+		  Test1::Test1_F_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadFailed )
 	{
 		fprintf(stderr, "test failed\n");
 		return -1;
@@ -199,9 +201,9 @@ int test1_main(void)
 	fprintf(stderr, "test passed\n");
 
 	fprintf(stderr, "Test 1.12 ...\n");
-	if ( Test1::Test1_G_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadFailed ||
-		  Test1::Test1_H_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadFailed ||
-		  Test1::Test1_I_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadFailed )
+	if ( Test1::Test1_G_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadFailed ||
+		  Test1::Test1_H_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadFailed ||
+		  Test1::Test1_I_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadFailed )
 	{
 		fprintf(stderr, "test failed\n");
 		return -1;
@@ -209,7 +211,7 @@ int test1_main(void)
 	fprintf(stderr, "test passed\n");
 
 	fprintf(stderr, "Test 1.13 ...\n");	
-	if ( Test1::Test1_J_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadFailed )
+	if ( Test1::Test1_J_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadFailed )
 	{
 		fprintf(stderr, "test failed\n");
 		return -1;
@@ -217,7 +219,7 @@ int test1_main(void)
 	fprintf(stderr, "test passed\n");
 
 	fprintf(stderr, "Test 1.14 ...\n");	
-	if ( Test1::Test1_K_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadFailed )
+	if ( Test1::Test1_K_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadFailed )
 	{
 		fprintf(stderr, "test failed\n");
 		return -1;
@@ -225,7 +227,7 @@ int test1_main(void)
 	fprintf(stderr, "test passed\n");
 
 	fprintf(stderr, "Test 1.15 ...\n");
-	if ( Test1::Test1_L_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadFailed )
+	if ( Test1::Test1_L_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadFailed )
 	{
 		fprintf(stderr, "test failed\n");
 		return -1;
@@ -245,17 +247,20 @@ int test1_main(void)
 	fprintf(fp, "[Version]\n");
 	fprintf(fp, "FormatVersion=\"1b\"\n");
 	fprintf(fp, "DataVersion=\"d1b\"\n");
+	fprintf(fp, "[FileInfo]\n");
+	fprintf(fp, "ReadOnly=true\n");
+	fprintf(fp, "FileName=\"/config/file1_b.dat\"\n");
 	fprintf(fp, "[Section1]\n");
 	fprintf(fp, "Param101=enum3_id3\n");
 	fclose(fp);
 
 	mkdir(CONFIG_PATH "/crc");
 	fp = fopen(CONFIG_PATH "/crc/file1_b.crc", "w");
-	fprintf(fp, "0x286e0d7f\n");
+	fprintf(fp, "0xa4fd4310\n");
 	fclose(fp);
 
 	fprintf(stderr, "Test 1.16 ...\n");
-	if ( Test1::Test1_B_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadOK )
+	if ( Test1::Test1_B_Access.readFile(&log_level_critical, &log_level_critical) != ConfigFile::ReadOK )
 	{
 		fprintf(stderr, "test failed\n");
 		return -1;
@@ -265,11 +270,13 @@ int test1_main(void)
 	// Test CRC check
 	//
 	fp = fopen(CONFIG_PATH "/crc/file1_b.crc", "w");
-	fprintf(fp, "0x286e0df7\n");	// incorrect CRC
+	fprintf(fp, "0xa4fd4301\n");	// incorrect CRC
 	fclose(fp);
+	unlink(CONFIG_PATH "/backup/file1_b.dat");
+	unlink(CONFIG_PATH "/backup/crc/file1_b.crc");
 
 	fprintf(stderr, "Test 1.17 ...\n");
-	if ( Test1::Test1_B_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadFailed )
+	if ( Test1::Test1_B_Access.readFile(&log_level_critical, &log_level_critical) != ConfigFile::ReadFailed )
 	{
 		fprintf(stderr, "test failed\n");
 		return -1;
@@ -283,17 +290,20 @@ int test1_main(void)
 	fprintf(fp, "[Version]\n");
 	fprintf(fp, "FormatVersion=\"1b\"\n");
 	fprintf(fp, "DataVersion=\"d1b\"\n");
+	fprintf(fp, "[FileInfo]\n");
+	fprintf(fp, "ReadOnly=true\n");
+	fprintf(fp, "FileName=\"/config/file1_b.dat\"\n");
 	fprintf(fp, "[Section1]\n");
 	fprintf(fp, "Param101=enum3_id1\n");
 	fclose(fp);
 
 	mkdir(CONFIG_PATH "/backup/crc");
 	fp = fopen(CONFIG_PATH "/backup/crc/file1_b.crc", "w");
-	fprintf(fp, "0x1a586ffd\n");
+	fprintf(fp, "0x96cb2192\n");
 	fclose(fp);
 
 	fprintf(stderr, "Test 1.18 ...\n");
-	if ( Test1::Test1_B_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadBackupOK )
+	if ( Test1::Test1_B_Access.readFile(&log_level_critical, &log_level_critical) != ConfigFile::ReadBackupOK )
 	{
 		fprintf(stderr, "test failed\n");
 		return -1;
@@ -308,16 +318,19 @@ int test1_main(void)
 	fprintf(fp, "[Version]\n");
 	fprintf(fp, "FormatVersion=\"1c\"\n");
 	fprintf(fp, "DataVersion=\"d1b\"\n");
+	fprintf(fp, "[FileInfo]\n");
+	fprintf(fp, "ReadOnly=true\n");
+	fprintf(fp, "FileName=\"/config/file1_b.dat\"\n");
 	fprintf(fp, "[Section1]\n");
 	fprintf(fp, "Param101=enum3_id3\n");
 	fclose(fp);
 
 	fp = fopen(CONFIG_PATH "/crc/file1_b.crc", "w");
-	fprintf(fp, "0xe250feec\n");
+	fprintf(fp, "0xe2e4492a\n");
 	fclose(fp);
 
 	fprintf(stderr, "Test 1.19 ...\n");
-	if ( Test1::Test1_B_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadFailed )
+	if ( Test1::Test1_B_Access.readFile(&log_level_critical, &log_level_critical) != ConfigFile::ReadFailed )
 	{
 		fprintf(stderr, "test failed\n");
 		return -1;
@@ -329,6 +342,8 @@ int test1_main(void)
 	fprintf(stderr, "Test 1.20 ...\n");
 	if ( !Test1::Test1_C_Access.Version.FormatVersion.set(Test1::Test1_C_Access.formatVersion()) ||
 		  !Test1::Test1_C_Access.Version.DataVersion.set("1") ||
+		  !Test1::Test1_C_Access.FileInfo.ReadOnly.set(false) ||
+		  !Test1::Test1_C_Access.FileInfo.FileName.set("/config/file1_c.dat") ||
 		  !Test1::Test1_C_Access.Section1.Param201.set(Test1::enum4_id1) ||
 		  !Test1::Test1_C_Access.Section2.Param1.set(1) ||
 		  !Test1::Test1_C_Access.Section2.Param2.set(-1) ||
@@ -345,7 +360,7 @@ int test1_main(void)
 	// Test file write
 	//
 	fprintf(stderr, "Test 1.21 ...\n");
-	if ( Test1::Test1_C_Access.writeFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::WriteOK )
+	if ( Test1::Test1_C_Access.writeFile(&log_level_critical, &log_level_critical) != ConfigFile::WriteOK )
 	{
 		fprintf(stderr, "test failed\n");
 		return -1;
@@ -356,6 +371,8 @@ int test1_main(void)
 	//
 	Test1::Test1_C_Access.Version.FormatVersion.set("0");
 	Test1::Test1_C_Access.Version.DataVersion.set("0");
+	Test1::Test1_C_Access.FileInfo.ReadOnly.set(true);
+	Test1::Test1_C_Access.FileInfo.FileName.set("0");
 	Test1::Test1_C_Access.Section1.Param201.set(Test1::enum4_id2);
 	Test1::Test1_C_Access.Section2.Param1.set(2);
 	Test1::Test1_C_Access.Section2.Param2.set(-2);
@@ -365,9 +382,11 @@ int test1_main(void)
 	Test1::Test1_C_Access.Section2.Param6.set(1);
 
 	fprintf(stderr, "Test 1.22 ...\n");
-	if ( Test1::Test1_C_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadOK ||
+	if ( Test1::Test1_C_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadOK ||
 		  strcmp(Test1::Test1_C().Version.FormatVersion, "1c") != 0 ||
 		  strcmp(Test1::Test1_C().Version.DataVersion, "1") != 0 ||
+		  Test1::Test1_C().FileInfo.ReadOnly != false ||
+		  strcmp(Test1::Test1_C().FileInfo.FileName, "/config/file1_c.dat") != 0 ||
 		  Test1::Test1_C().Section1.Param201 != Test1::enum4_id1 ||
 		  Test1::Test1_C().Section2.Param1 != 1 ||
 		  Test1::Test1_C().Section2.Param2 != -1 ||
@@ -385,6 +404,8 @@ int test1_main(void)
 	//
 	Test1::Test1_C_Access.Version.FormatVersion.set("0");
 	Test1::Test1_C_Access.Version.DataVersion.set("0");
+	Test1::Test1_C_Access.FileInfo.ReadOnly.set(true);
+	Test1::Test1_C_Access.FileInfo.FileName.set("0");
 	Test1::Test1_C_Access.Section1.Param201.set(Test1::enum4_id2);
 	Test1::Test1_C_Access.Section2.Param1.set(2);
 	Test1::Test1_C_Access.Section2.Param2.set(-2);
@@ -394,7 +415,7 @@ int test1_main(void)
 	Test1::Test1_C_Access.Section2.Param6.set(1);
 
 	fprintf(stderr, "Test 1.23 ...\n");
-	if ( Test1::Test1_C_Access.writeFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::WriteOK )
+	if ( Test1::Test1_C_Access.writeFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::WriteOK )
 	{
 		fprintf(stderr, "test failed\n");
 		return -1;
@@ -403,9 +424,11 @@ int test1_main(void)
 
 	fprintf(stderr, "Test 1.24 ...\n");
 	unlink(CONFIG_PATH "/file1_c.dat");
-	if ( Test1::Test1_C_Access.readFile(&log_level_startup_info, &log_level_startup_error) != ConfigFile::ReadBackupOK ||
+	if ( Test1::Test1_C_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadBackupOK ||
 		  strcmp(Test1::Test1_C().Version.FormatVersion, "1c") != 0 ||
 		  strcmp(Test1::Test1_C().Version.DataVersion, "1") != 0 ||
+		  Test1::Test1_C().FileInfo.ReadOnly != false ||
+		  strcmp(Test1::Test1_C().FileInfo.FileName, "/config/file1_c.dat") != 0 ||
 		  Test1::Test1_C().Section1.Param201 != Test1::enum4_id1 ||
 		  Test1::Test1_C().Section2.Param1 != 1 ||
 		  Test1::Test1_C().Section2.Param2 != -1 ||
@@ -504,6 +527,18 @@ int test1_main(void)
         Test1::Test1_C_Access.Section2.Param6.set(0) ||
         Test1::Test1_C_Access.Section2.Param6.set(-1) ||
         Test1::Test1_C_Access.Section2.Param6.set(-3) )
+	{
+		fprintf(stderr, "test failed\n");
+		return -1;
+	}
+	fprintf(stderr, "test passed\n");
+
+	fprintf(stderr, "Test 1.31 ...\n");
+	if ( Test1::Test1_P_Access.Section1.P1.set((Test1::TParamP)Test1::enum4_id1) ||
+		  !Test1::Test1_P_Access.Section1.P3.set(Test1::enumP_id1) ||
+		  Test1::Test1_P_Access.Section2.ParamP.set(Test1::enumP_id2) ||
+		  !Test1::Test1_P_Access.Section2.P2.set(Test1::enumP_id3) || 
+		  Test1::Test1_P_Access.Section2.P3.set((Test1::TParamP)Test1::enum4_id1) )
 	{
 		fprintf(stderr, "test failed\n");
 		return -1;

@@ -2,6 +2,8 @@
 
 rem $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/unit_test/test1/rcs/test1.bat 1.1 2005/05/11 16:12:04Z jl11312 Exp jl11312 $
 rem $Log: test1.bat $
+rem Revision 1.1  2005/05/11 16:12:04Z  jl11312
+rem Initial revision
 rem Revision 1.2  2005/01/21 16:49:39Z  jl11312
 rem - added new test cases
 rem Revision 1.1  2004/07/20 19:33:42Z  jl11312
@@ -9,7 +11,7 @@ rem Initial revision
 
 rm -rf tmp_data > nul
 echo Parsing configuration files
-..\..\release\config_parse -project taos -output Test1 -export_output test1_enum.h -data_file_dir tmp_data test1_a test1_b test1_c test1_d test1_e test1_f test1_g test1_h test1_i test1_j test1_k test1_l test1_m test1_n test1_o
+..\..\release\config_parse -project taos -file_names .. -config_helper .. -output Test1 -export_output test1_enum.h -data_file_dir tmp_data test1_a test1_b test1_c test1_d test1_e test1_f test1_g test1_h test1_i test1_j test1_k test1_l test1_m test1_n test1_o test1_p
 if errorlevel 1 goto fail
 
 echo.

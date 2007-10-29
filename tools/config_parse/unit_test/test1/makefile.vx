@@ -1,5 +1,7 @@
 # $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/unit_test/test1/rcs/makefile.vx 1.1 2005/05/11 15:15:06Z jl11312 Exp jl11312 $
 # $Log: makefile.vx $
+# Revision 1.1  2005/05/11 15:15:06Z  jl11312
+# Initial revision
 # Revision 1.1  2004/07/20 19:35:21Z  jl11312
 # Initial revision
 #
@@ -13,7 +15,7 @@ all: check_opt_change app
 # style) directory separators if they are needed.
 #
 MAINDIR = ..\..\..\..
-ADDN_INCDIR = -I$(MAINDIR) 
+ADDN_INCDIR = -I$(MAINDIR) -I$(MAINDIR)/include
 
 include $(MAINDIR)/makefile.vxc
 

@@ -1,8 +1,10 @@
-// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/parameter.cpp 1.1 2005/05/11 15:15:09Z jl11312 Exp jl11312 $
+// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/parameter.cpp 1.2 2005/05/11 15:15:09Z jl11312 Exp jl11312 $
 //
 // Configuration file parameter classes
 //
 // $Log: parameter.cpp $
+// Revision 1.2  2005/05/11 15:15:09Z  jl11312
+// - corrected archive types
 // Revision 1.3  2005/01/20 15:13:34Z  jl11312
 // - added suport for export file for shared enumeration types
 // Revision 1.2  2005/01/18 15:43:38Z  jl11312
@@ -29,7 +31,7 @@ Parameter::Parameter(const string & section, const string & name, const string &
 			startIndex -= 1;
 		}
 
-		_name = name.substr(0, startIndex);
+		_parameterName = name.substr(0, startIndex);
 		_index = atoi(name.substr(startIndex+1, name.size()-startIndex-2).c_str());
 
 		char indexStr[20];  
@@ -40,8 +42,10 @@ Parameter::Parameter(const string & section, const string & name, const string &
 	{
 		_indexString = "";
 		_index = -1;
-		_name = name;
+		_parameterName = name;
 	}
+
+	_variableName = _parameterName;
 }
 
 LongParameter::LongParameter(const string & section, const string & name, const string & stringValue, long value)
@@ -93,7 +97,7 @@ string Parameter::getDeclarationString(void)
 		case Parameter::TDouble: typeString = "double"; break;
 		case Parameter::TString: typeString = "const char *"; break;
 		case Parameter::TBool: typeString = "bool"; break;
-		case Parameter::TEnum: typeString = "T" + _name; break;
+		case Parameter::TEnum: typeString = "T" + _parameterName; break;
 	}
 
 	return typeString;
@@ -108,7 +112,7 @@ string Parameter::getPtrDeclarationString(void)
 		case Parameter::TDouble: typeString = "double *"; break;
 		case Parameter::TString: typeString = "const char **"; break;
 		case Parameter::TBool: typeString = "bool *"; break;
-		case Parameter::TEnum: typeString = "T" + _name + " *"; break;
+		case Parameter::TEnum: typeString = "T" + _parameterName + " *"; break;
 	}
 
 	return typeString;
@@ -123,7 +127,7 @@ void Parameter::generateAccessClassHeader(FILE * fp, bool readWrite, int arraySi
 		"      {\n"
 		"      public:\n"
 		"        const char * name(void) { return _name[_mapIdx]; }\n",
-		_name.c_str());
+		_variableName.c_str());
 
 	if ( !_validateFunc.empty() ||
 		  getType() == TEnum )
@@ -197,7 +201,7 @@ void Parameter::generateValidateFunction(FILE * fp)
 		break;
 
 	case TEnum:
-		fprintf(fp, "  T%s value = *(T%s *)valuePtr;\n", _name.c_str(), _name.c_str());
+		fprintf(fp, "  T%s value = *(T%s *)valuePtr;\n", _parameterName.c_str(), _parameterName.c_str());
 		break;
 
 	case TBool:

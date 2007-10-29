@@ -1,8 +1,10 @@
-// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/parameter.h 1.1 2005/05/11 15:15:08Z jl11312 Exp jl11312 $
+// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/parameter.h 1.2 2005/05/11 15:15:08Z jl11312 Exp jl11312 $
 //
 // Configuration file parameter classes
 //
 // $Log: parameter.h $
+// Revision 1.2  2005/05/11 15:15:08Z  jl11312
+// - corrected archive types
 // Revision 1.3  2005/01/20 15:13:15Z  jl11312
 // - added suport for export file for shared enumeration types
 // Revision 1.2  2005/01/18 15:12:36Z  jl11312
@@ -31,7 +33,8 @@ public:
 	virtual string getPtrDeclarationString(void);
 
 	const string & sectionName(void) { return _section; }
-	const string & name(void) { return _name; }
+	const string & variableName(void) { return _variableName; }
+	const string & parameterName(void) { return _parameterName; }
 	const string & value(void) { return _stringValue; }
 
 	const string & indexString(void) { return _indexString; }
@@ -49,6 +52,8 @@ public:
 	void setRange(string min, string max) { _min=min; _max=max; }
 	void setRangeFunc(const string & func) { _rangeFunc = func; }
 
+	virtual void setVariableName(const string & name) { _variableName = name; }
+
 	void generateAccessClassHeader(FILE * fp, bool readWrite, int arraySize);
 	void generateValidateFunction(FILE * fp);
 	void generateRangeFunction(FILE * fp);
@@ -64,7 +69,8 @@ public:
 
 protected:
 	string _section;
-	string _name;
+	string _parameterName;	// name of parameter
+	string _variableName;  	// variable name to be used (usually the same as _parameterName)  
 	string _stringValue;
 
 	string _indexString;

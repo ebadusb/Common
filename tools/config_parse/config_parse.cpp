@@ -3,6 +3,8 @@
 // Configuration file parse tool
 //
 // $Log: config_parse.cpp $
+// Revision 1.4  2006/10/19 20:01:02Z  MS10234
+// 63 - Add logging of the config files
 // Revision 1.3  2005/05/11 21:30:45Z  ms10234
 // - added argument for file_names and config_helper header file locations
 // Revision 1.2  2005/05/11 16:10:39Z  jl11312
@@ -35,7 +37,7 @@ static void generateHeaderFile(FILE * fp, const char * outputName, const char * 
 		" *\n"
 		" * Source Files:\n");
 
-	int file;
+	unsigned int file;
 	for ( file=0; file<configFile.size(); file++ )
 	{
 		fprintf(fp,
@@ -131,7 +133,7 @@ static void generateExportHeaderFile(FILE * fp, const char * outputName, const c
 		" *\n"
 		" * Source Files:\n");
 
-	int file;
+	unsigned int file;
 	for ( file=0; file<configFile.size(); file++ )
 	{
 		fprintf(fp,
@@ -178,7 +180,7 @@ void generateSourceFile(FILE * fp, const char * outputName, const char * sourceF
 		"#include \"%s.h\"\n\n",
 		sourceFileBase);
 
-	int file;
+	unsigned int file;
 	for ( file=0; file<configFile.size(); file++ )
 	{
 		if ( configFile[file]->noOutputFile() ) continue;
@@ -247,7 +249,7 @@ void generateSourceFile(FILE * fp, const char * outputName, const char * sourceF
 void parseFileList(void)
 {
 	bool error = false;
-	for (int file = 0; file < configFile.size(); file += 1)
+	for (unsigned int file = 0; file < configFile.size(); file += 1)
 	{
 		FILE * cfg_file = fopen(configFile[file]->fileName(), "r");
 		if ( !cfg_file )
@@ -350,7 +352,7 @@ void generateExportFile(const char * outputName, const char * exportFileName, co
 
 void generateDataFiles(const char * dataFileDir)
 {
-	for ( int file=0; file<configFile.size(); file++ )
+	for ( unsigned int file=0; file<configFile.size(); file++ )
 	{
 		if ( configFile[file]->noOutputFile() ) continue;
 		configFile[file]->generateDataFile(dataFileDir);
@@ -547,7 +549,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		for ( int file=0; file<configFile.size(); file++ )
+		for ( unsigned int file=0; file<configFile.size(); file++ )
 		{
 			configFile[file]->setProjectName(projectName);
 		}

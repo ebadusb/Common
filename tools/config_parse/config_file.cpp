@@ -3,6 +3,8 @@
 // Configuration file class
 //
 // $Log: config_file.cpp $
+// Revision 1.6  2007/05/02 13:59:51Z  jl11312
+// - changed logging to correctly log string and enum values
 // Revision 1.5  2007/01/04 16:42:56Z  MS10234
 // 57 - add in file information fields that describe read-only and location attributes of the file
 // Revision 1.4  2006/11/29 17:47:58Z  MS10234
@@ -43,7 +45,7 @@ ConfigFile::ConfigFile(const char * fileName)
 int ConfigFile::enumCount(void)
 {
 	int count = 0;
-	for ( int i=0; i<_enumType.size(); i++ )
+	for ( unsigned int i=0; i<_enumType.size(); i++ )
 	{
 		count += _enumType[i]->_id.size();
 	}
@@ -249,7 +251,7 @@ void ConfigFile::addParameter(Parameter * parameter)
 	_parameter.push_back(parameter);
 
 	// Add section name if necessary
-	int s;
+	unsigned int s;
 	for ( s=0; s<_section.size(); s++ )
 	{
 		if ( _section[s]->name() == parameter->sectionName() ) break;
@@ -416,6 +418,7 @@ void ConfigFile::getOption(void)
 {
 	int ch;
 	bool done = false;
+	bool started = false;
 
 	_parseToken.erase();
 	while ( (ch = getChar()) != EOF &&
@@ -423,6 +426,7 @@ void ConfigFile::getOption(void)
 	{
 		if ( ch == '@' )
 		{
+			started = true;
 			ch = getChar();
 			if ( ch == '}' )
 			{
@@ -431,11 +435,13 @@ void ConfigFile::getOption(void)
 			else if ( ch != EOF )
 			{
 				ungetc(ch, _fp);
-				_parseToken.insert(_parseToken.end(), ch);
+				_parseToken.insert(_parseToken.end(), '@');
 			}
 		}
-		else
+		else if ( started ||
+					 !isspace(ch) )
 		{
+			started = true;
 			_parseToken.insert(_parseToken.end(), ch);
 		}
 	}
@@ -489,11 +495,11 @@ void ConfigFile::processParameter(void)
 	}
 	else
 	{
-		for ( int enumIdx=0; enumIdx<_enumType.size() && !parameterObj; enumIdx++ )
+		for ( unsigned int enumIdx=0; enumIdx<_enumType.size() && !parameterObj; enumIdx++ )
 		{
 			if ( _parameterName.find(_enumType[enumIdx]->_name) == 0 )
 			{
-				for ( int id=0; id<_enumType[enumIdx]->_id.size() && !parameterObj; id++ )
+				for ( unsigned int id=0; id<_enumType[enumIdx]->_id.size() && !parameterObj; id++ )
 				{
 					if ( _enumType[enumIdx]->_id[id]->_name == _parseToken )
 					{
@@ -605,7 +611,7 @@ void ConfigFile::processFileOptions(void)
 					element->_value |= 0x80000000;
 					elementCount += 1;
 
-					for ( int i=0; i<eType->_id.size(); i++ )
+					for ( unsigned int i=0; i<eType->_id.size(); i++ )
 					{
 						if ( eType->_id[i]->_value == element->_value )
 						{
@@ -720,6 +726,17 @@ void ConfigFile::processParameterOptions(Parameter * parameter)
 		{
 			printError("missing option name");
 		}
+		else if ( _parseToken == "variable-name" )
+		{
+			if ( parameter->getType() != Parameter::TEnum )
+			{
+				printError("variable-name option only supported for enum parameters");
+			}
+
+			getOption();
+			parameter->setVariableName(_parseToken);
+			_parseToken = "@}";
+		}
 		else if ( _parseToken == "const" )
 		{
 			parameter->setConst();
@@ -782,16 +799,17 @@ void ConfigFile::processParameterOptions(Parameter * parameter)
 					// If range uses "0b" format, we need to convert to hex so that the generated code
 					// can be compiled properly.
 					//
-					char temp[40];
+					enum { TempSize = 40 };
+					char temp[TempSize];
 					if ( minString.find("0b") == 0 )
 					{
-						sprintf(temp, "0x%lx", (unsigned long)min._lValue);
+						sprintf_s(temp, TempSize, "0x%lx", (unsigned long)min._lValue);
 						minString = temp;
 					}
 
 					if ( maxString.find("0b") == 0 )
 					{
-						sprintf(temp, "0x%lx", (unsigned long)max._lValue);
+						sprintf_s(temp, TempSize, "0x%lx", (unsigned long)max._lValue);
 						maxString = temp;
 					}
 
@@ -902,7 +920,7 @@ string ConfigFile::formatFileName(const string & base)
 		int dirLen = projectRoot.size();
 
 		string	upCaseRoot = _projectName;
-		for ( int i=0; i<upCaseRoot.size(); i++ )	upCaseRoot[i] = toupper(upCaseRoot[i]);
+		for ( unsigned int i=0; i<upCaseRoot.size(); i++ )	upCaseRoot[i] = toupper(upCaseRoot[i]);
 
 		result = upCaseRoot;
 		result += "_PATH \"";
@@ -943,23 +961,23 @@ void ConfigFile::createDirectoryChain(const string & fileName)
 
 void ConfigFile::validateSections(void)
 {
-	for ( int sectIdx=0; sectIdx<_section.size(); sectIdx+=1 )
+	for ( unsigned int sectIdx=0; sectIdx<_section.size(); sectIdx+=1 )
 	{
 		if ( _section[sectIdx]->arraySize() == 0 )
 		{
-			for ( int paramIdx=0; paramIdx<_parameter.size(); paramIdx+=1 )
+			for ( unsigned int paramIdx=0; paramIdx<_parameter.size(); paramIdx+=1 )
 			{
 				if ( _parameter[paramIdx]->sectionName() == _section[sectIdx]->name() &&
 					  _parameter[paramIdx]->index() != -1 )
 				{
 					printError("illegal specification of index for non-array section - section=%s parameter=%s%s",
-									_section[sectIdx]->name().c_str(), _parameter[paramIdx]->name().c_str(), _parameter[paramIdx]->indexString().c_str());
+									_section[sectIdx]->name().c_str(), _parameter[paramIdx]->variableName().c_str(), _parameter[paramIdx]->indexString().c_str());
 				}
 			}
 		}
 		else
 		{
-			for ( int paramIdx=0; paramIdx<_parameter.size(); paramIdx+=1 )
+			for ( unsigned int paramIdx=0; paramIdx<_parameter.size(); paramIdx+=1 )
 			{
 				if ( _parameter[paramIdx]->sectionName() == _section[sectIdx]->name() )
 				{
@@ -967,7 +985,7 @@ void ConfigFile::validateSections(void)
 						  _parameter[paramIdx]->index() >= _section[sectIdx]->arraySize() )
 					{
 						printError("parameter index out of range - section=%s parameter=%s%s",
-									_section[sectIdx]->name().c_str(), _parameter[paramIdx]->name().c_str(), _parameter[paramIdx]->indexString().c_str());
+									_section[sectIdx]->name().c_str(), _parameter[paramIdx]->variableName().c_str(), _parameter[paramIdx]->indexString().c_str());
 					}
 					else if ( _parameter[paramIdx]->index() == 0 )
 					{
@@ -975,9 +993,9 @@ void ConfigFile::validateSections(void)
 						for ( int idx=1; idx<_section[sectIdx]->arraySize(); idx++ )
 						{
 							bool found = false;
-							for ( int searchIdx=0; searchIdx<_parameter.size(); searchIdx++ )
+							for ( unsigned int searchIdx=0; searchIdx<_parameter.size(); searchIdx++ )
 							{
-								if ( _parameter[searchIdx]->name() == _parameter[paramIdx]->name() &&
+								if ( _parameter[searchIdx]->variableName() == _parameter[paramIdx]->variableName() &&
 									  _parameter[searchIdx]->sectionName() == _section[sectIdx]->name() &&
 									  _parameter[searchIdx]->index() == idx )
 								{
@@ -990,7 +1008,7 @@ void ConfigFile::validateSections(void)
 							if ( !found )
 							{
 								printError("missing parameter setting for %s[%d] in section %s",
-										_parameter[paramIdx]->name().c_str(), idx, _section[sectIdx]->name().c_str());
+										_parameter[paramIdx]->variableName().c_str(), idx, _section[sectIdx]->name().c_str());
 							}
 						}
 					}
@@ -998,9 +1016,9 @@ void ConfigFile::validateSections(void)
 					{
 						// Make sure parameter with index==0 exists
 						bool found = false;
-						for ( int searchIdx=0; searchIdx<_parameter.size(); searchIdx++ )
+						for ( unsigned int searchIdx=0; searchIdx<_parameter.size(); searchIdx++ )
 						{
-							if ( _parameter[searchIdx]->name() == _parameter[paramIdx]->name() &&
+							if ( _parameter[searchIdx]->variableName() == _parameter[paramIdx]->variableName() &&
 								  _parameter[searchIdx]->sectionName() == _section[sectIdx]->name() &&
 								  _parameter[searchIdx]->index() == 0 )
 							{
@@ -1012,7 +1030,7 @@ void ConfigFile::validateSections(void)
 						if ( !found )
 						{
 							printError("missing parameter setting for %s[0] in section %s",
-									_parameter[paramIdx]->name().c_str(), _section[sectIdx]->name().c_str());
+									_parameter[paramIdx]->variableName().c_str(), _section[sectIdx]->name().c_str());
 						}
 					}
 				}
@@ -1023,7 +1041,7 @@ void ConfigFile::validateSections(void)
 
 void ConfigFile::generateIncludeFileList(FILE * fp)
 {
-	for ( int i=0; i<_include.size(); i++ )
+	for ( unsigned int i=0; i<_include.size(); i++ )
 	{
 		fprintf(fp, "#include %s\n", _include[i].c_str());
 	}
@@ -1031,13 +1049,13 @@ void ConfigFile::generateIncludeFileList(FILE * fp)
 
 void ConfigFile::generateEnumList(FILE * fp, EnumSelect enumSelect)
 {
-	for ( int i=0; i<_enumType.size(); i++ )
+	for ( unsigned int i=0; i<_enumType.size(); i++ )
 	{
 		if ( (enumSelect == Local && !_enumType[i]->_exportType) ||
 			  (enumSelect == Exported && _enumType[i]->_exportType) )
 		{
 			fprintf(fp, "  enum T%s {", _enumType[i]->_name.c_str());
-			for ( int t=0; t<_enumType[i]->_id.size(); t++ )
+			for ( unsigned int t=0; t<_enumType[i]->_id.size(); t++ )
 			{
 				fprintf(fp,
 					"%s%s = 0x%lx",
@@ -1057,7 +1075,7 @@ void ConfigFile::generateEnumList(FILE * fp, EnumSelect enumSelect)
 				"    return (",
 				_enumType[i]->_name.c_str());
 
-			for ( int t=0; t<_enumType[i]->_id.size(); t++ )
+			for ( unsigned int t=0; t<_enumType[i]->_id.size(); t++ )
 			{
 				fprintf(fp,
 					"%s*(unsigned long *)value == 0x%lx",
@@ -1073,9 +1091,9 @@ void ConfigFile::generateEnumList(FILE * fp, EnumSelect enumSelect)
 
 void ConfigFile::generateEnumMap(FILE * fp)
 {
-	for ( int i=0; i<_enumType.size(); i++ )
+	for ( unsigned int i=0; i<_enumType.size(); i++ )
 	{
-		for ( int t=0; t<_enumType[i]->_id.size(); t++ )
+		for ( unsigned int t=0; t<_enumType[i]->_id.size(); t++ )
 		{
 			fprintf(fp,
 				"  { \"%s\", 0x%lx },\n",
@@ -1092,8 +1110,8 @@ void ConfigFile::generateHeaderDataStructure(FILE * fp)
 		"  {\n",
 		_className.c_str());
 
-	int sectIdx;
-	int paramIdx;
+	unsigned int sectIdx;
+	unsigned int paramIdx;
 
 	for ( sectIdx=0; sectIdx<_section.size(); sectIdx++ )
 	{
@@ -1128,7 +1146,7 @@ void ConfigFile::generateHeaderDataStructure(FILE * fp)
 					break;
 
 				case Parameter::TEnum:
-					fprintf(fp, "      T%s", _parameter[paramIdx]->name().c_str());
+					fprintf(fp, "      T%s", _parameter[paramIdx]->parameterName().c_str());
 					break;
 
 				default:
@@ -1141,13 +1159,13 @@ void ConfigFile::generateHeaderDataStructure(FILE * fp)
 				{
 					fprintf(fp,
 						" %s[%d];\n",
-						_parameter[paramIdx]->name().c_str(), _section[sectIdx]->arraySize());
+						_parameter[paramIdx]->variableName().c_str(), _section[sectIdx]->arraySize());
 			   }
 			   else
 			   {
 					fprintf(fp,
 						" %s;\n",
-						_parameter[paramIdx]->name().c_str());
+						_parameter[paramIdx]->variableName().c_str());
 			   }
          }
 		}
@@ -1180,8 +1198,8 @@ void ConfigFile::generateHeaderAccessClass(FILE * fp)
 		"    DataMap _dataMap[%d];\n\n",
 		_className.c_str(), _section.size(), _parameter.size(), _parameter.size());
 
-	int sectIdx;
-	int paramIdx;
+	unsigned int sectIdx;
+	unsigned int paramIdx;
 	for ( sectIdx=0; sectIdx<_section.size(); sectIdx++ )
 	{
 		fprintf(fp,
@@ -1230,14 +1248,14 @@ void ConfigFile::generateHeaderAccessClass(FILE * fp)
 				{
 					fprintf(fp,
 						"      _C_%s %s[%d];\n",
-						_parameter[paramIdx]->name().c_str(), _parameter[paramIdx]->name().c_str(),
+						_parameter[paramIdx]->variableName().c_str(), _parameter[paramIdx]->variableName().c_str(),
 						_section[sectIdx]->arraySize());
 				}
 				else
 				{
 					fprintf(fp,
 						"      _C_%s %s;\n",
-						_parameter[paramIdx]->name().c_str(), _parameter[paramIdx]->name().c_str());
+						_parameter[paramIdx]->variableName().c_str(), _parameter[paramIdx]->variableName().c_str());
 				}
          }
 		}
@@ -1353,7 +1371,7 @@ void ConfigFile::generateSectionNameList(FILE * fp, const char * outputName)
 		"{\n",
 		outputName, _className.c_str(), _section.size());
 
-	for ( int sectIdx=0; sectIdx<_section.size(); sectIdx++ )
+	for ( unsigned int sectIdx=0; sectIdx<_section.size(); sectIdx++ )
 	{
 		fprintf(fp,
 			"%s\"%s\"",
@@ -1372,11 +1390,11 @@ void ConfigFile::generateNameList(FILE * fp, const char * outputName)
 		"{\n",
 		outputName, _className.c_str(), _parameter.size());
 
-	for ( int paramIdx=0; paramIdx<_parameter.size(); paramIdx++ )
+	for ( unsigned int paramIdx=0; paramIdx<_parameter.size(); paramIdx++ )
 	{
 		fprintf(fp,
 			"%s\"%s%s\"",
-			(paramIdx == 0) ? "  " : ",\n  ", _parameter[paramIdx]->name().c_str(),
+			(paramIdx == 0) ? "  " : ",\n  ", _parameter[paramIdx]->variableName().c_str(),
 			_parameter[paramIdx]->indexString().c_str());
 	} 
 
@@ -1395,7 +1413,7 @@ void ConfigFile::generateConstructors(FILE * fp, const char * outputName)
 	{
 		fprintf(fp,
 			"  :");
-		for ( int sectIdx = 0; sectIdx < _section.size(); sectIdx+=1 )
+		for ( unsigned int sectIdx = 0; sectIdx < _section.size(); sectIdx+=1 )
 		{
 			fprintf(fp, "%s%s(_dataMap)", (sectIdx==0) ? " " : ", ", _section[sectIdx]->name().c_str());
 		}
@@ -1406,9 +1424,9 @@ void ConfigFile::generateConstructors(FILE * fp, const char * outputName)
 	fprintf(fp,
 		"{\n");
 
-	for ( int paramIdx=0; paramIdx<_parameter.size(); paramIdx++ )
+	for ( unsigned int paramIdx=0; paramIdx<_parameter.size(); paramIdx++ )
 	{
-		int sectIdx;
+		unsigned int sectIdx;
 		for ( sectIdx=0; sectIdx<_section.size(); sectIdx++ )
 		{
 			if ( _section[sectIdx]->name() == _parameter[paramIdx]->sectionName() ) break;
@@ -1417,7 +1435,7 @@ void ConfigFile::generateConstructors(FILE * fp, const char * outputName)
 		fprintf(fp,
 			"  _dataMap[%d].setMap(_sectionName[%d], _name[%d], %s, (void *)&data.%s.%s%s,",
 			paramIdx, sectIdx, paramIdx, _parameter[paramIdx]->getTypeName().c_str(),
-			_section[sectIdx]->name().c_str(), _parameter[paramIdx]->name().c_str(),
+			_section[sectIdx]->name().c_str(), _parameter[paramIdx]->variableName().c_str(),
 			_parameter[paramIdx]->indexString().c_str());
 
 		fprintf(fp,
@@ -1428,7 +1446,7 @@ void ConfigFile::generateConstructors(FILE * fp, const char * outputName)
 		{
 			fprintf(fp,
 			   " (RangeFunc *)&%s::_C_%s::_C_%s::_C_%s::getRange,",
-			   outputName, _className.c_str(), _parameter[paramIdx]->sectionName().c_str(), _parameter[paramIdx]->name().c_str());
+			   outputName, _className.c_str(), _parameter[paramIdx]->sectionName().c_str(), _parameter[paramIdx]->variableName().c_str());
 		}
 		else
 		{
@@ -1441,7 +1459,7 @@ void ConfigFile::generateConstructors(FILE * fp, const char * outputName)
 		{
 			fprintf(fp, 
 				" &%s::_C_%s::_C_%s::_C_%s::validate",
-				outputName, _className.c_str(), _parameter[paramIdx]->sectionName().c_str(), _parameter[paramIdx]->name().c_str());
+				outputName, _className.c_str(), _parameter[paramIdx]->sectionName().c_str(), _parameter[paramIdx]->variableName().c_str());
 		}
 		else
 		{
@@ -1458,7 +1476,7 @@ void ConfigFile::generateConstructors(FILE * fp, const char * outputName)
 
 	if ( _readWrite )
 	{
-		for ( int sectIdx = 0; sectIdx < _section.size(); sectIdx+=1 )
+		for ( unsigned int sectIdx = 0; sectIdx < _section.size(); sectIdx+=1 )
 		{
 		   fprintf(fp, 
 		      "%s::_C_%s::_C_%s::_C_%s(const DataMap * dataMap)\n",
@@ -1467,13 +1485,13 @@ void ConfigFile::generateConstructors(FILE * fp, const char * outputName)
 		   fprintf(fp,
 			  "{\n");
 
-		   for ( int paramIdx = 0; paramIdx < _parameter.size(); paramIdx+=1 )
+		   for ( unsigned int paramIdx = 0; paramIdx < _parameter.size(); paramIdx+=1 )
 		   {
 				if ( _parameter[paramIdx]->sectionName() == _section[sectIdx]->name() )
 				{
 					fprintf(fp,
 						"  %s%s.initialize(dataMap, %d);\n",
-						_parameter[paramIdx]->name().c_str(), _parameter[paramIdx]->indexString().c_str(), paramIdx);
+						_parameter[paramIdx]->variableName().c_str(), _parameter[paramIdx]->indexString().c_str(), paramIdx);
 				}
 		   }
 
@@ -1483,7 +1501,7 @@ void ConfigFile::generateConstructors(FILE * fp, const char * outputName)
 	}
 	else
 	{
-		for ( int sectIdx = 0; sectIdx < _section.size(); sectIdx+=1 )
+		for ( unsigned int sectIdx = 0; sectIdx < _section.size(); sectIdx+=1 )
 		{
 		   fprintf(fp, 
 		      "%s::_C_%s::_C_%s::_C_%s(void)\n",
@@ -1492,13 +1510,13 @@ void ConfigFile::generateConstructors(FILE * fp, const char * outputName)
 		   fprintf(fp,
 			  "{\n");
 
-		   for ( int paramIdx = 0; paramIdx < _parameter.size(); paramIdx+=1 )
+		   for ( unsigned int paramIdx = 0; paramIdx < _parameter.size(); paramIdx+=1 )
 		   {
 				if ( _parameter[paramIdx]->sectionName() == _section[sectIdx]->name() )
 				{
 					fprintf(fp,
 						"  %s%s.initialize(%d);\n",
-						_parameter[paramIdx]->name().c_str(), _parameter[paramIdx]->indexString().c_str(), paramIdx);
+						_parameter[paramIdx]->variableName().c_str(), _parameter[paramIdx]->indexString().c_str(), paramIdx);
 				}
 		   }
 
@@ -1529,7 +1547,7 @@ void ConfigFile::generateLogDataFunction(FILE * fp, const char * outputName)
 
 void ConfigFile::generateParameterValidateFunctions(FILE * fp, const char * outputName)
 {
-	for ( int paramIdx=0; paramIdx<_parameter.size(); paramIdx++ )
+	for ( unsigned int paramIdx=0; paramIdx<_parameter.size(); paramIdx++ )
 	{
 		if ( _parameter[paramIdx]->index() > 0 ) continue;
 
@@ -1540,13 +1558,13 @@ void ConfigFile::generateParameterValidateFunctions(FILE * fp, const char * outp
 			fprintf(fp, 
 				"bool %s::_C_%s::_C_%s::_C_%s::validate(void * valuePtr)\n"
 				"{\n",
-				outputName, _className.c_str(), _parameter[paramIdx]->sectionName().c_str(), _parameter[paramIdx]->name().c_str());
+				outputName, _className.c_str(), _parameter[paramIdx]->sectionName().c_str(), _parameter[paramIdx]->variableName().c_str());
 
 			if ( _parameter[paramIdx]->getType() == Parameter::TEnum )
 			{
 				fprintf(fp,
 					"  if ( !%s::validate%s(valuePtr) ) return false;\n",
-					outputName, _parameter[paramIdx]->name().c_str());
+					outputName, _parameter[paramIdx]->parameterName().c_str());
 			}
 
 			if ( !func.empty() )
@@ -1568,7 +1586,7 @@ void ConfigFile::generateParameterValidateFunctions(FILE * fp, const char * outp
 
 void ConfigFile::generateParameterRangeFunctions(FILE * fp, const char * outputName)
 {
-	for ( int paramIdx=0; paramIdx<_parameter.size(); paramIdx++ )
+	for ( unsigned int paramIdx=0; paramIdx<_parameter.size(); paramIdx++ )
 	{
 		if ( _parameter[paramIdx]->index() > 0 ) continue;
 
@@ -1577,7 +1595,7 @@ void ConfigFile::generateParameterRangeFunctions(FILE * fp, const char * outputN
 			fprintf(fp, 
 				"bool %s::_C_%s::_C_%s::_C_%s::getRange(%s & min, %s & max)\n"
 				"{\n",
-				outputName, _className.c_str(), _parameter[paramIdx]->sectionName().c_str(), _parameter[paramIdx]->name().c_str(),
+				outputName, _className.c_str(), _parameter[paramIdx]->sectionName().c_str(), _parameter[paramIdx]->variableName().c_str(),
 				_parameter[paramIdx]->getDeclarationString().c_str(), _parameter[paramIdx]->getDeclarationString().c_str());
 
 			_parameter[paramIdx]->generateRangeFunction(fp);
@@ -1593,7 +1611,7 @@ void ConfigFile::generateParameterSetFunctions(FILE * fp, const char * outputNam
 {
 	if ( !_readWrite ) return;
 
-	for ( int paramIdx=0; paramIdx<_parameter.size(); paramIdx++ )
+	for ( unsigned int paramIdx=0; paramIdx<_parameter.size(); paramIdx++ )
 	{
 		if ( _parameter[paramIdx]->index() > 0 ) continue;
 		if ( _parameter[paramIdx]->isConst() ) continue;
@@ -1602,7 +1620,7 @@ void ConfigFile::generateParameterSetFunctions(FILE * fp, const char * outputNam
 			"bool %s::_C_%s::_C_%s::_C_%s::set(%s value)\n"
 			"{\n",
 			outputName, _className.c_str(), _parameter[paramIdx]->sectionName().c_str(),
-			_parameter[paramIdx]->name().c_str(), _parameter[paramIdx]->getDeclarationString().c_str());
+			_parameter[paramIdx]->variableName().c_str(), _parameter[paramIdx]->getDeclarationString().c_str());
 
 		_parameter[paramIdx]->generateSetFunction(fp);
 		fprintf(fp,
@@ -1643,8 +1661,8 @@ void ConfigFile::generateDataFile(const char * dataFileDir)
 		"#\n",
 		_fileName.c_str());
 
-	int sectIdx;
-	int paramIdx;
+	unsigned int sectIdx;
+	unsigned int paramIdx;
 	for ( sectIdx=0; sectIdx<_section.size(); sectIdx++ )
 	{
 		fprintf(fp,
@@ -1658,14 +1676,14 @@ void ConfigFile::generateDataFile(const char * dataFileDir)
 			{
 				fprintf(fp,
 					"%s%s=",
-					_parameter[paramIdx]->name().c_str(), _parameter[paramIdx]->indexString().c_str());
+					_parameter[paramIdx]->variableName().c_str(), _parameter[paramIdx]->indexString().c_str());
 
 				if ( _parameter[paramIdx]->getType() == Parameter::TString )
 				{
 					string value = _parameter[paramIdx]->value();
 
 					fputc('"', fp);
-					for ( int i=0; i<value.size(); i++ )
+					for ( unsigned int i=0; i<value.size(); i++ )
 					{
 						if ( value[i] == '"' ) fputc('\\', fp);
 						fputc(value[i], fp);

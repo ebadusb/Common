@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.cpp 1.9 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
  * $Log: cgui_data_item.cpp $
+ * Revision 1.9  2007/06/04 22:04:20Z  wms10235
+ * IT83 - Updates for the common GUI project to use the unicode string class
  * Revision 1.8  2007/04/05 17:36:06Z  pn02526
  * Make StringChar * arg a const StringChar *
  * Revision 1.7  2007/03/28 12:39:07  pn02526
@@ -268,5 +270,63 @@ void CGUIDataItemText::setValue(const char * value)
       _string = value;
       _valueChanged = true;
    }
+}
+
+//
+// Void Constructor
+//
+CGUIDataItemClock::CGUIDataItemClock(void) :
+	_value(0)
+{
+}
+
+CGUIDataItemClock::CGUIDataItemClock(int value) :
+	CGUIDataItem(true),
+	_value(value)
+{
+}
+
+CGUIDataItemClock::~CGUIDataItemClock()
+{
+}
+
+const StringChar * CGUIDataItemClock::convertToString(void)
+{
+	if( _valueChanged )
+	{
+		const char * intString = NULL;
+		ostringstream textStream;
+
+		textStream.setf(ios::fixed);
+		textStream.precision(0);
+
+		if ( _value < 10 )
+			textStream << "0" << _value;
+		else
+			textStream << _value;
+
+		intString = textStream.str().c_str();
+
+		//
+		// Copy value (string) into _string
+		//
+		if( intString )
+			_string = intString;
+		else
+			_string.empty();
+
+		_valueChanged = false;
+	}
+
+	return _string.getString();
+}
+
+void CGUIDataItemClock::setValue(int value)
+{
+	if (_value != value)
+	{
+		_value = value;
+		_valueChanged = true;
+	}
 }
 

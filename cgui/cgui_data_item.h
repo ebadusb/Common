@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.h 1.8 2010/04/27 21:26:08Z rm10919 Exp jl11312 $
  * $Log: cgui_data_item.h $
+ * Revision 1.5  2007/06/04 22:04:20Z  wms10235
+ * IT83 - Updates for the common GUI project to use the unicode string class
  * Revision 1.4  2007/04/05 17:37:17Z  pn02526
  * Make StringChar * arg a const StringChar *
  * Revision 1.3  2007/03/28 12:03:12  pn02526
@@ -34,8 +36,8 @@ protected:
 	bool _valueChanged;
 
 private:
-	CGUIDataItem(const CGUIDataItem& rhs);
-	CGUIDataItem& operator=(const CGUIDataItem& rhs);
+	CGUIDataItem(const CGUIDataItem& object);
+	CGUIDataItem& operator=(const CGUIDataItem& object);
 };
 
 class CGUIDataItemInteger : public CGUIDataItem
@@ -53,8 +55,8 @@ protected:
 	int _value;
 
 private:
-	CGUIDataItemInteger(const CGUIDataItemInteger& rhs);
-	CGUIDataItemInteger& operator=(const CGUIDataItemInteger& rhs);
+	CGUIDataItemInteger(const CGUIDataItemInteger& object);
+	CGUIDataItemInteger& operator=(const CGUIDataItemInteger& object);
 };
 
 class CGUIDataItemDouble : public CGUIDataItem
@@ -77,8 +79,8 @@ protected:
 	CGUITextItem * _separator;
 
 private:
-	CGUIDataItemDouble(const CGUIDataItemDouble& rhs);
-	CGUIDataItemDouble& operator=(const CGUIDataItemDouble& rhs);
+	CGUIDataItemDouble(const CGUIDataItemDouble& object);
+	CGUIDataItemDouble& operator=(const CGUIDataItemDouble& object);
 };
 
 class CGUIDataItemTextItem : public CGUIDataItem
@@ -98,8 +100,8 @@ protected:
 
 private:
 	CGUIDataItemTextItem(void);
-	CGUIDataItemTextItem(const CGUIDataItemTextItem& rhs);
-	CGUIDataItemTextItem& operator=(const CGUIDataItemTextItem& rhs);
+	CGUIDataItemTextItem(const CGUIDataItemTextItem& object);
+	CGUIDataItemTextItem& operator=(const CGUIDataItemTextItem& object);
 };
 
 class CGUIDataItemText : public CGUIDataItem
@@ -114,8 +116,28 @@ public:
 	void setValue(const char * value);
 
 private:
-	CGUIDataItemText(const CGUIDataItemText& rhs);
-	CGUIDataItemText& operator=(const CGUIDataItemText& rhs);
+	CGUIDataItemText(const CGUIDataItemText& object);
+	CGUIDataItemText& operator=(const CGUIDataItemText& object);
+};
+
+// Used to insert a leading 0 for clock time minutes and seconds.
+class CGUIDataItemClock : public CGUIDataItem
+{
+public:
+	CGUIDataItemClock(void);
+	CGUIDataItemClock(int value);
+	virtual ~CGUIDataItemClock();
+
+	virtual const StringChar * convertToString(void);
+
+	void setValue(int value);
+
+protected:
+	int _value;
+
+private:
+	CGUIDataItemClock(const CGUIDataItemClock& object);
+	CGUIDataItemClock& operator=(const CGUIDataItemClock& object);
 };
 
 #endif /* ifndef _DATA_ITEM_INCLUDE */

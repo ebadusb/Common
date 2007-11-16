@@ -4,40 +4,47 @@
  * Implement the class to create an empty non-filled frame.
  *
  * $Log: cgui_frame.cpp $
+ * Revision 1.5  2007/04/14 18:05:18Z  jl11312
+ * - handle deletion of objects referenced by an active screen (common IT 81)
  *
  */
+
+#include <vxworks.h>
+
 #include "cgui_frame.h"
 
-
-CGUIFrame::CGUIFrame(CGUIDisplay & display, const CGUIRegion region,  CGUIColor shadedColor,
-					 CGUIColor unshadedColor, unsigned short shadedLineWid, unsigned short unshadedLineWid) :
-						CGUIWindowObject(display, region),
-						_display(display),
-						_region(region),
-						_shadedColor(shadedColor),
-						_unShadedColor(unshadedColor),
-						_shadedLineWidth(shadedLineWid),
-						_unShadedLineWidth(unshadedLineWid)
+CGUIFrame::CGUIFrame( CGUIDisplay & display, const CGUIRegion region,  CGUIColor shadedColor,
+                      CGUIColor unshadedColor, unsigned short shadedLineWid, unsigned short unshadedLineWid ):
+                      CGUIWindowObject(display, region),
+							 _display(display),
+							 _region(region),
+							 _shadedColor(shadedColor),
+							 _unShadedColor(unshadedColor),
+							 _shadedLineWidth(shadedLineWid),
+							 _unShadedLineWidth(unshadedLineWid),
+							 _backgroundRectangle(NULL)
 {
 	_frameType = CGUI_SHADED_FRAME;
 }
 
-CGUIFrame::CGUIFrame(CGUIDisplay & display, const CGUIRegion region, CGUIColor color, unsigned short lineWid) :
-						CGUIWindowObject(display, region),
-						_display(display),
-						_region(region),
-						_color(color),
-						_lineWidth(lineWid)
-						
+CGUIFrame::CGUIFrame( CGUIDisplay & display, const CGUIRegion region, CGUIColor color, unsigned short lineWidth ):
+                      CGUIWindowObject( display, region ),
+                      _display( display ),
+                      _region( region ),
+                      _color( color ),
+                      _lineWidth( lineWidth ),
+							 _backgroundRectangle( NULL )
 {
 	_frameType = CGUI_SIMPLE_FRAME;
 }
 
 CGUIFrame::~CGUIFrame()
 {
+	if (_backgroundRectangle) delete _backgroundRectangle;
 }
 
-// setColor - change the colors used in a shaded frame boundary.  If used on a simple frame, no change is made.
+// setColor - change the colors used in a shaded frame boundary.
+//   If used on a simple frame, no change is made.
 void CGUIFrame::setColor(CGUIColor shadeColor, CGUIColor unshadedColor)
 {
 	if(_frameType == CGUI_SHADED_FRAME)
@@ -52,7 +59,8 @@ void CGUIFrame::setColor(CGUIColor shadeColor, CGUIColor unshadedColor)
 	}
 }
 
-// setColor - change the color of a simple frame boundary.  If used on a shaded frame, no change is made.
+// setColor - change the color of a simple frame boundary.  
+//   If used on a shaded frame, no change is made.
 void CGUIFrame::setColor(CGUIColor color)
 {
 	if(_frameType == CGUI_SIMPLE_FRAME)
@@ -65,15 +73,14 @@ void CGUIFrame::setColor(CGUIColor color)
 	}
 }
 
-
-// setLineSize - set the width in pixels of the lines that make up a shaded frame.  If used on a simple frame, no
-// change is made.
-void CGUIFrame::setLineSize (unsigned short shadedLineWid, unsigned short unShadedLineWid)
+// setLineSize - set the width in pixels of the lines that make up a shaded frame.
+//   If used on a simple frame, no change is made.
+void CGUIFrame::setLineSize (unsigned short shadedLineWidth, unsigned short unShadedLineWidth)
 {
 	if(_frameType == CGUI_SHADED_FRAME)
 	{	
-		_shadedLineWidth = shadedLineWid;
-		_unShadedLineWidth = unShadedLineWid;
+		_shadedLineWidth = shadedLineWidth;
+		_unShadedLineWidth = unShadedLineWidth;
 
 		if (_owner)
 		{
@@ -82,7 +89,8 @@ void CGUIFrame::setLineSize (unsigned short shadedLineWid, unsigned short unShad
 	}
 }
 
-// setLineSize - set the width in pixels of a simple frame.  If used on a shaded frame, no change is made.
+// setLineSize - set the width in pixels of a simple frame.
+//   If used on a shaded frame, no change is made.
 void CGUIFrame::setLineSize (unsigned short line)
 {
 	if(_frameType == CGUI_SIMPLE_FRAME)
@@ -95,8 +103,24 @@ void CGUIFrame::setLineSize (unsigned short line)
 	}
 }
 
-// getColor - return the colors used in a shaded frame boundary.  If used on a simple frame, the same color is
-// returned for each paramater.
+void CGUIFrame::setBackgroundColor( CGUIColor backgroundColor )
+{
+	
+	_backgroundColor = backgroundColor;
+
+	_backgroundRectangle = new CGUIRectangle( _display, _region, backgroundColor );
+
+
+	if (_owner)
+	{
+		
+		_owner->addObjectToFront( _backgroundRectangle );	
+		_owner->invalidateObjectRegion( this );
+	}
+}
+
+// getColor - return the colors used in a shaded frame boundary.
+//   If used on a simple frame, the same color is returned for each paramater.
 void CGUIFrame::getColor(CGUIColor & shadeColor, CGUIColor & unshadedColor) const
 {
 	if(_frameType == CGUI_SHADED_FRAME)
@@ -111,17 +135,19 @@ void CGUIFrame::getColor(CGUIColor & shadeColor, CGUIColor & unshadedColor) cons
 	}
 }
 
-// getColor - return the color of a simple frame boundary.  If used on a shaded frame, the shaded color is returned.
+// getColor - return the color of a simple frame boundary.
+//   If used on a shaded frame, the shaded color is returned.
 CGUIColor CGUIFrame::getColor(void) const
 {
-		CGUIColor retColor = _shadedColor;
+		CGUIColor returnColor = _shadedColor;
 		if(_frameType == CGUI_SIMPLE_FRAME)
-			retColor = _color;
-		return retColor;
+			returnColor = _color;
+		return returnColor;
 }
 
-// getLineSize - return the width in pixels of the lines that make up a shaded frame boundary  If used on a simple frame, the
-// same value is returned in each argument.
+// getLineSize - return the width in pixels of the lines
+//  that make up a shaded frame boundary.
+//   If used on a simple frame, the same value is returned in each argument.
 void CGUIFrame::getLineSize (unsigned short & shadedLineWid, unsigned short & unShadedLineWid) const
 {
 	if(_frameType == CGUI_SHADED_FRAME)
@@ -138,10 +164,10 @@ void CGUIFrame::getLineSize (unsigned short & shadedLineWid, unsigned short & un
 
 unsigned short CGUIFrame::getLineSize() const
 {
-	unsigned short retWidth = 0;
+	unsigned short returnWidth = 0;
 	if(_frameType == CGUI_SIMPLE_FRAME)
-		retWidth = _lineWidth;
-	return retWidth;
+		returnWidth = _lineWidth;
+	return returnWidth;
 };
 
 void CGUIFrame::draw(UGL_GC_ID gc)
@@ -150,8 +176,8 @@ void CGUIFrame::draw(UGL_GC_ID gc)
 	{
 		UGL_POS x1,y1,x2,y2;
 #if CPU!=SIMNT
-        int ltOffset;
-        int rbOffset;
+      int ltOffset;
+      int rbOffset;
 #endif
 		// set the linestyle to solid
 		uglLineStyleSet(gc, UGL_LINE_STYLE_SOLID);
@@ -163,9 +189,9 @@ void CGUIFrame::draw(UGL_GC_ID gc)
 			uglLineWidthSet(gc, (int)_shadedLineWidth);
 			uglForegroundColorSet(gc, (UGL_COLOR)_shadedColor);
 #if CPU!=SIMNT
-            // correct for offsets that will be applied by uglGenericLine
-            ltOffset = (_shadedLineWidth - 1) / 2;
-            rbOffset = _shadedLineWidth / 2 + 1;
+         // correct for offsets that will be applied by uglGenericLine
+         ltOffset = (_shadedLineWidth - 1) / 2;
+         rbOffset = _shadedLineWidth / 2 + 1;
 #endif
 		}
 		else
@@ -174,9 +200,9 @@ void CGUIFrame::draw(UGL_GC_ID gc)
 			uglLineWidthSet(gc, (int)_lineWidth);
 			uglForegroundColorSet(gc, (UGL_COLOR)_color);
 #if CPU!=SIMNT
-            // correct for offsets that will be applied by uglGenericLine
-            ltOffset = (_lineWidth - 1) / 2;
-            rbOffset = _lineWidth / 2 + 1;
+         // correct for offsets that will be applied by uglGenericLine
+         ltOffset = (_lineWidth - 1) / 2;
+         rbOffset = _lineWidth / 2 + 1;
 #endif
 		}
 
@@ -208,14 +234,14 @@ void CGUIFrame::draw(UGL_GC_ID gc)
 
 		if(_frameType == CGUI_SHADED_FRAME)
 		{
-			// set the line width and color for unshaded lines
+         // set the line width and color for unshaded lines
 			uglLineWidthSet(gc, (int)_unShadedLineWidth);
 			uglForegroundColorSet(gc, (UGL_COLOR)_unShadedColor);
-            // correct for offsets that will be applied by uglGenericLine
+         // correct for offsets that will be applied by uglGenericLine
 #if CPU!=SIMNT
-            ltOffset = (_unShadedLineWidth - 1) / 2;
-            rbOffset = _unShadedLineWidth / 2 + 1;
-            x1=_region.x + ltOffset;
+         ltOffset = (_unShadedLineWidth - 1) / 2;
+         rbOffset = _unShadedLineWidth / 2 + 1;
+         x1=_region.x + ltOffset;
 #endif
 		}
 

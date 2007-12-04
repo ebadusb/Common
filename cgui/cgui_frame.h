@@ -6,13 +6,13 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_frame.h 1.6 2007/12/04 01:06:00Z rm10919 Exp rm10919 $
  * $Log: cgui_frame.h $
+ * Revision 1.5  2007/11/15 21:01:52Z  rm10919
+ * Add new method to create background for frame.
  *
  */
-
 #ifndef _CGUI_FRAME_INCLUDE
 #define _CGUI_FRAME_INCLUDE
 
-#include <vxworks.h>
 #include <ugl/ugl.h>
 #include <ugl/uglwin.h>
 #include <ugl/uglinput.h>
@@ -30,35 +30,35 @@ public:
 
 	// CONSTRUCTOR - construct a shaded frame.  Must provide a display reference, region,
 	//  and frame type. Also, colors and line widths for shaded and unshaded segemnts of frame
-   CGUIFrame(CGUIDisplay & display, const CGUIRegion region,  
+   CGUIFrame( CGUIDisplay & display, const CGUIRegion region,  
              CGUIColor shadedColor, CGUIColor unshadedColor, 
-             unsigned short shadedLineWidth, unsigned short unshadedLineWidth);
+             unsigned short shadedLineWidth, unsigned short unshadedLineWidth );
 
 	// CONSTRUCTOR - construct a simple frame.  Color and line width must be provided along
 	//  with display reference and region for the frame.
-	CGUIFrame(CGUIDisplay & display, const CGUIRegion region,  CGUIColor color, unsigned short lineWidthth);
+	CGUIFrame( CGUIDisplay & display, const CGUIRegion region,  CGUIColor color, unsigned short lineWidthth );
 
 	//DESTRUCTIOR
 	virtual ~CGUIFrame(void);
 
 	// SetColor - change the colors used in a shaded frame boundary.
 	//   If used on a simple frame, no change is made.
-	void setColor(CGUIColor shadeColor, CGUIColor unshadedColor);
+	void setColor( CGUIColor shadeColor, CGUIColor unshadedColor );
 
 	// SetColor - change the color of a simple frame boundary.
 	//   If used on a shaded frame, no change is made.
-	void setColor(CGUIColor color);
+	void setColor( CGUIColor color );
 
 	// SetLineSize - set the width in pixels of the lines that make up a shaded frame.
 	//   If used on a simple frame, no change is made.
-	void setLineSize (unsigned short shadedLineWidth, unsigned short unShadedLineWidth);
+	void setLineSize( unsigned short shadedLineWidth, unsigned short unShadedLineWidth );
 
 	// SetLineSize - set the width in pixels of a simple frame.
 	//   If used on a shaded frame, no change is made.
-	void setLineSize (unsigned short line);
+	void setLineSize( unsigned short line );
 
 	// fill the frame with a background color
-	void setBackgroundColor(CGUIColor backgroundColor);
+	void setBackgroundColor( CGUIColor backgroundColor );
 
 	// getFrameType - return the type of frame this is
 	CGUIFrameType getFrameType(void) const { return _frameType; };
@@ -66,7 +66,7 @@ public:
 	// getColor - return the colors used in a shaded frame boundary.
 	//   If used on a simple frame, the same color is
 	// 	returned for each paramater.
-	void getColor(CGUIColor & shadeColor, CGUIColor & unshadedColor) const;
+	void getColor( CGUIColor & shadeColor, CGUIColor & unshadedColor ) const;
 
 	// getColor - return the color of a simple frame boundary.
 	//   If used on a shaded frame, the shaded color is returned.
@@ -76,7 +76,7 @@ public:
 
 	// getLineSize - return the width in pixels of the lines that make up a shaded frame boundary
 	//   If used on a simple frame, the same value is returned in each argument.
-	void getLineSize ( unsigned short & shadedLineWidth, unsigned short & unShadedLineWidth ) const;
+	void getLineSize( unsigned short & shadedLineWidth, unsigned short & unShadedLineWidth ) const;
 
 	// getLineSize - return the width in pixels of a simple frame.
 	//   If used on a shaded frame, a 0 is returned.

@@ -6,16 +6,19 @@
  *	Wide character string class
  *
  * $Log: unicode_string.cpp $
+ * Revision 1.2  2007/06/04 22:05:17Z  wms10235
+ * IT83 - Bug fix for unicode string class
  * Revision 1.1  2007/05/18 16:19:19Z  wms10235
  * Initial revision
  *
  */
 
+#include <vxWorks.h>
 #include "ucs_string.h"
 #include "unicode_conversion.h"
 #include "unicode_string.h"
 
-// Minimum number of characters allocated or grow array by.
+// Minimum number of characters to allocate or to grow string by.
 static const unsigned int minAllocationSize = 32;
 
 UnicodeString::UnicodeString(void) :
@@ -765,13 +768,13 @@ UnicodeString UnicodeString::mid(int index, int count) const
 {
 	UnicodeString retVal;
 
-	if( _length > 0 && count > 0 && _data )
+	if( _length > 0 && _data )
 	{
 		if( index >= 0 && index < _length )
 		{
 			int nCount = count;
 
-			if( index + nCount > _length )
+			if( nCount < 0 || index + nCount > _length )
 			{
 				nCount = (int)_length - index;
 			}

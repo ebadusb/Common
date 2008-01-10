@@ -6,6 +6,8 @@
  * Unicode string library unit test functions
  *
  * $Log: unicode_unit_test.cpp $
+ * Revision 1.1  2007/05/18 16:19:17Z  wms10235
+ * Initial revision
  *
  */
 
@@ -277,6 +279,12 @@ void unicodeStringUT(void)
 		}
 
 		if( uTestStr2.mid(17, 30) != (const StringChar*)L"rstuvwxyz0123456789" )
+		{
+			printf("failed\n");
+			break;
+		}
+
+		if( uTestStr2.mid(17) != (const StringChar*)L"rstuvwxyz0123456789" )
 		{
 			printf("failed\n");
 			break;

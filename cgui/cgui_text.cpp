@@ -2,6 +2,8 @@
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.31  2007/06/04 22:04:20Z  wms10235
+ * IT83 - Updates for the common GUI project to use the unicode string class
  * Revision 1.30  2007/04/14 18:05:19Z  jl11312
  * - handle deletion of objects referenced by an active screen (common IT 81)
  * Revision 1.29  2006/11/13 20:21:14Z  jd11007
@@ -69,6 +71,7 @@
  */
 
 #include <vxWorks.h>
+
 #include "cgui_text.h"
 #include "cgui_window.h"
 #include "datalog_levels.h"
@@ -83,12 +86,14 @@ const char * captureScreenName = NULL;
 #endif /* if CPU==SIMNT */
 
 CGUIVariableDatabaseContainer CGUIText::_variableDictionary;
+unsigned short CGUIText::_tabSpaceCount = 5;
 
 static StringChar newline_char = '\n';
 static StringChar space_char = ' ';
+static StringChar	tab_char = '\t';
 static StringChar null_char = '\0';
-
-const int textBlockSize = 16;
+static UnicodeString	paragraph_format_start("#![PG");
+static UnicodeString paragraph_format_end("]");
 
 int currentLanguage = 0;
 
@@ -99,13 +104,13 @@ CGUIText::CGUIText(CGUIDisplay & display)
 }
 
 CGUIText::CGUIText(CGUIDisplay & display, CGUITextItem * textItem, StylingRecord * stylingRecord = NULL)
-                  :CGUIWindowObject(display), _pixelRegion(0, 0, 0, 0)
+                  :CGUIWindowObject(display)
 {
 	initializeData(textItem, stylingRecord);
 }
 
 CGUIText::CGUIText(CGUIDisplay & display, CGUITextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL)
-                  :CGUIWindowObject(display), _pixelRegion(0, 0, 0, 0)
+                  :CGUIWindowObject(display)
 {
 	initializeData(textItem, stylingRecord);
 	setBackgroundColor(backgroundColor);
@@ -123,9 +128,7 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
 	{
 		if (_textItem->isInitialized())
 		{
-			//
-			//  If styling record from constructor is null,
-			//  set the the cgui_text._stylingRecord to
+			//  If styling record from constructor is null, set the the cgui_text._stylingRecord to
 			//  the cgui_text_item._stylingRecord by default.
 			//
 			if (!stylingRecord)
@@ -133,11 +136,12 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
 				_stylingRecord = _textItem->getStylingRecord();
 			}
 			else
-				_stylingRecord = * stylingRecord;
+			{
+				_stylingRecord = *stylingRecord;
+			}
 
 			// Set the requested region.
 			_requestedRegion = _stylingRecord.region;
-
 			_textString = _textItem->getTextObj(_textItem->getLanguageId());
 
 			if( _textString.getLength() == 0 )
@@ -146,6 +150,7 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
 			computeTextRegion();
 		}
 	}
+
 	_languageSetByApp = false;
 }
 
@@ -313,240 +318,341 @@ int CGUIText::getLength(void) const
 
 void CGUIText::getSize(CGUIRegion & region, int startIndex, int length)
 {
-   if (_stylingRecord.fontId == UGL_NULL_ID ||
-       !_textString.getLength() ||
-       startIndex >= _textString.getLength() )
-   {
-      region = CGUIRegion(0, 0, 0, 0);
-   }
-   else
-   {
-      UGL_SIZE uglStartIndex = startIndex;
-      UGL_SIZE uglLength = length;
+	if ( _stylingRecord.fontId == UGL_NULL_ID ||
+  		  !_textString.getLength() ||
+		  startIndex >= _textString.getLength() )
+	{
+		region = CGUIRegion(0, 0, 0, 0);
+	}
+	else
+	{
+		UGL_SIZE uglStartIndex = startIndex;
+		UGL_SIZE uglLength = length;
 
-      if (uglStartIndex < 0)
-      {
-         uglStartIndex = 0;
-      }
+		if ( uglStartIndex < 0 )
+		{
+			uglStartIndex = 0;
+		}
 
-      if (uglLength < 0 || uglStartIndex + uglLength > _textString.getLength() )
-      {
-         uglLength = _textString.getLength() - startIndex;
-      }
+		if ( uglLength < 0 ||
+			  uglStartIndex + uglLength > _textString.getLength() )
+		{
+			uglLength = _textString.getLength() - startIndex;
+		}
 
-      UGL_SIZE width = 0;
-      UGL_SIZE height = 0;
+		UGL_SIZE width = 0;
+		UGL_SIZE height = 0;
 
-      if (_stylingRecord.attributes & BOLD)
-      {
+		if ( _stylingRecord.attributes & BOLD )
+		{
 			UGL_ORD option = 0;
-         uglFontInfo(_stylingRecord.fontId, UGL_FONT_WEIGHT_SET, &option);
-      }
+			uglFontInfo(_stylingRecord.fontId, UGL_FONT_WEIGHT_SET, &option);
+		}
 		const StringChar * textStr = _textString.getString();
-      uglTextSizeGetW(_stylingRecord.fontId, &width, &height, uglLength, &textStr[uglStartIndex]);
-      region = CGUIRegion(0, 0, width, height);
-   }
+		uglTextSizeGetW(_stylingRecord.fontId, &width, &height, uglLength, &textStr[uglStartIndex]);
+		region = CGUIRegion(0, 0, width, height);
+	}
 }
 
-const CGUIRegion & CGUIText::getPixelSize()
+void CGUIText::getPixelSize(CGUIRegion & pixelRegion)
 {
-	getSize(_pixelRegion, 0, _textString.getLength());
-	return _pixelRegion;
+	getSize(pixelRegion, 0, _textString.getLength());
 }
 
-int CGUIText::getToken(int start_index)
+CGUIText::GetTokenResult CGUIText::getToken(int start_index, bool start_of_line, int & length)
 {
-   // this flag is false before encountering non-blank token characters
-   // and true after encountering non-blank token characters. This allows
-   // leading blanks to be included in the token, and the first trailing
-   // blank to delimit the token.
-   bool look_for_trailing_blank = false;
-   bool token_ended = false;
+	// this flag is false before encountering non-blank token characters
+	// and true after encountering non-blank token characters. This allows
+	// leading blanks to be included in the token, and the first trailing
+	// blank to delimit the token.
+	//
+	bool look_for_trailing_blank = false;
+	bool token_ended = false;
 
-   int current_index = start_index;
-   int token_char_count = 0;
+	int current_index = start_index;
+	length = 0;
 
-   // keep moving characters from the text string to the token string until
-   // a TRAILING blank or EOS is found.
-   while ( current_index < _textString.getLength() && !token_ended)
-   {
+	GetTokenResult	result = EndOfString;
 
-      // if this character is an explicit newline and the token buffer is empty, return
-      // the newline, otherwise if this character is an explicit newline and the token
-      // buffer contains something, return the contents of the token buffer. In this
-      // manner, newlines will be returned alone to the multiline manager.
-      if (_textString[current_index] == newline_char)
-      {
-         if (current_index == start_index) // nothing has been added to the token buffer, just return the Newline
-         {
-            // add the newline to the token
-            token_char_count = 1;
+	// Check for format command.  These are only allowed at the start of a line.
+	//
+	if ( start_of_line &&
+		  current_index < _textString.getLength() - paragraph_format_start.getLength() )
+	{
+		if ( _textString[current_index] == paragraph_format_start[0] &&
+			  _textString.mid(current_index, paragraph_format_start.getLength()) == paragraph_format_start )
+		{
+			int	endOfFormatToken = _textString.find(paragraph_format_end, current_index+paragraph_format_start.getLength());
+			if ( endOfFormatToken >= 0 )
+			{
+				endOfFormatToken += paragraph_format_end.getLength();
+				length = endOfFormatToken - current_index;
+				token_ended = true;
+				result = FormatToken;
+			}
+		}
+	}
 
-         }
-         token_ended = true;
-      }
+	// keep moving characters from the text string to the token string until
+	// a trailing blank or EOS is found.
+	//
+	while ( current_index < _textString.getLength() &&
+			  !token_ended )
+	{
+		if ( _textString[current_index] == newline_char ||
+			  _textString[current_index] == tab_char )
+		{
+			// If this character is an explicit newline or tab and the token buffer is empty,
+			// return the character.  Otherwise return the token parsed so far, and this character
+			// will be returned on the next call to getToken().
+			//
+			token_ended = true;
+			if ( current_index == start_index )
+			{
+				// nothing has been added to the token buffer, just return the single character
+				length = 1;
+			}
+		}
+		else if ( _textString[current_index] == space_char &&
+					 look_for_trailing_blank )
+		{
+			// if this is the delimiting trailing blank, leave the loop and return the token
+			token_ended = true;
+		}
+		else
+		{
+			if ( _textString[current_index] != space_char )
+			{
+				look_for_trailing_blank = true;
+			}
 
-      // if this is the delimiting trailing blank, leave the loop and return the token
-      else if ((_textString[current_index] == space_char)
-               &&
-               (look_for_trailing_blank))
-      {
-         token_ended = true;
-      }
-      else
-      {
-         if (_textString[current_index] != space_char)
-         {
-            look_for_trailing_blank = true;
-         }
-         // add this character to the token
-         token_char_count++;
-         current_index++;
-      }
-   }
-   return token_char_count;
-} // END get_token
+			// add this character to the token
+			length++;
+			current_index++;
+		}
+	}
+
+	if ( result != FormatToken )
+	{
+		result = (length <= 0) ? EndOfString : NormalToken;
+	}
+
+	return result;
+}
 
 void CGUIText::convertTextToMultiline(CGUIRegion & region)
 {
-   int   current_index = 0;
-   int   current_line = 0;
-   int  x_min = 0;
-   int  x_max = 0;
-   int  y_max = 0;
+	bool	start_of_line = true;
+	int	current_index = 0;
+	int	current_line = 0;
+	int	space_pixel_size = 0;
+	int	single_line_height = 0;
+	int	x_min = 0;
+	int	x_max = 0;
+	int	y_max = 0;
 
-   _lineData.clear();
+	_lineData.clear();
+	_formatData.firstLineIndent = 0;
+	_formatData.secondLineIndent = 0;
 
-   while( current_index < _textString.getLength() )
-   {
-      int    current_segment_pixel_width = 0;
-      int    line_start_index = current_index;
-      int    line_byte_count = 0;
-      int    blank_line_count = 0;
-      bool   line_done = false;
-      bool   foce_line = false;
+	if ( _stylingRecord.fontId != UGL_NULL_ID )
+	{
+		UGL_SIZE width = 0;
+		UGL_SIZE height = 0;
 
-      CGUIRegion line_size;
+		uglTextSizeGet(_stylingRecord.fontId, &width, &height, 1, " ");
+		space_pixel_size = width;
+		single_line_height = height;
+	}
 
-      while (!line_done)
-      {
-         int   token_byte_count;
+	int	line_start_x = 0;
+	int	line_start_y = 0;
 
-         // get the next blank delimited token
-         token_byte_count = getToken(current_index);
-         if (token_byte_count == 0)
-         {
-            // reached end of string, so this is the last line
-            line_done = true;
-            current_index = _textString.getLength();
-         }
-         else
-         {
-            if (_textString[current_index] == newline_char) //'\n')
-            {
-               // newline forced a line break
-               current_index += token_byte_count;
-               if (line_byte_count)
-               {
-                  line_done = true;
-               }
-               else
-               {
-                  line_start_index = current_index;
-                  blank_line_count += 1;
-               }
-            }
-            else
-            {
-               // not a newline, see if token will fit on current line
-               CGUIRegion token_size;
-               getSize(token_size, current_index, token_byte_count);
+	while ( current_index < _textString.getLength() )
+	{
+		int	current_segment_pixel_width = 0;
+		int	line_start_index = current_index;
+		int	line_byte_count = 0;
+		bool  line_done = false;
+		bool	line_ended_by_tab = false;
 
-               if (convertLinePosition(current_segment_pixel_width+token_size.width, token_size.height, line_size))
-               {
-                  // new token fits on line
-                  line_byte_count += token_byte_count;
-                  current_index   += token_byte_count;
-                  current_segment_pixel_width += token_size.width;
-               }
-               else
-               {
-                  line_done = true;
-                  if (line_byte_count == 0)
-                  {
-                     // must put token on line
-                     line_byte_count += token_byte_count;
-                     current_index   += token_byte_count;
-                     current_segment_pixel_width += token_size.width;
-                  }
-                  else
-                  {
-                     convertLinePosition(current_segment_pixel_width, token_size.height, line_size);
-                  }
-               }
-            }
-         }
-      }
+		CGUIRegion line_size;
 
-      //
-      // Create line_data struct
-      //
-      if (line_byte_count > 0)
-      {
-         LineData    current_line_data;
+		while ( !line_done )
+		{
+			int	token_char_count;
+			if (start_of_line) line_start_x = _formatData.firstLineIndent * _tabSpaceCount * space_pixel_size;
 
-         current_line_data.x = line_size.x;
-         if (current_line == 0)
-         {
-            current_line_data.y = blank_line_count*line_size.height;
-         }
-         else
-         {
-            current_line_data.y = _lineData.back().y + (blank_line_count+1)*line_size.height;
-         }
+			// get the next blank delimited token
+			GetTokenResult tokenResult = getToken(current_index, start_of_line, token_char_count);
 
-         current_line_data.index = line_start_index;
-         current_line_data.textLength = line_byte_count;
-         if (_textString[line_start_index] == space_char)
-         {
-            current_line_data.index++;
-            current_line_data.textLength--;
-         }
+			if ( tokenResult == EndOfString )
+			{
+				// reached end of string, so this is the last line
+				line_done = true;
+				current_index = _textString.getLength();
+			}
+			else if ( tokenResult == FormatToken )
+			{
+				int	parameter_index = current_index + paragraph_format_start.getLength();
+				int	first_line_indent = -1;
+				int	second_line_indent = -1;
+				while ( parameter_index < current_index + token_char_count &&
+						  second_line_indent < 0 )
+				{
+					if ( _textString[parameter_index] >= (StringChar)'0' &&
+						  _textString[parameter_index] <= (StringChar)'9' )
+					{
+						if ( first_line_indent < 0 )
+						{
+							first_line_indent = _textString[parameter_index] - (StringChar)'0';
+						}
+						else
+						{
+							second_line_indent = _textString[parameter_index] - (StringChar)'0';
+						}
+					}
 
-         _lineData.push_back(current_line_data);
+					parameter_index += 1;
+				}
 
-         x_max = (line_size.x + line_size.width - 1 > x_max) ? line_size.x + line_size.width - 1 : x_max;
-         if (current_line == 0)
-         {
-            x_min = line_size.x;
-         }
-         else
-         {
-            x_min = (line_size.x < x_min) ? line_size.x : x_min;
-         }
+				if ( first_line_indent >= 0 &&
+					  second_line_indent >= 0 )
+				{
+					_formatData.firstLineIndent = first_line_indent;
+					_formatData.secondLineIndent = second_line_indent;
+				}
 
-         y_max = _lineData.back().y + line_size.height + 1;
-         current_line++;
-      }
-   }
+				current_index += token_char_count;
+				line_start_index = current_index;
+			}
+			else if ( _textString[current_index] == newline_char )
+			{
+				// newline forced a line break
+				start_of_line = true;
+				current_index += token_char_count;
 
-   //
-   // Setup final region required by the text
-   //
-   region.x = x_min;
-   region.y = 0;
-   region.width = x_max - x_min + 1;
-   region.height = y_max + 1;
+				if ( line_byte_count )
+				{
+					line_done = true;
+				}
+				else
+				{
+					line_start_index = current_index;
+					line_start_y += 3*single_line_height/4;
+				}
+			}
+			else if ( _textString[current_index] == tab_char )
+			{
+				start_of_line = false;
+				current_index += token_char_count;
 
-   //
-   // Adjust line horizontal positions to left side of region
-   //
-   list<LineData>::iterator line;
-   for (line=_lineData.begin(); line != _lineData.end(); ++line) (*line).x -= region.x;
-} // END convert_text_to_multiline
+				if ( line_byte_count )
+				{
+					line_done = true;
+					line_ended_by_tab = true;
+				}
+				else
+				{
+					line_start_x += _tabSpaceCount * space_pixel_size;
+					line_start_index = current_index;
+				}
+			}
+			else
+			{
+				start_of_line = false;
+
+				CGUIRegion token_size;
+				getSize(token_size, current_index, token_char_count);
+
+				if ( convertLinePosition(current_segment_pixel_width+token_size.width, token_size.height, line_start_x, line_size) )
+				{
+					// new token fits on line
+					line_byte_count += token_char_count;
+					current_index   += token_char_count;
+					current_segment_pixel_width += token_size.width;
+				}
+				else
+				{
+					line_done = true;
+					if ( line_byte_count <= 0 )
+					{
+						// must put token on line
+						line_byte_count += token_char_count;
+						current_index   += token_char_count;
+						current_segment_pixel_width += token_size.width;
+					}
+					else
+					{
+						convertLinePosition(current_segment_pixel_width, token_size.height, line_start_x, line_size);
+					}
+				}
+			}
+		}
+
+		// Create line_data struct
+		//
+		if ( line_byte_count > 0 )
+		{
+			LineData 	current_line_data;
+
+			current_line_data.x = line_size.x;
+			current_line_data.y = line_start_y;
+
+			current_line_data.index = line_start_index;
+			current_line_data.textLength = line_byte_count;
+			if ( _textString[line_start_index] == space_char )
+			{
+				current_line_data.index++;
+				current_line_data.textLength--;
+			}
+
+			_lineData.push_back(current_line_data);
+
+			x_max = (line_size.x + line_size.width - 1 > x_max) ? line_size.x + line_size.width - 1 : x_max;
+			if ( current_line <= 0 )
+			{
+				x_min = line_size.x;
+			}
+			else
+			{
+				x_min = (line_size.x < x_min) ? line_size.x : x_min;
+			}
+
+			y_max = _lineData.back().y + line_size.height + 1;
+			current_line++;
+		}
+
+		if ( !line_ended_by_tab )
+		{
+			line_start_x = _formatData.secondLineIndent * _tabSpaceCount * space_pixel_size;
+			line_start_y += single_line_height;
+		}
+		else
+		{
+			int tab_column = ( line_size.x + line_size.width - 1 - _requestedRegion.x ) / ( _tabSpaceCount * space_pixel_size ) + 1;
+			line_start_x = tab_column * _tabSpaceCount * space_pixel_size;
+		}
+	}
+
+	// Setup final region required by the text
+	//
+	region.x = x_min;
+	region.y = 0;
+	region.width = x_max - x_min + 1;
+	region.height = y_max + 1;
+
+	// Adjust line horizontal positions to left side of region
+	//
+	list<LineData>::iterator line;
+	for ( line=_lineData.begin(); line != _lineData.end(); ++line )
+	{
+		(*line).x -= region.x;
+	}
+}
 
 
-bool CGUIText::convertLinePosition(int width, int height, CGUIRegion & region)
+bool CGUIText::convertLinePosition(int width, int height, int indent_pixels, CGUIRegion & region)
 {
    int  available_pixel_width = 0;
 
@@ -568,9 +674,9 @@ bool CGUIText::convertLinePosition(int width, int height, CGUIRegion & region)
    }
    else
    {
-      // LEFT alignment: text will start at _requestedRegion.x
-      region.x = _requestedRegion.x;
-      available_pixel_width = ( _requestedRegion.width == 0 ) ? _display.width()-region.x : _requestedRegion.width;
+      // LEFT alignment: text will start at _requestedRegion.x plus the current indent
+      region.x = _requestedRegion.x + indent_pixels;
+      available_pixel_width = ( _requestedRegion.width == 0 ) ? _display.width()-region.x : _requestedRegion.width-indent_pixels;
    }
 
    region.y = 0;

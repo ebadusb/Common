@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.19  2007/06/04 22:04:21Z  wms10235
+ * IT83 - Updates for the common GUI project to use the unicode string class
  * Revision 1.18  2005/09/30 22:40:53Z  rm10919
  * Get the variable database working!
  * Revision 1.17  2005/08/05 22:55:14Z  cf10242
@@ -92,7 +94,7 @@ public:
 	enum
 	{
 		NTS = 0x0000, BOLD = 0x0100, ITALIC = 0x0200, BOLD_ITALIC = 0x0300
-	};		// text style options, this may be controled by the font or the font driver.
+	};		// text style options, this may be controlled by the font or the font driver.
 			// NTS - no text style, default attribute.
 
 	//
@@ -107,17 +109,20 @@ public:
 		LEFT_TO_RIGHT = 0x0000, RIGHT_TO_LEFT = 0x1000
 	};		// text direction options
 
-	//
 	// Constructors
 	//
 	CGUIText(CGUIDisplay & display);
 	CGUIText(CGUIDisplay & display, CGUITextItem * textItem, StylingRecord * stylingRecord = NULL);
 	CGUIText(CGUIDisplay & display, CGUITextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL);
 
-	//
 	// Destructor
 	//
 	virtual ~CGUIText();
+
+	// Set tab spacing - this is global for all strings and must be set before formating
+	// the first string for display
+	//
+	static void setTabSpacing(unsigned short spaceCount) { _tabSpaceCount = spaceCount; }
 
 	//
 	// SET_ATTRIBUTES
@@ -215,8 +220,7 @@ public:
 	const UnicodeString& getTextObj(void);
 
 	int getLength(void) const;
-
-	const CGUIRegion & getPixelSize(void);	 // The entire string on one line, no text wrapping.
+	void getPixelSize(CGUIRegion & pixelRegion);	 // The entire string on one line, no text wrapping.
 
 	void handleVariableSubstitution(void);
 
@@ -225,6 +229,15 @@ public:
 	static CGUIVariableDatabaseContainer _variableDictionary;
 
 protected:
+	static unsigned short	_tabSpaceCount;
+
+	enum GetTokenResult
+	{
+		EndOfString,		// reached end of string - no token returned
+		NormalToken,		// normal token to add to output record
+		FormatToken			// format token - controls output format but is not included in output record
+								// format tokens are only allowed at the start of a line
+   };
 
 	//
 	// These methods are used to create the text lines
@@ -232,9 +245,9 @@ protected:
 	// work as the text wrapping method for the text.
 	//
 	void getSize(CGUIRegion & region, int startIndex = -1, int length = -1);
-	int  getToken(int start_index);
+	GetTokenResult getToken(int start_index, bool start_of_line, int & length);
 	void convertTextToMultiline(CGUIRegion & region);
-	bool convertLinePosition(int width, int height, CGUIRegion & region);
+	bool convertLinePosition(int width, int height, int indent_pixels, CGUIRegion & region);
 	void computeTextRegion(void);
 
 	virtual void draw(UGL_GC_ID gc);
@@ -248,7 +261,14 @@ protected:
 	{
 		short x, y;							// offset from top left corner of text region to top left corner of line
 		unsigned short index;			// index into text string for start of line
-		unsigned short textLength;		// number of text characters on line                                   // the ofsset for RIGHTTOLEFT text string may have a negative offset.
+		unsigned short textLength;		// number of text characters on line
+                                    // the ofsset for RIGHTTOLEFT text string may have a negative offset.
+	};
+
+	struct FormatData
+	{
+		unsigned short	firstLineIndent;	// number of tab-stops for indenting first line
+		unsigned short	secondLineIndent;	// number of tab-stops for indenting second and subsequent lines
 	};
 
 	CGUITextItem   *_textItem;			// Text item for strings from the string database
@@ -256,6 +276,7 @@ protected:
 	UnicodeString	_textString;		// Text string for dynamic user defined text
 
 	list<LineData> _lineData;			// list of text lines for object
+	FormatData		_formatData;		// current paragraph format options
 
 	//
 	// These are used to determine the background color for the text.
@@ -279,7 +300,6 @@ private:
 	void initializeData(CGUITextItem * textItem, StylingRecord * stylingRecord);
 
 	CGUIRegion     _requestedRegion;	// used to determine area for LineData
-	CGUIRegion     _pixelRegion;
 	LanguageId     _configLanguage;	// language of text string, need to know where to look for string. Not sure if this is need _textItem.languageId may be used.
 
 	// Disallow value semantics and the default constructor

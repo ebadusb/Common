@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.20  2008/01/10 18:17:43Z  jl11312
+ * - add support for embedded format commands
  * Revision 1.19  2007/06/04 22:04:21Z  wms10235
  * IT83 - Updates for the common GUI project to use the unicode string class
  * Revision 1.18  2005/09/30 22:40:53Z  rm10919
@@ -44,7 +46,6 @@
  *
  */
 
-//
 // This file contains the class used to wrap the underlying text of a
 // window.  The intent is to limit dependencies on the graphics
 // system to this header file and to the implementation files associated
@@ -56,7 +57,6 @@
 #ifndef _CGUI_TEXT_INCLUDE
 #define _CGUI_TEXT_INCLUDE
 
-#include <vxworks.h>
 #include <map>
 #include <list>
 #include <string>
@@ -71,8 +71,6 @@
 #include "cgui_text_item.h"
 #include "cgui_data_item.h"
 #include "cgui_variable_db_container.h"
-
-class CGUIWindow;
 
 class CGUIText : public CGUIWindowObject
 {
@@ -97,9 +95,8 @@ public:
 	};		// text style options, this may be controlled by the font or the font driver.
 			// NTS - no text style, default attribute.
 
-	//
 	//  The LEFTTORIGHT and RIGHTTOLEFT attributes are for
-	//  specifing from which direction the text is read.
+	//  specifying from which direction the text is read.
 	//  This will only become an issue when a language is added
 	//  that is read from right to left instead of left to right.
 	//  The default IS LEFTTORIGHT.
@@ -124,7 +121,6 @@ public:
 	//
 	static void setTabSpacing(unsigned short spaceCount) { _tabSpaceCount = spaceCount; }
 
-	//
 	// SET_ATTRIBUTES
 	// This methods set the attributes of the text.
 	// First bit sets vertical justification. Default value is TOP.
@@ -135,13 +131,11 @@ public:
 	void setAttributes(unsigned int attributes);
 	unsigned int getAttributes(void) const { return _stylingRecord.attributes; }
 
-	//
 	// SET_BACKGROUND_COLOR
 	// This method sets the background color for the text.
 	//
 	void setBackgroundColor(CGUIColor color);
 
-	//
 	// SET_COLOR
 	// These methods set the text color by sending on CGUIColor
 	// or by sending the RGB numbers.
@@ -150,7 +144,6 @@ public:
 	void setColor(int red, int green, int blue);
 	const CGUIColor * getColor(void) const { return &_stylingRecord.color; }
 
-	//
 	// SET_CAPTURE_BACKGROUND_COLOR
 	// This method determines if the background is determined by
 	// by this class' draw method or if the background color
@@ -160,7 +153,6 @@ public:
 	//
 	void setCaptureBackgroundColor(void) { _captureBackgroundColor = true; _backgroundColorSet = false; }
 
-	//
 	// SET_FONT_ID
 	// This methods sets the font for the text.
 	// The font used may dictate some styling
@@ -171,14 +163,12 @@ public:
 	void setFontId(CGUIFontId fontId);
 	CGUIFontId getFontId(void) const { return _stylingRecord.fontId; }
 
-	//
 	// SET_FONT_SIZE
 	// This method sets the font size for the text.
 	//
 	void setFontSize(int fontSize);
 	int getFontSize(void) const { return _stylingRecord.fontSize; }
 
-	//
 	// SET_LANGUAGE
 	// This methods sets the language the text will use.
 	// These is an interdependency between the font and the
@@ -187,7 +177,6 @@ public:
 	void setLanguage(LanguageId configLanguage);
 	LanguageId getLanguage(void) const { return _configLanguage; }
 
-	//
 	// SET_REGION
 	// This method sets the region by x, y, Width, and height
 	// for the text.
@@ -195,7 +184,6 @@ public:
 	void setRegion(const CGUIRegion & region);
 	CGUIRegion getRegion(void) const { return _stylingRecord.region; }
 
-	//
 	// SET_STYLING_RECORD
 	// This method sets the styling record of the
 	// text.  Use this method if several members
@@ -205,7 +193,6 @@ public:
 	void setStylingRecord(StylingRecord * stylingRecord);
 	StylingRecord * getStylingRecord(void) { return &_stylingRecord; }
 
-	//
 	// SET_TEXT
 	// This methods sets the text string.  When using this method
 	// only use strings from the text database.
@@ -239,7 +226,6 @@ protected:
 								// format tokens are only allowed at the start of a line
    };
 
-	//
 	// These methods are used to create the text lines
 	// as they will appear in the window.  Together they
 	// work as the text wrapping method for the text.
@@ -252,7 +238,6 @@ protected:
 
 	virtual void draw(UGL_GC_ID gc);
 
-	//
 	// This structure holds the individual text
 	// for each line.  It is used to wrap the
 	// text in the display area.
@@ -269,16 +254,20 @@ protected:
 	{
 		unsigned short	firstLineIndent;	// number of tab-stops for indenting first line
 		unsigned short	secondLineIndent;	// number of tab-stops for indenting second and subsequent lines
+
+		FormatData(void) : firstLineIndent(0), secondLineIndent(0) { }
 	};
 
 	CGUITextItem   *_textItem;			// Text item for strings from the string database
 	StylingRecord  _stylingRecord;	// holds the styling record for an object
 	UnicodeString	_textString;		// Text string for dynamic user defined text
 
+	UnicodeString	_lastTextString;	// Last text string evaluated by computeTextRegion() 
+	bool				_forceCompute;		// if true, computeTextRegion() is forced to reevaluate string
+
 	list<LineData> _lineData;			// list of text lines for object
 	FormatData		_formatData;		// current paragraph format options
 
-	//
 	// These are used to determine the background color for the text.
 	//
 	bool           _captureBackgroundColor;
@@ -288,13 +277,11 @@ protected:
 	bool           _languageSetByApp; // flag for determining if _textString needs updating based on language
 
 private:
-	//
 	// Text is never clipped by another window object and
 	// always appears on top.
 	//
 	virtual bool clipSiblings(void) const { return false; }
 
-	//
 	// Initialize values for text string object.
 	//
 	void initializeData(CGUITextItem * textItem, StylingRecord * stylingRecord);
@@ -303,8 +290,10 @@ private:
 	LanguageId     _configLanguage;	// language of text string, need to know where to look for string. Not sure if this is need _textItem.languageId may be used.
 
 	// Disallow value semantics and the default constructor
+	//
 	CGUIText(void);
-	CGUIText (const CGUIText & copy);
+	CGUIText(const CGUIText & copy);
 	CGUIText operator=(const CGUIText &obj);
 };
+
 #endif /* #ifndef _CGUI_TEXT_INCLUDE */

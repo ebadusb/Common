@@ -2,6 +2,8 @@
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.32  2008/01/10 18:17:43Z  jl11312
+ * - add support for embedded format commands
  * Revision 1.31  2007/06/04 22:04:20Z  wms10235
  * IT83 - Updates for the common GUI project to use the unicode string class
  * Revision 1.30  2007/04/14 18:05:19Z  jl11312
@@ -98,19 +100,19 @@ static UnicodeString paragraph_format_end("]");
 int currentLanguage = 0;
 
 CGUIText::CGUIText(CGUIDisplay & display)
-: CGUIWindowObject(display)
+	: CGUIWindowObject(display)
 {
-
+	initializeData(NULL, NULL);
 }
 
 CGUIText::CGUIText(CGUIDisplay & display, CGUITextItem * textItem, StylingRecord * stylingRecord = NULL)
-                  :CGUIWindowObject(display)
+   : CGUIWindowObject(display)
 {
 	initializeData(textItem, stylingRecord);
 }
 
 CGUIText::CGUIText(CGUIDisplay & display, CGUITextItem * textItem, CGUIColor backgroundColor, StylingRecord * stylingRecord = NULL)
-                  :CGUIWindowObject(display)
+   : CGUIWindowObject(display)
 {
 	initializeData(textItem, stylingRecord);
 	setBackgroundColor(backgroundColor);
@@ -123,6 +125,10 @@ CGUIText::~CGUIText()
 void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRecord)
 {
 	_textItem =  textItem;
+	_forceCompute = false;
+	_captureBackgroundColor = false;
+	_backgroundColorSet = false;
+	_languageSetByApp = false;
 
 	if (_textItem)
 	{
@@ -147,6 +153,7 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
 			if( _textString.getLength() == 0 )
 				setRegion(CGUIRegion(0, 0, 0, 0));
 
+			_forceCompute = true;
 			computeTextRegion();
 		}
 	}
@@ -156,41 +163,58 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
 
 void CGUIText::setAttributes(unsigned int attributes)
 {
-	_stylingRecord.attributes = attributes;
-	computeTextRegion();
-	_owner->invalidateObjectRegion(this);
+	if ( _stylingRecord.attributes != attributes )
+	{
+		_stylingRecord.attributes = attributes;
+		_forceCompute = true;
+		computeTextRegion();
+	}
 }
 
 void CGUIText::setBackgroundColor(CGUIColor color)
 {
-	_backgroundColorSet = true;
-	_backgroundColor = color;
+	if ( !_backgroundColorSet ||
+		  _backgroundColor != color )
+	{
+		_backgroundColorSet = true;
+		_backgroundColor = color;
+		if ( _owner ) _owner->invalidateObjectRegion(this);
+	}
 }
 
 void CGUIText::setColor(CGUIColor color)
 {
-	_stylingRecord.color = color;
-	_owner->invalidateObjectRegion(this);
+	if ( _stylingRecord.color != color )
+	{
+		_stylingRecord.color = color;
+		if ( _owner ) _owner->invalidateObjectRegion(this);
+	}
 }
 
 void CGUIText::setColor(int red, int green, int blue)
 {
-	_stylingRecord.color = MakeCGUIColor(red, green, blue);
-	_owner->invalidateObjectRegion(this);
+	CGUIColor color = MakeCGUIColor(red, green, blue);
+	setColor(color);
 }
 
 void CGUIText::setFontId(CGUIFontId fontId)
 {
+	// Internally, fontId is a pointer, so unlike the others, we don't
+	// check for a change in this update function.
+	//
 	_stylingRecord.fontId = fontId;
+	_forceCompute = true;
 	computeTextRegion();
-	_owner->invalidateObjectRegion(this);
 }
 
 void CGUIText::setFontSize(int fontSize)
 {
-	_stylingRecord.fontSize = fontSize;
-	computeTextRegion();
-	_owner->invalidateObjectRegion(this);
+	if ( _stylingRecord.fontSize != fontSize )
+	{
+		_stylingRecord.fontSize = fontSize;
+		_forceCompute = true;
+		computeTextRegion();
+	}
 }
 
 void CGUIText::setLanguage(LanguageId configLanguage)
@@ -202,6 +226,7 @@ void CGUIText::setLanguage(LanguageId configLanguage)
 	_configLanguage = configLanguage;
 	if( _textItem )
 		_textItem->setLanguageId(configLanguage);
+
 	_languageSetByApp = true;
 }
 
@@ -209,9 +234,8 @@ void CGUIText::setStylingRecord (StylingRecord * stylingRecord)
 {
 	_stylingRecord = * stylingRecord;
 	_requestedRegion = stylingRecord->region;
+	_forceCompute = true;
 	computeTextRegion();
-	if (_owner)
-		_owner->invalidateObjectRegion(this);
 }
 
 void CGUIText::setText(CGUITextItem * textItem)
@@ -260,6 +284,7 @@ void CGUIText::setText(const StringChar * text)
 	{
 		setRegion(CGUIRegion(0, 0, 0, 0));
 	}
+
 	computeTextRegion();
 }
 
@@ -272,6 +297,7 @@ void CGUIText::setText(const UnicodeString & text)
 	{
 		setRegion(CGUIRegion(0, 0, 0, 0));
 	}
+
 	computeTextRegion();
 }
 
@@ -286,6 +312,7 @@ void CGUIText::setText(const char * text)
 	{
 		setRegion(CGUIRegion(0, 0, 0, 0));
 	}
+
 	computeTextRegion();
 }
 
@@ -689,50 +716,61 @@ bool CGUIText::convertLinePosition(int width, int height, int indent_pixels, CGU
 
 void CGUIText::computeTextRegion(void)
 {
-   CGUIRegion    text_region;
-   if (_textString.getLength() > 0) handleVariableSubstitution();
-   convertTextToMultiline(text_region);
+   if ( _textString.getLength() > 0 ) handleVariableSubstitution();
+   if ( _forceCompute ||
+		  _textString != _lastTextString )
+	{
+		_forceCompute = false;
+		_lastTextString = _textString;
 
-   // find vertical region to place text
-   if (_stylingRecord.attributes & VJUSTIFY_CENTER)
-   {
-      // center vertically within specified region
-      if (text_region.height <= _requestedRegion.height)
-      {
-         text_region.vertShift(_requestedRegion.y + (_requestedRegion.height-text_region.height)/2);
-      }
-      else
-      {
-         text_region.vertShift(_requestedRegion.y);
-      }
-   }
-   else if (_stylingRecord.attributes & VJUSTIFY_BOTTOM)
-   {
-      // justify at bottom of requested region
-      if (text_region.height <= _requestedRegion.height)
-      {
-         text_region.vertShift(_requestedRegion.y + _requestedRegion.height - text_region.height);
-      }
-      else
-      {
-         text_region.vertShift(_requestedRegion.y);
-      }
-   }
-   else
-   {
-      // justify at top of requested region
-      text_region.vertShift(_requestedRegion.y);
-   }
-
-   setRegion(text_region);
-} // END compute_text_region
+		CGUIRegion    text_region;
+		convertTextToMultiline(text_region);
+	
+		// find vertical region to place text
+		if (_stylingRecord.attributes & VJUSTIFY_CENTER)
+		{
+			// center vertically within specified region
+			if (text_region.height <= _requestedRegion.height)
+			{
+				text_region.vertShift(_requestedRegion.y + (_requestedRegion.height-text_region.height)/2);
+			}
+			else
+			{
+				text_region.vertShift(_requestedRegion.y);
+			}
+		}
+		else if (_stylingRecord.attributes & VJUSTIFY_BOTTOM)
+		{
+			// justify at bottom of requested region
+			if (text_region.height <= _requestedRegion.height)
+			{
+				text_region.vertShift(_requestedRegion.y + _requestedRegion.height - text_region.height);
+			}
+			else
+			{
+				text_region.vertShift(_requestedRegion.y);
+			}
+		}
+		else
+		{
+			// justify at top of requested region
+			text_region.vertShift(_requestedRegion.y);
+		}
+	
+		setRegion(text_region);
+	}
+}
 
 void CGUIText::setRegion(const CGUIRegion & newRegion)
 {
-   if (_owner)
+   if ( _owner )
+	{
       _owner->setObjectRegion(this, newRegion);
+	}
    else
+	{
       _region = newRegion;
+	}
 }
 
 void CGUIText::draw(UGL_GC_ID gc)
@@ -745,6 +783,7 @@ void CGUIText::draw(UGL_GC_ID gc)
    {
       return;
    }
+
    //
    // Need true coordinates (not viewport relative) on screen so that
    // we can get correct background color for text.

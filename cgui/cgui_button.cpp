@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.31  2007/05/17 18:58:23Z  jl11312
+ *  - corrected array overwrite problem
  *  Revision 1.30  2007/03/14 21:08:51Z  jmedusb
  *  Added included headers for reserved messages and a datalog reserved stream call for button presses.
  *  Revision 1.29  2006/11/13 20:21:14Z  jd11007
@@ -181,9 +183,17 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _enabledText->setCaptureBackgroundColor();
       addObjectToFront(_enabledText);
 
-	  // establish button press logging ID
-	  strncpy(_buttonPressLogText, buttonData.enabledTextItem->getId(), MAX_BUTTON_LOG_SIZE); 
-	  _buttonPressLogText[MAX_BUTTON_LOG_SIZE] = 0;
+		if(buttonData.alternateButtonId[0])
+		{
+			strncpy(_buttonPressLogText, buttonData.alternateButtonId, MAX_BUTTON_LOG_SIZE); 
+			_buttonPressLogText[MAX_BUTTON_LOG_SIZE] = 0;
+		}
+		else
+		{
+         // establish button press logging ID
+         strncpy(_buttonPressLogText, buttonData.enabledTextItem->getId(), MAX_BUTTON_LOG_SIZE); 
+         _buttonPressLogText[MAX_BUTTON_LOG_SIZE] = 0;
+		}
    }
    else
    {

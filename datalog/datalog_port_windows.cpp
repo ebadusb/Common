@@ -33,7 +33,9 @@
  */
 
 
+#define _WIN32_WINNT 0x0500
 
+#include <stdio.h>
 #include "datalog.h"
 #include "error.h"
 #include <string>
@@ -56,7 +58,7 @@
 
 DataLog_Lock datalog_CreateMLock(void)
 {
-	return CreateMutex(0, TRUE, 0); /* semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE); */
+	return CreateMutex(0, FALSE, 0); /* semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE); */
 }
 
 DataLog_Lock datalog_CreateBLock(void)
@@ -272,7 +274,7 @@ void datalog_SetupPeriodicSignal(DataLog_SignalInfo * signalInfo, long milliSeco
 {
 	if ( !signalInfo->_timerCreated )
 	{
-		if ( CreateTimerQueueTimer(&(signalInfo->_timerID), timerQueue, /*(WAITORTIMERCALLBACKFUNC)timerNotify */ 0, 
+    if ( CreateTimerQueueTimer(&(signalInfo->_timerID), timerQueue, /*(WAITORTIMERCALLBACKFUNC)timerNotify */ 0, 
 			0, 0, milliSeconds, WT_EXECUTEINIOTHREAD) != OK )
 		{
 			_FATAL_ERROR(__FILE__, __LINE__, "timerCreate failed");

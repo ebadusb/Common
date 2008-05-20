@@ -215,7 +215,7 @@ DataLog_LocalOutputTask::DataLog_LocalOutputTask(const char * platformName, cons
 	// Output directly to disk file
 	//
 	_compressedFile = NULL;
-	_outputFD = open(common.connectName(), O_WRONLY | O_CREAT, 0666);
+	_outputFD = open(common.connectName(), DATALOG_OUTPUT_FILE_OPT, 0666);
 
 	if ( _outputFD < 0 )
 	{
@@ -331,7 +331,7 @@ void DataLog_LocalOutputTask::writeLogFileHeader(const char * platformName, cons
 	};
 
 	write(_outputFD, (char *)&fileHeader, sizeof(fileHeader));
-
+  int x = sizeof(unsigned long);
 	DataLog_UINT16	platformNameLen = strlen(platformName);
 	write(_outputFD, (char *)&platformNameLen, sizeof(DataLog_UINT16));
 	write(_outputFD, (char *)platformName, platformNameLen*sizeof(char));

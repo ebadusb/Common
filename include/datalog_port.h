@@ -203,11 +203,10 @@ typedef SEM_ID	DataLog_Lock;
 #define Packing_Structure_Directive
 #define Packing_Element_Directive __attribute__ ((packed))
 
+#define DATALOG_OUTPUT_FILE_OPT (O_WRONLY | O_CREAT)
 #include <inetLib.h>
 
-#elif defined (WIN32) /************************************************************************************/
-
-#include "stdafx.h"
+#elif defined (_WIN32) /************************************************************************************/
 
 #include <io.h>      /* Used to get access to open() call. */
 #include <winsock2.h>  /* used for socket calls */
@@ -304,6 +303,9 @@ extern int 	taskIdListGet (int idList [ ], int maxTasks);
 extern int 	taskUnlock (void);
 extern int  intLock(void);
 extern int  intUnlock(int level);
+// We must define our output file to be opened with the O_RAW flag in order
+// to assure that extra carriage returns aren't inserted into our output
+#define DATALOG_OUTPUT_FILE_OPT (O_WRONLY | O_CREAT | O_RAW)
 
 
 #else /* ifdef VXWORKS */
@@ -369,6 +371,7 @@ void datalog_StartNetworkClientTask(int clientSocket, struct sockaddr_in * clien
  *	Time stamp related functions.  Note that the related structures
  * are written to the log file and so must be packed.
  */
+
 Packing_Structure_Directive typedef struct
 {
 	DataLog_UINT8	_day Packing_Element_Directive;		/* 1-31 */

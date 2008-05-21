@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.24  2006/11/13 20:21:14Z  jd11007
+ *  IT 65 - Memory leak fixes.
  *  Revision 1.23  2006/11/01 16:35:34Z  rm10919
  *  Add enableWhenPressed to have enable bitmap move to front regardless of button state.
  *  Revision 1.22  2006/10/11 21:33:15Z  rm10919
@@ -157,6 +159,7 @@ protected:
    DataLog_Level           *_btnDataLogLevel;      // level at which to log button press events
 
    char 				   _buttonPressLogText[MAX_BUTTON_LOG_SIZE+1];  // button press logging text
+   bool					_alternateLogTextUsed;			// true if alternate log text was specified
 
 	StylingRecord *			_enabledStylingRecordSaved;	// so that we can delete it upon destruction
 	StylingRecord *			_disabledStylingRecordSaved;	// so that we can delete it upon destruction

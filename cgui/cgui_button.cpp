@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.32  2008/05/10 18:15:06Z  rm10919
+ *  Update btn id to use alternate id if used.IT2178
  *  Revision 1.31  2007/05/17 18:58:23Z  jl11312
  *  - corrected array overwrite problem
  *  Revision 1.30  2007/03/14 21:08:51Z  jmedusb
@@ -92,7 +94,13 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
                          bool                 enabled = true,         // button will be constructed as enabled unless specified here
                          bool                 visible = true,         // button will be constructed as visbile unless otherwise specified here
                          bool                 pressed = false
-                        ):CGUIWindow(display), _buttonState(CGUIButton::Released), _behaviorType(buttonData.type), _iconPointer(NULL), _pressed(pressed)
+                        ) :
+      CGUIWindow(display),
+      _buttonState(CGUIButton::Released),
+      _behaviorType(buttonData.type),
+      _iconPointer(NULL),
+      _pressed(pressed),
+      _alternateLogTextUsed(false)
 {
    if (!buttonLevel)
    {
@@ -182,32 +190,27 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _enabledText = new CGUIText(display, buttonData.enabledTextItem, buttonData.enabledStylingRecord);
       _enabledText->setCaptureBackgroundColor();
       addObjectToFront(_enabledText);
-
-		if(buttonData.alternateButtonId[0])
-		{
-			strncpy(_buttonPressLogText, buttonData.alternateButtonId, MAX_BUTTON_LOG_SIZE); 
-			_buttonPressLogText[MAX_BUTTON_LOG_SIZE] = 0;
-		}
-		else
-		{
-         // establish button press logging ID
-         strncpy(_buttonPressLogText, buttonData.enabledTextItem->getId(), MAX_BUTTON_LOG_SIZE); 
-         _buttonPressLogText[MAX_BUTTON_LOG_SIZE] = 0;
-		}
    }
    else
    {
-	   // try alternate button press logging ID from ButtonData
-	   if(buttonData.alternateButtonId[0])
-	   {
-		   strncpy(_buttonPressLogText, buttonData.alternateButtonId, MAX_BUTTON_LOG_SIZE); 
-		   _buttonPressLogText[MAX_BUTTON_LOG_SIZE] = 0;
-	   }
-	   else
-		   strcpy (_buttonPressLogText, "NO ID");
-
       _enabledText = NULL;
    }
+
+	if ( buttonData.alternateButtonId[0] )
+	{
+		strncpy(_buttonPressLogText, buttonData.alternateButtonId, MAX_BUTTON_LOG_SIZE);
+		_alternateLogTextUsed = true;
+	}
+	else if ( buttonData.enabledTextItem )
+	{
+      strncpy(_buttonPressLogText, buttonData.enabledTextItem->getId(), MAX_BUTTON_LOG_SIZE);
+	}
+	else
+	{
+	   strncpy(_buttonPressLogText, "NO ID", MAX_BUTTON_LOG_SIZE);
+   }
+
+	_buttonPressLogText[MAX_BUTTON_LOG_SIZE] = 0;
 
    if (buttonData.disabledTextItem)
    {
@@ -776,9 +779,12 @@ void CGUIButton::setEnabledText (CGUITextItem * textItem)
 {
    if (textItem)
    {
-	   // re-establish button press logging ID
-	   strncpy(_buttonPressLogText, textItem->getId(), MAX_BUTTON_LOG_SIZE); 
-	   _buttonPressLogText[MAX_BUTTON_LOG_SIZE] = 0;
+	   if ( !_alternateLogTextUsed )
+		{
+			strncpy(_buttonPressLogText, textItem->getId(), MAX_BUTTON_LOG_SIZE); 
+			_buttonPressLogText[MAX_BUTTON_LOG_SIZE] = 0;
+		}
+
       if (_enabledText)
       {
          _enabledText->setText(textItem);
@@ -1157,36 +1163,34 @@ void CGUIButton::disableIcon ()
 //  display text in "pressed" textstyle if provided
 void CGUIButton::doOnPress()
 {
-   if (_enabled)
-   {
-      if (_pressedBitmap) moveObjectToFront(_pressedBitmap);
-      // deleteObject(_enabledBitmap);
+	if (_enabled)
+	{
+		if (_pressedBitmap) moveObjectToFront(_pressedBitmap);
+		if (_iconPointer) moveObjectToBack(_iconPointer);
 
-      if (_iconPointer) moveObjectToBack(_iconPointer);
+		if (_pressedText)
+		{
+			_pressedText->setCaptureBackgroundColor();
+			_pressedText->setVisible(true);
+		}
 
-      if (_pressedText)
-      {
-         _pressedText->setCaptureBackgroundColor();
-         _pressedText->setVisible(true);
-      }
+		if (_enabledText)  
+		{
+			_enabledText->setVisible(false);
+	   }
 
-      if (_enabledText)  
-	  {
-		  _enabledText->setVisible(false);
-	  }
+		if (_disabledText) _disabledText->setVisible(false);
 
-      if (_disabledText) _disabledText->setVisible(false);
+		invalidateObjectRegion(_enabledBitmap);
 
-      invalidateObjectRegion(_enabledBitmap);
+		_pressed = true;
 
-      _pressed = true;
+		if (_audioMessagePointer) _audioMessagePointer->send();
 
-      if (_audioMessagePointer) _audioMessagePointer->send();
-	  //DataLog (log_level_cgui_button_press_info) << "BUTTON_NAME = " << _buttonPressLogText << endmsg;
-	  DataLogReserved( guiButtonMessage.name, log_level_cgui_button_press_info )
+		DataLogReserved( guiButtonMessage.name, log_level_cgui_button_press_info )
 			<< taggedItem( guiButtonMessage.buttonName, _buttonPressLogText )
 			<< endmsg;
-   }
+	}
 }
 
 // DO ON RELEASE

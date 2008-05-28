@@ -81,9 +81,6 @@ void datalog_ReleaseAccess(DataLog_Lock lock)
 	ReleaseMutex(lock);
 }
 
-
-
-
 //
 // Local functions
 //
@@ -95,7 +92,6 @@ static __timeb64 markTimeStampStart(void);
 //
 static DataLog_Lock initializationDataLock = datalog_CreateMLock();   /* semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE); */
 static bool initializationStarted;
-static HANDLE timerQueue /*= CreateTimerQueue() */;
 
 bool DataLog_CommonData::startInitialization(void)
 {
@@ -227,9 +223,9 @@ struct DataLog_SignalInfo
 static DataLog_Lock	signalDataLock = datalog_CreateMLock(); /* semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE); */
 static std::map<std::string, DataLog_SignalInfo *>	signalMap;
 
-static void timerNotify(timer_t timerID, DataLog_SignalInfo * signalInfo)
+VOID CALLBACK timerNotify(PVOID pData, BOOLEAN timerOrWait)
 {
-	datalog_ReleaseAccess(signalInfo->_semID);
+  datalog_SendSignal(static_cast<DataLog_SignalInfo*>(pData));
 }
 
 DataLog_SignalInfo * datalog_CreateSignal(const char * signalName)
@@ -267,23 +263,23 @@ bool datalog_WaitSignal(DataLog_SignalInfo * signalInfo, long milliSeconds)
 
 void datalog_SendSignal(DataLog_SignalInfo * signalInfo)
 {
-	datalog_ReleaseAccess(signalInfo->_semID);
+  ReleaseSemaphore(signalInfo->_semID, 1, 0);
 }
 
 void datalog_SetupPeriodicSignal(DataLog_SignalInfo * signalInfo, long milliSeconds)
 {
 	if ( !signalInfo->_timerCreated )
 	{
-    if ( CreateTimerQueueTimer(&(signalInfo->_timerID), timerQueue, /*(WAITORTIMERCALLBACKFUNC)timerNotify */ 0, 
-			0, 0, milliSeconds, WT_EXECUTEINIOTHREAD) != OK )
+    if ( CreateTimerQueueTimer(&(signalInfo->_timerID), NULL,(WAITORTIMERCALLBACKFUNC)timerNotify, 
+			signalInfo, 0, milliSeconds, WT_EXECUTEINIOTHREAD) != OK )
 		{
 			_FATAL_ERROR(__FILE__, __LINE__, "timerCreate failed");
 		}
 
 		signalInfo->_timerCreated = true;
 	}
-
-	ChangeTimerQueueTimer(timerQueue, signalInfo->_timerID, 0, milliSeconds);
+  else
+	  ChangeTimerQueueTimer(NULL, signalInfo->_timerID, 0, milliSeconds);
 
 /*
 	timer_cancel(signalInfo->_timerID);

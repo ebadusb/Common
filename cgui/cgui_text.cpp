@@ -2,6 +2,8 @@
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.33  2008/03/07 22:38:53Z  jl11312
+ * - only update text on screen if it has changed (IT 3278)
  * Revision 1.32  2008/01/10 18:17:43Z  jl11312
  * - add support for embedded format commands
  * Revision 1.31  2007/06/04 22:04:20Z  wms10235
@@ -96,6 +98,8 @@ static StringChar	tab_char = '\t';
 static StringChar null_char = '\0';
 static UnicodeString	paragraph_format_start("#![PG");
 static UnicodeString paragraph_format_end("]");
+static const UnicodeString nonBreakingSpace(" ");  // unicode hex or utf8 format = 0xC2A0
+static const UnicodeString regularLatinSpace(" "); // unicode hex = 0x0020
 
 int currentLanguage = 0;
 
@@ -852,16 +856,23 @@ void CGUIText::draw(UGL_GC_ID gc)
 	}
 #endif /* if CPU==SIMNT */
 
+	// make copy of text string to draw.
+	UnicodeString copyTextString( _textString );
+	copyTextString.replace( nonBreakingSpace, regularLatinSpace );
+	
+	//  let's write this out
    uglBackgroundColorSet(gc, backgroundColor);
    uglForegroundColorSet(gc, _stylingRecord.color);
    uglFontSet(gc, _stylingRecord.fontId);
 
    list<LineData>::const_iterator   lineIter = _lineData.begin();
-   while (lineIter != _lineData.end())
+   while( lineIter != _lineData.end() )
    {
-      uglTextDrawW(gc, (*lineIter).x + _region.x, (*lineIter).y + _region.y, (*lineIter).textLength, &_textString[(*lineIter).index]);
+      uglTextDrawW(gc, (*lineIter).x + _region.x, (*lineIter).y + _region.y, (*lineIter).textLength, &copyTextString[(*lineIter).index]);
+
       ++lineIter;
-   }
+		
+   } /* while lineIter != _lineData.end() */
 } // END draw
 
 void CGUIText::handleVariableSubstitution(void)

@@ -9,6 +9,8 @@
  * Derived from Taos thedif.h Revision 1.20  2005/06/01 09:23:01  jl11312
  *  and the STS ICD revision 1.4.
  * $Log: gripif.h $
+ * Revision 1.5  2006/12/05 17:28:10Z  wtucusb
+ * Added new enums for GRIP common ids
  * Revision 1.3  2006/11/29 22:18:02Z  wtucusb
  * Added Service Tools Suite, Design Input, Interface Control Document  Revision 1.6  November 26, 2006 Changes
  *  
@@ -295,6 +297,7 @@ const int GRIP_PASSWORD_SIZE        = 32;
 // see Broadcast Message   const int GRIP_SERIAL_NUMBER_SIZE   = 16;
 const int GRIP_DEVICE_TYPE_SIZE     = 32;
 const int GRIP_VERSION_SIZE         = 16;
+const int GRIP_INTERFACE_REVISION_SIZE = 16;
 
 struct GRIP_DiscoverDeviceReplyMsg
 {
@@ -304,6 +307,9 @@ struct GRIP_DiscoverDeviceReplyMsg
    char          SerialNumber[GRIP_SERIAL_NUMBER_SIZE]; //Character array for serial number - used for discovery of devices
    char          Type[GRIP_DEVICE_TYPE_SIZE]; //Character array for device type - "Atreus" "Optia" "Trima"
    char          Version[GRIP_VERSION_SIZE]; //Character array for version of device
+   char          interfaceRevision[GRIP_INTERFACE_REVISION_SIZE]; //Character array for format revision of interface between STS and device
+
+	GRIP_DiscoverDeviceReplyMsg() { memset(interfaceRevision,0,GRIP_INTERFACE_REVISION_SIZE); };
 };
 
 const unsigned int GRIP_DiscoverDeviceReplyMsgSize = sizeof(GRIP_DiscoverDeviceReplyMsg);

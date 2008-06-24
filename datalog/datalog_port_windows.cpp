@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/vxWorks/Common/datalog/rcs/datalog_port_windows.cpp 1.3 2008/05/28 16:51:07Z estausb Exp estausb $
- * $Log: datalog_port_windows.cpp $
+ * $Header: I:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.12 2003/12/16 21:56:59Z jl11312 Exp $
+ * $Log: datalog_port_vxworks.cpp $
  * Revision 1.12  2003/12/16 21:56:59Z  jl11312
  * - replaced binary semaphore with mutex semaphore to avoid potential priority inversion
  * Revision 1.11  2003/12/09 14:14:40Z  jl11312
@@ -63,7 +63,7 @@ DataLog_Lock datalog_CreateMLock(void)
 
 DataLog_Lock datalog_CreateBLock(void)
 {
-	return CreateSemaphore(0, 0, 1, 0); /* semBCreate(SEM_Q_PRIORITY, SEM_EMPTY); */
+	return CreateSemaphoreW(0, 0, 1, 0); /* semBCreate(SEM_Q_PRIORITY, SEM_EMPTY); */
 }
 
 void datalog_DeleteLock(DataLog_Lock lock)
@@ -81,10 +81,15 @@ void datalog_ReleaseAccess(DataLog_Lock lock)
 	ReleaseMutex(lock);
 }
 
+void datalog_ReleaseSemaphore(DataLog_Lock lock)
+{
+  ReleaseSemaphore(lock, 1, NULL);
+}
+
+
 //
 // Local functions
 //
-static void timerNotify(timer_t timerID, DataLog_SignalInfo * signalInfo);
 static __timeb64 markTimeStampStart(void);
 
 //
@@ -92,6 +97,7 @@ static __timeb64 markTimeStampStart(void);
 //
 static DataLog_Lock initializationDataLock = datalog_CreateMLock();   /* semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE); */
 static bool initializationStarted;
+static HANDLE timerQueue = NULL;
 
 bool DataLog_CommonData::startInitialization(void)
 {
@@ -223,9 +229,9 @@ struct DataLog_SignalInfo
 static DataLog_Lock	signalDataLock = datalog_CreateMLock(); /* semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE); */
 static std::map<std::string, DataLog_SignalInfo *>	signalMap;
 
-VOID CALLBACK timerNotify(PVOID pData, BOOLEAN timerOrWait)
+VOID CALLBACK timerCallback(PVOID lpParameter, BOOLEAN)
 {
-  datalog_SendSignal(static_cast<DataLog_SignalInfo*>(pData));
+  datalog_ReleaseSemaphore(static_cast<DataLog_SignalInfo*>(lpParameter)->_semID);
 }
 
 DataLog_SignalInfo * datalog_CreateSignal(const char * signalName)
@@ -263,14 +269,16 @@ bool datalog_WaitSignal(DataLog_SignalInfo * signalInfo, long milliSeconds)
 
 void datalog_SendSignal(DataLog_SignalInfo * signalInfo)
 {
-  ReleaseSemaphore(signalInfo->_semID, 1, 0);
+	datalog_ReleaseSemaphore(signalInfo->_semID);
 }
 
 void datalog_SetupPeriodicSignal(DataLog_SignalInfo * signalInfo, long milliSeconds)
 {
+  if(timerQueue == NULL)
+    timerQueue =  CreateTimerQueue();
 	if ( !signalInfo->_timerCreated )
 	{
-    if ( CreateTimerQueueTimer(&(signalInfo->_timerID), NULL,(WAITORTIMERCALLBACKFUNC)timerNotify, 
+    if ( CreateTimerQueueTimer(&(signalInfo->_timerID), timerQueue, (WAITORTIMERCALLBACKFUNC)timerCallback , 
 			signalInfo, 0, milliSeconds, WT_EXECUTEINIOTHREAD) != OK )
 		{
 			_FATAL_ERROR(__FILE__, __LINE__, "timerCreate failed");
@@ -278,8 +286,8 @@ void datalog_SetupPeriodicSignal(DataLog_SignalInfo * signalInfo, long milliSeco
 
 		signalInfo->_timerCreated = true;
 	}
-  else
-	  ChangeTimerQueueTimer(NULL, signalInfo->_timerID, 0, milliSeconds);
+
+	ChangeTimerQueueTimer(timerQueue, signalInfo->_timerID, 0, milliSeconds);
 
 /*
 	timer_cancel(signalInfo->_timerID);

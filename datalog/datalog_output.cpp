@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.15 2008/05/19 21:14:02Z estausb Exp jl11312 $
  * $Log: datalog_output.cpp $
+ * Revision 1.15  2008/05/19 21:14:02Z  estausb
+ * Modified the windows port of datalog.
  * Revision 1.13  2003/12/09 14:14:34Z  jl11312
  * - corrected time stamp problem (IT 6668)
  * - removed obsolete code/data types (IT 6664)
@@ -292,7 +294,7 @@ void DataLog_LocalOutputTask::flushOutput(void)
 void DataLog_LocalOutputTask::writeLogFileHeader(const char * platformName, const char * nodeName, const char * platformInfo)
 {
 	DataLog_CommonData common;
-	static const char * plainTextMsg = "CONFIDENTIAL: This file is intended only for the use of Gambro BCT and contains information that "
+	static const char * plainTextMsg = "CONFIDENTIAL: This file is intended only for the use of CaridianBCT and contains information that "
 												  "is proprietary and confidential. You are hereby notified that any use, dissemination, distribution, "
 												  "or copying of this file is strictly prohibited."
 												  "\nLog file: ";

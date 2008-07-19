@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.21  2008/03/07 22:38:54Z  jl11312
+ * - only update text on screen if it has changed (IT 3278)
  * Revision 1.20  2008/01/10 18:17:43Z  jl11312
  * - add support for embedded format commands
  * Revision 1.19  2007/06/04 22:04:21Z  wms10235
@@ -215,6 +217,14 @@ public:
 	// The actual variable and value is controled by the project.
 	static CGUIVariableDatabaseContainer _variableDictionary;
 
+	enum TokenSplitMethod
+	{
+		WordBased,
+		CharBased
+	};
+
+	static TokenSplitMethod _tokenSplitMethod;
+
 protected:
 	static unsigned short	_tabSpaceCount;
 
@@ -276,6 +286,25 @@ protected:
 
 	bool           _languageSetByApp; // flag for determining if _textString needs updating based on language
 
+	CGUIText::GetTokenResult getCharBasedToken(int start_index, bool start_of_line, int & length);
+	bool checkIfEnglish(int index);
+	bool checkIfForbiddenStart(int index);
+	bool checkIfForbiddenEnd(int index);
+	bool checkIfArabicNumeral(int index);
+
+	// Forbidden Char lists are present in string.info files
+	// If present, they are read only once and then shared across all CGUItext objects 
+
+	static UnicodeString _forbiddenStartCharList;
+	static bool _forbiddenStartCharsAvailable;
+
+	static UnicodeString _forbiddenEndCharList;
+	static bool _forbiddenEndCharsAvailable;
+
+	static bool _forbiddenCharsInitialized;
+
+	void initializeForbiddenChars();
+	
 private:
 	// Text is never clipped by another window object and
 	// always appears on top.

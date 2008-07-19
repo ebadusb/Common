@@ -2,6 +2,8 @@
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.34  2008/06/11 23:06:12Z  rm10919
+ * Add handling of non-breaking spaces. IT 5377
  * Revision 1.33  2008/03/07 22:38:53Z  jl11312
  * - only update text on screen if it has changed (IT 3278)
  * Revision 1.32  2008/01/10 18:17:43Z  jl11312
@@ -96,10 +98,20 @@ static StringChar newline_char = '\n';
 static StringChar space_char = ' ';
 static StringChar	tab_char = '\t';
 static StringChar null_char = '\0';
+static StringChar decimal_point = '.';
+static StringChar decimal_comma = ',';
 static UnicodeString	paragraph_format_start("#![PG");
 static UnicodeString paragraph_format_end("]");
 static const UnicodeString nonBreakingSpace(" ");  // unicode hex or utf8 format = 0xC2A0
 static const UnicodeString regularLatinSpace(" "); // unicode hex = 0x0020
+CGUIText::TokenSplitMethod CGUIText::_tokenSplitMethod = CGUIText::CharBased;
+
+bool CGUIText::_forbiddenStartCharsAvailable = false;
+bool CGUIText::_forbiddenEndCharsAvailable = false;
+bool CGUIText::_forbiddenCharsInitialized=false;
+
+UnicodeString CGUIText::_forbiddenStartCharList;
+UnicodeString CGUIText::_forbiddenEndCharList;
 
 int currentLanguage = 0;
 
@@ -134,6 +146,8 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
 	_backgroundColorSet = false;
 	_languageSetByApp = false;
 
+	initializeForbiddenChars();
+	
 	if (_textItem)
 	{
 		if (_textItem->isInitialized())
@@ -390,6 +404,255 @@ void CGUIText::getPixelSize(CGUIRegion & pixelRegion)
 	getSize(pixelRegion, 0, _textString.getLength());
 }
 
+CGUIText::GetTokenResult CGUIText::getCharBasedToken(int start_index, bool start_of_line, int & length)
+{
+	bool token_ended = false;
+	int current_index = start_index;
+	length = 0;
+	GetTokenResult	result = EndOfString;
+
+	// Check for format command.  These are only allowed at the start of a line.
+	//
+	if ( start_of_line &&
+		  current_index < _textString.getLength() - paragraph_format_start.getLength() )
+	{
+		if ( _textString[current_index] == paragraph_format_start[0] &&
+			  _textString.mid(current_index, paragraph_format_start.getLength()) == paragraph_format_start )
+		{
+			int	endOfFormatToken = _textString.find(paragraph_format_end, current_index+paragraph_format_start.getLength());
+			if ( endOfFormatToken >= 0 )
+			{
+				endOfFormatToken += paragraph_format_end.getLength();
+				length = endOfFormatToken - current_index;
+				token_ended = true;
+				result = FormatToken;
+			}
+		}
+	}
+
+	// keep moving characters from the text string to the token string until
+	// a trailing blank or EOS is found.
+	//
+
+	int tokenWidth=0;
+	bool englishToken = false;
+	bool forbiddenStartToken = false;
+	bool forbiddenEndToken = false;
+
+	while ( current_index < _textString.getLength() &&
+			  !token_ended )
+	{
+		if( _textString[current_index] == newline_char )
+		{
+			token_ended = true;
+			if ( current_index == start_index )
+			{
+				length = 1;
+			}
+		}
+		else if( checkIfForbiddenStart(current_index+1) ) // Asian Forbidden Start char
+		{
+			if( englishToken && !checkIfEnglish(current_index) && !forbiddenStartToken )
+			{
+				token_ended=true;
+			}
+			else
+			{
+				length+=1;
+				current_index+=1; 
+				forbiddenStartToken=true;  
+			}
+		}
+		else if( checkIfForbiddenEnd(current_index) ) // Asian Forbidden End Char
+		{
+			if( englishToken && !forbiddenStartToken && !forbiddenEndToken )
+			{
+				token_ended=true;
+			}
+			else
+			{
+				length+=1;
+				current_index+=1;
+				forbiddenEndToken=true;
+			}  
+		}
+		else if( checkIfEnglish(current_index) ) // English letters or numbers
+		{
+			englishToken = true;
+			length++;
+			current_index++;
+		}
+		else if ( _textString[current_index] == tab_char )
+		{
+			token_ended = true;
+			if ( current_index == start_index )
+			{
+				length = 1;
+			}
+		}
+		else if( _textString[current_index] == space_char)
+		{
+			if( englishToken )
+			{
+				token_ended=true;
+			}
+			else
+			{
+				length+=1;
+				current_index+=1;
+			}
+		}
+		else   
+		{
+			// Floating point numbers
+			if( ( _textString[current_index] == decimal_point || _textString[current_index] == decimal_comma )
+				 && checkIfArabicNumeral(current_index-1) && checkIfArabicNumeral(current_index+1) )
+			{
+				length+=1;
+				current_index+=1;
+			}
+			else // All other characters
+			{
+				if( forbiddenStartToken || forbiddenEndToken || !englishToken )
+				{
+					length+=1;
+					current_index+=1;
+	
+					if( forbiddenStartToken ) forbiddenStartToken=false;
+					if( forbiddenEndToken )   forbiddenEndToken=false;
+				}
+	
+				if( englishToken )
+				{
+					englishToken=false;
+				}
+	
+				token_ended = true; 
+			}
+		}
+	}
+
+	if ( result != FormatToken )
+	{
+		result = (length <= 0) ? EndOfString : NormalToken;
+	}
+
+	return result;
+}
+
+bool CGUIText::checkIfArabicNumeral(int index)
+{
+	bool result=false;
+	UnicodeString zero('0');
+	UnicodeString nine('9');
+
+	if( index < _textString.getLength() && index >= 0 )
+	{
+		StringChar charPos = _textString[index];
+
+		if( charPos >= zero[0] && charPos <= nine[0] )
+		{
+			result = true;
+		}
+	}
+
+	return result;
+
+}
+
+bool CGUIText::checkIfEnglish(int index)
+{
+	bool result = false;
+	UnicodeString smallA('a');
+	UnicodeString bigA('A');
+	UnicodeString smallZ('z');
+	UnicodeString bigZ('Z');
+
+	UnicodeString zero('0');
+	UnicodeString nine('9');
+
+	if( index < _textString.getLength() && index >= 0 )
+	{
+		StringChar charPos = _textString[index];
+
+		if( ( charPos >= smallA[0] && charPos <= smallZ[0] ) || 
+			 ( charPos >= bigA[0] && charPos <= bigZ[0] ) ||
+			 ( charPos >= zero[0] && charPos <= nine[0] ) )
+		{
+			result = true;
+		}
+	}
+
+	return result;
+}
+
+bool CGUIText::checkIfForbiddenStart(int index)
+{
+	bool result = false;
+
+	if( _forbiddenStartCharsAvailable )
+	{	
+		if( index < _textString.getLength() && index >= 0 )
+		{
+			if( _forbiddenStartCharList.find(_textString[index],0) != -1 )
+			{
+				result = true;
+			}
+		}
+	}
+
+	return result;
+}
+
+bool CGUIText::checkIfForbiddenEnd(int index)
+{
+	bool result = false;
+
+	if( _forbiddenEndCharsAvailable )
+	{
+		if( index < _textString.getLength() && index >= 0 )
+		{
+			if( _forbiddenEndCharList.find(_textString[index],0) != -1 )
+			{
+				result = true;
+			}
+		}
+	}
+
+	return result;
+}
+
+
+void CGUIText::initializeForbiddenChars()
+{
+	if( !_forbiddenCharsInitialized )
+	{
+		CGUITextItem* forbiddenStartCharList = CGUITextItem::_textMap.findString("forbiddenStartCharList");
+		if( forbiddenStartCharList != NULL )
+		{
+			_forbiddenStartCharList = forbiddenStartCharList->getTextObj();
+			_forbiddenStartCharsAvailable=true;
+		}
+		else
+		{
+			DataLog( log_level_cgui_info ) << "Couldn't find forbiddenStartCharList in string.info files" << endmsg;
+		}
+	
+		CGUITextItem* forbiddenEndCharList = CGUITextItem::_textMap.findString("forbiddenEndCharList");
+		if( forbiddenEndCharList != NULL )
+		{
+			_forbiddenEndCharList = forbiddenEndCharList->getTextObj();
+			_forbiddenEndCharsAvailable=true;
+		}
+		else
+		{
+			DataLog( log_level_cgui_info ) << "Couldn't find forbiddenEndCharList in string.info files" << endmsg;
+		}
+
+		_forbiddenCharsInitialized=true;
+	}
+}
+
 CGUIText::GetTokenResult CGUIText::getToken(int start_index, bool start_of_line, int & length)
 {
 	// this flag is false before encountering non-blank token characters
@@ -515,7 +778,21 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
 			if (start_of_line) line_start_x = _formatData.firstLineIndent * _tabSpaceCount * space_pixel_size;
 
 			// get the next blank delimited token
-			GetTokenResult tokenResult = getToken(current_index, start_of_line, token_char_count);
+
+			GetTokenResult tokenResult = EndOfString;
+
+			switch( _tokenSplitMethod )
+			{
+			case WordBased:
+				tokenResult = getToken(current_index, start_of_line, token_char_count);
+				break;
+
+			case CharBased:
+				tokenResult = getCharBasedToken(current_index, start_of_line, token_char_count);
+				break;
+			}
+
+			UnicodeString ustr = _textString.mid(current_index,token_char_count);
 
 			if ( tokenResult == EndOfString )
 			{

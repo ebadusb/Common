@@ -2,6 +2,8 @@
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.35  2008/07/18 23:10:12Z  adalusb
+ * Checked in changes for asian language text wrap. A new function getCharBasedToken() has been added.
  * Revision 1.34  2008/06/11 23:06:12Z  rm10919
  * Add handling of non-breaking spaces. IT 5377
  * Revision 1.33  2008/03/07 22:38:53Z  jl11312
@@ -104,7 +106,7 @@ static UnicodeString	paragraph_format_start("#![PG");
 static UnicodeString paragraph_format_end("]");
 static const UnicodeString nonBreakingSpace(" ");  // unicode hex or utf8 format = 0xC2A0
 static const UnicodeString regularLatinSpace(" "); // unicode hex = 0x0020
-CGUIText::TokenSplitMethod CGUIText::_tokenSplitMethod = CGUIText::CharBased;
+CGUIText::TokenSplitMethod CGUIText::_tokenSplitMethod = CGUIText::WordBased;
 
 bool CGUIText::_forbiddenStartCharsAvailable = false;
 bool CGUIText::_forbiddenEndCharsAvailable = false;

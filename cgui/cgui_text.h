@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.22  2008/07/18 23:10:15Z  adalusb
+ * Checked in changes for asian language text wrap. A new function getCharBasedToken() has been added.
  * Revision 1.21  2008/03/07 22:38:54Z  jl11312
  * - only update text on screen if it has changed (IT 3278)
  * Revision 1.20  2008/01/10 18:17:43Z  jl11312
@@ -224,6 +226,9 @@ public:
 	};
 
 	static TokenSplitMethod _tokenSplitMethod;
+	
+
+	static void selectTokenSplitMethod();
 
 protected:
 	static unsigned short	_tabSpaceCount;
@@ -303,7 +308,8 @@ protected:
 
 	static bool _forbiddenCharsInitialized;
 
-	void initializeForbiddenChars();
+	static void initializeForbiddenChars();
+	static bool _tokenSplitMethodSelected;
 	
 private:
 	// Text is never clipped by another window object and

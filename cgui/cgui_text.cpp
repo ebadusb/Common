@@ -2,6 +2,8 @@
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.36  2008/07/22 17:43:58Z  adalusb
+ * Set the token algorithm to word based for now as strings have been frozen for MNC production ( English ). This will be changed for foreign languages.
  * Revision 1.35  2008/07/18 23:10:12Z  adalusb
  * Checked in changes for asian language text wrap. A new function getCharBasedToken() has been added.
  * Revision 1.34  2008/06/11 23:06:12Z  rm10919
@@ -115,6 +117,8 @@ bool CGUIText::_forbiddenCharsInitialized=false;
 UnicodeString CGUIText::_forbiddenStartCharList;
 UnicodeString CGUIText::_forbiddenEndCharList;
 
+bool CGUIText::_tokenSplitMethodSelected = false;
+
 int currentLanguage = 0;
 
 CGUIText::CGUIText(CGUIDisplay & display)
@@ -148,7 +152,10 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
 	_backgroundColorSet = false;
 	_languageSetByApp = false;
 
-	initializeForbiddenChars();
+	if( !_tokenSplitMethodSelected )
+	{
+		selectTokenSplitMethod();
+	}
 	
 	if (_textItem)
 	{
@@ -624,6 +631,33 @@ bool CGUIText::checkIfForbiddenEnd(int index)
 	return result;
 }
 
+void CGUIText::selectTokenSplitMethod()
+{
+	_tokenSplitMethod = CGUIText::WordBased;
+
+	CGUITextItem* tokenSplitAlgorithm = CGUITextItem::_textMap.findString("languageWrappingAlgorithm");
+	if( tokenSplitAlgorithm != NULL )
+	{
+		UnicodeString charBased("CharBased");
+		if( tokenSplitAlgorithm->getTextObj().find(charBased) != -1 )
+		{
+			_tokenSplitMethod = CGUIText::CharBased;
+			_forbiddenCharsInitialized = false;
+			initializeForbiddenChars();
+			DataLog( log_level_cgui_info ) << "CharBased token split algorithm selected" << endmsg;
+		}
+		else
+		{
+			DataLog( log_level_cgui_info ) << "WordBased token split algorithm selected" << endmsg;
+		}
+	}
+	else
+	{
+		DataLog( log_level_cgui_info ) << "WordBased token split algorithm selected" << endmsg;
+	}
+
+	_tokenSplitMethodSelected = true;
+}
 
 void CGUIText::initializeForbiddenChars()
 {
@@ -634,6 +668,7 @@ void CGUIText::initializeForbiddenChars()
 		{
 			_forbiddenStartCharList = forbiddenStartCharList->getTextObj();
 			_forbiddenStartCharsAvailable=true;
+			DataLog( log_level_cgui_info ) << "Found forbiddenStartCharList in string.info files" << endmsg;
 		}
 		else
 		{
@@ -645,6 +680,7 @@ void CGUIText::initializeForbiddenChars()
 		{
 			_forbiddenEndCharList = forbiddenEndCharList->getTextObj();
 			_forbiddenEndCharsAvailable=true;
+			DataLog( log_level_cgui_info ) << "Found forbiddenEndCharList in string.info files" << endmsg;
 		}
 		else
 		{

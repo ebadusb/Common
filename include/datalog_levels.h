@@ -3,6 +3,8 @@
  *
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_levels.h 1.13 2007/02/26 23:28:29Z wms10235 Exp ssunusb $
  * $Log: datalog_levels.h $
+ * Revision 1.13  2007/02/26 23:28:29Z  wms10235
+ * IT74 - Added Firewire logging level and moved functions under the C++ area
  * Revision 1.12  2007/01/18 22:51:51Z  MS10234
  * - add log level for language support library
  * Revision 1.11  2006/10/19 19:40:30Z  MS10234
@@ -189,6 +191,9 @@ static DataLog_InitTable	initTable[] =
 	{ &log_level_state_machine_info, &log_handle_state_machine_info, "state_machine_info", true },
 	{ &log_level_spoofer_error, &log_handle_spoofer_error, "spoofer_error", true },
     { &log_level_spoofer_info, &log_handle_spoofer_info, "spoofer_info", true },
+
+	{ &log_level_hog_error, &log_handle_hog_error, "hog_error", true },
+	{ &log_level_hog_info, &log_handle_hog_info, "hog_info", true },
 
     { &log_level_cgui_error, &log_handle_cgui_error, "cgui_error", true },
 	{ &log_level_cgui_info, &log_handle_cgui_info, "cgui_info", true },

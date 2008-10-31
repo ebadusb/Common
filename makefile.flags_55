@@ -1,8 +1,10 @@
-# @(#) $Header: Z:/BCT_Development/vxWorks/Common/rcs/makefile.flags_55 1.9 2005/05/26 18:48:30Z jheiusb Exp agauusb $
+# @(#) $Header: Z:/BCT_Development/vxWorks/Common/rcs/makefile.flags_55 1.11 2008/11/19 20:47:09Z agauusb Exp agauusb $
 #
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags_55 $
+# Revision 1.9  2005/05/26 18:48:30Z  jheiusb
+# IT 32 Add 486 options
 # Revision 1.8  2005/01/12 18:15:52Z  jl11312
 # - restored optimization flags (IT 17)
 # Revision 1.7  2004/12/02 22:02:58Z  jl11312
@@ -97,8 +99,10 @@ endif
 
 ifneq ($(BUILD_TYPE),DEBUG)
   ifneq ($(BUILD_TYPE),PRODUCTION)
-    OPT_ERROR := Invalid BUILD_TYPE: $(BUILD_TYPE).  Valid types are CLEAN, DEBUG, or PRODUCTION.
-    FORCE_REBUILD := 1
+    ifneq ($(BUILD_TYPE),DEMO)
+      OPT_ERROR := Invalid BUILD_TYPE: $(BUILD_TYPE).  Valid types are CLEAN, DEBUG, PRODUCTION or DEMO.
+      FORCE_REBUILD := 1
+    endif
   endif
 endif
 

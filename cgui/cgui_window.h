@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.h 1.12 2007/04/20 14:58:26Z wms10235 Exp rm10919 $
  * $Log: cgui_window.h $
+ * Revision 1.12  2007/04/20 14:58:26Z  wms10235
+ * IT2354 - Removing function bringToTop() since it is a duplicate of raiseScreenPriority()
  * Revision 1.11  2007/04/18 16:28:30Z  wms10235
  * IT2354 - Added screen/display functions for reports
  * Revision 1.10  2006/06/17 17:42:32Z  cf10242
@@ -149,6 +151,7 @@ private:
    // to determine if the object should be drawn.
    //
    list<CGUIWindowObject *> _clippedObjects;
+   list<CGUIWindowObject *> _transparencyObjects;
    list<CGUIWindowObject *> _nonClippedObjects;
    unsigned long _guardBottom;
 };

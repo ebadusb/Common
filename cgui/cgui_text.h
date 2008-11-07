@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.23  2008/07/23 22:55:08Z  adalusb
+ * Selection of the text wrapping algorithm based on the language loaded enabled. 
  * Revision 1.22  2008/07/18 23:10:15Z  adalusb
  * Checked in changes for asian language text wrap. A new function getCharBasedToken() has been added.
  * Revision 1.21  2008/03/07 22:38:54Z  jl11312
@@ -315,7 +317,7 @@ private:
 	// Text is never clipped by another window object and
 	// always appears on top.
 	//
-	virtual bool clipSiblings(void) const { return false; }
+	virtual ClippingType clipSiblings(void) const { return NotClipped; }
 
 	// Initialize values for text string object.
 	//

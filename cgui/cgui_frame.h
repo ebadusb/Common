@@ -6,6 +6,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_frame.h 1.6 2007/12/04 01:06:00Z rm10919 Exp rm10919 $
  * $Log: cgui_frame.h $
+ * Revision 1.6  2007/12/04 01:06:00Z  rm10919
+ * Fix potential memory leak.
  * Revision 1.5  2007/11/15 21:01:52Z  rm10919
  * Add new method to create background for frame.
  *
@@ -86,7 +88,7 @@ protected:
    virtual void draw( UGL_GC_ID gc );
 
 private:
-   virtual bool clipSiblings(void) const { return false; }
+   virtual ClippingType clipSiblings(void) const { return Transparency; }
 
 private:
 	CGUIRegion _region;

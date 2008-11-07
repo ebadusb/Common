@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.21 2010/04/02 16:26:25Z agauusb Exp agauusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.19  2007/04/20 14:58:26Z  wms10235
+ * IT2354 - Removing function bringToTop() since it is a duplicate of raiseScreenPriority()
  * Revision 1.18  2007/04/18 16:28:30Z  wms10235
  * IT2354 - Added screen/display functions for reports
  * Revision 1.17  2007/04/14 18:05:19Z  jl11312
@@ -110,6 +112,12 @@ CGUIWindow::~CGUIWindow()
       if ( obj ) obj->_owner = NULL;
    }
 
+   for (objIter = _transparencyObjects.begin(); objIter != _transparencyObjects.end(); ++objIter)
+   {
+      CGUIWindowObject * obj = *objIter;
+      if ( obj ) obj->_owner = NULL;
+   }
+        
    for (objIter = _nonClippedObjects.begin(); objIter != _nonClippedObjects.end(); ++objIter)
    {
       CGUIWindowObject * obj = *objIter;
@@ -119,7 +127,7 @@ CGUIWindow::~CGUIWindow()
 
 void CGUIWindow::setPosition(short x, short y)
 {
-    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
+   if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
        DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
    if (x != _region.x ||
        y != _region.y)
@@ -260,8 +268,9 @@ void CGUIWindow::detach(void)
 
 void CGUIWindow::addObject(CGUIWindowObject * obj)
 {
-    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+   if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
+      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+	
 	if(obj)
 	{
 		obj->_owner = this;
@@ -272,19 +281,25 @@ void CGUIWindow::addObject(CGUIWindowObject * obj)
 
 void CGUIWindow::addObjectToFront(CGUIWindowObject * obj)
 {
-    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+   if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
+      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+	
 	if(obj)
 	{
-		if (obj->clipSiblings())
+      switch( obj->clipSiblings() )
 		{
-			_clippedObjects.push_front(obj);
-		}
-		else
-		{
-			_nonClippedObjects.push_front(obj);
-		}
+			case CGUIWindowObject::Clipped:
+            _clippedObjects.push_front(obj);
+				break;
 
+			case CGUIWindowObject::Transparency:
+				_transparencyObjects.push_front(obj);
+				break;
+
+			case CGUIWindowObject::NotClipped:
+            _nonClippedObjects.push_front(obj);
+				break;
+		}
 		addObject(obj);
 	}
 }
@@ -292,19 +307,25 @@ void CGUIWindow::addObjectToFront(CGUIWindowObject * obj)
 
 void CGUIWindow::addObjectToBack(CGUIWindowObject * obj)
 {
-    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+   if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
+      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+	
 	if(obj)
 	{
-		if (obj->clipSiblings())
+		switch( obj->clipSiblings() )
 		{
-			_clippedObjects.push_back(obj);
-		}
-		else
-		{
-			_nonClippedObjects.push_back(obj);
-		}
+			case CGUIWindowObject::Clipped:
+            _clippedObjects.push_back(obj);
+				break;
 
+			case CGUIWindowObject::Transparency:
+				_transparencyObjects.push_back(obj);
+				break;
+
+			case CGUIWindowObject::NotClipped:
+				_nonClippedObjects.push_back(obj);
+				break;
+		}
 		addObject(obj);
 	}
 }
@@ -324,6 +345,7 @@ void CGUIWindow::deleteObject(CGUIWindowObject * obj)
 		// here we just attempt to remove the object from both lists.
 		//
 		_clippedObjects.remove(obj);
+		_transparencyObjects.remove(obj);
 		_nonClippedObjects.remove(obj);
 
 		invalidateObjectRegion(obj);
@@ -336,15 +358,24 @@ void CGUIWindow::moveObjectToFront(CGUIWindowObject * obj)
    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
 
-   // Order is important only for clipped objects
+   // Order is important only for clipped and transparency objects
    //
 	if(obj)
 	{
-		if (obj->clipSiblings() &&
-			_clippedObjects.front() != obj)
+		if ( obj->clipSiblings() == CGUIWindowObject::Clipped
+			  && _clippedObjects.front() != obj)
 		{
 			_clippedObjects.remove(obj);
 			_clippedObjects.push_front(obj);
+			
+			invalidateObjectRegion(obj);
+		}
+		else if( obj->clipSiblings() == CGUIWindowObject::Transparency
+               && _transparencyObjects.front() != obj)
+		{
+         _transparencyObjects.remove(obj);
+         _transparencyObjects.push_front(obj);
+
 			invalidateObjectRegion(obj);
 		}
 	}
@@ -355,17 +386,27 @@ void CGUIWindow::moveObjectToBack(CGUIWindowObject * obj)
    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
 
-   // Order is important only for clipped objects
+   // Order is important only for clipped and transparency objects
    //
 	if(obj)
 	{
-		if (obj->clipSiblings() &&
-			_clippedObjects.back() != obj)
+		if (obj->clipSiblings() == CGUIWindowObject::Clipped
+			 && _clippedObjects.back() != obj)
 		{
 			_clippedObjects.remove(obj);
 			_clippedObjects.push_back(obj);
+			
 			invalidateObjectRegion(obj);
 		}
+		else if( obj->clipSiblings() == CGUIWindowObject::Transparency
+					&& _transparencyObjects.front() != obj)
+		{
+			_transparencyObjects.remove(obj);
+			_transparencyObjects.push_back(obj);
+
+			invalidateObjectRegion(obj);
+		}
+
 	}
 }
 
@@ -616,6 +657,15 @@ void CGUIWindow::preDrawObjects(void)
       }
    }
 
+	for (objIter = _transparencyObjects.begin(); objIter != _transparencyObjects.end(); ++objIter)
+	{
+		CGUIWindowObject * obj = *objIter;
+		if (obj && obj->_visible)
+		{
+			obj->preDraw();
+		}
+	}
+
    for (objIter = _nonClippedObjects.begin(); objIter != _nonClippedObjects.end(); ++objIter)
    {
       CGUIWindowObject * obj = *objIter;
@@ -629,8 +679,9 @@ void CGUIWindow::preDrawObjects(void)
 
 void CGUIWindow::drawObjects(UGL_GC_ID gc)
 {
-    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+	if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
+      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+	
    UGL_REGION_ID  clippedDrawRegion = uglRegionCreate();
    uglRegionCopy(_activeDrawRegion, clippedDrawRegion);
 
@@ -670,15 +721,34 @@ void CGUIWindow::drawObjects(UGL_GC_ID gc)
          uglClipRegionSet(gc, clippedDrawRegion);
       }
    }
+	
    uglClipRegionSet(gc, _activeDrawRegion);
-   for (objIter = _nonClippedObjects.begin(); objIter != _nonClippedObjects.end(); ++objIter)
+
+	for (objIter = _transparencyObjects.begin(); objIter != _transparencyObjects.end(); ++objIter)
+	{
+		CGUIWindowObject * obj = *objIter;
+		if (obj && obj->_visible)
+		{
+			obj->draw(gc);
+
+			UGL_RECT objRect;
+			obj->_region.convertToUGLRect(objRect);
+			uglRegionCopy(_activeDrawRegion, clippedDrawRegion);
+			uglRegionClipToRect(clippedDrawRegion, &objRect);
+			if (!uglRegionIsEmpty(clippedDrawRegion))
+			{
+            obj->draw(gc);
+			}
+		}
+	}
+
+	for (objIter = _nonClippedObjects.begin(); objIter != _nonClippedObjects.end(); ++objIter)
    {
       CGUIWindowObject * obj = *objIter;
       if (obj && obj->_visible)
       {
          UGL_RECT objRect;
          obj->_region.convertToUGLRect(objRect);
-
          uglRegionCopy(_activeDrawRegion, clippedDrawRegion);
          uglRegionClipToRect(clippedDrawRegion, &objRect);
          if (!uglRegionIsEmpty(clippedDrawRegion))

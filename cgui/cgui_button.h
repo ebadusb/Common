@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.25  2008/05/20 20:29:20Z  jl11312
+ *  - corrected handling of alternate logging text
  *  Revision 1.24  2006/11/13 20:21:14Z  jd11007
  *  IT 65 - Memory leak fixes.
  *  Revision 1.23  2006/11/01 16:35:34Z  rm10919
@@ -82,6 +84,7 @@
 // 7) there is one callback routine associated with a button press,
 // 8) there is one callback routine associated with a button release
 
+
 class CGUIButton : public CGUIWindow
 {    
 public:
@@ -96,7 +99,43 @@ public:
 	{
 		Released,
 		Pressed,
+		Disabled,
+		NoButtonState
 	};
+
+struct ButtonIcon
+{
+   ButtonIcon( void ){ _iconBitmap = NULL; _buttonStateType = NoButtonState; _iconId = 0; };
+	
+   ButtonIcon( CGUIDisplay & display, CGUIBitmapInfo * iconBitmapInfo, ButtonStateType buttonStateType, short x, short y ):
+               _buttonStateType( buttonStateType )
+	{ 
+		_iconId = setIconId();
+		_iconBitmap = new CGUIBitmap( display, CGUIRegion( x, y, 0, 0 ), *iconBitmapInfo);
+	};
+
+	~ButtonIcon(void)
+	{ 
+		if( _iconBitmap ) delete _iconBitmap;
+	}
+
+   int getIconId( void ){ return _iconId; };
+
+	void setButtonStateType( ButtonStateType buttonStateType ){ _buttonStateType = buttonStateType; };
+	CGUIBitmap * getBitmap( void ){ return _iconBitmap; };
+	ButtonStateType getButtonStateType( void ){ return _buttonStateType; };
+	void setVisible( bool newVisible ){ _iconBitmap->setVisible( newVisible ); };
+   
+private:
+
+	CGUIBitmap * _iconBitmap;
+   ButtonStateType _buttonStateType;
+	int _iconId;
+
+	static int _iconCounter;
+
+   int setIconId( void ){ if( _iconId < 1 ) _iconId = _iconCounter++; return _iconId; };
+};
   
    struct ButtonData
    {
@@ -106,21 +145,24 @@ public:
       unsigned short vMargin;            // vertical and horizontal margins from edge of button to
       unsigned short hMargin;            // where any button labels are allowed to start
 
-      CGUIBitmapInfo * enabledBitmapId;  // enabled state bitmap id
-      CGUITextItem * enabledTextItem;    // label text (if any) used in enabled state
-      StylingRecord * enabledStylingRecord;// label text styling information in enabled state
+      CGUIBitmapInfo	* enabledBitmapId;		// enabled state bitmap id
+      CGUITextItem	* enabledTextItem;		// label text (if any) used in enabled state
+      StylingRecord	* enabledStylingRecord;	// label text styling information in enabled state
+		ButtonIcon		* enabledButtonIcon;		//	background icon associated with the enabled state
 
-      CGUIBitmapInfo * disabledBitmapId; // disableded state bitmap id
-      CGUITextItem * disabledTextItem;   // attributes for label text used in disabled state
-      StylingRecord * disabledStylingRecord; // label text styling information in disableded state
+      CGUIBitmapInfo	* disabledBitmapId;		// disableded state bitmap id
+      CGUITextItem	* disabledTextItem;		// attributes for label text used in disabled state
+      StylingRecord	* disabledStylingRecord;// label text styling information in disableded state
+		ButtonIcon		* disabledButtonIcon;	//	background icon associated with the disabled state
 
-      CGUIBitmapInfo * pressedBitmapId;  // pressed state bitmap id
-      CGUITextItem * pressedTextItem;    // label text used in pressed state
-      StylingRecord * pressedStylingRecord;// label text styling information in pressed state
+      CGUIBitmapInfo	* pressedBitmapId;		// pressed state bitmap id
+      CGUITextItem	* pressedTextItem;		// label text used in pressed state
+      StylingRecord	* pressedStylingRecord;	// label text styling information in pressed state
+		ButtonIcon		* pressedButtonIcon;		//	background icon associated with the pressed state
 
-	  char alternateButtonId[MAX_BUTTON_LOG_SIZE+1];        // enabled text item ID is used.  If none, then this field is used
+		char alternateButtonId[MAX_BUTTON_LOG_SIZE+1];	// enabled text item ID is used.  If none, then this field is used
 
-      ButtonBehavior type;               // button behavior  
+      ButtonBehavior type;							// button behavior  
    };
 
 
@@ -154,6 +196,7 @@ protected:
    
    CGUIBitmap              *_iconPointer;          // ptr to the icon bitmap object
 
+	list< ButtonIcon *> _iconList;						// list of transparent icons
    ButtonBehavior           _behaviorType;         // how does button behave when pressed
    
    DataLog_Level           *_btnDataLogLevel;      // level at which to log button press events
@@ -189,6 +232,7 @@ public:
    // ENABLEWHENPRESSED
    // set the state of the button to enabled with enable bitmap on top.  If currently invisible, the button is made visible.
    void enableWhenPressed(void);
+	void enableReleased( void );
 
 	// ENABLEPRESSED
 	void enablePressed(void);
@@ -363,6 +407,16 @@ public:
    // DISABLE ICON
    // set a previously set icon as invisible
    void disableIcon();
+
+	// icon management
+	// add icon object to button icon list
+	int addIcon( CGUIBitmapInfo * bitmapInfo, const short x, const short y, ButtonStateType buttonStateType = NoButtonState );
+
+	// change the button state type of an icon in the list
+	bool setIconButtonStateType( int iconId, ButtonStateType buttonStateType );
+	
+	// remove icon from icon list
+	bool removeIcon( int iconId );
 
 protected:
    // The following methods are called when state of the button is changed.  These can be overriden

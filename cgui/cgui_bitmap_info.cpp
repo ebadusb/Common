@@ -6,6 +6,8 @@
  * build_bitmap_info file.
  *
  * $Log: cgui_bitmap_info.cpp $
+ * Revision 1.7  2007/04/14 18:04:40Z  jl11312
+ * - delete uncompressed data for unreferenced bitmaps (common IT 80)
  * Revision 1.6  2007/03/28 15:18:28Z  wms10235
  * IT2888 - Correcting GUI memory leak
  * Revision 1.5  2006/05/15 21:47:36Z  rm10919
@@ -33,26 +35,70 @@ CGUIBitmapInfo::CGUIBitmapInfo(const unsigned char bmp_data[],
 					 _myWidth (width),
 					 _loadCount (0),
 					 _myId(UGL_NULL_ID),
+					 _myMaskBitmap(NULL),
+					 _transparent(false),
 					 _compressed(true)
 {
 	_mySize = size;
+	_mySizeMask = 0;
 	_myBitmap = (unsigned char *)bmp_data;
+}
+
+CGUIBitmapInfo::CGUIBitmapInfo(const unsigned char bmp_data[], 
+                               unsigned long size,
+                               const unsigned char mask_data[],
+                               unsigned long sizeMask,
+                               unsigned short width,
+                               unsigned short height ) :
+					 _myHeight (height),
+					 _myWidth (width),
+					 _loadCount (0),
+					 _myId(UGL_NULL_ID),
+					 _transparent(true),	
+					 _compressed(true)
+{
+	_mySize = size;
+	_mySizeMask = sizeMask;
+	_myBitmap = (unsigned char *)bmp_data;
+	_myMaskBitmap = (unsigned char *)mask_data;
 }
 
 // CONSTRUCTOR - accepts a pointer to the input bitmap.  Expects that the data is in
 // uncompressed format.
 CGUIBitmapInfo::CGUIBitmapInfo(const unsigned short bmp_data[],
-					 unsigned long size,
-					 unsigned short width,
-					 unsigned short height) :
+                               unsigned long size,
+                               unsigned short width,
+                               unsigned short height) :
 					 _myHeight (height),
 					 _myWidth (width),
 					 _loadCount (0),
 					 _myId(UGL_NULL_ID),
+					 _myMaskBitmap(NULL),
+					 _transparent(false),	
 					 _compressed(false)
 {
 	_mySize = size;
+	_mySizeMask = 0;
 	_myBitmap = (unsigned char *)bmp_data;
+}
+
+CGUIBitmapInfo::CGUIBitmapInfo(const unsigned short bmp_data[], 
+										 unsigned long size,
+                               const unsigned short mask_data[],
+                               unsigned long sizeMask,
+                               unsigned short width,
+                               unsigned short height) :
+					 _myHeight (height),
+					 _myWidth (width),
+					 _loadCount (0),
+					 _myId(UGL_NULL_ID),
+					 _transparent(true),
+					 _compressed(false)
+{
+	_mySize = size;
+	_mySizeMask = sizeMask;
+	_myBitmap = (unsigned char *)bmp_data;
+	_myMaskBitmap = (unsigned char *)mask_data;
 }
 
 CGUIBitmapInfo::~CGUIBitmapInfo()
@@ -68,14 +114,25 @@ void CGUIBitmapInfo::createDisplay (CGUIDisplay & dispObj)
    {
       // bitmap not loaded yet
       unsigned long   bmpSize = _myHeight * _myWidth * sizeof(unsigned short);   // the USHORT is for RGB565 representation of color for bmp
+      unsigned long   maskSize = _myHeight * _myWidth * sizeof(unsigned char);   // the U CHAR is for monchrome representation of the mask bitmap
       unsigned char * bmpImage = _compressed ? new unsigned char[bmpSize] : _myBitmap;
+		unsigned char * maskImage = (_compressed && _transparent) ? new unsigned char[maskSize] : _myMaskBitmap;
+
+		bool haveTransparentMask = _transparent;
+		
       UGL_DIB dib;
+      UGL_MDIB tdib;
 
       UGL_DEVICE_ID display = dispObj.display();
       UGL_MODE_INFO modeInfo;
 
       uglInfo(display, UGL_MODE_INFO_REQ, &modeInfo);
 
+		int uncp = uncompress( maskImage, &maskSize, _myMaskBitmap, _mySizeMask);
+
+		if ( _compressed &&  uncp != Z_OK ) 
+			haveTransparentMask = false;
+		
       if (_compressed && uncompress(bmpImage, &bmpSize, _myBitmap, _mySize) != Z_OK)
       {
          // log mesage to error log level and set a null ID
@@ -87,6 +144,16 @@ void CGUIBitmapInfo::createDisplay (CGUIDisplay & dispObj)
          dib.width = _myWidth;
          dib.stride = _myWidth;
          dib.pImage = (void *)bmpImage;
+
+			if( _transparent )
+			{
+				int byteWidth = (_myWidth+7)/8;
+				
+            tdib.height = _myHeight;
+            tdib.width = _myWidth;
+            tdib.stride = 8 * byteWidth;
+            tdib.pImage = (UGL_UINT8 *)maskImage;
+			}
 
          if (modeInfo.colorModel == UGL_DIRECT)
          {
@@ -121,7 +188,10 @@ void CGUIBitmapInfo::createDisplay (CGUIDisplay & dispObj)
             dib.imageFormat = UGL_DIRECT;
          }
 
-         _myId = uglBitmapCreate(display, &dib, UGL_DIB_INIT_DATA, 0, UGL_DEFAULT_MEM);
+			if( !haveTransparentMask )
+            _myId = uglBitmapCreate(display, &dib, UGL_DIB_INIT_DATA, 0, UGL_DEFAULT_MEM);
+			else
+				_myId = uglTransBitmapCreate(display, &dib, &tdib, UGL_DIB_INIT_DATA, 0, UGL_DEFAULT_MEM);
 
          // get actual height and width
          UGL_SIZE width, height;
@@ -131,6 +201,7 @@ void CGUIBitmapInfo::createDisplay (CGUIDisplay & dispObj)
       }
 
       if ( _compressed ) delete[] bmpImage;
+      if ( _compressed && _transparent ) delete[] maskImage;
    }
 
 	_loadCount += 1;

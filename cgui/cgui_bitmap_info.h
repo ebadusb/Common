@@ -5,6 +5,8 @@
 * build_bitmap_info file.
 *
 * $Log: cgui_bitmap_info.h $
+* Revision 1.9  2007/04/14 18:04:41Z  jl11312
+* - delete uncompressed data for unreferenced bitmaps (common IT 80)
 * Revision 1.8  2007/03/28 15:18:28Z  wms10235
 * IT2888 - Correcting GUI memory leak
 * Revision 1.7  2006/05/15 21:47:36Z  rm10919
@@ -23,6 +25,7 @@
 * Initial revision
 *
 */
+
 #ifndef _CGUIBITMAPINFO_INCLUDE
 #define _CGUIBITMAPINFO_INCLUDE
 
@@ -44,10 +47,24 @@ public:
 						 unsigned short width,
 						 unsigned short height);
 
+	CGUIBitmapInfo (const unsigned char bmp_data[],
+						 unsigned long size,
+						 const unsigned char mask_data[],
+                   unsigned long sizeMask,
+						 unsigned short width,
+						 unsigned short height);
+
 	// CONSTRUCTOR - accepts a pointer to the input bitmap.  Expects that the data is in
 	// uncompressed format.
 	CGUIBitmapInfo (const unsigned short bmp_data[],
 						 unsigned long size,
+						 unsigned short width,
+						 unsigned short height);
+
+	CGUIBitmapInfo (const unsigned short bmp_data[],
+						 unsigned long size,
+						 const unsigned short mask_data[],
+						 unsigned long sizeMask,
 						 unsigned short width,
 						 unsigned short height);
 
@@ -70,6 +87,8 @@ public:
 	// getId - return my CGUIBitmapId
 	inline CGUIBitmapId getId() { return _myId; }
 
+	inline bool getTransparency(void) { return _transparent; }
+
 private:
 	// Declare copy constructor and assigned operator private to avoid use
 	//
@@ -80,11 +99,15 @@ private:
 	CGUIBitmapInfo(void);
 
 	unsigned char *	_myBitmap;
+	unsigned char *	_myMaskBitmap;
 	unsigned long  	_mySize;
+	unsigned long  	_mySizeMask;
 	unsigned short 	_myHeight,_myWidth;
 	unsigned short 	_loadCount;
 	CGUIBitmapId		_myId;
 	bool  				_compressed;
+	bool  				_transparent;
 };
 
 #endif /* ifndef _CGUIBITMAPINFO_INCLUDE */
+

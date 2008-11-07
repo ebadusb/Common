@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window_object.h 1.6 2008/11/06 22:24:17Z rm10919 Exp wms10235 $
  * $Log: cgui_window_object.h $
+ * Revision 1.5  2007/07/09 18:48:40Z  jl11312
+ * - added function to access _owner member
  * Revision 1.4  2005/02/21 17:17:14Z  cf10242
  * IT 133 - delete all allocated memory to avoid unrecovered memory
  * Revision 1.3  2004/09/30 17:00:53Z  cf10242
@@ -28,10 +30,12 @@
 class CGUIWindow;
 class CGUIWindowObject
 {
-
    friend class CGUIWindow;
+	
 public:
-   CGUIWindowObject(CGUIDisplay & display);
+   enum ClippingType { Clipped, Transparency, NotClipped };
+
+	CGUIWindowObject(CGUIDisplay & display);
    CGUIWindowObject(CGUIDisplay & display, const CGUIRegion & region);
    virtual ~CGUIWindowObject();
 
@@ -58,7 +62,8 @@ protected:
 
 private:
    void initializeData(void);
-   virtual bool clipSiblings(void) const = 0;
+	
+   virtual ClippingType clipSiblings(void) const = 0;
 
 protected:
    CGUIRegion _region;

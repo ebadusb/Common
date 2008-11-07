@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.33  2008/05/20 20:29:20Z  jl11312
+ *  - corrected handling of alternate logging text
  *  Revision 1.32  2008/05/10 18:15:06Z  rm10919
  *  Update btn id to use alternate id if used.IT2178
  *  Revision 1.31  2007/05/17 18:58:23Z  jl11312
@@ -82,6 +84,8 @@
 
 using namespace GuiButtonPressMessageRes;
 
+// set static variable
+int CGUIButton::ButtonIcon::_iconCounter = 0;
 
 // CONSTRUCTOR
 CGUIButton::CGUIButton  (CGUIDisplay        & display,                // reference to a cguidisplay object for display context
@@ -150,6 +154,54 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
    }
 	else
 		_pressedBitmap = NULL;
+
+	// Background Icon Bitmaps
+	if( buttonData.enabledButtonIcon )
+	{
+      _iconList.push_front( buttonData.enabledButtonIcon ); 
+		if( _enabled )
+		{
+			buttonData.enabledButtonIcon->setVisible( true );
+         addObjectToFront( buttonData.enabledButtonIcon->getBitmap());
+		}
+		else
+		{
+			buttonData.enabledButtonIcon->setVisible( false );
+			addObjectToBack( buttonData.enabledButtonIcon->getBitmap());
+		}
+	}
+	
+	if( buttonData.disabledButtonIcon )
+	{
+		_iconList.push_front( buttonData.disabledButtonIcon ); 
+		if( _enabled )
+		{
+			buttonData.disabledButtonIcon->setVisible( false );
+			addObjectToBack( buttonData.disabledButtonIcon->getBitmap());
+		}
+		else
+		{
+			buttonData.disabledButtonIcon->setVisible( true );
+			addObjectToFront( buttonData.disabledButtonIcon->getBitmap());
+		}
+		
+	}
+
+	if( buttonData.pressedButtonIcon )
+	{
+		_iconList.push_front( buttonData.pressedButtonIcon ); 
+
+		if( _pressed )
+		{
+			buttonData.pressedButtonIcon->setVisible( true );
+			addObjectToFront( buttonData.pressedButtonIcon->getBitmap());
+		}
+		else
+		{
+			buttonData.pressedButtonIcon->setVisible( false );
+			addObjectToBack( buttonData.pressedButtonIcon->getBitmap());
+		}
+	}
 
    //
    // Text stuff
@@ -308,6 +360,26 @@ CGUIButton::~CGUIButton ()
 
    if (_iconPointer) delete _iconPointer;
 
+
+	// delete transparent bitmaps
+	if( _iconList.size() > 0 )
+	{
+		list< ButtonIcon *>::iterator iconIter = _iconList.begin();
+
+      while( iconIter != _iconList.end( ))
+		{
+			ButtonIcon * buttonIcon;
+			buttonIcon = ( *iconIter );
+
+			// go to next item in list
+			iconIter++;
+			
+			// delete pointer to button icon
+			delete( buttonIcon );
+		}	
+		_iconList.clear();	
+	}
+
    winCbRemove(_id, &CGUIWindow::uglPointerCallback);
    winCbRemove(_id, &CGUIWindow::uglPointerCallback);
 
@@ -337,6 +409,31 @@ void CGUIButton::enable(void)
 		setDisabled(false);
 		setWindowVisibility(true);
 
+		// set icons associated with release state
+		if( _iconList.size() > 0 )
+		{
+			list< ButtonIcon *>::iterator iconIter = _iconList.begin();
+
+			while( iconIter != _iconList.end( ))
+			{
+				ButtonIcon * buttonIcon;
+				buttonIcon = ( *iconIter );
+
+				// move icon to front
+				if( buttonIcon->getButtonStateType() == Released ||
+					 buttonIcon->getButtonStateType() == NoButtonState )
+				{
+					buttonIcon->setVisible( true );
+					moveObjectToFront( buttonIcon->getBitmap());
+				}
+				else 
+				{		
+					buttonIcon->setVisible( false );
+					moveObjectToBack( buttonIcon->getBitmap());
+				}
+				iconIter++;
+			}
+		}
 
       if (_disabledText) _disabledText->setVisible(false);
       if (_pressedText)  _pressedText->setVisible(false);
@@ -365,10 +462,89 @@ void CGUIButton::enableWhenPressed(void)
 
 	  if (_iconPointer) moveObjectToFront(_iconPointer);
 
+	  // set icons associated with release state
+     if( _iconList.size() > 0 )
+	  {
+		  list< ButtonIcon *>::iterator iconIter = _iconList.begin();
+
+		  while( iconIter != _iconList.end( ))
+		  {
+			  ButtonIcon * buttonIcon;
+			  buttonIcon = ( *iconIter );
+
+			  // move icon to front
+			  if( buttonIcon->getButtonStateType() == Released ||
+					buttonIcon->getButtonStateType() == NoButtonState )
+			  {
+				  buttonIcon->setVisible( true );
+				  moveObjectToFront( buttonIcon->getBitmap());
+			  }
+			  else 
+			  {		
+				  buttonIcon->setVisible( false );
+				  moveObjectToBack( buttonIcon->getBitmap());
+			  }
+			  iconIter++;
+		  }
+	  }
+
       setDisabled(false);
       setWindowVisibility(true);
 
 
+      if (_disabledText) _disabledText->setVisible(false);
+      if (_pressedText)  _pressedText->setVisible(false);
+
+      if (_enabledText)
+      {
+         _enabledText->setVisible(true);
+         _enabledText->setCaptureBackgroundColor();
+      }
+    }
+}
+
+// same enabledWhenPressed()
+void CGUIButton::enableReleased( void )
+{
+    if(!_enabled || _pressed)
+    {
+      _enabled = true;
+      _pressed = false;
+      if (_disabledBitmap) moveObjectToBack(_disabledBitmap);
+      if (_pressedBitmap) moveObjectToBack(_pressedBitmap);
+      if (_enabledBitmap) moveObjectToFront(_enabledBitmap);
+
+	  if (_iconPointer) moveObjectToFront(_iconPointer);
+
+	  // set icons associated with release state
+	  if( _iconList.size() > 0 )
+	  {
+		  list< ButtonIcon *>::iterator iconIter = _iconList.begin();
+
+		  while( iconIter != _iconList.end( ))
+		  {
+			  ButtonIcon * buttonIcon;
+			  buttonIcon = ( *iconIter );
+
+			  // move icon to front
+			  if( buttonIcon->getButtonStateType() == Released ||
+					buttonIcon->getButtonStateType() == NoButtonState )
+			  {
+				  buttonIcon->setVisible( true );
+				  moveObjectToFront( buttonIcon->getBitmap());
+			  }
+			  else 
+			  {		
+				  buttonIcon->setVisible( false );
+				  moveObjectToBack( buttonIcon->getBitmap());
+			  }
+			  iconIter++;
+		  }
+	  }
+
+      setDisabled(false);
+      setWindowVisibility(true);
+     
       if (_disabledText) _disabledText->setVisible(false);
       if (_pressedText)  _pressedText->setVisible(false);
 
@@ -388,14 +564,41 @@ void CGUIButton::enablePressed(void)
     {
       _enabled = true;
       _pressed = true;
-      if (_disabledBitmap) moveObjectToBack(_disabledBitmap);
+
+		if (_disabledBitmap) moveObjectToBack(_disabledBitmap);
 		if (_enabledBitmap) moveObjectToBack(_enabledBitmap);
       if (_pressedBitmap) moveObjectToFront(_pressedBitmap);
 
+	   if (_iconPointer) moveObjectToFront(_iconPointer);
+
+		// set icons associated with release state
+		if( _iconList.size() > 0 )
+		{
+			list< ButtonIcon *>::iterator iconIter = _iconList.begin();
+
+			while( iconIter != _iconList.end( ))
+			{
+				ButtonIcon * buttonIcon;
+				buttonIcon = ( *iconIter );
+
+				// move icon to front
+				if( buttonIcon->getButtonStateType() == Pressed ||
+					 buttonIcon->getButtonStateType() == NoButtonState )
+				{
+					buttonIcon->setVisible( true );
+					moveObjectToFront( buttonIcon->getBitmap());
+				}
+				else 
+				{		
+					buttonIcon->setVisible( false );
+					moveObjectToBack( buttonIcon->getBitmap());
+				}
+				iconIter++;
+			}
+		}
+		
 		setDisabled(false);
 		setWindowVisibility(true);
-
-	   if (_iconPointer) moveObjectToFront(_iconPointer);
 
       if (_disabledText) _disabledText->setVisible(false);
       if (_enabledText)  _enabledText->setVisible(false);
@@ -419,6 +622,32 @@ void CGUIButton::disable()
       _enabled = false;
       if (_enabledBitmap) moveObjectToBack(_enabledBitmap);
       if (_disabledBitmap) moveObjectToFront(_disabledBitmap);
+
+		// set icons associated with release state
+		if( _iconList.size() > 0 )
+		{
+			list< ButtonIcon *>::iterator iconIter = _iconList.begin();
+
+			while( iconIter != _iconList.end( ))
+			{
+				ButtonIcon * buttonIcon;
+				buttonIcon = ( *iconIter );
+
+				// move icon to front
+				if( buttonIcon->getButtonStateType() == Disabled ||
+					 buttonIcon->getButtonStateType() == NoButtonState )
+				{
+					buttonIcon->setVisible( true );
+					moveObjectToFront( buttonIcon->getBitmap());
+				}
+				else 
+				{		
+					buttonIcon->setVisible( false );
+					moveObjectToBack( buttonIcon->getBitmap());
+				}
+				iconIter++;
+			}
+		}
 
 		setDisabled(false);
 		setWindowVisibility(true);
@@ -557,7 +786,9 @@ void CGUIButton::pointerEvent (const PointerEvent & event) // event structure re
 {    
    if (_enabled)
    {
-      if (event.eventType == PointerEvent::ButtonPress)
+      DataLog( log_level_cgui_info ) << "Button press on an enabled button - cguiButton::pointerEvent" << guiButtonMessage.buttonName << endmsg;
+
+		if (event.eventType == PointerEvent::ButtonPress)
       {
 			_buttonState = CGUIButton::Pressed;
          doOnPress();
@@ -601,6 +832,9 @@ void CGUIButton::pointerEvent (const PointerEvent & event) // event structure re
          }
       }
    }
+	else
+		
+      DataLog( log_level_cgui_info ) << "Button press on a DISABLED button - cguiButton::pointerEvent -- " << _buttonPressLogText << "   " << endmsg;
 }
 
 //SET ENABLED BITMAP
@@ -635,8 +869,6 @@ void CGUIButton::setEnabledBitmap (CGUIBitmapInfo *enabledBitmapId) // ptr to bi
     }
    if (enabledBitmapId)
    {
-//      _enabledBitmap = new CGUIBitmap (_display, CGUIRegion(0,0,0,0), *enabledBitmapId);
-      //_enabledBitmap->setBitmap(enabledBitmapId);
       _enabledBitmap->setBitmap();
       if (_enabledText)
       {
@@ -1092,6 +1324,103 @@ void CGUIButton::setTextColor(CGUIColor color)
    _pressedText->setColor(color);
 }
 
+// Transparent bitmap management
+// add transparent bitmap object to transparency icon list
+int CGUIButton::addIcon( CGUIBitmapInfo * bitmapInfo, const short x, const short y, ButtonStateType buttonStateType )
+{
+   int result;
+	
+	ButtonIcon * buttonIcon = NULL;
+
+	if( bitmapInfo != NULL )
+      buttonIcon = new ButtonIcon( _display, bitmapInfo, buttonStateType, x, y );
+	
+	result = buttonIcon->getIconId();
+	
+	_iconList.push_front( buttonIcon );
+
+	if(( _buttonState == Released && buttonStateType == Released ) ||
+		( _buttonState == Pressed && buttonStateType == Pressed ) ||
+		( _buttonState == Disabled && buttonStateType == Disabled ) ||
+		( buttonStateType == NoButtonState ))
+	{
+		buttonIcon->setVisible( true );
+		addObjectToFront( buttonIcon->getBitmap());
+	}
+	else 
+	{		
+		buttonIcon->setVisible( false );
+		addObjectToBack( buttonIcon->getBitmap());
+	}
+	return result;
+}
+
+// remove icon in list to front
+bool CGUIButton::removeIcon( int iconId )
+{
+	bool result = false;
+	
+	list< ButtonIcon *>::iterator iconIter = _iconList.begin();
+	
+	while( iconIter != _iconList.end( ))
+	{
+		ButtonIcon * buttonIcon;
+		buttonIcon = ( *iconIter );
+
+		if( buttonIcon->getIconId() == iconId )
+		{
+			// remove from the bitmap list
+			_iconList.remove( buttonIcon );
+
+			delete( buttonIcon );
+			
+			result = true;
+			break;
+		}
+		iconIter++;
+	}
+	return result;
+}
+
+
+// update button state type association of icon in list 
+bool CGUIButton::setIconButtonStateType( int iconId, ButtonStateType buttonStateType )
+{
+	bool result = false;
+	
+	list< ButtonIcon *>::iterator iconIter = _iconList.begin();
+
+	while( iconIter != _iconList.end( ))
+	{
+		ButtonIcon * buttonIcon;
+		buttonIcon = ( *iconIter );
+
+		if( buttonIcon->getIconId() == iconId )
+		{
+			// update button state type
+			buttonIcon->setButtonStateType( buttonStateType );
+
+			// move and redraw icon if needed
+			if(( _buttonState == Released && buttonStateType == Released ) ||
+				( _buttonState == Pressed && buttonStateType == Pressed ) ||
+				( _buttonState == Disabled && buttonStateType == Disabled ) ||
+				( buttonStateType == NoButtonState ))
+			{
+				buttonIcon->getBitmap()->setVisible( true );
+				moveObjectToFront( buttonIcon->getBitmap());
+			}
+			else 
+			{		
+				buttonIcon->getBitmap()->setVisible( false );
+				moveObjectToBack( buttonIcon->getBitmap());
+			}
+			result = true;
+		}
+		iconIter++;
+	}
+	return result;
+}
+
 // SET ICON
 // Set an icon to be associated with the button. 
 void CGUIButton::setIcon (CGUIBitmapInfo * iconId,  // ptr to bitmap object for icon
@@ -1165,8 +1494,36 @@ void CGUIButton::doOnPress()
 {
 	if (_enabled)
 	{
-		if (_pressedBitmap) moveObjectToFront(_pressedBitmap);
-		if (_iconPointer) moveObjectToBack(_iconPointer);
+		if( _pressedBitmap ) moveObjectToFront( _pressedBitmap );
+		if( _iconPointer ) moveObjectToBack( _iconPointer );
+
+		// set icons associated with pressed button state
+		if( _iconList.size() > 0 )
+		{
+			list< ButtonIcon *>::iterator iconIter = _iconList.begin();
+
+			int last = _iconList.size();
+			
+			while( iconIter != _iconList.end( ))
+			{
+				ButtonIcon * buttonIcon;
+				buttonIcon = ( *iconIter );
+
+				// move icon to front
+				if( buttonIcon->getButtonStateType() == Pressed ||
+                buttonIcon->getButtonStateType() == NoButtonState )
+				{
+					buttonIcon->getBitmap()->setVisible( true );
+					moveObjectToFront( buttonIcon->getBitmap());
+				}
+				else 
+				{		
+					buttonIcon->getBitmap()->setVisible( false );
+					moveObjectToBack( buttonIcon->getBitmap());
+				}
+				iconIter++;
+			}
+		}
 
 		if (_pressedText)
 		{
@@ -1204,9 +1561,36 @@ void CGUIButton::doOnRelease()
    if (_enabled)
    {
       if (_enabledBitmap) moveObjectToFront(_enabledBitmap);
-      // deleteObject(_pressedBitmap);
 
       if (_iconPointer) moveObjectToFront(_iconPointer);
+
+		// set icons associated with release state
+		if( _iconList.size() > 0 )
+		{
+			list< ButtonIcon *>::iterator iconIter = _iconList.begin();
+
+			int last = _iconList.size();
+
+			while( iconIter != _iconList.end( ))
+			{
+				ButtonIcon * buttonIcon;
+				buttonIcon = ( *iconIter );
+
+				// move icon to front
+				if( buttonIcon->getButtonStateType() == Released ||
+					 buttonIcon->getButtonStateType() == NoButtonState )
+				{
+					buttonIcon->getBitmap()->setVisible( true );
+					moveObjectToFront( buttonIcon->getBitmap());
+				}
+				else 
+				{		
+					buttonIcon->getBitmap()->setVisible( false );
+					moveObjectToBack( buttonIcon->getBitmap());
+				}
+				iconIter++;
+			}
+		}
 
       if (_enabledText)
       {
@@ -1237,9 +1621,34 @@ void CGUIButton::doOnEnable()
    if (_enabled)
    {
       if(_enabledBitmap) moveObjectToFront(_enabledBitmap);
-      // deleteObject(_pressedBitmap);
 
       if (_iconPointer) moveObjectToFront(_iconPointer);
+
+		// set icons associated with release state
+		if( _iconList.size() > 0 )
+		{
+			list< ButtonIcon *>::iterator iconIter = _iconList.begin();
+
+			while( iconIter != _iconList.end( ))
+			{
+				ButtonIcon * buttonIcon;
+				buttonIcon = ( *iconIter );
+
+				// move icon to front
+				if( buttonIcon->getButtonStateType() == Released ||
+					 buttonIcon->getButtonStateType() == NoButtonState )
+				{
+					buttonIcon->getBitmap()->setVisible( true );
+					moveObjectToFront( buttonIcon->getBitmap());
+				}
+				else 
+				{		
+					buttonIcon->getBitmap()->setVisible( false );
+					moveObjectToBack( buttonIcon->getBitmap());
+				}
+				iconIter++;
+			}
+		}
 
       if (_enabledText)
       {

@@ -6,6 +6,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap.h 1.5 2007/03/28 15:18:28Z wms10235 Exp rm10919 $
  * $Log: cgui_bitmap.h $
+ * Revision 1.5  2007/03/28 15:18:28Z  wms10235
+ * IT2888 - Correcting GUI memory leak
  * Revision 1.4  2004/11/18 22:34:09Z  rm10919
  * Naming conventions.
  * Revision 1.3  2004/10/14 14:27:39Z  cf10242
@@ -54,7 +56,7 @@ protected:
    virtual void draw(UGL_GC_ID gc);
 
 private:
-   virtual bool clipSiblings(void) const { return true;}
+   virtual ClippingType clipSiblings(void) const { if( _bitmapObject->getTransparency() ) return Transparency; else return Clipped;}
 
 private:
 	CGUIBitmap(void);

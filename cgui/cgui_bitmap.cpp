@@ -5,6 +5,8 @@
  * of the bitmap information and do the actual display of the graphics.
  *
  * $Log: cgui_bitmap.cpp $
+ * Revision 1.5  2007/04/14 18:04:40Z  jl11312
+ * - delete uncompressed data for unreferenced bitmaps (common IT 80)
  * Revision 1.4  2007/03/28 15:18:28Z  wms10235
  * IT2888 - Correcting GUI memory leak
  * Revision 1.3  2005/01/25 21:45:40Z  cf10242
@@ -20,13 +22,13 @@
 #include "cgui_bitmap_info.h"
 #include "cgui_window.h"
 
-CGUIBitmap::CGUIBitmap(CGUIDisplay & display, const CGUIRegion region, CGUIBitmapInfo & bitmapObject, bool realize) :
-	CGUIWindowObject(display, region),	// initialize the parent
-	_display(display),               	// set display reference
-	_bitmapObject (&bitmapObject),    	// set the bitmap data object
-	_region (region)              		// initialize the region
+CGUIBitmap::CGUIBitmap( CGUIDisplay & display, const CGUIRegion region, CGUIBitmapInfo & bitmapObject, bool realize ):
+                        CGUIWindowObject(display, region),	// initialize the parent
+                        _display(display),               	// set display reference
+                        _bitmapObject (&bitmapObject),    	// set the bitmap data object
+                        _region (region)              		// initialize the region
 {
-   if (realize)
+   if( realize )
 	{
       setBitmap();
 	}
@@ -34,29 +36,29 @@ CGUIBitmap::CGUIBitmap(CGUIDisplay & display, const CGUIRegion region, CGUIBitma
 
 CGUIBitmap::~CGUIBitmap()
 {
-   _bitmapObject->removeDisplay(_display);
+   _bitmapObject->removeDisplay( _display );
 }
 
-void CGUIBitmap::setRegion(const CGUIRegion & newRegion)
+void CGUIBitmap::setRegion( const CGUIRegion & newRegion )
 {
    CGUIRegion clippedRegion = newRegion;
    clippedRegion.width = _width;
    clippedRegion.height = _height;
 
-   CGUIWindowObject::setRegion(clippedRegion);
+   CGUIWindowObject::setRegion( clippedRegion );
 }
 
 void CGUIBitmap::setBitmap()
 {
    // tell bitmap object to display the image
-   _bitmapObject->createDisplay(_display);
+   _bitmapObject->createDisplay( _display );
 
    CGUIRegion newRegion = _region;
-   _bitmapObject->getSize(_width, _height);
+   _bitmapObject->getSize( _width, _height );
    newRegion.width = _width;
    newRegion.height = _height;
 
-   CGUIWindowObject::setRegion(newRegion);
+   CGUIWindowObject::setRegion( newRegion );
 
    //
    // The explicit call to invalidate the bitmap's region is needed
@@ -64,15 +66,15 @@ void CGUIBitmap::setBitmap()
    // new regions are the same, CGUIWindowObject::set_region simply returns
    // without forcing a redraw).
    //
-   if (_owner)
+   if( _owner )
    {
-      _owner->invalidateObjectRegion(this);
+      _owner->invalidateObjectRegion( this );
    }
 }
 
-void CGUIBitmap::setBitmap(CGUIBitmapInfo & bitmapObject)
+void CGUIBitmap::setBitmap( CGUIBitmapInfo & bitmapObject )
 {
-   if (_bitmapObject->getId() != 0)
+   if( _bitmapObject->getId() != 0 )
    {
       //_display.unloadBitmap(_bitmapObject);
       unloadBitmap();
@@ -87,23 +89,23 @@ void CGUIBitmap::setBitmap(CGUIBitmapInfo & bitmapObject)
    // new regions are the same, OSWindowObject::set_region simply returns
    // without forcing a redraw).
    //
-   if (_owner)
+   if( _owner )
    {
-      _owner->invalidateObjectRegion(this);
+      _owner->invalidateObjectRegion( this );
    }
 }
 
 void CGUIBitmap::unloadBitmap()
 {
 
-   _bitmapObject->removeDisplay(_display);
+   _bitmapObject->removeDisplay( _display );
 
    unsigned short height, width;
    CGUIRegion newRegion = _region;
-   _bitmapObject->getSize(width, height);
+   _bitmapObject->getSize( width, height );
    newRegion.width = width;
    newRegion.height = height;
-   CGUIWindowObject::setRegion(newRegion);
+   CGUIWindowObject::setRegion( newRegion );
 
    //
    // The explicit call to invalidate the bitmap's region is needed
@@ -111,18 +113,19 @@ void CGUIBitmap::unloadBitmap()
    // new regions are the same, CGUIWindowObject::set_region simply returns
    // without forcing a redraw).
    //
-   if (_owner)
+   if( _owner )
    {
-      _owner->invalidateObjectRegion(this);
+      _owner->invalidateObjectRegion( this );
    }
 }
 
-void CGUIBitmap::draw(UGL_GC_ID gc)
+void CGUIBitmap::draw( UGL_GC_ID gc )
 {
    CGUIBitmapId uglId = _bitmapObject->getId();
-   if (uglId != UGL_NULL_ID)
-   {
-      uglBitmapBlt(gc, uglId, 0, 0, _width-1, _height-1, UGL_DEFAULT_ID, _region.x, _region.y);
-   }
+
+	if( uglId != UGL_NULL_ID )
+	{
+		uglBitmapBlt( gc, uglId, 0, 0, _width-1, _height-1, UGL_DEFAULT_ID, _region.x, _region.y );
+	}
 }
 

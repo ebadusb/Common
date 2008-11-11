@@ -4,6 +4,8 @@
  * Utilities for managing configuration files
  *
  * $Log: config_helper.cpp $
+ * Revision 1.4  2007/10/29 17:22:49Z  jl11312
+ * - don't log file data if file can't be read
  * Revision 1.3  2007/07/03 15:00:06Z  MS10234
  *  - check for NULL string before attempting to log (AtreusSW IT 774)
  * Revision 1.2  2007/05/02 14:08:22Z  jl11312
@@ -96,6 +98,92 @@ void ConfigData::checkConfigDataErrors(GetConfigFileObj * getConfigFileObj,
 		}
 		
 		index += 1;
+	}
+}
+
+void ConfigFile::logData(DataLog_Level * level, const ConfigData::DataMap * const dataMap, int dataMapSize, ConfigFile::ReadStatus readStatus)
+{
+	bool	logDataOK = true;
+
+	if (readStatus == ConfigFile::ReadOK )
+		DataLog(*level) << "config read OK from <" << fileName() << ">" << endmsg;
+	else if (readStatus == ConfigFile::ReadBackupOK)
+		DataLog(*level) << "config backup read OK from <" << backupFileName() << ">" << endmsg;
+	else if (readStatus == ConfigFile::ReadDefaultOK)
+		DataLog(*level) << "config default read OK from <" << defaultFileName() << ">" << endmsg;
+	else if (readStatus == ConfigFile::ReadFailed)
+	{
+		DataLog(*level) << "config default read failed from <" << defaultFileName() << ">" << endmsg;
+		logDataOK = false;
+	}
+
+	logData(level, dataMap, dataMapSize, logDataOK);
+}
+
+void ConfigFile::logData(DataLog_Level * level, const ConfigData::DataMap * const dataMap, int dataMapSize, ConfigFile::WriteStatus writeStatus)
+{
+	bool	logDataOK = false;
+
+	if (writeStatus == ConfigFile::WriteNotAllowed)
+		DataLog(*level) << "config write not allowed to <" << fileName() << ">" << endmsg;
+	else if (writeStatus == ConfigFile::WriteBackupFailed)
+		DataLog(*level) << "config backup write failed to <" << backupFileName() << ">" << endmsg;
+	else if (writeStatus == ConfigFile::WriteFailed)
+		DataLog(*level) << "config write failed to <" << fileName() << ">" << endmsg;
+	else if (writeStatus == ConfigFile::WriteOK )
+	{
+		DataLog(*level) << "config write OK to <" << fileName() << ">" << endmsg;
+		logDataOK = true;
+	}
+
+	logData(level, dataMap, dataMapSize, logDataOK);
+}
+
+void ConfigFile::logData(DataLog_Level * level, const ConfigData::DataMap * const dataMap, int dataMapSize, bool logDataOK)
+{
+	if ( logDataOK )
+	{
+		DataLog(*level) << "ConfigFileData <" << fileName() << ">:";
+	
+		const char * sectionName = NULL;
+		for ( int idx=0; idx<dataMapSize; idx+=1 )
+		{
+			if ( !sectionName || strcmp(sectionName, dataMap[idx]._sectionName) != 0 )
+			{
+				sectionName = dataMap[idx]._sectionName;
+				DataLog(*level) << " [" << sectionName << "]";
+			}
+	
+			DataLog(*level) << " " << dataMap[idx]._paramName << "=";
+			switch ( dataMap[idx]._type )
+			{
+			case ConfigData::TLong:
+				DataLog(*level) << *(long *)dataMap[idx]._value;
+				break;
+	
+			case ConfigData::TDouble:
+				DataLog(*level) << precision(5) << *(double *)dataMap[idx]._value;
+				break;
+	
+			case ConfigData::TString:
+				logString(level, dataMap[idx], *(const char **)dataMap[idx]._value);
+				break;
+	
+			case ConfigData::TBool:
+				DataLog(*level) << *(bool *)dataMap[idx]._value;
+				break;
+	
+			case ConfigData::TEnum:
+				logEnum(level, dataMap[idx], *(long *)dataMap[idx]._value);
+				break;
+	
+			default:
+				DataLog(*level) << "unknown-type";
+				break;
+			}
+		}
+	
+		DataLog(*level) << endmsg;
 	}
 }
 
@@ -262,68 +350,6 @@ ConfigFile::WriteStatus ConfigFile::writeData(const ConfigData::DataMap * const 
 	protectDataFile(crcName);
 
 	return retVal;
-}
-
-void ConfigFile::logData(DataLog_Level * level, const ConfigData::DataMap * const dataMap, int dataMapSize, ConfigFile::ReadStatus readStatus)
-{
-	bool	logDataOK = true;
-
-	if (readStatus == ConfigFile::ReadOK )
-		DataLog(*level) << "config read OK from <" << fileName() << ">" << endmsg;
-	else if (readStatus == ConfigFile::ReadBackupOK)
-		DataLog(*level) << "config backup read OK from <" << backupFileName() << ">" << endmsg;
-	else if (readStatus == ConfigFile::ReadDefaultOK)
-		DataLog(*level) << "config default read OK from <" << defaultFileName() << ">" << endmsg;
-	else
-	{
-		DataLog(*level) << "config default read failed from <" << defaultFileName() << ">" << endmsg;
-		logDataOK = false;
-	}
-
-	if ( logDataOK )
-	{
-		DataLog(*level) << "ConfigFileData <" << fileName() << ">:";
-	
-		const char * sectionName = NULL;
-		for ( int idx=0; idx<dataMapSize; idx+=1 )
-		{
-			if ( !sectionName || strcmp(sectionName, dataMap[idx]._sectionName) != 0 )
-			{
-				sectionName = dataMap[idx]._sectionName;
-				DataLog(*level) << " [" << sectionName << "]";
-			}
-	
-			DataLog(*level) << " " << dataMap[idx]._paramName << "=";
-			switch ( dataMap[idx]._type )
-			{
-			case ConfigData::TLong:
-				DataLog(*level) << *(long *)dataMap[idx]._value;
-				break;
-	
-			case ConfigData::TDouble:
-				DataLog(*level) << precision(5) << *(double *)dataMap[idx]._value;
-				break;
-	
-			case ConfigData::TString:
-				logString(level, dataMap[idx], *(const char **)dataMap[idx]._value);
-				break;
-	
-			case ConfigData::TBool:
-				DataLog(*level) << *(bool *)dataMap[idx]._value;
-				break;
-	
-			case ConfigData::TEnum:
-				logEnum(level, dataMap[idx], *(long *)dataMap[idx]._value);
-				break;
-	
-			default:
-				DataLog(*level) << "unknown-type";
-				break;
-			}
-		}
-	
-		DataLog(*level) << endmsg;
-	}
 }
 
 bool ConfigFile::getParamValueByName(const ConfigData::DataMap * const dataMap, int dataMapSize, const char * sectionName, const char * paramName, ConfigData::ParamValue & value)

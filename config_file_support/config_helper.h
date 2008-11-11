@@ -4,6 +4,8 @@
  * Utilities for managing configuration files
  *
  * $Log: config_helper.h $
+ * Revision 1.2  2007/05/02 14:08:22Z  jl11312
+ * - changed logging to correctly log string and enum values (Taos IT 3234)
  * Revision 1.1  2007/01/18 21:44:37Z  MS10234
  * Initial revision
  * Revision 1.1  2005/05/16 22:31:38Z  ms10234
@@ -96,6 +98,8 @@ protected:
 	bool writeString(FILE * fp, const ConfigData::DataMap & dataMap, const char * str);
 
 	void logData(DataLog_Level * level, const ConfigData::DataMap * const dataMap, int dataMapSize, ConfigFile::ReadStatus readStatus);
+	void logData(DataLog_Level * level, const ConfigData::DataMap * const dataMap, int dataMapSize, ConfigFile::WriteStatus writeStatus);
+	void logData(DataLog_Level * level, const ConfigData::DataMap * const dataMap, int dataMapSize, bool logDataOK);
 	void logEnum(DataLog_Level * level, const ConfigData::DataMap & dataMap, long value);
 	void logString(DataLog_Level * level, const ConfigData::DataMap & dataMap, const char * str);
 

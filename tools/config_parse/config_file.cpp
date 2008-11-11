@@ -1,8 +1,10 @@
-// $Header: Q:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_file.cpp 1.7 2007/10/29 17:18:35Z jl11312 Exp jd11007 $
+// $Header: Q:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_file.cpp 1.7 2007/10/29 17:18:35Z jl11312 Exp $
 //
 // Configuration file class
 //
 // $Log: config_file.cpp $
+// Revision 1.7  2007/10/29 17:18:35Z  jl11312
+// - added support for alternate variable names for enum parameters
 // Revision 1.6  2007/05/02 13:59:51Z  jl11312
 // - changed logging to correctly log string and enum values
 // Revision 1.5  2007/01/04 16:42:56Z  MS10234
@@ -803,13 +805,13 @@ void ConfigFile::processParameterOptions(Parameter * parameter)
 					char temp[TempSize];
 					if ( minString.find("0b") == 0 )
 					{
-						sprintf_s(temp, TempSize, "0x%lx", (unsigned long)min._lValue);
+						sprintf(temp, "0x%lx", (unsigned long)min._lValue);
 						minString = temp;
 					}
 
 					if ( maxString.find("0b") == 0 )
 					{
-						sprintf_s(temp, TempSize, "0x%lx", (unsigned long)max._lValue);
+						sprintf(temp, "0x%lx", (unsigned long)max._lValue);
 						maxString = temp;
 					}
 
@@ -1266,7 +1268,8 @@ void ConfigFile::generateHeaderAccessClass(FILE * fp)
 
 
 	fprintf(fp,
-		"    void logData( DataLog_Level * level, ConfigFile::ReadStatus s );\n\n");
+		"		void logData( DataLog_Level * level, ConfigFile::ReadStatus s );\n"
+		"		void logData( DataLog_Level * level, ConfigFile::WriteStatus s);\n\n");
 
 	fprintf(fp,
 	   "  public:\n"
@@ -1338,10 +1341,12 @@ void ConfigFile::generateHeaderAccessClass(FILE * fp)
 		fprintf(fp,
 			"	WriteStatus writeFile(DataLog_Level * logLevel, DataLog_Level * errorLevel)\n"
 			"	{\n"
+			"		ConfigFile::WriteStatus status;\n"
 			"		_logLevel = logLevel;\n"
 			"		_errorLevel = errorLevel;\n"
-			"		logData(&log_level_config_data_info, ConfigFile::ReadFailed);\n"
-			"		return ConfigFile::writeData(_dataMap, %d, fileName(), crcFileName(), backupFileName(), backupCRCFileName());\n"
+			"		status = ConfigFile::writeData(_dataMap, %d, fileName(), crcFileName(), backupFileName(), backupCRCFileName());\n" 
+			"		logData(&log_level_config_data_info, status);\n"
+			"		return status;\n"
 			"	}\n\n",
 			_parameter.size());
 	}
@@ -1529,6 +1534,7 @@ void ConfigFile::generateConstructors(FILE * fp, const char * outputName)
 
 void ConfigFile::generateLogDataFunction(FILE * fp, const char * outputName)
 {
+	// ReadStatus version...
 	fprintf(fp, 
 		"void %s::_C_%s::logData( DataLog_Level * level, ConfigFile::ReadStatus readStatus )\n",
 		outputName, _className.c_str(), _className.c_str(), _className.c_str());
@@ -1538,6 +1544,21 @@ void ConfigFile::generateLogDataFunction(FILE * fp, const char * outputName)
 
 	fprintf(fp,
 		"   ConfigFile::logData(level, _dataMap, %d, readStatus);\n",
+		_parameter.size());
+
+	fprintf(fp, 
+		"}\n\n");
+
+	// WriteStatus version...
+	fprintf(fp, 
+		"void %s::_C_%s::logData( DataLog_Level * level, ConfigFile::WriteStatus writeStatus )\n",
+		outputName, _className.c_str(), _className.c_str(), _className.c_str());
+
+	fprintf(fp,
+		"{\n");
+
+	fprintf(fp,
+		"   ConfigFile::logData(level, _dataMap, %d, writeStatus);\n",
 		_parameter.size());
 
 	fprintf(fp, 

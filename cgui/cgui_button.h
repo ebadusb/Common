@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.26  2008/11/06 22:24:15Z  rm10919
+ *  Add transparent and shaded bitmaps and shaded buttons.
  *  Revision 1.25  2008/05/20 20:29:20Z  jl11312
  *  - corrected handling of alternate logging text
  *  Revision 1.24  2006/11/13 20:21:14Z  jd11007
@@ -163,6 +165,8 @@ private:
 		char alternateButtonId[MAX_BUTTON_LOG_SIZE+1];	// enabled text item ID is used.  If none, then this field is used
 
       ButtonBehavior type;							// button behavior  
+
+		ButtonData(void){ memset( this, 0, sizeof( *this )); type = RaiseAfterRelease; };
    };
 
 

@@ -3,6 +3,8 @@
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags_55 $
+# Revision 1.10  2008/10/31 16:13:34Z  agauusb
+# Add DEMO mode to the BUILD_TYPE flags
 # Revision 1.9  2005/05/26 18:48:30Z  jheiusb
 # IT 32 Add 486 options
 # Revision 1.8  2005/01/12 18:15:52Z  jl11312
@@ -303,9 +305,15 @@ else
 OPTFLAGS := -O2 -Wuninitialized
 endif
 endif
+endif
+
+ifeq ($(BUILD_TYPE),DEMO)
+
+ifndef DBGFLAGS
+DBGFLAGS := -DDEMO_BUILD
+endif
 
 else
-
 ifndef DBGFLAGS
 DBGFLAGS := -g -DDEBUG_BUILD
 endif

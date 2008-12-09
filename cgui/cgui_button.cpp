@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.34  2008/11/06 22:24:15Z  rm10919
+ *  Add transparent and shaded bitmaps and shaded buttons.
  *  Revision 1.33  2008/05/20 20:29:20Z  jl11312
  *  - corrected handling of alternate logging text
  *  Revision 1.32  2008/05/10 18:15:06Z  rm10919
@@ -786,8 +788,6 @@ void CGUIButton::pointerEvent (const PointerEvent & event) // event structure re
 {    
    if (_enabled)
    {
-      DataLog( log_level_cgui_info ) << "Button press on an enabled button - cguiButton::pointerEvent" << guiButtonMessage.buttonName << endmsg;
-
 		if (event.eventType == PointerEvent::ButtonPress)
       {
 			_buttonState = CGUIButton::Pressed;

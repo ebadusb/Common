@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.24  2008/11/06 22:24:16Z  rm10919
+ * Add transparent and shaded bitmaps and shaded buttons.
  * Revision 1.23  2008/07/23 22:55:08Z  adalusb
  * Selection of the text wrapping algorithm based on the language loaded enabled. 
  * Revision 1.22  2008/07/18 23:10:15Z  adalusb
@@ -77,6 +79,22 @@
 #include "cgui_text_item.h"
 #include "cgui_data_item.h"
 #include "cgui_variable_db_container.h"
+#include "font_table.h"
+
+struct FontRange
+{
+	int startIndex;
+	int endIndex;
+	int fontIndex;
+	char  *fontName;
+
+	FontRange( void ) { memset( this, 0, sizeof( *this )); };
+
+	// needed for tree function
+	bool FontRange::operator == ( const FontRange fontRange ) const;
+	bool FontRange::operator < ( const FontRange fontRange ) const;
+	bool FontRange::operator > ( const FontRange fontRange ) const;
+};
 
 class CGUIText : public CGUIWindowObject
 {
@@ -175,6 +193,20 @@ public:
 	void setFontSize(int fontSize);
 	int getFontSize(void) const { return _stylingRecord.fontSize; }
 
+	// 	Add a font range to list.
+	// 
+	static bool addFontRange( FontRange *fontRange );
+	CGUIFontId getFontId( int currentChar );
+	int checkInFontRange( int currentChar );
+	void addFontRangeFonts( void );
+	static bool _fontRangeIdsAdded;	//	If the language is changed need to set this to false.
+
+	static int _defaultFontIndex; // Needs to be set when language table is loaded. Assumes index of English is zero.
+
+	// 	Clear font range list.
+	// 
+	static void clearFontRange( void );
+
 	// SET_LANGUAGE
 	// This methods sets the language the text will use.
 	// These is an interdependency between the font and the
@@ -200,7 +232,7 @@ public:
 	StylingRecord * getStylingRecord(void) { return &_stylingRecord; }
 
 	// SET_TEXT
-	// This methods sets the text string.  When using this method
+	// This methods sets the text string.  When using these method
 	// only use strings from the text database.
 	//
 	void setText(CGUITextItem * textItem);
@@ -213,7 +245,7 @@ public:
 	const UnicodeString& getTextObj(void);
 
 	int getLength(void) const;
-	void getPixelSize(CGUIRegion & pixelRegion);	 // The entire string on one line, no text wrapping.
+	void getPixelSize(CGUIRegion & pixelRegion, CGUIFontId fontId );	 // The entire string on one line, no text wrapping.
 
 	void handleVariableSubstitution(void);
 
@@ -228,8 +260,7 @@ public:
 	};
 
 	static TokenSplitMethod _tokenSplitMethod;
-	
-
+   
 	static void selectTokenSplitMethod();
 
 protected:
@@ -247,10 +278,11 @@ protected:
 	// as they will appear in the window.  Together they
 	// work as the text wrapping method for the text.
 	//
-	void getSize(CGUIRegion & region, int startIndex = -1, int length = -1);
-	GetTokenResult getToken(int start_index, bool start_of_line, int & length);
+	void getSize( CGUIRegion & region, int startIndex = -1, int length = -1, CGUIFontId fontId = UGL_NULL_ID /*= _stylingRecord.fontId */ );
+	void getTokenSize( CGUIRegion & region, int startIndex = -1, int length = -1 );
+	GetTokenResult getToken(int startIndex, bool startOfLine, int & length);
 	void convertTextToMultiline(CGUIRegion & region);
-	bool convertLinePosition(int width, int height, int indent_pixels, CGUIRegion & region);
+	bool convertLinePosition(int width, int height, int indentPixels, CGUIRegion & region);
 	void computeTextRegion(void);
 
 	virtual void draw(UGL_GC_ID gc);
@@ -263,8 +295,8 @@ protected:
 	{
 		short x, y;							// offset from top left corner of text region to top left corner of line
 		unsigned short index;			// index into text string for start of line
-		unsigned short textLength;		// number of text characters on line
-                                    // the ofsset for RIGHTTOLEFT text string may have a negative offset.
+		unsigned short textLength;		// number of text characters on line -- the offset for RIGHTTOLEFT text string may have a negative offset.
+		CGUIFontId		fontId;			// the font associated with text
 	};
 
 	struct FormatData
@@ -285,6 +317,9 @@ protected:
 	list<LineData> _lineData;			// list of text lines for object
 	FormatData		_formatData;		// current paragraph format options
 
+	static list< FontRange * > _fontRange;	//  list of unicode ranges with associated font name and index of font
+
+	
 	// These are used to determine the background color for the text.
 	//
 	bool           _captureBackgroundColor;
@@ -293,7 +328,7 @@ protected:
 
 	bool           _languageSetByApp; // flag for determining if _textString needs updating based on language
 
-	CGUIText::GetTokenResult getCharBasedToken(int start_index, bool start_of_line, int & length);
+	CGUIText::GetTokenResult getCharBasedToken(int startIndex, bool startOfLine, int & length);
 	bool checkIfEnglish(int index);
 	bool checkIfForbiddenStart(int index);
 	bool checkIfForbiddenEnd(int index);

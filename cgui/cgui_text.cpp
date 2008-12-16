@@ -2,6 +2,8 @@
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.37  2008/07/23 22:55:04Z  adalusb
+ * Selection of the text wrapping algorithm based on the language loaded enabled. 
  * Revision 1.36  2008/07/22 17:43:58Z  adalusb
  * Set the token algorithm to word based for now as strings have been frozen for MNC production ( English ). This will be changed for foreign languages.
  * Revision 1.35  2008/07/18 23:10:12Z  adalusb
@@ -84,6 +86,7 @@
 
 #include "cgui_text.h"
 #include "cgui_window.h"
+#include "fontTable.h"
 #include "datalog_levels.h"
 
 #if CPU==SIMNT
@@ -92,20 +95,21 @@
 bool captureTextID = false;
 string captureTextIDStr;
 const char * captureScreenName = NULL;
-
+int simTextBold = 0;
 #endif /* if CPU==SIMNT */
+
 
 CGUIVariableDatabaseContainer CGUIText::_variableDictionary;
 unsigned short CGUIText::_tabSpaceCount = 5;
 
-static StringChar newline_char = '\n';
-static StringChar space_char = ' ';
-static StringChar	tab_char = '\t';
-static StringChar null_char = '\0';
-static StringChar decimal_point = '.';
-static StringChar decimal_comma = ',';
-static UnicodeString	paragraph_format_start("#![PG");
-static UnicodeString paragraph_format_end("]");
+static StringChar newlineChar = '\n';
+static StringChar spaceChar = ' ';
+static StringChar	tabChar = '\t';
+static StringChar nullChar = '\0';
+static StringChar decimalPoint = '.';
+static StringChar decimalComma = ',';
+static UnicodeString	paragraphFormatStart("#![PG");
+static UnicodeString paragraphFormatEnd("]");
 static const UnicodeString nonBreakingSpace(" ");  // unicode hex or utf8 format = 0xC2A0
 static const UnicodeString regularLatinSpace(" "); // unicode hex = 0x0020
 CGUIText::TokenSplitMethod CGUIText::_tokenSplitMethod = CGUIText::WordBased;
@@ -120,6 +124,12 @@ UnicodeString CGUIText::_forbiddenEndCharList;
 bool CGUIText::_tokenSplitMethodSelected = false;
 
 int currentLanguage = 0;
+int CGUIText::_defaultFontIndex = 0;
+
+// Declare & initialize font range list.
+list< FontRange * > CGUIText::_fontRange;
+bool CGUIText::_fontRangeIdsAdded = false;
+bool simAddFonts = true;
 
 CGUIText::CGUIText(CGUIDisplay & display)
 	: CGUIWindowObject(display)
@@ -186,6 +196,13 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
 	}
 
 	_languageSetByApp = false;
+
+	// add any new fonts needed for text
+	if( !_fontRangeIdsAdded && ( _fontRange.size() > 0 ) )
+	{
+		addFontRangeFonts();
+	}
+
 }
 
 void CGUIText::setAttributes(unsigned int attributes)
@@ -242,6 +259,110 @@ void CGUIText::setFontSize(int fontSize)
 		_forceCompute = true;
 		computeTextRegion();
 	}
+}
+
+
+bool CGUIText::addFontRange( FontRange *fontRange )
+{
+	// future add logic to insert in list in sorted order.
+	_fontRange.push_front( fontRange );
+
+   return true;
+}
+
+
+CGUIFontId CGUIText::getFontId( int currentChar )
+{
+   CGUIFontId resultFontId = _stylingRecord.fontId;
+	
+	int fontIndex = checkInFontRange( currentChar );
+
+   if( fontIndex != _defaultFontIndex )
+	{
+      resultFontId = _display._font[ _stylingRecord.fontSize + fontIndex * 50 ];
+	}
+
+	return resultFontId;
+}
+
+int CGUIText::checkInFontRange( int currentChar )
+{
+	int result = _defaultFontIndex;
+
+	if( _fontRange.size() > 0 )
+	{
+		list< FontRange * >::iterator fontRangeIter = _fontRange.begin();
+		FontRange * fontRange = NULL;
+
+		while( fontRangeIter != _fontRange.end() )
+		{
+			fontRange = ( *fontRangeIter );
+			if( currentChar >= fontRange->startIndex &&
+				 currentChar <= fontRange->endIndex )
+			{
+				result = fontRange->fontIndex;
+				break;
+			}
+			fontRangeIter++;
+		} // while not end of _fontRange list do
+	}
+	
+	return result;
+}
+
+void CGUIText::clearFontRange()
+{
+	if( _fontRange.size() > 0 )
+	{
+		list< FontRange * >::iterator fontRangeIter = _fontRange.begin();
+		FontRange * fontRange = NULL;
+		
+		while( fontRangeIter != _fontRange.end() )
+		{
+         fontRange = ( *fontRangeIter );
+			
+			// go to next item in list
+			fontRangeIter++;
+
+			// delete pointer to fontRange struct
+			delete( fontRange );
+		} // while not end of _fontRange list do
+	}
+	
+	_fontRange.clear();
+}
+
+void CGUIText::addFontRangeFonts()
+{
+	if( _fontRange.size() > 0 )
+	{
+		list< FontRange * >::iterator fontRangeIter = _fontRange.begin();
+		FontRange * fontRange = NULL;
+
+		while( fontRangeIter != _fontRange.end() )
+		{
+			fontRange = ( *fontRangeIter );
+//			if( _display._font[6 + fontRange->fontIndex* 50] == NULL )
+//			{
+				UGL_ORD option = UGL_FONT_ANTI_ALIASING_16;
+				unsigned char bold = simTextBold;
+
+				for (int f=6; f<=32; f++)
+				{
+					int index = f + fontRange->fontIndex * 50;
+					_display._font[index] = _display.createFont( fontRange->fontName, f, bold);
+					uglFontInfo(_display._font[index], UGL_FONT_ANTI_ALIASING_SET, &option);
+	//				option = UGL_FONT_BOLD_LIGHT;
+	//				uglFontInfo( _display->_font[f], UGL_FONT_WEIGHT_SET, &option );
+				}
+//			} // if font doesn't exsist
+
+			fontRangeIter++;
+		} // while not end of _fontRange list do
+	} //	font range list greater than zero
+
+	_fontRangeIdsAdded = true;
+		
 }
 
 void CGUIText::setLanguage(LanguageId configLanguage)
@@ -370,11 +491,11 @@ int CGUIText::getLength(void) const
 	return retVal;
 }
 
-void CGUIText::getSize(CGUIRegion & region, int startIndex, int length)
+void CGUIText::getSize(CGUIRegion & region, int startIndex, int length, CGUIFontId fontId)
 {
-	if ( _stylingRecord.fontId == UGL_NULL_ID ||
-  		  !_textString.getLength() ||
-		  startIndex >= _textString.getLength() )
+	if (( fontId == UGL_NULL_ID || _stylingRecord.fontId == UGL_NULL_ID) ||
+			!_textString.getLength() ||
+			startIndex >= _textString.getLength() )
 	{
 		region = CGUIRegion(0, 0, 0, 0);
 	}
@@ -400,40 +521,86 @@ void CGUIText::getSize(CGUIRegion & region, int startIndex, int length)
 		if ( _stylingRecord.attributes & BOLD )
 		{
 			UGL_ORD option = 0;
-			uglFontInfo(_stylingRecord.fontId, UGL_FONT_WEIGHT_SET, &option);
+			uglFontInfo( fontId, UGL_FONT_WEIGHT_SET, &option );
 		}
 		const StringChar * textStr = _textString.getString();
-		uglTextSizeGetW(_stylingRecord.fontId, &width, &height, uglLength, &textStr[uglStartIndex]);
-		region = CGUIRegion(0, 0, width, height);
+		uglTextSizeGetW( fontId, &width, &height, uglLength, &textStr[uglStartIndex] );
+		region = CGUIRegion( 0, 0, width, height );
 	}
 }
 
-void CGUIText::getPixelSize(CGUIRegion & pixelRegion)
+void CGUIText::getPixelSize(CGUIRegion & pixelRegion, CGUIFontId fontId )
 {
-	getSize(pixelRegion, 0, _textString.getLength());
+	getSize(pixelRegion, 0, _textString.getLength(), fontId);
 }
 
-CGUIText::GetTokenResult CGUIText::getCharBasedToken(int start_index, bool start_of_line, int & length)
+
+void CGUIText::getTokenSize( CGUIRegion & region, int startIndex = -1, int length = -1 )
 {
-	bool token_ended = false;
-	int current_index = start_index;
+	CGUIRegion resultRegion = CGUIRegion( 0, 0, 0, 0 );
+	CGUIFontId currentFontId = getFontId( _textString[ startIndex ]);	//_stylingRecord.fontId;
+	
+	if( _fontRange.size() > 0 )
+	{
+		int segmentLength = 0;
+		int finalIndex = 0;
+
+		if( startIndex >= 0 && length > 0 )
+		{
+			for( int i = startIndex; i <= ( startIndex + length ); i++ )
+			{
+				int currentChar = (int)_textString[i];
+				CGUIFontId newFontId = getFontId( currentChar );
+
+				if( newFontId == NULL )
+					newFontId = _stylingRecord.fontId;
+
+				if( newFontId != currentFontId || ( i == ( startIndex + length )))
+				{
+					
+					//	update resultRegion to new values
+					getSize( resultRegion,( i - segmentLength ), segmentLength, currentFontId );
+
+					region.width += resultRegion.width;
+					segmentLength = 0;	//	This will be automaticaly incremented when it drops out of the if-statement
+
+					currentFontId = newFontId;
+				}
+				segmentLength++;
+				
+			}	// for text length
+		}	 // if greater than zero
+
+      region.height = resultRegion.height;
+	}
+	else
+	{
+		getSize( region, startIndex, length, currentFontId );
+	}
+}
+
+
+CGUIText::GetTokenResult CGUIText::getCharBasedToken(int startIndex, bool startOfLine, int & length)
+{
+	bool tokenEnded = false;
+	int currentIndex = startIndex;
 	length = 0;
 	GetTokenResult	result = EndOfString;
 
 	// Check for format command.  These are only allowed at the start of a line.
 	//
-	if ( start_of_line &&
-		  current_index < _textString.getLength() - paragraph_format_start.getLength() )
+	if ( startOfLine &&
+		  currentIndex < _textString.getLength() - paragraphFormatStart.getLength() )
 	{
-		if ( _textString[current_index] == paragraph_format_start[0] &&
-			  _textString.mid(current_index, paragraph_format_start.getLength()) == paragraph_format_start )
+		if ( _textString[currentIndex] == paragraphFormatStart[0] &&
+			  _textString.mid(currentIndex, paragraphFormatStart.getLength()) == paragraphFormatStart )
 		{
-			int	endOfFormatToken = _textString.find(paragraph_format_end, current_index+paragraph_format_start.getLength());
+			int	endOfFormatToken = _textString.find(paragraphFormatEnd, currentIndex+paragraphFormatStart.getLength());
 			if ( endOfFormatToken >= 0 )
 			{
-				endOfFormatToken += paragraph_format_end.getLength();
-				length = endOfFormatToken - current_index;
-				token_ended = true;
+				endOfFormatToken += paragraphFormatEnd.getLength();
+				length = endOfFormatToken - currentIndex;
+				tokenEnded = true;
 				result = FormatToken;
 			}
 		}
@@ -448,84 +615,84 @@ CGUIText::GetTokenResult CGUIText::getCharBasedToken(int start_index, bool start
 	bool forbiddenStartToken = false;
 	bool forbiddenEndToken = false;
 
-	while ( current_index < _textString.getLength() &&
-			  !token_ended )
+	while ( currentIndex < _textString.getLength() &&
+			  !tokenEnded )
 	{
-		if( _textString[current_index] == newline_char )
+		if( _textString[currentIndex] == newlineChar )
 		{
-			token_ended = true;
-			if ( current_index == start_index )
+			tokenEnded = true;
+			if ( currentIndex == startIndex )
 			{
 				length = 1;
 			}
 		}
-		else if( checkIfForbiddenStart(current_index+1) ) // Asian Forbidden Start char
+		else if( checkIfForbiddenStart(currentIndex+1) ) // Asian Forbidden Start char
 		{
-			if( englishToken && !checkIfEnglish(current_index) && !forbiddenStartToken )
+			if( englishToken && !checkIfEnglish(currentIndex) && !forbiddenStartToken )
 			{
-				token_ended=true;
+				tokenEnded=true;
 			}
 			else
 			{
 				length+=1;
-				current_index+=1; 
+				currentIndex+=1; 
 				forbiddenStartToken=true;  
 			}
 		}
-		else if( checkIfForbiddenEnd(current_index) ) // Asian Forbidden End Char
+		else if( checkIfForbiddenEnd(currentIndex) ) // Asian Forbidden End Char
 		{
 			if( englishToken && !forbiddenStartToken && !forbiddenEndToken )
 			{
-				token_ended=true;
+				tokenEnded=true;
 			}
 			else
 			{
 				length+=1;
-				current_index+=1;
+				currentIndex+=1;
 				forbiddenEndToken=true;
 			}  
 		}
-		else if( checkIfEnglish(current_index) ) // English letters or numbers
+		else if( checkIfEnglish(currentIndex) ) // English letters or numbers
 		{
 			englishToken = true;
 			length++;
-			current_index++;
+			currentIndex++;
 		}
-		else if ( _textString[current_index] == tab_char )
+		else if ( _textString[currentIndex] == tabChar )
 		{
-			token_ended = true;
-			if ( current_index == start_index )
+			tokenEnded = true;
+			if ( currentIndex == startIndex )
 			{
 				length = 1;
 			}
 		}
-		else if( _textString[current_index] == space_char)
+		else if( _textString[currentIndex] == spaceChar)
 		{
 			if( englishToken )
 			{
-				token_ended=true;
+				tokenEnded=true;
 			}
 			else
 			{
 				length+=1;
-				current_index+=1;
+				currentIndex+=1;
 			}
 		}
 		else   
 		{
 			// Floating point numbers
-			if( ( _textString[current_index] == decimal_point || _textString[current_index] == decimal_comma )
-				 && checkIfArabicNumeral(current_index-1) && checkIfArabicNumeral(current_index+1) )
+			if( ( _textString[currentIndex] == decimalPoint || _textString[currentIndex] == decimalComma )
+				 && checkIfArabicNumeral(currentIndex-1) && checkIfArabicNumeral(currentIndex+1) )
 			{
 				length+=1;
-				current_index+=1;
+				currentIndex+=1;
 			}
 			else // All other characters
 			{
 				if( forbiddenStartToken || forbiddenEndToken || !englishToken )
 				{
 					length+=1;
-					current_index+=1;
+					currentIndex+=1;
 	
 					if( forbiddenStartToken ) forbiddenStartToken=false;
 					if( forbiddenEndToken )   forbiddenEndToken=false;
@@ -536,7 +703,7 @@ CGUIText::GetTokenResult CGUIText::getCharBasedToken(int start_index, bool start
 					englishToken=false;
 				}
 	
-				token_ended = true; 
+				tokenEnded = true; 
 			}
 		}
 	}
@@ -691,35 +858,35 @@ void CGUIText::initializeForbiddenChars()
 	}
 }
 
-CGUIText::GetTokenResult CGUIText::getToken(int start_index, bool start_of_line, int & length)
+CGUIText::GetTokenResult CGUIText::getToken(int startIndex, bool startOfLine, int & length)
 {
 	// this flag is false before encountering non-blank token characters
 	// and true after encountering non-blank token characters. This allows
 	// leading blanks to be included in the token, and the first trailing
 	// blank to delimit the token.
 	//
-	bool look_for_trailing_blank = false;
-	bool token_ended = false;
+	bool lookForTrailingBlank = false;
+	bool tokenEnded = false;
 
-	int current_index = start_index;
+	int currentIndex = startIndex;
 	length = 0;
 
 	GetTokenResult	result = EndOfString;
 
 	// Check for format command.  These are only allowed at the start of a line.
 	//
-	if ( start_of_line &&
-		  current_index < _textString.getLength() - paragraph_format_start.getLength() )
+	if ( startOfLine &&
+		  currentIndex < _textString.getLength() - paragraphFormatStart.getLength() )
 	{
-		if ( _textString[current_index] == paragraph_format_start[0] &&
-			  _textString.mid(current_index, paragraph_format_start.getLength()) == paragraph_format_start )
+		if ( _textString[currentIndex] == paragraphFormatStart[0] &&
+			  _textString.mid(currentIndex, paragraphFormatStart.getLength()) == paragraphFormatStart )
 		{
-			int	endOfFormatToken = _textString.find(paragraph_format_end, current_index+paragraph_format_start.getLength());
+			int	endOfFormatToken = _textString.find(paragraphFormatEnd, currentIndex+paragraphFormatStart.getLength());
 			if ( endOfFormatToken >= 0 )
 			{
-				endOfFormatToken += paragraph_format_end.getLength();
-				length = endOfFormatToken - current_index;
-				token_ended = true;
+				endOfFormatToken += paragraphFormatEnd.getLength();
+				length = endOfFormatToken - currentIndex;
+				tokenEnded = true;
 				result = FormatToken;
 			}
 		}
@@ -728,39 +895,39 @@ CGUIText::GetTokenResult CGUIText::getToken(int start_index, bool start_of_line,
 	// keep moving characters from the text string to the token string until
 	// a trailing blank or EOS is found.
 	//
-	while ( current_index < _textString.getLength() &&
-			  !token_ended )
+	while ( currentIndex < _textString.getLength() &&
+			  !tokenEnded )
 	{
-		if ( _textString[current_index] == newline_char ||
-			  _textString[current_index] == tab_char )
+		if ( _textString[currentIndex] == newlineChar ||
+			  _textString[currentIndex] == tabChar )
 		{
 			// If this character is an explicit newline or tab and the token buffer is empty,
 			// return the character.  Otherwise return the token parsed so far, and this character
 			// will be returned on the next call to getToken().
 			//
-			token_ended = true;
-			if ( current_index == start_index )
+			tokenEnded = true;
+			if ( currentIndex == startIndex )
 			{
 				// nothing has been added to the token buffer, just return the single character
 				length = 1;
 			}
 		}
-		else if ( _textString[current_index] == space_char &&
-					 look_for_trailing_blank )
+		else if ( _textString[currentIndex] == spaceChar &&
+					 lookForTrailingBlank )
 		{
 			// if this is the delimiting trailing blank, leave the loop and return the token
-			token_ended = true;
+			tokenEnded = true;
 		}
 		else
 		{
-			if ( _textString[current_index] != space_char )
+			if ( _textString[currentIndex] != spaceChar )
 			{
-				look_for_trailing_blank = true;
+				lookForTrailingBlank = true;
 			}
 
 			// add this character to the token
 			length++;
-			current_index++;
+			currentIndex++;
 		}
 	}
 
@@ -774,14 +941,16 @@ CGUIText::GetTokenResult CGUIText::getToken(int start_index, bool start_of_line,
 
 void CGUIText::convertTextToMultiline(CGUIRegion & region)
 {
-	bool	start_of_line = true;
-	int	current_index = 0;
-	int	current_line = 0;
-	int	space_pixel_size = 0;
-	int	single_line_height = 0;
-	int	x_min = 0;
-	int	x_max = 0;
-	int	y_max = 0;
+	bool	startOfLine = true;
+	int	currentIndex = 0;
+	int	currentLine = 0;
+	int	spacePixelSize = 0;
+	int	singleLineHeight = 0;
+	int	xMin = 0;
+	int	xMax = 0;
+	int	yMax = 0;
+
+	CGUIFontId currentFontId = _stylingRecord.fontId;
 
 	_lineData.clear();
 	_formatData.firstLineIndent = 0;
@@ -793,27 +962,27 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
 		UGL_SIZE height = 0;
 
 		uglTextSizeGet(_stylingRecord.fontId, &width, &height, 1, " ");
-		space_pixel_size = width;
-		single_line_height = height;
+		spacePixelSize = width;
+		singleLineHeight = height;
 	}
 
-	int	line_start_x = 0;
-	int	line_start_y = 0;
+	int	lineStartX = 0;
+	int	lineStartY = 0;
 
-	while ( current_index < _textString.getLength() )
+	while ( currentIndex < _textString.getLength() )
 	{
-		int	current_segment_pixel_width = 0;
-		int	line_start_index = current_index;
-		int	line_byte_count = 0;
-		bool  line_done = false;
-		bool	line_ended_by_tab = false;
+		int	currentSegmentPixelWidth = 0;
+		int	lineStartIndex = currentIndex;
+		int	lineByteCount = 0;
+		bool  lineDone = false;
+		bool	lineEndedByTab = false;
 
-		CGUIRegion line_size;
+		CGUIRegion lineSize;
 
-		while ( !line_done )
+		while ( !lineDone )
 		{
-			int	token_char_count;
-			if (start_of_line) line_start_x = _formatData.firstLineIndent * _tabSpaceCount * space_pixel_size;
+			int	tokenCharCount;
+			if (startOfLine) lineStartX = _formatData.firstLineIndent * _tabSpaceCount * spacePixelSize;
 
 			// get the next blank delimited token
 
@@ -821,172 +990,235 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
 
 			switch( _tokenSplitMethod )
 			{
-			case WordBased:
-				tokenResult = getToken(current_index, start_of_line, token_char_count);
-				break;
+				case WordBased:
+					tokenResult = getToken( currentIndex, startOfLine, tokenCharCount );
+					break;
 
-			case CharBased:
-				tokenResult = getCharBasedToken(current_index, start_of_line, token_char_count);
-				break;
+				case CharBased:
+					tokenResult = getCharBasedToken( currentIndex, startOfLine, tokenCharCount );
+					break;
 			}
 
-			UnicodeString ustr = _textString.mid(current_index,token_char_count);
-
-			if ( tokenResult == EndOfString )
+//			UnicodeString ustr = _textString.mid( currentIndex, tokenCharCount );
+//
+			if( tokenResult == EndOfString )
 			{
 				// reached end of string, so this is the last line
-				line_done = true;
-				current_index = _textString.getLength();
+				lineDone = true;
+				currentIndex = _textString.getLength();
 			}
-			else if ( tokenResult == FormatToken )
+			else if( tokenResult == FormatToken )
 			{
-				int	parameter_index = current_index + paragraph_format_start.getLength();
-				int	first_line_indent = -1;
-				int	second_line_indent = -1;
-				while ( parameter_index < current_index + token_char_count &&
-						  second_line_indent < 0 )
+				int	parameter_index = currentIndex + paragraphFormatStart.getLength();
+				int	firstLineIndent = -1;
+				int	secondLineIndent = -1;
+				while ( parameter_index < currentIndex + tokenCharCount &&
+						  secondLineIndent < 0 )
 				{
 					if ( _textString[parameter_index] >= (StringChar)'0' &&
 						  _textString[parameter_index] <= (StringChar)'9' )
 					{
-						if ( first_line_indent < 0 )
+						if ( firstLineIndent < 0 )
 						{
-							first_line_indent = _textString[parameter_index] - (StringChar)'0';
+							firstLineIndent = _textString[parameter_index] - (StringChar)'0';
 						}
 						else
 						{
-							second_line_indent = _textString[parameter_index] - (StringChar)'0';
+							secondLineIndent = _textString[parameter_index] - (StringChar)'0';
 						}
 					}
 
 					parameter_index += 1;
 				}
 
-				if ( first_line_indent >= 0 &&
-					  second_line_indent >= 0 )
+				if ( firstLineIndent >= 0 &&
+					  secondLineIndent >= 0 )
 				{
-					_formatData.firstLineIndent = first_line_indent;
-					_formatData.secondLineIndent = second_line_indent;
+					_formatData.firstLineIndent = firstLineIndent;
+					_formatData.secondLineIndent = secondLineIndent;
 				}
 
-				current_index += token_char_count;
-				line_start_index = current_index;
+				currentIndex += tokenCharCount;
+				lineStartIndex = currentIndex;
 			}
-			else if ( _textString[current_index] == newline_char )
+			else if ( _textString[currentIndex] == newlineChar )
 			{
 				// newline forced a line break
-				start_of_line = true;
-				current_index += token_char_count;
+				startOfLine = true;
+				currentIndex += tokenCharCount;
 
-				if ( line_byte_count )
+				if ( lineByteCount )
 				{
-					line_done = true;
+					lineDone = true;
 				}
 				else
 				{
-					line_start_index = current_index;
-					line_start_y += 3*single_line_height/4;
+					lineStartIndex = currentIndex;
+					lineStartY += 3*singleLineHeight/4;
 				}
 			}
-			else if ( _textString[current_index] == tab_char )
+			else if ( _textString[currentIndex] == tabChar )
 			{
-				start_of_line = false;
-				current_index += token_char_count;
+				startOfLine = false;
+				currentIndex += tokenCharCount;
 
-				if ( line_byte_count )
+				if ( lineByteCount )
 				{
-					line_done = true;
-					line_ended_by_tab = true;
+					lineDone = true;
+					lineEndedByTab = true;
 				}
 				else
 				{
-					line_start_x += _tabSpaceCount * space_pixel_size;
-					line_start_index = current_index;
+					lineStartX += _tabSpaceCount * spacePixelSize;
+					lineStartIndex = currentIndex;
 				}
 			}
 			else
 			{
-				start_of_line = false;
+				startOfLine = false;
 
-				CGUIRegion token_size;
-				getSize(token_size, current_index, token_char_count);
+				CGUIRegion tokenSize;
 
-				if ( convertLinePosition(current_segment_pixel_width+token_size.width, token_size.height, line_start_x, line_size) )
+				
+				
+				getTokenSize( tokenSize, currentIndex, tokenCharCount );
+
+				if ( convertLinePosition(currentSegmentPixelWidth+tokenSize.width, tokenSize.height, lineStartX, lineSize) )
 				{
 					// new token fits on line
-					line_byte_count += token_char_count;
-					current_index   += token_char_count;
-					current_segment_pixel_width += token_size.width;
+					lineByteCount += tokenCharCount;
+					currentIndex	+= tokenCharCount;
+					currentSegmentPixelWidth += tokenSize.width;
 				}
-				else
+				else  // new token doesn't fit on line
 				{
-					line_done = true;
-					if ( line_byte_count <= 0 )
+					lineDone = true;
+					if ( lineByteCount <= 0 )	// token only text for line so must put on line
 					{
 						// must put token on line
-						line_byte_count += token_char_count;
-						current_index   += token_char_count;
-						current_segment_pixel_width += token_size.width;
+						lineByteCount += tokenCharCount;
+						currentIndex   += tokenCharCount;
+						currentSegmentPixelWidth += tokenSize.width;
 					}
 					else
 					{
-						convertLinePosition(current_segment_pixel_width, token_size.height, line_start_x, line_size);
+						// update line region information without tokenSize.width
+						convertLinePosition(currentSegmentPixelWidth, tokenSize.height, lineStartX, lineSize);
 					}
 				}
 			}
-		}
+		}	// while line not done
 
 		// Create line_data struct
 		//
-		if ( line_byte_count > 0 )
+		if ( lineByteCount > 0 )
 		{
-			LineData 	current_line_data;
+			LineData 	currentLineData;
 
-			current_line_data.x = line_size.x;
-			current_line_data.y = line_start_y;
+			currentLineData.x = lineSize.x;
+			currentLineData.y = lineStartY;
 
-			current_line_data.index = line_start_index;
-			current_line_data.textLength = line_byte_count;
-			if ( _textString[line_start_index] == space_char )
+			currentLineData.index = lineStartIndex;
+			currentLineData.textLength = lineByteCount;
+			currentLineData.fontId = currentFontId;
+
+			// eliminate first char if it is a blank (space character)
+			if ( _textString[lineStartIndex] == spaceChar )
 			{
-				current_line_data.index++;
-				current_line_data.textLength--;
+				currentLineData.index++;
+				currentLineData.textLength--;
 			}
 
-			_lineData.push_back(current_line_data);
-
-			x_max = (line_size.x + line_size.width - 1 > x_max) ? line_size.x + line_size.width - 1 : x_max;
-			if ( current_line <= 0 )
+			//	Check for conbination of fonts for line data
+			//
+			if( _fontRange.size() > 0 )
 			{
-				x_min = line_size.x;
+				_fontRangeIdsAdded = simAddFonts;
+				// check to see of font ids exsistj
+				if( !_fontRangeIdsAdded )
+				{
+					addFontRangeFonts();
+				}
+				
+				LineData 	fontRangeLineData;
+				CGUIRegion fontRangeRegion( 0, 0, 0, 0 );
+				
+				fontRangeLineData.x = currentLineData.x;
+				fontRangeLineData.y = currentLineData.y;
+				fontRangeLineData.index = currentLineData.index;
+				fontRangeLineData.textLength = 0; //currentLineData.textLength;
+				fontRangeLineData.fontId = currentFontId;
+
+				for( int i = currentLineData.index; i <= (currentLineData.index + currentLineData.textLength); i++ )
+				{
+					int currentChar = (int)_textString[i];
+					CGUIFontId newFontId = getFontId( currentChar );
+
+					if( newFontId == NULL ) 
+						newFontId = _stylingRecord.fontId;
+
+					if( newFontId != currentFontId )
+					{
+						if(( i != currentLineData.index ) || ( i == (currentLineData.index + currentLineData.textLength )))
+						{
+                     fontRangeLineData.textLength = i - fontRangeLineData.index;
+
+							_lineData.push_back( fontRangeLineData );
+
+                     //	update  fontRangeLineData to new values
+                     getSize( fontRangeRegion, fontRangeLineData.index, fontRangeLineData.textLength, currentFontId );
+                     fontRangeLineData.x += fontRangeRegion.width;
+                     fontRangeLineData.index = i;
+							fontRangeLineData.textLength = 0;	//	This will be automaticaly incremented when it drops out of the if-statement
+						}
+                  currentFontId = newFontId;
+						fontRangeLineData.fontId = newFontId;
+					}
+					fontRangeLineData.textLength++;	//	increment text length
+				} //	for current line data
+				
+				_lineData.push_back( fontRangeLineData );
 			}
 			else
 			{
-				x_min = (line_size.x < x_min) ? line_size.x : x_min;
+				// associate fontId with line data
+				currentLineData.fontId = _stylingRecord.fontId;
+				// do what we always did 
+            _lineData.push_back(currentLineData);		
 			}
 
-			y_max = _lineData.back().y + line_size.height + 1;
-			current_line++;
+			xMax = (lineSize.x + lineSize.width - 1 > xMax) ? lineSize.x + lineSize.width - 1 : xMax;
+			if ( currentLine <= 0 )
+			{
+				xMin = lineSize.x;
+			}
+			else
+			{
+				xMin = (lineSize.x < xMin) ? lineSize.x : xMin;
+			}
+
+			yMax = _lineData.back().y + lineSize.height + 1;
+			currentLine++;
 		}
 
-		if ( !line_ended_by_tab )
+		if ( !lineEndedByTab )
 		{
-			line_start_x = _formatData.secondLineIndent * _tabSpaceCount * space_pixel_size;
-			line_start_y += single_line_height;
+			lineStartX = _formatData.secondLineIndent * _tabSpaceCount * spacePixelSize;
+			lineStartY += singleLineHeight;
 		}
 		else
 		{
-			int tab_column = ( line_size.x + line_size.width - 1 - _requestedRegion.x ) / ( _tabSpaceCount * space_pixel_size ) + 1;
-			line_start_x = tab_column * _tabSpaceCount * space_pixel_size;
+			int tab_column = ( lineSize.x + lineSize.width - 1 - _requestedRegion.x ) / ( _tabSpaceCount * spacePixelSize ) + 1;
+			lineStartX = tab_column * _tabSpaceCount * spacePixelSize;
 		}
 	}
 
 	// Setup final region required by the text
 	//
-	region.x = x_min;
+	region.x = xMin;
 	region.y = 0;
-	region.width = x_max - x_min + 1;
-	region.height = y_max + 1;
+	region.width = xMax - xMin + 1;
+	region.height = yMax + 1;
 
 	// Adjust line horizontal positions to left side of region
 	//
@@ -998,7 +1230,7 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
 }
 
 
-bool CGUIText::convertLinePosition(int width, int height, int indent_pixels, CGUIRegion & region)
+bool CGUIText::convertLinePosition(int width, int height, int indentPixels, CGUIRegion & region)
 {
    int  available_pixel_width = 0;
 
@@ -1021,8 +1253,8 @@ bool CGUIText::convertLinePosition(int width, int height, int indent_pixels, CGU
    else
    {
       // LEFT alignment: text will start at _requestedRegion.x plus the current indent
-      region.x = _requestedRegion.x + indent_pixels;
-      available_pixel_width = ( _requestedRegion.width == 0 ) ? _display.width()-region.x : _requestedRegion.width-indent_pixels;
+      region.x = _requestedRegion.x + indentPixels;
+      available_pixel_width = ( _requestedRegion.width == 0 ) ? _display.width()-region.x : _requestedRegion.width-indentPixels;
    }
 
    region.y = 0;
@@ -1042,41 +1274,41 @@ void CGUIText::computeTextRegion(void)
 		_forceCompute = false;
 		_lastTextString = _textString;
 
-		CGUIRegion    text_region;
-		convertTextToMultiline(text_region);
+		CGUIRegion    textRegion;
+		convertTextToMultiline(textRegion);
 	
 		// find vertical region to place text
 		if (_stylingRecord.attributes & VJUSTIFY_CENTER)
 		{
 			// center vertically within specified region
-			if (text_region.height <= _requestedRegion.height)
+			if (textRegion.height <= _requestedRegion.height)
 			{
-				text_region.vertShift(_requestedRegion.y + (_requestedRegion.height-text_region.height)/2);
+				textRegion.vertShift(_requestedRegion.y + (_requestedRegion.height-textRegion.height)/2);
 			}
 			else
 			{
-				text_region.vertShift(_requestedRegion.y);
+				textRegion.vertShift(_requestedRegion.y);
 			}
 		}
 		else if (_stylingRecord.attributes & VJUSTIFY_BOTTOM)
 		{
 			// justify at bottom of requested region
-			if (text_region.height <= _requestedRegion.height)
+			if (textRegion.height <= _requestedRegion.height)
 			{
-				text_region.vertShift(_requestedRegion.y + _requestedRegion.height - text_region.height);
+				textRegion.vertShift(_requestedRegion.y + _requestedRegion.height - textRegion.height);
 			}
 			else
 			{
-				text_region.vertShift(_requestedRegion.y);
+				textRegion.vertShift(_requestedRegion.y);
 			}
 		}
 		else
 		{
 			// justify at top of requested region
-			text_region.vertShift(_requestedRegion.y);
+			textRegion.vertShift(_requestedRegion.y);
 		}
 	
-		setRegion(text_region);
+		setRegion(textRegion);
 	}
 }
 
@@ -1178,12 +1410,19 @@ void CGUIText::draw(UGL_GC_ID gc)
 	//  let's write this out
    uglBackgroundColorSet(gc, backgroundColor);
    uglForegroundColorSet(gc, _stylingRecord.color);
-   uglFontSet(gc, _stylingRecord.fontId);
+//   uglFontSet(gc, _stylingRecord.fontId);
 
    list<LineData>::const_iterator   lineIter = _lineData.begin();
    while( lineIter != _lineData.end() )
    {
-      uglTextDrawW(gc, (*lineIter).x + _region.x, (*lineIter).y + _region.y, (*lineIter).textLength, &copyTextString[(*lineIter).index]);
+		LineData lineData;
+		lineData.x = (*lineIter).x;
+		lineData.y = (*lineIter).y;
+		lineData.textLength = (*lineIter).textLength;
+		lineData.fontId = (*lineIter).fontId;
+		
+		uglFontSet( gc, (*lineIter).fontId );
+      uglTextDrawW( gc, (*lineIter).x + _region.x, (*lineIter).y + _region.y, (*lineIter).textLength, &copyTextString[(*lineIter).index] );
 
       ++lineIter;
 		
@@ -1196,5 +1435,78 @@ void CGUIText::handleVariableSubstitution(void)
 	{
 		_textString = _textItem->getTextObj();
 	}
+}
+
+
+// Functions for FontRange
+bool FontRange::operator == ( const FontRange fontRange ) const
+{
+	bool result = true;
+
+	do
+	{
+      if( startIndex != fontRange.startIndex )
+		{
+			result = false;
+			break;
+		}
+
+		if( endIndex != fontRange.endIndex )
+		{
+			result = false;
+			break;	
+		}
+
+	} while( false );   /* only do-while loop once */
+
+	return result;
+}
+
+bool FontRange::operator < ( const FontRange fontRange  ) const
+{
+	bool result = false;
+
+	do
+	{
+      if( startIndex < fontRange.startIndex )
+		{
+			result = true;
+			break;
+		}		
+
+		if( startIndex == fontRange.startIndex &&
+			 endIndex < fontRange.endIndex )
+		{
+			result = true;
+			break;
+		}
+		
+	}while( false );	  /* only do-while loop once */
+
+	return result;
+}
+
+bool FontRange::operator > ( const FontRange fontRange  ) const
+{
+	bool result = false;
+
+	do
+	{
+      if( startIndex > fontRange.startIndex )
+		{
+			result = true;
+			break;
+		}		
+
+		if( startIndex == fontRange.startIndex &&
+			 endIndex > fontRange.endIndex )
+		{
+			result = true;
+			break;
+		}
+		
+	}while( false );	  /* only do-while loop once */
+
+	return result;
 }
 

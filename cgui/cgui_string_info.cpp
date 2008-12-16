@@ -4,6 +4,8 @@
  * Derived from cgui_string_data.cpp revision 1.7  2006/07/25 15:42:37  cf10242
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_info.cpp 1.7 2008/12/16 22:01:41Z rm10919 Exp wms10235 $
  * $Log: cgui_string_info.cpp $
+ * Revision 1.5  2007/05/08 21:57:32Z  rm10919
+ * Changed UFT8ToUnicode to handle 3 byte UTF8 characters. IT-3294
  * Revision 1.4  2007/04/30 18:26:07Z  jl11312
  * - additional error checking when reading string info files (Taos IT 3102)
  * Revision 1.3  2007/02/08 19:28:05Z  rm10919
@@ -16,10 +18,16 @@
  */
 
 #include <vxWorks.h>
+#include "cgui_graphics.h"
 #include "cgui_string_info.h"
+#include "cgui_text.h"
+#include "fontTable.h"
 #include "datalog_levels.h"
 
+//extern int getFontIndex( const char *fontName );
+
 // constructor that accepts a file name, opens it, and prepares for gets
+//
 CGUIStringInfo::CGUIStringInfo(const char * filename)
 {
 	DataLog( log_level_cgui_info ) << "CGUIStringInfo::CGUIStringInfo( \"" << filename << "\" )" << endmsg;
@@ -28,6 +36,7 @@ CGUIStringInfo::CGUIStringInfo(const char * filename)
 }
 
 // constructor that just sets up the class members, but does not require a file name to open
+//
 CGUIStringInfo::CGUIStringInfo()
 {
    CGUIStringInfo::initialize();
@@ -39,6 +48,7 @@ CGUIStringInfo::~CGUIStringInfo(void)
 }
 
 // open the given string.info file
+//
 void CGUIStringInfo::open(const char * filename)
 {
     CGUIStringInfo::close();
@@ -52,6 +62,7 @@ void CGUIStringInfo::open(const char * filename)
 }
 
 // close the string.info file
+//
 void CGUIStringInfo::close()
 {
     if( _filename != NULL ) delete[] _filename;
@@ -61,16 +72,19 @@ void CGUIStringInfo::close()
 }
 
 // initialize class members
+//
 void CGUIStringInfo::initialize()
 {
     _filename = NULL;
     _stringInfo = NULL;
     _lineBuffer = NULL;
     _readingFileTable = false;
+    _readingFontRanges = false;
     _line = 0;
 }
 
 // convert UTF8 encoding to Unicode
+//
 void CGUIStringInfo::UTF8ToUnicode( char *&data, StringChar * wString, int &writeIdx )
 {
    if ( (*data & 0xf0) == 0xe0 &&
@@ -154,9 +168,9 @@ void CGUIStringInfo::UTF8ToUnicode( char *&data, StringChar * wString, int &writ
 }
 
 // get that returns false if caller provides a null pointer or string as the key.
+//
 bool CGUIStringInfo::get( const char * stringKey, const CGUIFontId * fontId, CGUITextItem & result, int fontIndex = 0)
 {
-//   DataLog( log_level_cgui_debug ) << "CGUIStringInfo::get(stringKey=\"" << stringKey << "\" fontId=" << (void *)fontId << " result=" << (void *)&result << ")" << endmsg;
     if( stringKey == NULL )
         return false;
     else
@@ -164,9 +178,9 @@ bool CGUIStringInfo::get( const char * stringKey, const CGUIFontId * fontId, CGU
 }
 
 // main get routine called by all other gets.
+// 
 bool CGUIStringInfo::get ( const CGUIFontId * fontId, CGUITextItem & result, const char * stringKey, int fontIndex = 0 )
 {
-//   DataLog( log_level_cgui_debug ) << "CGUIStringInfo::get(fontId=" << (void *)fontId << " result=" << (void *)&result << " stringKey=\"" << stringKey << "\")" << endmsg;
    if(_stringInfo != NULL) while (fgets(_lineBuffer, LineBufferSize, _stringInfo) != NULL)
    {
       char * p = NULL;
@@ -174,7 +188,7 @@ bool CGUIStringInfo::get ( const CGUIFontId * fontId, CGUITextItem & result, con
       char * firstToken = strtok_r(_lineBuffer, " \t\n\r\"", &p);
 
       // skip comments
-      if (!firstToken || firstToken[0] == '#')
+      if (!firstToken || firstToken[0] == '#'|| firstToken[0] == '[')
       {
          continue;
       }
@@ -200,15 +214,46 @@ bool CGUIStringInfo::get ( const CGUIFontId * fontId, CGUITextItem & result, con
          break;
       }
 
-      else if (_readingFileTable && (stringKey == NULL || (strcmp(firstToken, stringKey) == 0) ) )
+		else if( strcmp( firstToken, "FONT_RANGE_TABLE_START" ) == 0 )
+		{
+			if (_readingFileTable)
+         {
+            DataLog( log_level_cgui_error ) << "line " << _line << ": unexpected FONT_RANGE_TABLE_START - " << _filename << endmsg;
+            break;
+         }
+			else
+			{
+				_readingFontRanges = true;
+			}
+		}
+
+		else if( strcmp(firstToken, "FONT_RANGE_TABLE_END") == 0 )
+		{
+			if ( _readingFileTable || !_readingFontRanges )
+			{
+				DataLog( log_level_cgui_error ) << "line " << _line << ": unexpected FONT_RANGE_TABLE_START - " << _filename << endmsg;
+				break;
+			}
+			else
+			{
+            _readingFontRanges = false;
+			}
+		}
+
+      else if( _readingFileTable && ( stringKey == NULL || ( strcmp( firstToken, stringKey ) == 0 )))
       {
          result.setId(firstToken);
          return parseLine( p, fontId, result, fontIndex);
       }
+		else if( _readingFontRanges )
+		{
+//			parseRange( p );
+		}
    }
 
    return false;
 }
+
 
 bool CGUIStringInfo::getQuotedString(char *&data, StringChar *& wString)
 {
@@ -250,6 +295,7 @@ bool CGUIStringInfo::getQuotedString(char *&data, StringChar *& wString)
 }
 
 // Parse the line and populate the given CGUITextItem.
+//
 bool CGUIStringInfo::parseLine ( char * p, const CGUIFontId * fontId, CGUITextItem & result, int fontIndex = 0)
 {
 	bool status = true;
@@ -287,3 +333,101 @@ bool CGUIStringInfo::parseLine ( char * p, const CGUIFontId * fontId, CGUITextIt
 	if ( wString ) delete[] wString;
    return status;
 }
+
+bool CGUIStringInfo::parseRange( char * p )
+{
+	bool result;
+	unsigned int startRange, endRange;
+
+	if( sscanf( p, "%x %x", &startRange, &endRange ) == 2 )
+	{
+      char * q1 = strstr( (const char *)p, "\"");
+      char * q2 = strrchr( (const char *)p, '"');
+
+      if( q1 != q2 )
+		{
+			q1++;
+         int length = q2 - q1;
+			
+			char * fontName = new char[length+1];
+         strncpy( fontName, q1, length );
+			fontName[length] = '\0';
+
+         FontRange *fontRange = new FontRange();
+			int index = getFontIndex( fontName );
+
+         fontRange->startIndex = startRange;
+         fontRange->endIndex = endRange;
+         fontRange->fontName = fontName;
+         fontRange->fontIndex = index;
+
+			result = CGUIText::addFontRange( fontRange );
+		
+			result = true;
+		}
+		else
+		{
+         result = false;
+			DataLog( log_level_cgui_error ) << "line " << _line << ": wrong parameters from Font Range Table - " << _filename << endmsg;
+		}
+   }
+	else
+	{
+		result = false;
+		DataLog( log_level_cgui_error ) << "line " << _line << ": missing parameters from Font Range Table - " << _filename << endmsg;
+	}
+
+	return result;
+}
+
+bool CGUIStringInfo::setFontRange ( const string & filename )
+{
+	bool result = false;
+	CGUIStringInfo::open( filename );
+	
+   if(_stringInfo != NULL) while (fgets(_lineBuffer, LineBufferSize, _stringInfo) != NULL)
+   {
+      _line += 1;
+      char * p = NULL;
+		char * p2 =  new char[strlen(_lineBuffer)+1];
+		strcpy( p2, _lineBuffer );
+      char * firstToken = strtok_r(_lineBuffer, " \t\n\r\"", &p);
+
+      // skip comments
+      if( !firstToken || firstToken[0] == '#' )
+      {
+         continue;
+      }
+
+		if( strcmp( firstToken, "FONT_RANGE_TABLE_START" ) == 0 )
+		{
+				_readingFontRanges = true;
+		}
+
+		else if( strcmp(firstToken, "FONT_RANGE_TABLE_END") == 0 )
+		{
+			if ( _readingFileTable || !_readingFontRanges )
+			{
+				DataLog( log_level_cgui_error ) << "line " << _line << ": unexpected FONT_RANGE_TABLE_START - " << _filename << endmsg;
+				break;
+			}
+			else
+			{
+				//	All finished, so let's quit.
+            _readingFontRanges = false;
+				result = true;
+				break;
+			}
+		}
+
+		else if( _readingFontRanges && firstToken[0] == '0' )
+		{
+			parseRange( p2 );
+		}
+		delete p2;
+   }
+	CGUIStringInfo::close();
+
+	return result;
+}
+

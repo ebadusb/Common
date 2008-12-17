@@ -2,6 +2,8 @@
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.39  2008/12/16 22:01:42Z  rm10919
+ * Correct include file name.
  * Revision 1.38  2008/12/16 06:03:03Z  rm10919
  * Add the ablility for combined fonts in text. IT 6562
  * Revision 1.37  2008/07/23 22:55:04Z  adalusb
@@ -98,6 +100,7 @@ bool captureTextID = false;
 string captureTextIDStr;
 const char * captureScreenName = NULL;
 int simTextBold = 0;
+bool simAddFonts = true;
 #endif /* if CPU==SIMNT */
 
 
@@ -131,7 +134,6 @@ int CGUIText::_defaultFontIndex = 0;
 // Declare & initialize font range list.
 list< FontRange * > CGUIText::_fontRange;
 bool CGUIText::_fontRangeIdsAdded = false;
-bool simAddFonts = true;
 
 CGUIText::CGUIText(CGUIDisplay & display)
 	: CGUIWindowObject(display)

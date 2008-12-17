@@ -3,6 +3,8 @@
  *
  * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.27 2007/05/10 16:35:46Z jl11312 Exp rm10919 $
  * $Log: cgui_graphics.cpp $
+ * Revision 1.27  2007/05/10 16:35:46Z  jl11312
+ * - add option to specify timeout in waiting for UGL events in message loop (Taos IT 3315)
  * Revision 1.26  2007/04/10 15:15:48Z  wms10235
  * IT2354 - Removing the postscript generation from common gui
  * Revision 1.25  2007/04/10 15:12:02Z  wms10235
@@ -243,7 +245,7 @@ UGL_DIB * CGUIDisplay::offscreenFlush(void)
 	return pDib;
 }
 
-CGUIFontId CGUIDisplay::createFont(const char * familyName, unsigned char pixelSize)
+CGUIFontId CGUIDisplay::createFont(const char * familyName, unsigned char pixelSize, unsigned char weight)
 {
    static const char fontStringTemplate[] = "familyName=%s; pixelSize=%d";
    char * fontString = new char[strlen(familyName)+sizeof(fontStringTemplate)+3];
@@ -252,8 +254,13 @@ CGUIFontId CGUIDisplay::createFont(const char * familyName, unsigned char pixelS
 
    sprintf(fontString, fontStringTemplate, familyName, pixelSize);
    uglFontFindString(_uglFontDriver, fontString, &fontDef);
-   fontDef.pixelSize = pixelSize;
-   font = uglFontCreate(_uglFontDriver, &fontDef);
+
+	fontDef.pixelSize = pixelSize;
+
+	if( weight > 0 )
+		fontDef.weight =  weight;
+
+	font = uglFontCreate(_uglFontDriver, &fontDef);
 
    delete[] fontString;
    return font;

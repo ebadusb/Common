@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.19 2007/06/04 22:04:20Z wms10235 Exp rm10919 $
+ * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.19 2007/06/04 22:04:20Z wms10235 Exp $
  * $Log: cgui_graphics.h $
+ * Revision 1.19  2007/06/04 22:04:20Z  wms10235
+ * IT83 - Updates for the common GUI project to use the unicode string class
  * Revision 1.18  2007/05/10 16:35:46Z  jl11312
  * - add option to specify timeout in waiting for UGL events in message loop (Taos IT 3315)
  * Revision 1.17  2007/04/10 20:47:34Z  adalusb
@@ -102,7 +104,7 @@ extern UGL_ARGB deviceClut[CGUIPaletteSize];
 
 enum
 {
-   MAX_FONTS = 256
+   MAX_FONTS = 1200
 };
 
 //
@@ -113,6 +115,7 @@ typedef int LanguageId;
 extern int currentLanguage;
 
 void convertToStringChar(const char * string, StringChar ** stringChar);
+
 //
 // The CGUIDisplay class handles the underlying UGL graphics context
 // and event loop.  Currently, only one instance of the CGUIDisplay
@@ -146,7 +149,7 @@ public:
    //
    // Font management
    //
-   CGUIFontId createFont(const char * familyName, unsigned char pixelSize);
+   CGUIFontId createFont(const char * familyName, unsigned char pixelSize, unsigned char weight = 0);
    void deleteFont(CGUIFontId font);
    //
    // The top left of the display is fixed at 0,0.  The following

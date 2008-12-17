@@ -2,6 +2,8 @@
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.38  2008/12/16 06:03:03Z  rm10919
+ * Add the ablility for combined fonts in text. IT 6562
  * Revision 1.37  2008/07/23 22:55:04Z  adalusb
  * Selection of the text wrapping algorithm based on the language loaded enabled. 
  * Revision 1.36  2008/07/22 17:43:58Z  adalusb
@@ -86,7 +88,7 @@
 
 #include "cgui_text.h"
 #include "cgui_window.h"
-#include "fontTable.h"
+#include "font_table.h"
 #include "datalog_levels.h"
 
 #if CPU==SIMNT

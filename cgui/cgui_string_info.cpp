@@ -4,6 +4,8 @@
  * Derived from cgui_string_data.cpp revision 1.7  2006/07/25 15:42:37  cf10242
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_info.cpp 1.7 2008/12/16 22:01:41Z rm10919 Exp wms10235 $
  * $Log: cgui_string_info.cpp $
+ * Revision 1.6  2008/12/16 06:03:02Z  rm10919
+ * Add the ablility for combined fonts in text. IT 6562
  * Revision 1.5  2007/05/08 21:57:32Z  rm10919
  * Changed UFT8ToUnicode to handle 3 byte UTF8 characters. IT-3294
  * Revision 1.4  2007/04/30 18:26:07Z  jl11312
@@ -21,7 +23,7 @@
 #include "cgui_graphics.h"
 #include "cgui_string_info.h"
 #include "cgui_text.h"
-#include "fontTable.h"
+#include "font_table.h"
 #include "datalog_levels.h"
 
 //extern int getFontIndex( const char *fontName );

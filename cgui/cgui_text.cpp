@@ -2,6 +2,8 @@
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.42  2008/12/17 19:16:01Z  rm10919
+ * Fix global variable definition for build.
  * Revision 1.41  2008/12/17 16:46:37Z  rm10919
  * Correct global varibale. 
  * Revision 1.40  2008/12/17 16:20:22Z  rm10919
@@ -1164,9 +1166,9 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
 					if( newFontId == NULL ) 
 						newFontId = _stylingRecord.fontId;
 
-					if( newFontId != currentFontId )
+					if(( newFontId != currentFontId ) && ( i != (currentLineData.index + currentLineData.textLength )))
 					{
-						if(( i != currentLineData.index ) || ( i == (currentLineData.index + currentLineData.textLength )))
+						if( i != currentLineData.index )
 						{
                      fontRangeLineData.textLength = i - fontRangeLineData.index;
 
@@ -1181,7 +1183,9 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
                   currentFontId = newFontId;
 						fontRangeLineData.fontId = newFontId;
 					}
-					fontRangeLineData.textLength++;	//	increment text length
+					if( i != (currentLineData.index + currentLineData.textLength ))
+                   fontRangeLineData.textLength++;	//	increment text length
+					
 				} //	for current line data
 				
 				_lineData.push_back( fontRangeLineData );

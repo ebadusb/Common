@@ -2,6 +2,8 @@
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.41  2008/12/17 16:46:37Z  rm10919
+ * Correct global varibale. 
  * Revision 1.40  2008/12/17 16:20:22Z  rm10919
  * Changes for combined fonts. IT6562
  * Revision 1.39  2008/12/16 22:01:42Z  rm10919
@@ -101,7 +103,6 @@
 bool captureTextID = false;
 string captureTextIDStr;
 const char * captureScreenName = NULL;
-int simTextBold = 0;
 #endif /* if CPU==SIMNT */
 
 
@@ -132,6 +133,7 @@ bool CGUIText::_tokenSplitMethodSelected = false;
 int currentLanguage = 0;
 int CGUIText::_defaultFontIndex = 0;
 bool simAddFonts = false;
+int simTextBold = 0;
 
 // Declare & initialize font range list.
 list< FontRange * > CGUIText::_fontRange;
@@ -549,7 +551,6 @@ void CGUIText::getTokenSize( CGUIRegion & region, int startIndex = -1, int lengt
 	if( _fontRange.size() > 0 )
 	{
 		int segmentLength = 0;
-		int finalIndex = 0;
 
 		if( startIndex >= 0 && length > 0 )
 		{

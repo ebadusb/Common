@@ -2,6 +2,8 @@
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.43  2008/12/17 21:35:47Z  rm10919
+ * Correction on text length for combined fonts. IT 6562
  * Revision 1.42  2008/12/17 19:16:01Z  rm10919
  * Fix global variable definition for build.
  * Revision 1.41  2008/12/17 16:46:37Z  rm10919
@@ -969,8 +971,7 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
 	{
 		UGL_SIZE width = 0;
 		UGL_SIZE height = 0;
-
-		uglTextSizeGet(_stylingRecord.fontId, &width, &height, 1, " ");
+		uglTextSizeGet(getFontId(0x0020), &width, &height, 1," ");
 		spacePixelSize = width;
 		singleLineHeight = height;
 	}

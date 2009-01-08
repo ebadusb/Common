@@ -5,6 +5,8 @@
  *
  *
  * $Log: cgui_button_shaded.cpp $
+ * Revision 1.1  2008/11/06 22:19:42Z  rm10919
+ * Initial revision
  *
  */
  
@@ -13,242 +15,141 @@
 #include "cgui_bitmap_info_shaded.h"
 #include "cgui_button_shaded.h"
 
-CGUIButtonShaded::CGUIButtonShaded( CGUIDisplay & display, CGUIWindow * parent, CGUIRegion region, const CGUIBitmapInfoShaded::ColorScheme enabledColorScheme, const CGUIBitmapInfoShaded::ColorScheme disabledColorScheme, const CallbackBase buttonReleasedCallback, const char * buttonId, CGUITextItem * textItem, CGUIButton::ButtonBehavior buttonBehavoir ):
-												_display( display ), _parent( parent ),
-												_region( region ),
-												_buttonReleasedCallback( buttonReleasedCallback )
+//	Simple Buttons
+CGUIButtonShaded::CGUIButtonShaded( CGUIDisplay & display, CGUIWindow * parent, CGUIRegion region, const ColorScheme enabledColorScheme, const ColorScheme disabledColorScheme, const ShadeType shadeType, const char * buttonId, CGUIButton::ButtonBehavior buttonBehavoir, CGUITextItem * textItem ):
+												CGUIButton( display )
 {
-	_buttonData.left = _region.x;
-	_buttonData.top = _region.y;
-	_buttonData.vMargin = 3;
-	_buttonData.hMargin = 3;
-
-	_buttonData.enabledBitmapId = CGUIBitmapInfoShaded::createShadedBitmapData( enabledColorScheme, CGUIBitmapInfoShaded::BottomTop, 1, _region.width, _region.height );
-	_buttonData.enabledTextItem = textItem;
-	_buttonData.enabledStylingRecord = NULL;
-	_buttonData.enabledButtonIcon = NULL;
-
-	_buttonData.disabledBitmapId =  CGUIBitmapInfoShaded::createShadedBitmapData( disabledColorScheme, CGUIBitmapInfoShaded::BottomTop, 1, _region.width, _region.height );
-	_buttonData.disabledTextItem = textItem;
-	_buttonData.disabledStylingRecord = NULL;
-	_buttonData.disabledButtonIcon = NULL;
-
-	_buttonData.pressedBitmapId = CGUIBitmapInfoShaded::createShadedBitmapData( enabledColorScheme, CGUIBitmapInfoShaded::TopBottom, 1, _region.width, _region.height );
-	_buttonData.pressedTextItem = NULL;
-	_buttonData.pressedStylingRecord = NULL;
-	_buttonData.pressedButtonIcon = NULL;
-
-	_buttonData.type = buttonBehavoir;
+	CGUIButton::ButtonData buttonData;
 	
-	if ( buttonId ) strcpy( _buttonData.alternateButtonId, buttonId );
+	buttonData.left = region.x;
+	buttonData.top = region.y;
+	buttonData.vMargin = 3;
+	buttonData.hMargin = 3;
 
-	_button = new CGUIButton( _display, _parent, _buttonData );
-	_button->setReleasedCallback( Callback<CGUIButtonShaded>( this, &CGUIButtonShaded::buttonCallback ));
-	_button->enable();
+	buttonData.enabledBitmapId = CGUIBitmapInfoShaded::createShadedBitmapData( enabledColorScheme, shadeType, 1, region.width, region.height );
+	buttonData.enabledTextItem = textItem;
+	buttonData.enabledStylingRecord = NULL;
+	buttonData.enabledButtonIcon = NULL;
+
+	buttonData.disabledBitmapId =  CGUIBitmapInfoShaded::createShadedBitmapData( disabledColorScheme, shadeType, 1, region.width, region.height );
+	buttonData.disabledTextItem = textItem;
+	buttonData.disabledStylingRecord = NULL;
+	buttonData.disabledButtonIcon = NULL;
+
+	buttonData.pressedBitmapId = CGUIBitmapInfoShaded::createShadedBitmapData( enabledColorScheme, getPressedShadeType( shadeType ), 1, region.width, region.height );
+	buttonData.pressedTextItem = NULL;
+	buttonData.pressedStylingRecord = NULL;
+	buttonData.pressedButtonIcon = NULL;
+
+	buttonData.type = buttonBehavoir;
+	
+	if ( buttonId ) strcpy( buttonData.alternateButtonId, buttonId );
+
+	setCGUIButton( display, parent, buttonData );
 }
 
-CGUIButtonShaded::CGUIButtonShaded( CGUIDisplay & display, CGUIWindow * parent, CGUIRegion region, const CGUIBitmapInfoShaded::ColorScheme enabledColorScheme, const CGUIBitmapInfoShaded::ColorScheme disabledColorScheme, const CallbackBase buttonReleasedCallback, const char * buttonId, CGUIButton::ButtonStateType buttonState, CGUIButton::ButtonBehavior buttonBehavoir, CGUITextItem * enabledTextItem , CGUITextItem * disabledTextItem , CGUITextItem * pressedTextItem ):
-												_display( display ), _parent( parent ),
-												_region( region ),
-												_buttonReleasedCallback( buttonReleasedCallback )
+CGUIButtonShaded::CGUIButtonShaded( CGUIDisplay & display, CGUIWindow * parent, CGUIRegion region, ButtonDataShaded & enabledButtonDataShaded, ButtonDataShaded & disabledButtonDataShaded, const char * buttonId, CGUIButton::ButtonBehavior buttonBehavoir ):
+												CGUIButton( display )
+{		
+	CGUIButton::ButtonData buttonData;
+	
+	buttonData.left = region.x;
+	buttonData.top = region.y;
+	buttonData.vMargin = 3;
+	buttonData.hMargin = 3;
 
+	buttonData.enabledBitmapId = CGUIBitmapInfoShaded::createShadedBitmapData( enabledButtonDataShaded.colorScheme, enabledButtonDataShaded.shadeType, enabledButtonDataShaded.borderWidth, region.width, region.height );
+	buttonData.enabledTextItem = enabledButtonDataShaded.textItem;
+	buttonData.enabledStylingRecord = enabledButtonDataShaded.stylingRecord;
+	buttonData.enabledButtonIcon = enabledButtonDataShaded.buttonIcon;
+
+	buttonData.disabledBitmapId =  CGUIBitmapInfoShaded::createShadedBitmapData( disabledButtonDataShaded.colorScheme, disabledButtonDataShaded.shadeType, disabledButtonDataShaded.borderWidth, region.width, region.height );
+	buttonData.disabledTextItem = disabledButtonDataShaded.textItem;
+	buttonData.disabledStylingRecord = disabledButtonDataShaded.stylingRecord;
+	buttonData.disabledButtonIcon = disabledButtonDataShaded.buttonIcon;
+
+	buttonData.pressedBitmapId = CGUIBitmapInfoShaded::createShadedBitmapData( enabledButtonDataShaded.colorScheme, getPressedShadeType( enabledButtonDataShaded.shadeType ), enabledButtonDataShaded.borderWidth, region.width, region.height );
+	buttonData.pressedTextItem = NULL;
+	buttonData.pressedStylingRecord = NULL;
+	buttonData.pressedButtonIcon = NULL;
+
+	buttonData.type = buttonBehavoir;
+	
+	if ( buttonId ) strcpy( buttonData.alternateButtonId, buttonId );
+
+	setCGUIButton( display, parent, buttonData );
+}
+
+// Special Buttons
+CGUIButtonShaded::CGUIButtonShaded( CGUIDisplay & display, CGUIWindow * parent, CGUIRegion region, ButtonDataShaded & enabledButtonDataShaded, ButtonDataShaded & disabledButtonDataShaded, ButtonDataShaded & pressedButtonDataShaded, const char * buttonId, CGUIButton::ButtonBehavior buttonBehavoir ):
+												CGUIButton( display )
 {
-	_buttonData.left = _region.x;
-	_buttonData.top = _region.y;
-	_buttonData.vMargin = 3;
-	_buttonData.hMargin = 3;
+	CGUIButton::ButtonData buttonData;
+	
+	buttonData.left = region.x;
+	buttonData.top = region.y;
+	buttonData.vMargin = 3;
+	buttonData.hMargin = 3;
 
-	_buttonData.enabledBitmapId = CGUIBitmapInfoShaded::createShadedBitmapData( enabledColorScheme, CGUIBitmapInfoShaded::BottomTop, 1, _region.width, _region.height );
-	_buttonData.enabledTextItem = enabledTextItem;
-	_buttonData.enabledStylingRecord = NULL;
-	_buttonData.enabledButtonIcon = NULL;
+	buttonData.enabledBitmapId = CGUIBitmapInfoShaded::createShadedBitmapData( enabledButtonDataShaded.colorScheme, enabledButtonDataShaded.shadeType, enabledButtonDataShaded.borderWidth, region.width, region.height );
+	buttonData.enabledTextItem = enabledButtonDataShaded.textItem;
+	buttonData.enabledStylingRecord = pressedButtonDataShaded.stylingRecord;
+	buttonData.enabledButtonIcon = pressedButtonDataShaded.buttonIcon;
 
-	_buttonData.disabledBitmapId =  CGUIBitmapInfoShaded::createShadedBitmapData( disabledColorScheme, CGUIBitmapInfoShaded::BottomTop, 1, _region.width, _region.height );
-	_buttonData.disabledTextItem = disabledTextItem;
-	_buttonData.disabledStylingRecord = NULL;
-	_buttonData.disabledButtonIcon = NULL;
+	buttonData.disabledBitmapId =  CGUIBitmapInfoShaded::createShadedBitmapData( disabledButtonDataShaded.colorScheme, disabledButtonDataShaded.shadeType, disabledButtonDataShaded.borderWidth, region.width, region.height );
+	buttonData.disabledTextItem = pressedButtonDataShaded.textItem;
+	buttonData.disabledStylingRecord = pressedButtonDataShaded.stylingRecord;
+	buttonData.disabledButtonIcon = pressedButtonDataShaded.buttonIcon;
 
-	_buttonData.pressedBitmapId = CGUIBitmapInfoShaded::createShadedBitmapData( enabledColorScheme, CGUIBitmapInfoShaded::TopBottom, 1, _region.width, _region.height );
-	_buttonData.pressedTextItem = pressedTextItem;
-	_buttonData.pressedStylingRecord = NULL;
-	_buttonData.pressedButtonIcon = NULL;
+	buttonData.pressedBitmapId = CGUIBitmapInfoShaded::createShadedBitmapData( pressedButtonDataShaded.colorScheme, pressedButtonDataShaded.shadeType, pressedButtonDataShaded.borderWidth, region.width, region.height );
+	buttonData.pressedTextItem = pressedButtonDataShaded.textItem;
+	buttonData.pressedStylingRecord = pressedButtonDataShaded.stylingRecord;
+	buttonData.pressedButtonIcon = pressedButtonDataShaded.buttonIcon;
 
-	_buttonData.type = buttonBehavoir;
+	buttonData.type = buttonBehavoir;
 
-	if ( buttonId ) strcpy( _buttonData.alternateButtonId, buttonId );
+	if ( buttonId ) strcpy( buttonData.alternateButtonId, buttonId );
 
-	_button = new CGUIButton( _display, _parent, _buttonData );
-	_button->setReleasedCallback( Callback<CGUIButtonShaded>( this, &CGUIButtonShaded::buttonCallback ));
-
-   switch( buttonState )
-	{
-		case CGUIButton::Pressed:
-			_button->enablePressed();
-			break;
-
-		case CGUIButton::NoButtonState:
-		case CGUIButton::Released:
-			_button->enableReleased();
-			break;
-
-		case CGUIButton::Disabled:
-			_button->disable();
-			break;
-	}
+	setCGUIButton( display, parent, buttonData );
 }
 
 CGUIButtonShaded::~CGUIButtonShaded()
 {
-	if( _button ) delete _button;
-}
 
-void CGUIButtonShaded::buttonCallback()
-{
-	_buttonReleasedCallback();
 }
 
 
-// Set button state functions.
-//
-void CGUIButtonShaded::disable()
+ShadeType CGUIButtonShaded::getPressedShadeType( const ShadeType enabledShadeType )
 {
-	_button->disable();
-}
+	ShadeType pressedShadeType;
 
-void CGUIButtonShaded::enable()
-{
-	_button->enable();
-}
+	switch( enabledShadeType )
+	{
+		case NoShade:
+			pressedShadeType = NoShade;
+			break;
 
-void CGUIButtonShaded::enablePressed()
-{
-	_button->enablePressed();
-}
+		case Solid:
+			pressedShadeType = Solid;
+			break;
 
-void CGUIButtonShaded::enableReleased()
-{
-	_button->enableReleased();
-}
+		case TopBottom:
+			pressedShadeType = BottomTop;
+			break;
 
-// Set button text functions.
-//
-void CGUIButtonShaded::setText( CGUITextItem * textItem )
-{
-	_button->setText( textItem );
-}
+		case BottomTop:
+			pressedShadeType = TopBottom;
+			break;
 
-void CGUIButtonShaded::setText( const StringChar * string )
-{
-	_button->setText( string );
-}
+		case LeftRight:
+			pressedShadeType = RightLeft;
+			break;
 
-void CGUIButtonShaded::setText()
-{
-	_button->setText();
-}
+		case RightLeft:
+			pressedShadeType = LeftRight;
+			break;
+	}
 
-void CGUIButtonShaded::setEnabledText( CGUITextItem * textItem )
-{
-	_button->setEnabledText( textItem );
-}
-
-void CGUIButtonShaded::setEnabledText( const StringChar * string )
-{
-	_button->setEnabledText( string );
-}
-
-void CGUIButtonShaded::setStylingRecord( StylingRecord * newStylingRecord )
-{
-	_button->setStylingRecord( newStylingRecord );
-}
-
-
-void CGUIButtonShaded::setEnabledTextColor( CGUIColor color )
-{
-	_button->setEnabledTextColor( color );
-}
-
-void CGUIButtonShaded::setDisabledTextColor( CGUIColor color )
-{
-	_button->setDisabledTextColor( color );
-}
-
-
-void CGUIButtonShaded::setPressedTextColor( CGUIColor color )
-{
-	_button->setPressedTextColor( color );
-}
-
-
-void CGUIButtonShaded::setTextColor( CGUIColor color )
-{
-	_button->setTextColor( color );
-}
-
-
-void CGUIButtonShaded::addIcon( CGUIBitmapInfo * bitmapInfo, const short x, const short y, CGUIButton::ButtonStateType buttonStateType = CGUIButton::NoButtonState )
-{
-	_button->addIcon( bitmapInfo, x, y, buttonStateType );
-}
-
-
-//	Messages and Callbacks
-// 
-void CGUIButtonShaded::setMessage( Message<long>* newEventMessage )
-{
-	_button->setMessage( newEventMessage );
-}
-
-void CGUIButtonShaded::enablePressedMessage()
-{
-	_button->enablePressedMessage();
-}
-
-void CGUIButtonShaded::disablePressedMessage()
-{
-	_button->disablePressedMessage();
-}
-
-void CGUIButtonShaded::enableReleasedMessage()
-{
-	_button->enableReleasedMessage();
-}
-
-void CGUIButtonShaded::disableReleasedMessage()
-{
-	_button->disableReleasedMessage();
-}
-
-
-void CGUIButtonShaded::setPressedCallback( const CallbackBase cb )
-{
-	_button->setPressedCallback( cb );
-}
-
-void CGUIButtonShaded::setReleasedCallback( const CallbackBase cb )
-{
-	_button->setReleasedCallback( cb );
-}
-
-
-void CGUIButtonShaded::enablePressedCallback()
-{
-	_button->enablePressedCallback();
-}
-
-void CGUIButtonShaded::disablePressedCallback()
-{
-	_button->disablePressedCallback();
-}
-
-
-void CGUIButtonShaded::enableReleasedCallback()
-{
-	_button->enableReleasedCallback();
-}
-
-void CGUIButtonShaded::disableReleasedCallback()
-{
-	_button->disableReleasedCallback();
+	return pressedShadeType;
 }
 

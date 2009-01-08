@@ -6,6 +6,8 @@
  *  can be used to generate a standard button.
  *  
  *  $Log: cgui_button.h $
+ *  Revision 1.27  2008/11/13 20:31:23Z  rm10919
+ *  Add initializer to button data struct. IT6488
  *  Revision 1.26  2008/11/06 22:24:15Z  rm10919
  *  Add transparent and shaded bitmaps and shaded buttons.
  *  Revision 1.25  2008/05/20 20:29:20Z  jl11312
@@ -105,39 +107,39 @@ public:
 		NoButtonState
 	};
 
-struct ButtonIcon
-{
-   ButtonIcon( void ){ _iconBitmap = NULL; _buttonStateType = NoButtonState; _iconId = 0; };
+	struct ButtonIcon
+	{
+		ButtonIcon( void ){ _iconBitmap = NULL; _buttonStateType = NoButtonState; _iconId = 0; };
 	
-   ButtonIcon( CGUIDisplay & display, CGUIBitmapInfo * iconBitmapInfo, ButtonStateType buttonStateType, short x, short y ):
-               _buttonStateType( buttonStateType )
-	{ 
-		_iconId = setIconId();
-		_iconBitmap = new CGUIBitmap( display, CGUIRegion( x, y, 0, 0 ), *iconBitmapInfo);
-	};
+		ButtonIcon( CGUIDisplay & display, CGUIBitmapInfo * iconBitmapInfo, ButtonStateType buttonStateType, short x, short y ):
+						_buttonStateType( buttonStateType )
+		{ 
+			_iconId = setIconId();
+			_iconBitmap = new CGUIBitmap( display, CGUIRegion( x, y, 0, 0 ), *iconBitmapInfo);
+		};
 
-	~ButtonIcon(void)
-	{ 
-		if( _iconBitmap ) delete _iconBitmap;
-	}
+		~ButtonIcon(void)
+		{ 
+			if( _iconBitmap ) delete _iconBitmap;
+		}
 
-   int getIconId( void ){ return _iconId; };
+		int getIconId( void ){ return _iconId; };
 
-	void setButtonStateType( ButtonStateType buttonStateType ){ _buttonStateType = buttonStateType; };
-	CGUIBitmap * getBitmap( void ){ return _iconBitmap; };
-	ButtonStateType getButtonStateType( void ){ return _buttonStateType; };
-	void setVisible( bool newVisible ){ _iconBitmap->setVisible( newVisible ); };
+		void setButtonStateType( ButtonStateType buttonStateType ){ _buttonStateType = buttonStateType; };
+		CGUIBitmap * getBitmap( void ){ return _iconBitmap; };
+		ButtonStateType getButtonStateType( void ){ return _buttonStateType; };
+		void setVisible( bool newVisible ){ _iconBitmap->setVisible( newVisible ); };
    
-private:
+	private:
 
-	CGUIBitmap * _iconBitmap;
-   ButtonStateType _buttonStateType;
-	int _iconId;
+		CGUIBitmap * _iconBitmap;
+		ButtonStateType _buttonStateType;
+		int _iconId;
 
-	static int _iconCounter;
+		static int _iconCounter;
 
-   int setIconId( void ){ if( _iconId < 1 ) _iconId = _iconCounter++; return _iconId; };
-};
+		int setIconId( void ){ if( _iconId < 1 ) _iconId = _iconCounter++; return _iconId; };
+	};	//  ButtonIcon struct
   
    struct ButtonData
    {
@@ -464,15 +466,35 @@ protected:
    //  	if button is visible, reset to invisible internally and with parent
    virtual void doOnInvisible();
 
+protected:
+	// Used to create button for derived classes.
+   void setCGUIButton( CGUIDisplay & display, CGUIWindow * parent, ButtonData & buttonData,
+							  Message<long>      * pressEventObject = NULL,	// ptr to int message object to output when button is pressed and released
+																							// can be NULL to indicate no message is output
+							  Message<long>      * audioMessage = NULL,		// ptr to audio message to send when button is pressed
+							  DataLog_Level      * buttonLevel = NULL,		// datalog level object used to log button press events
+							  bool                 enabled = true,				// button will be enabled unless specified here
+							  bool                 visible = true,				// button will be visbile unless otherwise specified here
+							  bool                 pressed = false );
+
+	// common code for creating button ( constructor and setCGUIButton Method )
+	void initializeButton( CGUIDisplay & display, CGUIWindow * parent, ButtonData & buttonData,
+						  Message<long>      * pressEventObject = NULL,
+						  Message<long>      * audioMessage = NULL,
+						  DataLog_Level      * buttonLevel = NULL,
+						  bool                 enabled = true,
+						  bool                 visible = true,
+						  bool                 pressed = false);
+	
+   //Constructor for derived classes
+	CGUIButton( CGUIDisplay & display );
 
 private:
    bool _pressed;
 
-private:
 	CGUIButton();
-	CGUIButton (CGUIButton & copy);
-	CGUIButton operator=(CGUIButton &obj);
-
+	CGUIButton( CGUIButton & copy );
+	CGUIButton operator = ( CGUIButton &object );
 };
 
 #endif /* #ifndef _CGUI_BUTTON_INCLUDE */

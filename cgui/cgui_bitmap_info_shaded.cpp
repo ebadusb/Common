@@ -10,6 +10,8 @@
 *		already exsists before creating the shaded bitmap data.
 *
 * $Log: cgui_bitmap_info_shaded.cpp $
+* Revision 1.1  2008/11/06 22:19:41Z  rm10919
+* Initial revision
 *
 *
 */
@@ -34,7 +36,7 @@ CGUIBitmapInfoShaded::~CGUIBitmapInfoShaded()
 	
 }
 
-CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( RGB startColor, RGB endColor, ShadeType shadeType,/* BorderShape borderShape,*/ /*BorderShadeType borderShadeType,*/ short borderWidth, short bitmapWidth, short bitmapHeight )
+CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( RGB startColor, RGB endColor, ShadeType shadeType, short borderWidth, short bitmapWidth, short bitmapHeight, BitmapShape bitmapShape /* = NoShape */ )
 {
 	// return value variable
 	//
@@ -59,7 +61,7 @@ CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( RGB startColor, R
 }
 
 
-CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( const ColorScheme colorScheme, ShadeType shadeType, /*BorderScheme borderScheme,*/ short borderWidth, short bitmapWidth, short bitmapHeight )
+CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( const ColorScheme colorScheme, ShadeType shadeType, short borderWidth, short bitmapWidth, short bitmapHeight, BitmapShape bitmapShape /* = NoShape */ )
 {
 	// return value variable
 	//
@@ -81,7 +83,7 @@ CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( const ColorScheme
 }
 
 
-CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( BitmapMetrics &bitmapMetrics )
+CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( BitmapMetrics &bitmapMetrics, BitmapShape bitmapShape /* = NoShape */ )
 {	
 	// return value variable
 	//
@@ -176,7 +178,10 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 	
 	if( numberOfColors < 0 ) 
 		numberOfColors = abs( numberOfColors );
-   
+
+	if( startColor.lum == endColor.lum )
+		numberOfColors = 1;
+	
 	//4.Ensure that lVvalue is assigned the lightest of the two colors
 	if( endColor.lum > startColor.lum )
 	{
@@ -630,7 +635,7 @@ void CGUIBitmapInfoShaded::createBorder( UGL_DEVICE_ID devId, BitmapMetrics &bit
 }
 
 
-CGUIBitmapInfoShaded::HSL CGUIBitmapInfoShaded::rgbToHSL( RGB rgb )
+HSL CGUIBitmapInfoShaded::rgbToHSL( RGB rgb )
 {
 	// return value
 	HSL returnHSL;
@@ -739,7 +744,7 @@ CGUIBitmapInfoShaded::HSL CGUIBitmapInfoShaded::rgbToHSL( RGB rgb )
 	return returnHSL;
 }
 
-CGUIBitmapInfoShaded::RGB CGUIBitmapInfoShaded::hslToRGB( HSL hsl )
+RGB CGUIBitmapInfoShaded::hslToRGB( HSL hsl )
 {
 	// return value
 	RGB returnRGB;
@@ -825,7 +830,7 @@ short CGUIBitmapInfoShaded::hslColorRangeConverter( float color, float p, float 
 }
 
 
-bool CGUIBitmapInfoShaded::RGB::operator == ( const RGB rgb ) const
+bool RGB::operator == ( const RGB rgb ) const
 {
 	bool result = false;
 
@@ -847,7 +852,7 @@ bool CGUIBitmapInfoShaded::RGB::operator == ( const RGB rgb ) const
 	return result;
 }
 
-bool CGUIBitmapInfoShaded::RGB::operator < ( const RGB rgb ) const
+bool RGB::operator < ( const RGB rgb ) const
 {
 	bool result = false;
 
@@ -874,7 +879,7 @@ bool CGUIBitmapInfoShaded::RGB::operator < ( const RGB rgb ) const
 }
 
 
-bool CGUIBitmapInfoShaded::ColorScheme::operator == ( const ColorScheme colorScheme ) const
+bool ColorScheme::operator == ( const ColorScheme colorScheme ) const
 {
    bool result = true;
 	
@@ -897,7 +902,7 @@ bool CGUIBitmapInfoShaded::ColorScheme::operator == ( const ColorScheme colorSch
 	return result;
 }
 
-bool CGUIBitmapInfoShaded::ColorScheme::operator < ( const ColorScheme colorScheme ) const
+bool ColorScheme::operator < ( const ColorScheme colorScheme ) const
 {
 	bool result = false;
 

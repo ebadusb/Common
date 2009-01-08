@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.35  2008/12/08 19:06:09Z  rm10919
+ *  Remove extra logging from pointer events.
  *  Revision 1.34  2008/11/06 22:24:15Z  rm10919
  *  Add transparent and shaded bitmaps and shaded buttons.
  *  Revision 1.33  2008/05/20 20:29:20Z  jl11312
@@ -90,16 +92,16 @@ using namespace GuiButtonPressMessageRes;
 int CGUIButton::ButtonIcon::_iconCounter = 0;
 
 // CONSTRUCTOR
-CGUIButton::CGUIButton  (CGUIDisplay        & display,                // reference to a cguidisplay object for display context
-                         CGUIWindow         * parent,                 // pointer to a parent window
-                         ButtonData         & buttonData,             // reference to button data for bitmaps, text and behavior
-                         Message<long>      * pressEventObject = NULL,// ptr to int message object to output when button is pressed and released
-                                                                      // can be NULL to indicate no message is output
-                         Message<long>      * audioMessage = NULL,    // ptr to audio message to send when button is pressed
-                         DataLog_Level      * buttonLevel = NULL,     // datalog level object used to log button press events
-                         bool                 enabled = true,         // button will be constructed as enabled unless specified here
-                         bool                 visible = true,         // button will be constructed as visbile unless otherwise specified here
-                         bool                 pressed = false
+CGUIButton::CGUIButton  (CGUIDisplay        & display,          	   		// reference to a cguidisplay object for display context
+                         CGUIWindow         * parent,            				// pointer to a parent window
+                         ButtonData         & buttonData,             		// reference to button data for bitmaps, text and behavior
+                         Message<long>      * pressEventObject /*= NULL*/,	// ptr to int message object to output when button is pressed and released
+																									// can be NULL to indicate no message is output
+                         Message<long>      * audioMessage /*= NULL*/,    	// ptr to audio message to send when button is pressed
+                         DataLog_Level      * buttonLevel /*= NULL*/,     	// datalog level object used to log button press events
+                         bool                 enabled /*= true*/,         	// button will be constructed as enabled unless specified here
+                         bool                 visible /*= true*/,         	// button will be constructed as visbile unless otherwise specified here
+                         bool                 pressed /*= false*/
                         ) :
       CGUIWindow(display),
       _buttonState(CGUIButton::Released),
@@ -108,63 +110,101 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
       _pressed(pressed),
       _alternateLogTextUsed(false)
 {
-   if (!buttonLevel)
-   {
-      buttonLevel = &log_level_critical;
-   }
-   // Button size is based on enabled bitmap (all bitmaps should be the same size anyway)
-   CGUIRegion buttonRegion = CGUIRegion(buttonData.left, buttonData.top, 0, 0); //buttonData.enabledBitmapId->getWidth(), buttonData.enabledBitmapId->getHeight());
+	initializeButton( display, parent, buttonData,
+							pressEventObject, audioMessage, buttonLevel, enabled, visible, pressed );
 
-   _enabled = enabled;
+}	
 
-   if (buttonData.enabledBitmapId)
-   {
-      _enabledBitmap = new CGUIBitmap (display, CGUIRegion(0,0,0,0), *buttonData.enabledBitmapId);
-      buttonRegion = CGUIRegion(buttonData.left, buttonData.top, _enabledBitmap->getRegion().width, _enabledBitmap->getRegion().height);
-      setRegion(buttonRegion);
-      addObjectToFront(_enabledBitmap);
-   }
-   else
-   {
+CGUIButton::CGUIButton(CGUIDisplay & display):CGUIWindow(display)
+{
+	
+}
+
+void CGUIButton::setCGUIButton( CGUIDisplay & display, CGUIWindow * parent, ButtonData & buttonData,
+										  Message<long>      * pressEventObject /*= NULL*/,	// ptr to int message object to output when button is pressed and released
+																												// can be NULL to indicate no message is output
+										  Message<long>      * audioMessage /*= NULL*/,			// ptr to audio message to send when button is pressed
+										  DataLog_Level      * buttonLevel /*= NULL*/,			// datalog level object used to log button press events
+										  bool                 enabled /*= true*/,				// button will be enabled unless specified here
+										  bool                 visible /*= true*/,				// button will be visbile unless otherwise specified here
+										  bool                 pressed /*= false*/ )
+{
+	_buttonState = CGUIButton::Released;
+	_behaviorType = buttonData.type;
+	_iconPointer = NULL;
+	_pressed = pressed;
+	_alternateLogTextUsed = false;
+	
+	initializeButton( display, parent, buttonData,
+							pressEventObject, audioMessage, buttonLevel, enabled, visible, pressed );
+
+}
+
+void CGUIButton::initializeButton( CGUIDisplay & display, CGUIWindow * parent, ButtonData & buttonData,
+											  Message<long>      * pressEventObject /*= NULL*/ ,
+											  Message<long>      * audioMessage /*= NULL*/ ,
+											  DataLog_Level      * buttonLevel /*= NULL */,
+											  bool                 enabled /*= true */,
+											  bool                 visible /*= true */,
+											  bool                 pressed /*= false*/ )
+{
+	if (!buttonLevel)
+	{
+		buttonLevel = &log_level_critical;
+	}
+	// Button size is based on enabled bitmap (all bitmaps should be the same size anyway)
+	CGUIRegion buttonRegion = CGUIRegion(buttonData.left, buttonData.top, 0, 0); //buttonData.enabledBitmapId->getWidth(), buttonData.enabledBitmapId->getHeight());
+
+	_enabled = enabled;
+
+	if (buttonData.enabledBitmapId)
+	{
+		_enabledBitmap = new CGUIBitmap (display, CGUIRegion(0,0,0,0), *buttonData.enabledBitmapId);
+		buttonRegion = CGUIRegion(buttonData.left, buttonData.top, _enabledBitmap->getRegion().width, _enabledBitmap->getRegion().height);
+		setRegion(buttonRegion);
+		addObjectToFront(_enabledBitmap);
+	}
+	else
+	{
 		_enabledBitmap = NULL;
-   }
+	}
 
-   if (buttonData.disabledBitmapId)
-   {
-      _disabledBitmap = new CGUIBitmap (display, CGUIRegion(0,0,0,0), *buttonData.disabledBitmapId);
-      if (!_enabled)
-      {
-         addObjectToFront(_disabledBitmap);
-      }else
-      {
-         addObjectToBack(_disabledBitmap);
-      }
-   }
+	if (buttonData.disabledBitmapId)
+	{
+		_disabledBitmap = new CGUIBitmap (display, CGUIRegion(0,0,0,0), *buttonData.disabledBitmapId);
+		if (!_enabled)
+		{
+			addObjectToFront(_disabledBitmap);
+		}else
+		{
+			addObjectToBack(_disabledBitmap);
+		}
+	}
 	else
 		_disabledBitmap = NULL;
-   
-   if (buttonData.pressedBitmapId)
-   {
-      _pressedBitmap = new CGUIBitmap (display, CGUIRegion(0,0,0,0), *buttonData.pressedBitmapId);
-      if (_pressed) 
-      { 
-         addObjectToFront(_pressedBitmap);
-      }else
-      {
-         addObjectToBack(_pressedBitmap);
-      }
-   }
+
+	if (buttonData.pressedBitmapId)
+	{
+		_pressedBitmap = new CGUIBitmap (display, CGUIRegion(0,0,0,0), *buttonData.pressedBitmapId);
+		if (_pressed) 
+		{ 
+			addObjectToFront(_pressedBitmap);
+		}else
+		{
+			addObjectToBack(_pressedBitmap);
+		}
+	}
 	else
 		_pressedBitmap = NULL;
 
 	// Background Icon Bitmaps
 	if( buttonData.enabledButtonIcon )
 	{
-      _iconList.push_front( buttonData.enabledButtonIcon ); 
+		_iconList.push_front( buttonData.enabledButtonIcon ); 
 		if( _enabled )
 		{
 			buttonData.enabledButtonIcon->setVisible( true );
-         addObjectToFront( buttonData.enabledButtonIcon->getBitmap());
+			addObjectToFront( buttonData.enabledButtonIcon->getBitmap());
 		}
 		else
 		{
@@ -172,7 +212,7 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
 			addObjectToBack( buttonData.enabledButtonIcon->getBitmap());
 		}
 	}
-	
+
 	if( buttonData.disabledButtonIcon )
 	{
 		_iconList.push_front( buttonData.disabledButtonIcon ); 
@@ -186,7 +226,6 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
 			buttonData.disabledButtonIcon->setVisible( true );
 			addObjectToFront( buttonData.disabledButtonIcon->getBitmap());
 		}
-		
 	}
 
 	if( buttonData.pressedButtonIcon )
@@ -205,50 +244,50 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
 		}
 	}
 
-   //
-   // Text stuff
-   //
-   if (buttonData.hMargin > 0)
-   {
-      _textRegion.x = buttonData.hMargin;      
-      _textRegion.width = _enabledBitmap->getRegion().width - 2 * buttonData.hMargin;
-      _haveTextRegion = true;
-   }
-   if (buttonData.vMargin > 0 )
-   {
-      _textRegion.y = buttonData.vMargin;
-      _textRegion.height = _enabledBitmap->getRegion().height - 2 * buttonData.hMargin;
-      _haveTextRegion = true;
-   }
+	//
+	// Text stuff
+	//
+	if (buttonData.hMargin > 0)
+	{
+		_textRegion.x = buttonData.hMargin;      
+		_textRegion.width = _enabledBitmap->getRegion().width - 2 * buttonData.hMargin;
+		_haveTextRegion = true;
+	}
+	if (buttonData.vMargin > 0 )
+	{
+		_textRegion.y = buttonData.vMargin;
+		_textRegion.height = _enabledBitmap->getRegion().height - 2 * buttonData.hMargin;
+		_haveTextRegion = true;
+	}
 
-   if (buttonData.vMargin < 1 || buttonData.hMargin < 1) _haveTextRegion = false;
+	if (buttonData.vMargin < 1 || buttonData.hMargin < 1) _haveTextRegion = false;
 
-   if (buttonData.enabledTextItem)
-   {
-      if (!buttonData.enabledStylingRecord)
-      {
-         buttonData.enabledStylingRecord = new StylingRecord(buttonData.enabledTextItem->getStylingRecord());
+	if (buttonData.enabledTextItem)
+	{
+		if (!buttonData.enabledStylingRecord)
+		{
+			buttonData.enabledStylingRecord = new StylingRecord(buttonData.enabledTextItem->getStylingRecord());
 			_enabledStylingRecordSaved = buttonData.enabledStylingRecord;
-      }
+		}
 
-      if (_haveTextRegion)
-      {
-         buttonData.enabledStylingRecord->region = _textRegion;
-      }
-      else if ((buttonData.enabledStylingRecord->region.width == 0) && (buttonData.enabledStylingRecord->region.height == 0))
-      {
-         buttonData.enabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
-         buttonData.enabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
-      }
+		if (_haveTextRegion)
+		{
+			buttonData.enabledStylingRecord->region = _textRegion;
+		}
+		else if ((buttonData.enabledStylingRecord->region.width == 0) && (buttonData.enabledStylingRecord->region.height == 0))
+		{
+			buttonData.enabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
+			buttonData.enabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
+		}
 
-      _enabledText = new CGUIText(display, buttonData.enabledTextItem, buttonData.enabledStylingRecord);
-      _enabledText->setCaptureBackgroundColor();
-      addObjectToFront(_enabledText);
-   }
-   else
-   {
-      _enabledText = NULL;
-   }
+		_enabledText = new CGUIText(display, buttonData.enabledTextItem, buttonData.enabledStylingRecord);
+		_enabledText->setCaptureBackgroundColor();
+		addObjectToFront(_enabledText);
+	}
+	else
+	{
+		_enabledText = NULL;
+	}
 
 	if ( buttonData.alternateButtonId[0] )
 	{
@@ -257,87 +296,86 @@ CGUIButton::CGUIButton  (CGUIDisplay        & display,                // referen
 	}
 	else if ( buttonData.enabledTextItem )
 	{
-      strncpy(_buttonPressLogText, buttonData.enabledTextItem->getId(), MAX_BUTTON_LOG_SIZE);
+		strncpy(_buttonPressLogText, buttonData.enabledTextItem->getId(), MAX_BUTTON_LOG_SIZE);
 	}
 	else
 	{
-	   strncpy(_buttonPressLogText, "NO ID", MAX_BUTTON_LOG_SIZE);
-   }
+		strncpy(_buttonPressLogText, "NO ID", MAX_BUTTON_LOG_SIZE);
+	}
 
 	_buttonPressLogText[MAX_BUTTON_LOG_SIZE] = 0;
 
-   if (buttonData.disabledTextItem)
-   {
-      if (!buttonData.disabledStylingRecord)
-      {
-         buttonData.disabledStylingRecord = new StylingRecord(buttonData.disabledTextItem->getStylingRecord());
+	if (buttonData.disabledTextItem)
+	{
+		if (!buttonData.disabledStylingRecord)
+		{
+			buttonData.disabledStylingRecord = new StylingRecord(buttonData.disabledTextItem->getStylingRecord());
 			_disabledStylingRecordSaved = buttonData.disabledStylingRecord;
-      }
+		}
 
-      if (_haveTextRegion)
-      {
-         buttonData.disabledStylingRecord->region = _textRegion;
-      }
-      else if ((buttonData.disabledStylingRecord->region.width == 0) && (buttonData.disabledStylingRecord->region.height == 0))
-      {
-         buttonData.disabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
-         buttonData.disabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
-      }
+		if (_haveTextRegion)
+		{
+			buttonData.disabledStylingRecord->region = _textRegion;
+		}
+		else if ((buttonData.disabledStylingRecord->region.width == 0) && (buttonData.disabledStylingRecord->region.height == 0))
+		{
+			buttonData.disabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
+			buttonData.disabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
+		}
 
-      _disabledText = new CGUIText(display, buttonData.disabledTextItem, buttonData.disabledStylingRecord);
-      _disabledText->setCaptureBackgroundColor();
-      _disabledText->setVisible(false);
-      addObjectToFront(_disabledText);
-   }
-   else
-   {
-      _disabledText = NULL;
-   }
+		_disabledText = new CGUIText(display, buttonData.disabledTextItem, buttonData.disabledStylingRecord);
+		_disabledText->setCaptureBackgroundColor();
+		_disabledText->setVisible(false);
+		addObjectToFront(_disabledText);
+	}
+	else
+	{
+		_disabledText = NULL;
+	}
 
-   if (buttonData.pressedTextItem)
-   {
-      if (!buttonData.pressedStylingRecord)
-      {
-         buttonData.pressedStylingRecord = new StylingRecord(buttonData.pressedTextItem->getStylingRecord());
+	if (buttonData.pressedTextItem)
+	{
+		if (!buttonData.pressedStylingRecord)
+		{
+			buttonData.pressedStylingRecord = new StylingRecord(buttonData.pressedTextItem->getStylingRecord());
 			_pressedStylingRecordSaved = buttonData.pressedStylingRecord;
-      }
+		}
 
-      if (_haveTextRegion)
-      {
-         buttonData.pressedStylingRecord->region = _textRegion;
-      }
-      else if ((buttonData.pressedStylingRecord->region.width == 0) && (buttonData.pressedStylingRecord->region.height == 0))
-      {
-         buttonData.pressedStylingRecord->region.width = _enabledBitmap->getRegion().width;
-         buttonData.pressedStylingRecord->region.height = _enabledBitmap->getRegion().height;
-      }
+		if (_haveTextRegion)
+		{
+			buttonData.pressedStylingRecord->region = _textRegion;
+		}
+		else if ((buttonData.pressedStylingRecord->region.width == 0) && (buttonData.pressedStylingRecord->region.height == 0))
+		{
+			buttonData.pressedStylingRecord->region.width = _enabledBitmap->getRegion().width;
+			buttonData.pressedStylingRecord->region.height = _enabledBitmap->getRegion().height;
+		}
 
-      _pressedText = new CGUIText(display, buttonData.pressedTextItem, buttonData.pressedStylingRecord);
-      _pressedText->setCaptureBackgroundColor();
-      _pressedText->setVisible(false);
-      addObjectToFront(_pressedText);
-   }
-   else
-   {
-      _pressedText = NULL;
-   }
+		_pressedText = new CGUIText(display, buttonData.pressedTextItem, buttonData.pressedStylingRecord);
+		_pressedText->setCaptureBackgroundColor();
+		_pressedText->setVisible(false);
+		addObjectToFront(_pressedText);
+	}
+	else
+	{
+		_pressedText = NULL;
+	}
 
-   attach(parent);
+	attach(parent);
 
-   if (pressEventObject)
-   {
-      _pressEventMessageEnabled = true;
-      _buttonMessagePointer = pressEventObject;
+	if (pressEventObject)
+	{
+		_pressEventMessageEnabled = true;
+		_buttonMessagePointer = pressEventObject;
 
-   }
-   else
-   {
-      _pressEventMessageEnabled = false;
-      _releasedEventMessageEnabled = false;
-      _buttonMessagePointer = NULL;
-   }
-
-}	
+	}
+	else
+	{
+		_pressEventMessageEnabled = false;
+		_releasedEventMessageEnabled = false;
+		_buttonMessagePointer = NULL;
+	}
+}
 
 void CGUIButton::attach(CGUIWindow * parent)
 {
@@ -448,64 +486,19 @@ void CGUIButton::enable(void)
     }
 }
 
-// ENABLE when top bitmap is pressed but enabled state
-//   to put the enable bitmap back on top.
-//  Set the state of the button to enabled.  
-//  If currently invisible, the button is made visible.
+// ENABLEReleased when top bitmap is pressed but  the button is in the
+// 	enabled state to put the released bitmap back on top.
+// 	Set the state of the button to enabled.  
+// 	If currently invisible, the button is made visible.
 void CGUIButton::enableWhenPressed(void)
 {
-    if(!_enabled || _pressed)
-    {
-      _enabled = true;
-      _pressed = false;
-      if (_disabledBitmap) moveObjectToBack(_disabledBitmap);
-      if (_pressedBitmap) moveObjectToBack(_pressedBitmap);
-      if (_enabledBitmap) moveObjectToFront(_enabledBitmap);
-
-	  if (_iconPointer) moveObjectToFront(_iconPointer);
-
-	  // set icons associated with release state
-     if( _iconList.size() > 0 )
-	  {
-		  list< ButtonIcon *>::iterator iconIter = _iconList.begin();
-
-		  while( iconIter != _iconList.end( ))
-		  {
-			  ButtonIcon * buttonIcon;
-			  buttonIcon = ( *iconIter );
-
-			  // move icon to front
-			  if( buttonIcon->getButtonStateType() == Released ||
-					buttonIcon->getButtonStateType() == NoButtonState )
-			  {
-				  buttonIcon->setVisible( true );
-				  moveObjectToFront( buttonIcon->getBitmap());
-			  }
-			  else 
-			  {		
-				  buttonIcon->setVisible( false );
-				  moveObjectToBack( buttonIcon->getBitmap());
-			  }
-			  iconIter++;
-		  }
-	  }
-
-      setDisabled(false);
-      setWindowVisibility(true);
-
-
-      if (_disabledText) _disabledText->setVisible(false);
-      if (_pressedText)  _pressedText->setVisible(false);
-
-      if (_enabledText)
-      {
-         _enabledText->setVisible(true);
-         _enabledText->setCaptureBackgroundColor();
-      }
-    }
+	// Renamed the function to more accurately 
+	//		describe the function.  Needed to keep 
+	// 	this function for code maintenance.
+	enableReleased();
 }
 
-// same enabledWhenPressed()
+
 void CGUIButton::enableReleased( void )
 {
     if(!_enabled || _pressed)

@@ -11,6 +11,8 @@
 * 			
 *
 * $Log: cgui_bitmap_info_shaded.h $
+* Revision 1.1  2008/11/06 22:19:41Z  rm10919
+* Initial revision
 *
 *
 */
@@ -21,59 +23,62 @@
 #include "cgui_bitmap_info.h"
 #include "cgui_graphics.h"
 
+	
+enum ShadeType
+{ 
+   NoShade,
+   Solid, 		// start and end color match
+   TopBottom,	// start color top, end color bottom
+	BottomTop, 	// start color bottom, end color top
+   LeftRight,	// start color left, end color right
+	RightLeft/*,	// start color right, end color left
+	CenterIn,	// start color outer edge, end color in center
+	CenterOut */	// start color center, end color outer edge
+};
+
+struct RGB
+{/*Lowest intensity at 0. Highest intensity at 255*/
+	short red;	//	red
+	short green;	//	green
+	short blue;	//	blue
+ 
+	bool operator == ( const RGB rgb ) const;
+	bool operator < ( const RGB rgb ) const;
+};
+
+struct HSL
+{
+   short hue;	//	hue
+	short sat;	//	saturation
+	short lum;	//	lightness (luminance)
+
+	HSL( void ) { memset( this, 0, sizeof( *this ) );}
+};
+
+struct ColorScheme
+{
+	RGB	colorStart;			//The starting lightness level of the chosen color. An RGB triplet.
+	RGB	colorEnd;			//The ending lightness level of the chosen color. An RGB triplet.
+
+	// needed for mapping function
+	bool ColorScheme::operator == ( const ColorScheme colorScheme ) const;
+	bool ColorScheme::operator < ( const ColorScheme colorScheme ) const;
+};
+
+enum BitmapShape
+{ 
+	NoShape,			// has not border around edge
+	Square,			// has square edge, no background color or mask needed
+	Rounded			// has rounded edges, Need mask for transparentcy????  Background color??? FUTURE!!!!!
+};
+
+
+
 class CGUIBitmapInfoShaded
 {
 public:
 	CGUIBitmapInfoShaded();
 	virtual ~CGUIBitmapInfoShaded();
-	
-	enum ShadeType
-	{ 
-		NoShade,
-		Solid, 		// start and end color match
-      TopBottom,	// start color top, end color bottom
-		BottomTop, 	// start color bottom, end color top
-		LeftRight,	// start color left, end color right
-		RightLeft/*,	// start color right, end color left
-		CenterIn,	// start color outer edge, end color in center
-		CenterOut */	// start color center, end color outer edge
-	 };
-
-	enum BorderShape
-	{ 
-		NoBorderShape,	// has not border around edge
-		Square/*,		// has square edge, no background color or mask needed
-		Rounded*/		// has rounded edges, Need mask for transparentcy????
-	};
-
-	struct RGB
-	{/*Lowest intensity at 0. Highest intensity at 255*/
-		short red;	//	red
-		short green;	//	green
-		short blue;	//	blue
-					// 
-		bool operator == ( const RGB rgb ) const;
-		bool operator < ( const RGB rgb ) const;
-	};
-
-	struct HSL
-	{
-		short hue;	//	hue
-		short sat;	//	saturation
-		short lum;	//	lightness (luminance)
-
-		HSL( void ) { memset( this, 0, sizeof( *this ) );}
-	};
-
-	struct ColorScheme
-	{
-		RGB	colorStart;			//The starting lightness level of the chosen color. An RGB triplet.
-		RGB	colorEnd;			//The ending lightness level of the chosen color. An RGB triplet.
-
-      // needed for mapping function
-		bool ColorScheme::operator == ( const ColorScheme coloScheme ) const;
-		bool ColorScheme::operator < ( const ColorScheme colorScheme ) const;
-	};
 
 	struct BitmapMetrics
 	{
@@ -94,9 +99,9 @@ public:
 	// Creates and adds shaded bitmap info data to map, returns pinter to CGUIBimapInfo data (in map).
 	//		If shaded bitmap exsists then it returns the CGUIBitmapInfo * without re-ceating it.
 	// 
-	static CGUIBitmapInfo * createShadedBitmapData( RGB startColor, RGB endColor, ShadeType shadeType, /*BorderShape borderShape,*/ /*BorderShadeType borderShadeType,*/ short borderWidth, short bitmapWidth, short bitmapHeight );
-	static CGUIBitmapInfo * createShadedBitmapData( const ColorScheme colorScheme, ShadeType shadeType, /*BorderScheme borderScheme,*/ short borderWidth, short bitmapWidth, short bitmapHeight );
-	static CGUIBitmapInfo * createShadedBitmapData( BitmapMetrics &bitmapMetrics );
+	static CGUIBitmapInfo * createShadedBitmapData( RGB startColor, RGB endColor, ShadeType shadeType,  short borderWidth, short bitmapWidth, short bitmapHeight, BitmapShape bitmapShape = NoShape );
+	static CGUIBitmapInfo * createShadedBitmapData( const ColorScheme colorScheme, ShadeType shadeType, short borderWidth, short bitmapWidth, short bitmapHeight, BitmapShape bitmapShape = NoShape );
+	static CGUIBitmapInfo * createShadedBitmapData( BitmapMetrics &bitmapMetrics, BitmapShape bitmapShape = NoShape );
 
 protected:
 

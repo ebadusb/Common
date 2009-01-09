@@ -5,6 +5,8 @@
  *
  *
  * $Log: cgui_button_shaded.cpp $
+ * Revision 1.2  2009/01/08 00:55:21Z  rm10919
+ * Updates and bug fixes for shaded buttons.
  * Revision 1.1  2008/11/06 22:19:42Z  rm10919
  * Initial revision
  *
@@ -121,7 +123,7 @@ CGUIButtonShaded::~CGUIButtonShaded()
 
 ShadeType CGUIButtonShaded::getPressedShadeType( const ShadeType enabledShadeType )
 {
-	ShadeType pressedShadeType;
+	ShadeType pressedShadeType = NoShade;
 
 	switch( enabledShadeType )
 	{

@@ -5,6 +5,8 @@
  *
  *
  * $Log: cgui_button_shaded.cpp $
+ * Revision 1.3  2009/01/08 17:04:54Z  rm10919
+ * Initialize return value.
  * Revision 1.2  2009/01/08 00:55:21Z  rm10919
  * Updates and bug fixes for shaded buttons.
  * Revision 1.1  2008/11/06 22:19:42Z  rm10919
@@ -99,9 +101,9 @@ CGUIButtonShaded::CGUIButtonShaded( CGUIDisplay & display, CGUIWindow * parent, 
 	buttonData.enabledButtonIcon = pressedButtonDataShaded.buttonIcon;
 
 	buttonData.disabledBitmapId =  CGUIBitmapInfoShaded::createShadedBitmapData( disabledButtonDataShaded.colorScheme, disabledButtonDataShaded.shadeType, disabledButtonDataShaded.borderWidth, region.width, region.height );
-	buttonData.disabledTextItem = pressedButtonDataShaded.textItem;
-	buttonData.disabledStylingRecord = pressedButtonDataShaded.stylingRecord;
-	buttonData.disabledButtonIcon = pressedButtonDataShaded.buttonIcon;
+	buttonData.disabledTextItem = disabledButtonDataShaded.textItem;
+	buttonData.disabledStylingRecord = disabledButtonDataShaded.stylingRecord;
+	buttonData.disabledButtonIcon = disabledButtonDataShaded.buttonIcon;
 
 	buttonData.pressedBitmapId = CGUIBitmapInfoShaded::createShadedBitmapData( pressedButtonDataShaded.colorScheme, pressedButtonDataShaded.shadeType, pressedButtonDataShaded.borderWidth, region.width, region.height );
 	buttonData.pressedTextItem = pressedButtonDataShaded.textItem;

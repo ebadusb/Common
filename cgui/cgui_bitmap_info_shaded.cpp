@@ -10,6 +10,8 @@
 *		already exsists before creating the shaded bitmap data.
 *
 * $Log: cgui_bitmap_info_shaded.cpp $
+* Revision 1.2  2009/01/08 00:55:18Z  rm10919
+* Updates and bug fixes for shaded buttons.
 * Revision 1.1  2008/11/06 22:19:41Z  rm10919
 * Initial revision
 *
@@ -455,183 +457,62 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 
 void CGUIBitmapInfoShaded::createBorder( UGL_DEVICE_ID devId, BitmapMetrics &bitmapMetrics, unsigned short *colorImage )
 {
-	int dimension = 0;
-	int rowSize = 0;
+	int dimension = bitmapMetrics.bitmapHeight;
+	int rowSize = bitmapMetrics.bitmapWidth;
 
-	UGL_COLOR black_rgb565;
-	UGL_COLOR white_rgb565;
+	UGL_COLOR highBorderColor;
+	UGL_COLOR lowBorderColor;
+	
+	UGL_ARGB whiteARGB	= UGL_MAKE_RGB( 250, 250, 250);
+	UGL_ARGB blackARGB	= UGL_MAKE_RGB( 0, 0, 0);
 
-	UGL_ARGB white_argb	= UGL_MAKE_RGB( 250, 250, 250);
-   uglColorAlloc( devId, &white_argb, UGL_NULL, &white_rgb565, 1);
-
-	UGL_ARGB black_argb	= UGL_MAKE_RGB( 0, 0, 0);
-	uglColorAlloc(devId, &black_argb, UGL_NULL, &black_rgb565, 1);
-
-	if( bitmapMetrics.shadeType == TopBottom ||
-		 bitmapMetrics.shadeType == BottomTop ||
+   if( bitmapMetrics.shadeType == TopBottom ||
+		 bitmapMetrics.shadeType == LeftRight ||
 		 bitmapMetrics.shadeType == Solid )
 	{
-      dimension = bitmapMetrics.bitmapHeight;
-		rowSize = bitmapMetrics.bitmapWidth;
+		uglColorAlloc( devId, &whiteARGB, UGL_NULL, &lowBorderColor, 1);
+		uglColorAlloc(devId, &blackARGB, UGL_NULL, &highBorderColor, 1);
    }
-	
-	if( bitmapMetrics.shadeType == RightLeft ||
-		 bitmapMetrics.shadeType == LeftRight )
+	else
 	{
-		dimension = bitmapMetrics.bitmapWidth;
-		rowSize  = bitmapMetrics.bitmapHeight;
+		// Case for BottomTop and RightLeft
+		uglColorAlloc( devId, &whiteARGB, UGL_NULL, &highBorderColor, 1);
+		uglColorAlloc(devId, &blackARGB, UGL_NULL, &lowBorderColor, 1);
 	}
-
-	switch( bitmapMetrics.shadeType )
+	//
+	//	Border for the top and bottom of button.
+	// 
+	for( int i = 0; i < rowSize; i++ )
 	{
-		case TopBottom:
-			for( int i = 0; i < rowSize; i++ )
-			{
-				//Bottom
-				//White line around button
-				colorImage[( dimension - 1) * rowSize + i ] = (unsigned short)white_rgb565;
-
-				//White Border
-				for( int k = 0; k < bitmapMetrics./*borderScheme.*/borderWidth; k++ )
-				{
-					colorImage[( dimension - ( 2 + k )) * rowSize + i ] = (unsigned short)white_rgb565;
-				}
-				//
-				//Top
-				//Black line around button
-				colorImage[i] = black_rgb565; 
-
-				//Black Border
-				for( int k = 0; k < bitmapMetrics./*borderScheme.*/borderWidth; k++ )
-				{
-					if( i < rowSize -( 1 + k ))
-					{
-                  colorImage[ i + rowSize * ( 1 + k )] 	= (unsigned short)black_rgb565;
-					}
-				}
-			}
-			
-			for( int i = 0; i < dimension; i++ )
-			{
-				//Right
-				//White line on far right
-				colorImage[( i + 2 ) * rowSize - 1 ] = (unsigned short)white_rgb565;
-
-				//White Border
-				for( int k = 0; k < bitmapMetrics./*borderScheme.*/borderWidth; k++ )
-				{
-					if(( i > ( 1 + k )) && ( i < dimension-2 ))
-					{
-						colorImage[( i + 1 ) * rowSize - ( 2 + k )] = (unsigned short)white_rgb565;
-					}
-				}
-				//
-				//Left
-				//Black line on far left
-				colorImage[ i * rowSize ] = (unsigned short)black_rgb565;
-
-				//Black Border
-				for( int k = 0; k < bitmapMetrics./*borderScheme.*/borderWidth; k++)
-				{
-					if( i < dimension - ( 1 + k ))
-					{
-						colorImage[ i * rowSize + ( 1 + k )] = (unsigned short)black_rgb565;
-					}	// if
-				}	// inside for loop
-			}	// outside for loop
-		break;
-
-		case BottomTop:
-			for( int i = 0; i < rowSize; i++ )
-			{
-				//Bottom
-				//Black Line on bottom row
-				colorImage[( dimension - 1 ) * rowSize + i ] = black_rgb565;
-
-				//Black Border
-				for( int k = 0; k < bitmapMetrics./*borderScheme.*/borderWidth; k++ )
-				{
-					if( i > k )
-					{
-						colorImage[( dimension - ( 2 + k )) * rowSize + i ] = black_rgb565;
-					}
-				}
-				//Top
-				//White Line on top row
-				colorImage[ i ] = white_rgb565;
-
-				//White Border
-				for( int k = 0; k < bitmapMetrics./*borderScheme.*/borderWidth; k++ )
-				{
-					if( i < rowSize - ( 1 + k ))
-					{
-						colorImage[ i + rowSize * ( 1 + k )] 	= white_rgb565;
-					}
-				}
-			}
-			for( int i = 0; i < dimension; i++ )
-			{
-				//Right
-				//Black Line on far right
-				colorImage[( i + 2 ) * rowSize - 1] = black_rgb565;
-
-				//Black Border
-				for( int k = 0; k < bitmapMetrics./*borderScheme.*/borderWidth; k++ )
-				{
-					if(( i > ( 1 + k )) && ( i < dimension - 2))
-					{
-						colorImage[( i + 1 ) * rowSize - ( 2 + k )] = black_rgb565;
-					}
-				}
-				//Left
-				//White line on far left
-				colorImage[ i * rowSize ] = white_rgb565;
-
-				//White Border
-				for( int k = 0; k < bitmapMetrics./*borderScheme.*/borderWidth; k++ )
-				{
-					if(( i > 1 ) && ( i < dimension - ( 2 + k )))
-					{
-						colorImage[ i * rowSize + ( 1 + k )] = white_rgb565;
-					}
-				}
-
-				//Bottom
-				//Redraw Black Line on bottom row
-				for( int i = 0; i < rowSize; i++ )
-				{
-               colorImage[( dimension - 1 ) * rowSize + i ] = black_rgb565;
-				}
-			}
-		break;
-
-		case RightLeft:
-		break;
-
-		case LeftRight:
-		break;
-
-		case Solid:
-			for( int i = 0; i < rowSize; i++ )
-			{
-				//Bottom
-				colorImage[( dimension - 1 ) * rowSize + i ] = black_rgb565;
-				//Top
-				colorImage[ i ] = black_rgb565;	
-			}
-			
-			for(int i = 0; i < dimension; i++ )
-			{
-				//Right
-				colorImage[( i + 1 ) * rowSize - 1 ] = black_rgb565;
-				//Left	
-				colorImage[ i * rowSize ] = black_rgb565;
-			}
-		break;
-
-		case NoShade:
-			break;
-	}
+		//Bottom Border
+		for( int k = 0; k < bitmapMetrics.borderWidth; k++ )
+		{
+			colorImage[( dimension - ( bitmapMetrics.borderWidth - k )) * rowSize + i ] = (unsigned short)lowBorderColor;
+		}
+		//
+		//Top Border
+		for( int k = 0; k < bitmapMetrics.borderWidth; k++ )
+		{
+			colorImage[ i + rowSize * ( bitmapMetrics.borderWidth - k - 1 )]  = (unsigned short)highBorderColor;
+		}	//	inside for loop 
+	}	//	outside for loop
+	//
+	// Border for the right and left sides of button.
+	//
+	for( int i = 0; i < dimension; i++ )
+	{
+		//Right White Line on Far Right
+		for( int k = 0; k < bitmapMetrics.borderWidth; k++ )
+		{
+			colorImage[( i + 1 ) * rowSize - ( bitmapMetrics.borderWidth - k )] = (unsigned short)lowBorderColor;
+		}
+		//
+		//Left Black Line on Far Left
+		for( int k = 0; k < bitmapMetrics.borderWidth; k++)
+		{
+			colorImage[ i * rowSize + ( bitmapMetrics.borderWidth - k - 1 )] = (unsigned short)highBorderColor;
+		}	// inside for loop
+	}	// outside for loop
 }
 
 

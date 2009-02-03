@@ -10,6 +10,8 @@
 *		already exsists before creating the shaded bitmap data.
 *
 * $Log: cgui_bitmap_info_shaded.cpp $
+* Revision 1.3  2009/02/01 21:59:13Z  rm10919
+* Fix array over-run.
 * Revision 1.2  2009/01/08 00:55:18Z  rm10919
 * Updates and bug fixes for shaded buttons.
 * Revision 1.1  2008/11/06 22:19:41Z  rm10919
@@ -467,33 +469,39 @@ void CGUIBitmapInfoShaded::createBorder( UGL_DEVICE_ID devId, BitmapMetrics &bit
 	UGL_ARGB blackARGB	= UGL_MAKE_RGB( 0, 0, 0);
 
    if( bitmapMetrics.shadeType == TopBottom ||
-		 bitmapMetrics.shadeType == LeftRight ||
-		 bitmapMetrics.shadeType == Solid )
+		 bitmapMetrics.shadeType == LeftRight )
 	{
 		uglColorAlloc( devId, &whiteARGB, UGL_NULL, &lowBorderColor, 1);
 		uglColorAlloc(devId, &blackARGB, UGL_NULL, &highBorderColor, 1);
    }
+	else if( bitmapMetrics.shadeType == BottomTop ||
+            bitmapMetrics.shadeType == RightLeft  )
+	{
+		uglColorAlloc( devId, &whiteARGB, UGL_NULL, &highBorderColor, 1);
+		uglColorAlloc(devId, &blackARGB, UGL_NULL, &lowBorderColor, 1);
+	}
 	else
 	{
-		// Case for BottomTop and RightLeft
-		uglColorAlloc( devId, &whiteARGB, UGL_NULL, &highBorderColor, 1);
+		// Case for Solid
+		uglColorAlloc( devId, &blackARGB, UGL_NULL, &highBorderColor, 1);
 		uglColorAlloc(devId, &blackARGB, UGL_NULL, &lowBorderColor, 1);
 	}
 	//
 	//	Border for the top and bottom of button.
 	// 
+	int index, index2;
 	for( int i = 0; i < rowSize; i++ )
 	{
 		//Bottom Border
 		for( int k = 0; k < bitmapMetrics.borderWidth; k++ )
 		{
-			colorImage[( dimension - ( bitmapMetrics.borderWidth - k )) * rowSize + i ] = (unsigned short)lowBorderColor;
+         colorImage[( dimension - ( bitmapMetrics.borderWidth - k )) * rowSize + i ] = (unsigned short)lowBorderColor;
 		}
-		//
+      //
 		//Top Border
 		for( int k = 0; k < bitmapMetrics.borderWidth; k++ )
 		{
-			colorImage[ i + rowSize * ( bitmapMetrics.borderWidth - k - 1 )]  = (unsigned short)highBorderColor;
+         colorImage[ i + rowSize * ( bitmapMetrics.borderWidth - k - 1 )]  = (unsigned short)highBorderColor;
 		}	//	inside for loop 
 	}	//	outside for loop
 	//

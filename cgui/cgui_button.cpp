@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.36  2009/01/08 00:55:20Z  rm10919
+ *  Updates and bug fixes for shaded buttons.
  *  Revision 1.35  2008/12/08 19:06:09Z  rm10919
  *  Remove extra logging from pointer events.
  *  Revision 1.34  2008/11/06 22:24:15Z  rm10919
@@ -1212,10 +1214,16 @@ void CGUIButton::setPressedText (CGUITextItem * textItem = NULL)
          _pressedText = new CGUIText(_display, textItem);
          addObjectToFront(_pressedText);
       }      
-   }else
-   {
-      // NOT GOOD!!! Nothing to do.
-   }
+
+		if( !_pressed )
+		{
+			_pressedText->setVisible(false);
+		}
+		else
+		{
+			_pressedText->setVisible(true);
+		}
+	}
 }
 
 void CGUIButton::setPressedText (const char * string = NULL)
@@ -1231,7 +1239,16 @@ void CGUIButton::setPressedText (const char * string = NULL)
          _pressedText = new CGUIText(_display);
          _pressedText->setText(string);
          addObjectToFront(_pressedText);
-      }      
+      }
+
+		if( !_pressed )
+		{
+			_pressedText->setVisible(false);
+		}
+		else
+		{
+			_pressedText->setVisible(true);
+		}
    }else
    {
       // NOT GOOD!!! Nothing to do.
@@ -1252,6 +1269,15 @@ void CGUIButton::setPressedText (const StringChar * string = NULL)
          _pressedText->setText(string);
          addObjectToFront(_pressedText);
       }      
+
+		if( !_pressed )
+		{
+			_pressedText->setVisible(false);
+		}
+		else
+		{
+			_pressedText->setVisible(true);
+		}
    }else
    {
       // NOT GOOD!!! Nothing to do.

@@ -2,6 +2,8 @@
  * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.45 2009/03/02 20:46:25Z adalusb Exp ms10234 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.44  2009/01/07 16:52:12Z  adalusb
+ * Tab width is now calculated using english language font instead of the styling record font. 
  * Revision 1.43  2008/12/17 21:35:47Z  rm10919
  * Correction on text length for combined fonts. IT 6562
  * Revision 1.42  2008/12/17 19:16:01Z  rm10919
@@ -317,6 +319,33 @@ int CGUIText::checkInFontRange( int currentChar )
 			}
 			fontRangeIter++;
 		} // while not end of _fontRange list do
+	}
+	
+	return result;
+}
+
+bool CGUIText::getFontNameForChar(unsigned short currentChar,string& fontName)
+{
+	bool result = false;
+
+	if( _fontRange.size() > 0 )
+	{
+		list< FontRange * >::iterator fontRangeIter = _fontRange.begin();
+		FontRange * fontRange = NULL;
+
+		while( fontRangeIter != _fontRange.end() )
+		{
+			fontRange = ( *fontRangeIter );
+			if( currentChar >= fontRange->startIndex &&
+				 currentChar <= fontRange->endIndex )
+			{
+				fontName = fontRange->fontName;
+				result = true;
+				break;
+			}
+
+			fontRangeIter++;
+		} 
 	}
 	
 	return result;

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.25  2008/12/16 06:03:04Z  rm10919
+ * Add the ablility for combined fonts in text. IT 6562
  * Revision 1.24  2008/11/06 22:24:16Z  rm10919
  * Add transparent and shaded bitmaps and shaded buttons.
  * Revision 1.23  2008/07/23 22:55:08Z  adalusb
@@ -202,6 +204,8 @@ public:
 	static bool _fontRangeIdsAdded;	//	If the language is changed need to set this to false.
 
 	static int _defaultFontIndex; // Needs to be set when language table is loaded. Assumes index of English is zero.
+
+	static bool getFontNameForChar(unsigned short currentChar,string& fontName);
 
 	// 	Clear font range list.
 	// 

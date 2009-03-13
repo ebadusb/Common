@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.cpp 1.19 2007/06/04 22:04:21Z wms10235 Exp adalusb $
  * $Log: cgui_text_item.cpp $
+ * Revision 1.19  2007/06/04 22:04:21Z  wms10235
+ * IT83 - Updates for the common GUI project to use the unicode string class
  * Revision 1.18  2007/05/03 04:21:20Z  cf10242
  * IT 3218: clean up string lengths in several places
  * Revision 1.17  2007/04/26 16:47:20Z  wms10235
@@ -47,6 +49,7 @@
 #include "cgui_text_item.h"
 #include "cgui_text.h"
 #include "cgui_string_data_container.h"
+#include "datalog_levels.h"
 
 CGUIStringDataContainer CGUITextItem::_textMap;
 
@@ -212,7 +215,14 @@ void CGUITextItem::handleVariableSubstitution(void)
 
 					if( variableValue.getLength() > 0 )
 					{
-						_string.replace( variableName, variableValue );
+						if( _string.replace( variableName, variableValue ) < 0 )
+						{
+							DataLog( log_level_cgui_info ) << "Variable replacement failed for " << getId() << endmsg;
+						}
+					}
+					else
+					{
+						DataLog( log_level_cgui_info ) << "Variable lookup returned NULL for " << name.c_str() << endmsg;
 					}
 				}
 

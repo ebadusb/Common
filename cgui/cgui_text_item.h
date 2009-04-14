@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.15 2009/04/13 22:34:00Z rm10919 Exp wms10235 $
  * $Log: cgui_text_item.h $
+ * Revision 1.14  2007/06/04 22:04:21Z  wms10235
+ * IT83 - Updates for the common GUI project to use the unicode string class
  * Revision 1.13  2007/04/30 21:18:28Z  wms10235
  * IT2354 - Updated the getTextItem() method to be a static
  * Revision 1.12  2007/04/26 16:47:20Z  wms10235
@@ -71,6 +73,9 @@ public:
 	void setId(const char * id);
 	const char * getId(void) const;
 
+	// Returns font size for stylling record.
+	int getFontSize( void ) { return _stylingRecord.fontSize;}
+
 	// The method returns a pointer to the text string
 	const StringChar * getText(LanguageId languageId = currentLanguage);
 
@@ -120,14 +125,14 @@ public:
 	static CGUIStringDataContainer _textMap; // String database
 
 private:
-	string			_id;						// Non-translated internal string ID
+   string			_id;						// Non-translated internal string ID
    UnicodeString	_string;					// String with variables substituted
-	UnicodeString	_template;				// String template with variable placeholders
+   UnicodeString	_template;				// String template with variable placeholders
    LanguageId		_languageId;			// Language ID
    StylingRecord	_stylingRecord;		// GUI styling information
-	bool				_hasVariables;			// Indicates that the template cantains variables
+   bool				_hasVariables;			// Indicates that the template cantains variables
 
-	static int		_defaultLanguageId;
+   static int		_defaultLanguageId;
 };
 
 #endif /* #ifndef _CGUI_TEXT_ITEM_INCLUDE */

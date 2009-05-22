@@ -1,11 +1,13 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- *  $Header: Q:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_button.cpp 1.37 2009/02/25 22:20:12Z rm10919 Exp jd11007 $ 
+ *  $Header: Z:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_button.cpp 1.39 2010/04/02 16:26:36Z agauusb Exp agauusb $ 
  *  This file defines the base class for all button styles in the common GUI.
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.37  2009/02/25 22:20:12Z  rm10919
+ *  Update pressed set text to be like enable and disable set text.
  *  Revision 1.36  2009/01/08 00:55:20Z  rm10919
  *  Updates and bug fixes for shaded buttons.
  *  Revision 1.35  2008/12/08 19:06:09Z  rm10919
@@ -1338,9 +1340,9 @@ void CGUIButton::setPressedTextColor(CGUIColor color)
 
 void CGUIButton::setTextColor(CGUIColor color)
 {
-   _enabledText->setColor(color);
-   _disabledText->setColor(color);
-   _pressedText->setColor(color);
+	if (_enabledText)		_enabledText->setColor(color);
+   if (_disabledText)	_disabledText->setColor(color);
+   if (_pressedText)		_pressedText->setColor(color);
 }
 
 // Transparent bitmap management

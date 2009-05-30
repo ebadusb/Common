@@ -2,6 +2,8 @@
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.47 2009/05/29 23:11:49Z ms10234 Exp wms10235 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.46  2009/05/26 20:30:28Z  ms10234
+ * 6768 - change to only load font range once
  * Revision 1.45  2009/03/02 20:46:25Z  adalusb
  * IT 6701. Added a function to map a char to a font name for reports. 
  * Revision 1.44  2009/01/07 16:52:12Z  adalusb
@@ -99,7 +101,6 @@
  */
 
 #include <vxWorks.h>
-#include <wvLib.h>
 
 #include "cgui_text.h"
 #include "cgui_window.h"
@@ -289,8 +290,6 @@ bool CGUIText::addFontRange( FontRange *fontRange )
 
 CGUIFontId CGUIText::getFontId( int currentChar )
 {
-	wvEvent(__LINE__,__FILE__,10);
-
    CGUIFontId resultFontId = _stylingRecord.fontId;
 	
 	int fontIndex = checkInFontRange( currentChar );
@@ -305,7 +304,6 @@ CGUIFontId CGUIText::getFontId( int currentChar )
 
 int CGUIText::checkInFontRange( int currentChar )
 {
-	wvEvent(__LINE__,__FILE__,10);
 	int result = _defaultFontIndex;
 
 	if( _fontRange.size() > 0 )
@@ -331,7 +329,6 @@ int CGUIText::checkInFontRange( int currentChar )
 
 bool CGUIText::getFontNameForChar(unsigned short currentChar,string& fontName)
 {
-	wvEvent(__LINE__,__FILE__,10);
 	bool result = false;
 
 	if( _fontRange.size() > 0 )
@@ -398,7 +395,6 @@ void CGUIText::addFontRangeFonts()
 				{
 					int index = f + fontRange->fontIndex * 50;
 					_display._font[index] = _display.createFont( fontRange->fontName, f, bold);
-	wvEvent(__LINE__,__FILE__,10);
 					uglFontInfo(_display._font[index], UGL_FONT_ANTI_ALIASING_SET, &option);
 	//				option = UGL_FONT_BOLD_LIGHT;
 	//				uglFontInfo( _display->_font[f], UGL_FONT_WEIGHT_SET, &option );
@@ -541,7 +537,6 @@ int CGUIText::getLength(void) const
 
 void CGUIText::getSize(CGUIRegion & region, int startIndex, int length, CGUIFontId fontId)
 {
-	wvEvent(__LINE__,__FILE__,10);
 	if (( fontId == UGL_NULL_ID || _stylingRecord.fontId == UGL_NULL_ID) ||
 			!_textString.getLength() ||
 			startIndex >= _textString.getLength() )
@@ -570,11 +565,9 @@ void CGUIText::getSize(CGUIRegion & region, int startIndex, int length, CGUIFont
 		if ( _stylingRecord.attributes & BOLD )
 		{
 			UGL_ORD option = 0;
-	wvEvent(__LINE__,__FILE__,10);
 			uglFontInfo( fontId, UGL_FONT_WEIGHT_SET, &option );
 		}
 		const StringChar * textStr = _textString.getString();
-	wvEvent(__LINE__,__FILE__,10);
 		uglTextSizeGetW( fontId, &width, &height, uglLength, &textStr[uglStartIndex] );
 		region = CGUIRegion( 0, 0, width, height );
 	}
@@ -588,7 +581,6 @@ void CGUIText::getPixelSize(CGUIRegion & pixelRegion, CGUIFontId fontId )
 
 void CGUIText::getTokenSize( CGUIRegion & region, int startIndex = -1, int length = -1 )
 {
-	wvEvent(__LINE__,__FILE__,10);
 	CGUIRegion resultRegion = CGUIRegion( 0, 0, 0, 0 );
 	CGUIFontId currentFontId = getFontId( _textString[ startIndex ]);	//_stylingRecord.fontId;
 	
@@ -633,7 +625,6 @@ void CGUIText::getTokenSize( CGUIRegion & region, int startIndex = -1, int lengt
 
 CGUIText::GetTokenResult CGUIText::getCharBasedToken(int startIndex, bool startOfLine, int & length)
 {
-	wvEvent(__LINE__,__FILE__,10);
 	bool tokenEnded = false;
 	int currentIndex = startIndex;
 	length = 0;
@@ -770,7 +761,6 @@ CGUIText::GetTokenResult CGUIText::getCharBasedToken(int startIndex, bool startO
 
 bool CGUIText::checkIfArabicNumeral(int index)
 {
-	wvEvent(__LINE__,__FILE__,10);
 	bool result=false;
 	UnicodeString zero('0');
 	UnicodeString nine('9');
@@ -791,7 +781,6 @@ bool CGUIText::checkIfArabicNumeral(int index)
 
 bool CGUIText::checkIfEnglish(int index)
 {
-	wvEvent(__LINE__,__FILE__,10);
 	bool result = false;
 	UnicodeString smallA('a');
 	UnicodeString bigA('A');
@@ -818,7 +807,6 @@ bool CGUIText::checkIfEnglish(int index)
 
 bool CGUIText::checkIfForbiddenStart(int index)
 {
-	wvEvent(__LINE__,__FILE__,10);
 	bool result = false;
 
 	if( _forbiddenStartCharsAvailable )
@@ -837,7 +825,6 @@ bool CGUIText::checkIfForbiddenStart(int index)
 
 bool CGUIText::checkIfForbiddenEnd(int index)
 {
-	wvEvent(__LINE__,__FILE__,10);
 	bool result = false;
 
 	if( _forbiddenEndCharsAvailable )
@@ -856,7 +843,6 @@ bool CGUIText::checkIfForbiddenEnd(int index)
 
 void CGUIText::selectTokenSplitMethod()
 {
-	wvEvent(__LINE__,__FILE__,10);
 	_tokenSplitMethod = CGUIText::WordBased;
 
 	CGUITextItem* tokenSplitAlgorithm = CGUITextItem::_textMap.findString("languageWrappingAlgorithm");
@@ -917,7 +903,6 @@ void CGUIText::initializeForbiddenChars()
 
 CGUIText::GetTokenResult CGUIText::getToken(int startIndex, bool startOfLine, int & length)
 {
-	wvEvent(__LINE__,__FILE__,10);
 	// this flag is false before encountering non-blank token characters
 	// and true after encountering non-blank token characters. This allows
 	// leading blanks to be included in the token, and the first trailing
@@ -999,7 +984,6 @@ CGUIText::GetTokenResult CGUIText::getToken(int startIndex, bool startOfLine, in
 
 void CGUIText::convertTextToMultiline(CGUIRegion & region)
 {
-	wvEvent(__LINE__,__FILE__,10);
 	bool	startOfLine = true;
 	int	currentIndex = 0;
 	int	currentLine = 0;
@@ -1019,7 +1003,6 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
 	{
 		UGL_SIZE width = 0;
 		UGL_SIZE height = 0;
-	wvEvent(__LINE__,__FILE__,10);
 		uglTextSizeGet(getFontId(0x0020), &width, &height, 1," ");
 		spacePixelSize = width;
 		singleLineHeight = height;
@@ -1292,7 +1275,6 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
 
 bool CGUIText::convertLinePosition(int width, int height, int indentPixels, CGUIRegion & region)
 {
-	wvEvent(__LINE__,__FILE__,10);
    int  available_pixel_width = 0;
 
    // Given alignment specification and text size information, determine the region
@@ -1328,7 +1310,6 @@ bool CGUIText::convertLinePosition(int width, int height, int indentPixels, CGUI
 
 void CGUIText::computeTextRegion(void)
 {
-	wvEvent(__LINE__,__FILE__,10);
    if ( _textString.getLength() > 0 ) handleVariableSubstitution();
    if ( _forceCompute ||
 		  _textString != _lastTextString )
@@ -1388,7 +1369,6 @@ void CGUIText::setRegion(const CGUIRegion & newRegion)
 
 void CGUIText::draw(UGL_GC_ID gc)
 {
-	wvEvent(__LINE__,__FILE__,10);
    if (!_textString.getLength() ||
        _stylingRecord.fontId == UGL_NULL ||
        _lineData.empty() ||
@@ -1403,7 +1383,6 @@ void CGUIText::draw(UGL_GC_ID gc)
    // we can get correct background color for text.
    //
    UGL_POS vp_left, vp_top, vp_right, vp_bottom;
-	wvEvent(__LINE__,__FILE__,10);
    uglViewPortGet(gc, &vp_left, &vp_top, &vp_right, &vp_bottom);
 
    CGUIColor  backgroundColor;
@@ -1427,7 +1406,6 @@ void CGUIText::draw(UGL_GC_ID gc)
                 y+vp_top >= 0 && y+vp_top < _display.height())
             {
                UGL_ARGB    pixelARGB;
-	wvEvent(__LINE__,__FILE__,10);
                uglPixelGet(gc, x, y, &pixelARGB);
 
                red += (pixelARGB & 0xf800) >> 8;
@@ -1473,9 +1451,7 @@ void CGUIText::draw(UGL_GC_ID gc)
 	copyTextString.replace( nonBreakingSpace, regularLatinSpace );
 	
 	//  let's write this out
-	wvEvent(__LINE__,__FILE__,10);
    uglBackgroundColorSet(gc, backgroundColor);
-	wvEvent(__LINE__,__FILE__,10);
    uglForegroundColorSet(gc, _stylingRecord.color);
 //   uglFontSet(gc, _stylingRecord.fontId);
 
@@ -1488,9 +1464,7 @@ void CGUIText::draw(UGL_GC_ID gc)
 		lineData.textLength = (*lineIter).textLength;
 		lineData.fontId = (*lineIter).fontId;
 		
-	wvEvent(__LINE__,__FILE__,10);
 		uglFontSet( gc, (*lineIter).fontId );
-	wvEvent(__LINE__,__FILE__,10);
       uglTextDrawW( gc, (*lineIter).x + _region.x, (*lineIter).y + _region.y, (*lineIter).textLength, &copyTextString[(*lineIter).index] );
 
       ++lineIter;

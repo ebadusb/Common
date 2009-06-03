@@ -795,7 +795,8 @@ void Router::deregisterTask( unsigned long tId )
       for ( smiter = _SpooferMsgMap.begin() ; 
             smiter != _SpooferMsgMap.end() ; )
       {
-		 tmpiter = smiter++;
+		 tmpiter = smiter;
+		 ++smiter;
 
          // erase the entry if it relates to this task ...
          if ( (*tmpiter).second == tId ) {

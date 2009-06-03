@@ -3,8 +3,10 @@
  *
  * TITLE:      msgsystimer.cpp, Message System Timer
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/msgsystimer.cpp 1.31 2009/06/03 15:28:34Z jsylusb Exp jsylusb $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/msgsystimer.cpp 1.31 2009/06/03 15:28:34Z jsylusb Exp $
  * $Log: msgsystimer.cpp $
+ * Revision 1.31  2009/06/03 15:28:34Z  jsylusb
+ * Fixed improper use of iterators which can cause page faults.
  * Revision 1.30  2007/04/22 17:29:09Z  jl11312
  * - added alternate constructor to specify queue size (Taos IT 3122)
  *
@@ -495,7 +497,8 @@ void MsgSysTimer::deregisterTimersOfTask( const unsigned long tId )
    for ( miter = _TimerMsgMap.begin() ;
 		 miter != _TimerMsgMap.end() ; )
    {
-	  tmpiter = miter++;
+	  tmpiter = miter;
+      ++miter;
 
       mePtr = (*tmpiter).second;
       if (    mePtr->_TimerMessage

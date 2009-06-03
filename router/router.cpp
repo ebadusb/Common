@@ -791,14 +791,16 @@ void Router::deregisterTask( unsigned long tId )
       //
       //  iterate over the spoofer-message map ...
       map< unsigned long, unsigned long >::iterator smiter;
+      map< unsigned long, unsigned long >::iterator tmpiter;
       for ( smiter = _SpooferMsgMap.begin() ; 
-            smiter != _SpooferMsgMap.end() ;
-            ++smiter )
+            smiter != _SpooferMsgMap.end() ; )
       {
-         //
+		 tmpiter = smiter++;
+
          // erase the entry if it relates to this task ...
-         if ( (*smiter).second == tId )
-            _SpooferMsgMap.erase( smiter );
+         if ( (*tmpiter).second == tId ) {
+            _SpooferMsgMap.erase( tmpiter );
+		 }
       }
    }
 }

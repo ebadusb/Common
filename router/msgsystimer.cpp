@@ -3,8 +3,10 @@
  *
  * TITLE:      msgsystimer.cpp, Message System Timer
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/msgsystimer.cpp 1.30 2007/04/22 17:29:09Z jl11312 Exp jsylusb $
+ * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/msgsystimer.cpp 1.31 2009/06/03 15:28:34Z jsylusb Exp jsylusb $
  * $Log: msgsystimer.cpp $
+ * Revision 1.30  2007/04/22 17:29:09Z  jl11312
+ * - added alternate constructor to specify queue size (Taos IT 3122)
  *
  */
 
@@ -489,11 +491,13 @@ void MsgSysTimer::deregisterTimersOfTask( const unsigned long tId )
    //  which belong the the given tId ...
    MapEntry *mePtr;
    map< unsigned long, MapEntry* >::iterator miter;
+   map< unsigned long, MapEntry* >::iterator tmpiter;
    for ( miter = _TimerMsgMap.begin() ;
-         miter != _TimerMsgMap.end() ;
-         ++miter )
+		 miter != _TimerMsgMap.end() ; )
    {
-      mePtr = (*miter).second;
+	  tmpiter = miter++;
+
+      mePtr = (*tmpiter).second;
       if (    mePtr->_TimerMessage
            && mePtr->_TimerMessage->msgData().taskId() == tId )
       {
@@ -501,10 +505,9 @@ void MsgSysTimer::deregisterTimersOfTask( const unsigned long tId )
          // deregister this timer ...
          mePtr->_Interval = 0;
          mePtr->_IntervalInTicks = 0;
-         _TimerMsgMap.erase( miter );
+         _TimerMsgMap.erase( tmpiter );
       }
    }
-
 }
 
 void MsgSysTimer::checkTimers()

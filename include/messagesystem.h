@@ -33,6 +33,8 @@ public:
 
    static void signalHandler( int signal );
 
+   static bool exists();
+
 private:
 
    //

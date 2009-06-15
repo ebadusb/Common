@@ -148,7 +148,7 @@ bool MessageSystem::init( const char *qname, const unsigned int qsize, const boo
       return false;
    }
 
-	if ( taskVarGet(taskIdSelf(), (int *)&_TheMessageSystem) != ERROR )
+	if ( exists() )
 	{
       DataLog( log_level_critical ) << "Task variable _TheMessageSystem has already been added for this task ("
                            << hex << (unsigned long)_TheMessageSystem << " currentObj=" 
@@ -185,4 +185,10 @@ bool MessageSystem::init( const char *qname, const unsigned int qsize, const boo
 
    return true;
 }
+
+bool MessageSystem::exists()
+{
+	return taskVarGet(taskIdSelf(), (int *)&_TheMessageSystem) != ERROR;
+}
+
 

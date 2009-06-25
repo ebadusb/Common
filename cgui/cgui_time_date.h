@@ -3,11 +3,13 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_time_date.h 1.6 2007/03/22 20:57:49Z pn02526 Exp wms10235 $
  * $Log: cgui_time_date.h $
+ * Revision 1.6  2007/03/22 20:57:49Z  pn02526
+ * Add ability to specifiy time value.
  * Revision 1.5  2007/03/22 09:19:22  pn02526
- * Add two CGUITextItem pointers for AM  and PM strings (suffixes for 12-hour time strings) to the calling sequence of the constructor, plus functions to get and set them post-construction. The two new constructor arguments are transparent to existing code. If NULL in the constructor or the set function, the class does not attempt to append anything to twelve-hour time strings. To internationalize this, the string handling within the class has been changed to use the wide character type StringChar used internally in the CGUIText and CGUITextItem classes.  The stringCharxxxx functions have been added for this.  
+ * Add two CGUITextItem pointers for AM  and PM strings (suffixes for 12-hour time strings) to the calling sequence of the constructor, plus functions to get and set them post-construction. The two new constructor arguments are transparent to existing code. If NULL in the constructor or the set function, the class does not attempt to append anything to twelve-hour time strings. To internationalize this, the string handling within the class has been changed to use the wide character type StringChar used internally in the CGUIText and CGUITextItem classes.  The stringCharxxxx functions have been added for this.
  * Change the date separator character must be changed to hyphen for internationalizing date strings.
- * 
- * 
+ *
+ *
  * --- Added comments ---  pn02526 [2007/03/22 18:35:30Z]
  * IT 77.
  * Revision 1.4  2005/03/14 18:21:37  rm10919
@@ -64,7 +66,7 @@ public:
    void update(time_t);
 
 private:
-   
+
    unsigned int    _displayAttributes;
 
     CGUITextItem * _amTextItem;
@@ -76,6 +78,10 @@ private:
     inline size_t stringCharAllocation(const StringChar * s);
     void stringCharCpy( StringChar ** ps1, const StringChar * s2 );
     void stringCharCat( StringChar ** ps1, const StringChar * s2 );
+
+	 CGUITimeDate(void);
+	 CGUITimeDate(const CGUITimeDate & obj);
+	 CGUITimeDate & operator=(const CGUITimeDate & obj);
 };
 
 #endif /* ifndef _CGUI_TIME_DATE_INCLUDE */

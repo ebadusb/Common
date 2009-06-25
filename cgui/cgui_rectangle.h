@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_rectangle.h 1.5 2008/11/06 22:24:16Z rm10919 Exp wms10235 $
+ * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_rectangle.h 1.5 2008/11/06 22:24:16Z rm10919 Exp $
  * $Log: cgui_rectangle.h $
+ * Revision 1.5  2008/11/06 22:24:16Z  rm10919
+ * Add transparent and shaded bitmaps and shaded buttons.
  * Revision 1.4  2005/04/15 21:35:19Z  cf10242
  * override region method for rectangle
  * Revision 1.3  2005/02/21 17:17:12Z  cf10242
@@ -47,9 +49,9 @@ private:
    CGUIColor  _color;
 
 private:
-	//CGUIRectangle();
-	//CGUIRectangle (const CGUIRectangle &obj);
-	//CGUIRectangle operator=(CGUIRectangle &obj);
+	CGUIRectangle(void);
+	CGUIRectangle (const CGUIRectangle &obj);
+	CGUIRectangle operator=(const CGUIRectangle &obj);
 
 };
 #endif /* #ifndef _CGUI_RECTANGLE_INCLUDE */

@@ -1,7 +1,7 @@
 /*
-* $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info_shaded.cpp 1.4 2009/02/03 00:38:08Z rm10919 Exp wms10235 $
+* $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info_shaded.cpp 1.4 2009/02/03 00:38:08Z rm10919 Exp $
 *
-*	This file defines the CGUIBitmapInfoShaded class which defines and creates 
+*	This file defines the CGUIBitmapInfoShaded class which defines and creates
 *		a CGUIBitmapInfo object that is the shaded bitmap data.  This class could also be
 *		used when needing a bitmap for the button class.
 *		Use the createBitmapShadedData() to create/use(find) an object in the class,
@@ -10,6 +10,8 @@
 *		already exsists before creating the shaded bitmap data.
 *
 * $Log: cgui_bitmap_info_shaded.cpp $
+* Revision 1.4  2009/02/03 00:38:08Z  rm10919
+* Update border for solid color.
 * Revision 1.3  2009/02/01 21:59:13Z  rm10919
 * Fix array over-run.
 * Revision 1.2  2009/01/08 00:55:18Z  rm10919
@@ -32,12 +34,10 @@ SEM_ID CGUIBitmapInfoShaded::_lock = semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_S
 
 CGUIBitmapInfoShaded::CGUIBitmapInfoShaded()
 {
-	
 }
 
 CGUIBitmapInfoShaded::~CGUIBitmapInfoShaded()
 {
-	
 }
 
 CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( RGB startColor, RGB endColor, ShadeType shadeType, short borderWidth, short bitmapWidth, short bitmapHeight, BitmapShape bitmapShape /* = NoShape */ )
@@ -58,9 +58,9 @@ CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( RGB startColor, R
 
 	bitmapMetrics.bitmapWidth = bitmapWidth;
 	bitmapMetrics.bitmapHeight = bitmapHeight;
-	
+
    result = createShadedBitmapData( bitmapMetrics );
-	
+
 	return result;
 }
 
@@ -80,7 +80,7 @@ CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( const ColorScheme
 	bitmapMetrics.borderWidth = borderWidth;
 	bitmapMetrics.bitmapWidth = bitmapWidth;
 	bitmapMetrics.bitmapHeight = bitmapHeight;
-	
+
    result = createShadedBitmapData( bitmapMetrics );
 
 	return result;
@@ -88,23 +88,23 @@ CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( const ColorScheme
 
 
 CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( BitmapMetrics &bitmapMetrics, BitmapShape bitmapShape /* = NoShape */ )
-{	
+{
 	// return value variable
 	//
 	CGUIBitmapInfo * result = NULL;
-	
+
 	// Check to see if this shaded bitmap already exsists.
 	//
 	map < BitmapMetrics, CGUIBitmapInfo * >::iterator iter;
-	
+
 	semTake( _lock, WAIT_FOREVER );
 
 	iter = _shadedBitmapInfoCache.find( bitmapMetrics );
-	
+
 	if( iter != _shadedBitmapInfoCache.end() )
 	{
 		CGUIBitmapInfo * shadedBitmapInfo = iter->second;
-		result = shadedBitmapInfo;	
+		result = shadedBitmapInfo;
 	}
 	else 	// create the shaded bitmap info
 	{
@@ -118,7 +118,7 @@ CGUIBitmapInfo * CGUIBitmapInfoShaded::createShadedBitmapData( BitmapMetrics &bi
 		{
 			CGUIBitmapInfo * shadedBitmapInfo = iter->second;
 			result = shadedBitmapInfo;
-		}		
+		}
 	}
 	semGive( _lock );
 
@@ -134,58 +134,58 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 	pRegistryData = uglRegistryFind (UGL_DISPLAY_TYPE, 0, 0, 0);
 	devId = (UGL_DEVICE_ID)pRegistryData->id;
 
-	int skip, step, repeat, extra, position, minValue, lValue = 0; 
+	int skip, step, repeat, extra, position, minValue, lValue = 0;
 	int rowSize = 0;
 	int dimension = 0;
-	
+
 	long numberOfColors = 0;
-	
+
 	UGL_COLOR deviceColor;
-	
-	// fill 
+
+	// fill
 	unsigned short * bitmapData = NULL;
-   
-	if(( bitmapMetrics.shadeType == TopBottom ) 
+
+	if(( bitmapMetrics.shadeType == TopBottom )
 		|| ( bitmapMetrics.shadeType == BottomTop )
 		|| ( bitmapMetrics.shadeType == Solid ))
 	{
 		dimension = (int)bitmapMetrics.bitmapHeight;
 		rowSize  = (int)bitmapMetrics.bitmapWidth;
 	}
-	
+
 	if(( bitmapMetrics.shadeType == RightLeft )
 			|| ( bitmapMetrics.shadeType == LeftRight ))
 	{
 		dimension = (int)bitmapMetrics.bitmapWidth;
 		rowSize  = (int)bitmapMetrics.bitmapHeight;
 	}
-	
+
 	//2 Get the two extreme levels of lightness, the L value
 	RGB rgb;
 
 	rgb.red = bitmapMetrics.colorScheme.colorStart.red;
 	rgb.green = bitmapMetrics.colorScheme.colorStart.green;
 	rgb.blue = bitmapMetrics.colorScheme.colorStart.blue;
-	
+
 	HSL startColor = rgbToHSL( rgb );
 
 	rgb.red = bitmapMetrics.colorScheme.colorEnd.red;
 	rgb.green = bitmapMetrics.colorScheme.colorEnd.green;
 	rgb.blue = bitmapMetrics.colorScheme.colorEnd.blue;
-	
+
 	HSL endColor = rgbToHSL( rgb );
 
 	HSL hsl;
 
 	//3.Determine the number of colors between the startColor and endColor colors. L_start - L_finish.
 	numberOfColors = startColor.lum - endColor.lum;
-	
-	if( numberOfColors < 0 ) 
+
+	if( numberOfColors < 0 )
 		numberOfColors = abs( numberOfColors );
 
 	if( startColor.lum == endColor.lum )
 		numberOfColors = 1;
-	
+
 	//4.Ensure that lVvalue is assigned the lightest of the two colors
 	if( endColor.lum > startColor.lum )
 	{
@@ -214,16 +214,16 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 
 	/*5.Alocate enough memory for the color bitmap image */
 	// already did this step.
-	
+
 	bitmapData = new unsigned short[ bitmapMetrics.bitmapWidth * bitmapMetrics.bitmapHeight ];
-	
+
 	/*6.Store colors, 'dimension' pixels in length, with decreasing values in lightness,L_value.*/
 	if( numberOfColors > dimension )
 	{
 		/*CASE1: More colors than rows*/
 		  /*Move through the dimension 'step'colors at a time.*/
 		step	= numberOfColors / dimension;
-		
+
 		/*Number of places, in the dimension,where an extra color will be passed by.*/
 		skip	= numberOfColors - step * dimension;
 
@@ -233,14 +233,14 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 		else
 			position = NONE;
 
-		hsl.lum = lValue; 
+		hsl.lum = lValue;
 		rgb = hslToRGB( hsl );
 
 		/*Fill the array, 'dimension' pixels in length with the corresponding shades of color
 		'row_size pixels the same color*/
 		for( int i = 0; i < dimension; i++ )
 		{
-			/*Step1.Convert to ARGB8888 format*/ 
+			/*Step1.Convert to ARGB8888 format*/
 			UGL_ARGB portableColor	= UGL_MAKE_RGB( rgb.red, rgb.green, rgb.blue );
 
 			for( int j = rowSize * i; j< rowSize * ( i + 1 ); j++ )
@@ -261,7 +261,7 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 			}
 
 			/*Convert to the new RGB value*/
-			hsl.lum = lValue; 
+			hsl.lum = lValue;
 			rgb = hslToRGB( hsl );
 		}
 	}
@@ -271,12 +271,12 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 		/*Fill the array, 'dimension' pixels in length with the corresponding shades of color
 		'row_size pixels the same color*/
 
-		hsl.lum = lValue; 
+		hsl.lum = lValue;
 		rgb = hslToRGB( hsl );
 
 		for( int i = 0; i < dimension; i++ )
 		{
-			//Step1.Convert to ARGB8888 format 
+			//Step1.Convert to ARGB8888 format
 			UGL_ARGB portableColor	= UGL_MAKE_RGB( rgb.red, rgb.green, rgb.blue );
 
 			for(int j = rowSize * i; j< rowSize * ( i + 1 ); j++)
@@ -289,7 +289,7 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 			//New shade
 			lValue--;
 			//Convert to the new RGB value
-			hsl.lum = lValue; 
+			hsl.lum = lValue;
 			rgb   = hslToRGB( hsl );
 		}
 	}
@@ -298,41 +298,41 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 		/*CASE3.More rows than colors*/
 		/*Move through the dimension repeating each color 'repeat' times.*/
 		repeat = dimension / numberOfColors;
-		
+
 		/*Number of places, in the dimension,where a color will be repeated for an extra row.*/
 		extra = dimension - numberOfColors * repeat;
-		
+
 		/*The positions in the dimension where a color will be repeated for an extra row.*/
 		if( extra != 0 )
 			position = dimension / extra;
-		else 
+		else
 			position = NONE;
 
-		hsl.lum = lValue; 
+		hsl.lum = lValue;
 		rgb = hslToRGB( hsl );
-		
+
 		/*Fill the array, 'dimension' pixels in length with the corresponding shades of color
 		'row_size pixels the same color*/
 		int i = 0;
 		int posCount = 0;
-		
+
 		UGL_ARGB portableColor;
-		
+
 		while( i < dimension )
 		{
 			for( int k = 0; k < repeat; k++ )
 			{
 				//Repeat the row color "repeat" times
 				portableColor	= UGL_MAKE_RGB( rgb.red, rgb.green, rgb.blue );
-				
+
 				for( int j = rowSize * i; j< rowSize * ( i + 1 ); j++ )
 				{
 					uglColorAlloc(devId, &portableColor, UGL_NULL, &deviceColor, 1 );
 					bitmapData[j]= (unsigned short)deviceColor;
 				}
-				i++; 
+				i++;
 				posCount++;
-				
+
 				if( posCount == position )
 				{
 					//Add in an extra row of same color every "position" rows down the dimension
@@ -348,14 +348,14 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 						break;
 				}
 			}
-			
+
 			/*move to next level of shading as long as there is a color left to use*/
 			if( lValue >= minValue )
 			{
 				/*New shade*/
 				lValue--;
-            hsl.lum = lValue; 
-				
+            hsl.lum = lValue;
+
 				/*Convert to the new RGB value*/
 				rgb = hslToRGB( hsl );
 			}
@@ -372,7 +372,7 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 			{
 				colors[l] = bitmapData[ l * rowSize ];
 			}
-			
+
 			for( int i = 0; i < dimension; i++ )
 			{
 				for( int j = rowSize * i; j< rowSize * ( i + 1 ); j++ )
@@ -433,7 +433,7 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 			{
 				colors[l] = bitmapData[ l * rowSize ];
 			}
-			
+
 			for( int i = 0; i < dimension; i++ )
 			{
 				for( int j = rowSize * i ; j< rowSize * ( i + 1 ); j++ )
@@ -443,15 +443,17 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
          }
 		break;
 	}
-	
+
 	if( bitmapMetrics.borderWidth > 0 )
 	{
       createBorder( devId, bitmapMetrics, colorImage );
 	}
 
 	CGUIBitmapInfo * shadedBitmapInfo = new CGUIBitmapInfo ( colorImage, sizeof( *colorImage ), bitmapMetrics.bitmapWidth, bitmapMetrics.bitmapHeight );
-	
+
+	semTake( _lock, WAIT_FOREVER );
 	_shadedBitmapInfoCache[ bitmapMetrics ] = shadedBitmapInfo;
+	semGive( _lock );
 
 	return true;
 }
@@ -464,7 +466,7 @@ void CGUIBitmapInfoShaded::createBorder( UGL_DEVICE_ID devId, BitmapMetrics &bit
 
 	UGL_COLOR highBorderColor;
 	UGL_COLOR lowBorderColor;
-	
+
 	UGL_ARGB whiteARGB	= UGL_MAKE_RGB( 250, 250, 250);
 	UGL_ARGB blackARGB	= UGL_MAKE_RGB( 0, 0, 0);
 
@@ -488,7 +490,7 @@ void CGUIBitmapInfoShaded::createBorder( UGL_DEVICE_ID devId, BitmapMetrics &bit
 	}
 	//
 	//	Border for the top and bottom of button.
-	// 
+	//
 	int index, index2;
 	for( int i = 0; i < rowSize; i++ )
 	{
@@ -502,7 +504,7 @@ void CGUIBitmapInfoShaded::createBorder( UGL_DEVICE_ID devId, BitmapMetrics &bit
 		for( int k = 0; k < bitmapMetrics.borderWidth; k++ )
 		{
          colorImage[ i + rowSize * ( bitmapMetrics.borderWidth - k - 1 )]  = (unsigned short)highBorderColor;
-		}	//	inside for loop 
+		}	//	inside for loop
 	}	//	outside for loop
 	//
 	// Border for the right and left sides of button.
@@ -528,13 +530,13 @@ HSL CGUIBitmapInfoShaded::rgbToHSL( RGB rgb )
 {
 	// return value
 	HSL returnHSL;
-	
+
    float red, green, blue, hue, sat, lum, maxValue, minValue = 0.0;
 
 	enum MaxColor { RedMax, GreenMax, BlueMax, MaxEqualMin };
 
 	MaxColor maxColor = RedMax;
-	
+
 	//	normalize RGB values
 	//
 	red	= (float)( rgb.red / 255.0 );
@@ -637,7 +639,7 @@ RGB CGUIBitmapInfoShaded::hslToRGB( HSL hsl )
 {
 	// return value
 	RGB returnRGB;
-	
+
    float hue, sat, lum, q, p, tempRed, tempGreen, tempBlue = 0.0;
 
 	if( hsl.sat == 0 )
@@ -647,12 +649,12 @@ RGB CGUIBitmapInfoShaded::hslToRGB( HSL hsl )
 		returnRGB.blue = hsl.lum;
 		return returnRGB;
 	}
-	
+
 	//	normalize HSL values (values must be in the range of [0,1) ).
 	hue = (float)hsl.hue / 255.0;
 	sat = (float)hsl.sat / 255.0;
 	lum = (float)hsl.lum / 255.0;
-	
+
 	//Calculate q
 	if( lum < 0.5 )
 		q = lum * ( 1.0 + sat );
@@ -695,17 +697,17 @@ float CGUIBitmapInfoShaded::checkColorRange( float color )
 short CGUIBitmapInfoShaded::hslColorRangeConverter( float color, float p, float q )
 {
 	float returnColor = 0;
-	
+
 	if( color < (1.0 / 6.0 ))
 	{
 		returnColor = p + (( q - p ) * 6.0 * color );
 	}
-	else if(( color >= (1.0 / 6.0 )) && 
+	else if(( color >= (1.0 / 6.0 )) &&
 			  ( color < 0.5 ))
 	{
 		returnColor = q;
 	}
-	else if(( color >= 0.5 ) && 
+	else if(( color >= 0.5 ) &&
 			  ( color < ( 2.0 / 3.0 )))
 	{
 		returnColor = p + (( q - p ) * 6.0 * ((2.0 / 3.0 ) - color ));
@@ -733,7 +735,7 @@ bool RGB::operator == ( const RGB rgb ) const
 				 ( rgb.green << 8 ) +
 				 ( rgb.red  ));
 
-	if( color1 == color2 ) 
+	if( color1 == color2 )
       result = true;
 	else
 		result = false;
@@ -755,7 +757,7 @@ bool RGB::operator < ( const RGB rgb ) const
 				 ( rgb.green << 8 ) +
 				 ( rgb.red ));
 
-	if( color1 < color2 ) 
+	if( color1 < color2 )
 	{
 		result = true;
 	}
@@ -771,10 +773,10 @@ bool RGB::operator < ( const RGB rgb ) const
 bool ColorScheme::operator == ( const ColorScheme colorScheme ) const
 {
    bool result = true;
-	
+
 	do
 	{
-		if( colorStart != colorScheme.colorStart ) 
+		if( colorStart != colorScheme.colorStart )
 		{
 			result = false;
 			break;
@@ -785,7 +787,7 @@ bool ColorScheme::operator == ( const ColorScheme colorScheme ) const
 			result = false;
 			break;
 		}
-		
+
 	} while ( false );	  /* only do-while loop once */
 
 	return result;
@@ -797,13 +799,13 @@ bool ColorScheme::operator < ( const ColorScheme colorScheme ) const
 
 	do
 	{
-		if( colorStart < colorScheme.colorStart ) 
+		if( colorStart < colorScheme.colorStart )
 		{
 			result = true;
 			break;
 		}
 
-		if( colorStart == colorScheme.colorStart && 
+		if( colorStart == colorScheme.colorStart &&
 			 colorEnd < colorScheme.colorEnd )
 		{
 			result = true;
@@ -831,20 +833,20 @@ bool CGUIBitmapInfoShaded::BitmapMetrics::operator == ( const CGUIBitmapInfoShad
 		if( borderWidth != bitmapMetrics.borderWidth )
 		{
 			result = false;
-			break;	
+			break;
 		}
 
 		if( bitmapWidth != bitmapMetrics.bitmapWidth )
 		{
 			result = false;
 			break;
-		}		
+		}
 
 		if( bitmapHeight != bitmapMetrics.bitmapHeight )
 		{
 			result = false;
 			break;
-		}		
+		}
 
 	} while( false );   /* only do-while loop once */
 
@@ -861,7 +863,7 @@ bool CGUIBitmapInfoShaded::BitmapMetrics::operator < ( const CGUIBitmapInfoShade
 		{
 			result = true;
 			break;
-		}		
+		}
 
 		if( bitmapWidth == bitmapMetrics.bitmapWidth &&
 			 bitmapHeight < bitmapMetrics.bitmapHeight )

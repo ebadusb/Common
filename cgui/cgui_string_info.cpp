@@ -4,6 +4,8 @@
  * Derived from cgui_string_data.cpp revision 1.7  2006/07/25 15:42:37  cf10242
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_info.cpp 1.7 2008/12/16 22:01:41Z rm10919 Exp wms10235 $
  * $Log: cgui_string_info.cpp $
+ * Revision 1.7  2008/12/16 22:01:41Z  rm10919
+ * Correct include file name.
  * Revision 1.6  2008/12/16 06:03:02Z  rm10919
  * Add the ablility for combined fonts in text. IT 6562
  * Revision 1.5  2007/05/08 21:57:32Z  rm10919
@@ -25,6 +27,7 @@
 #include "cgui_text.h"
 #include "font_table.h"
 #include "datalog_levels.h"
+#include "error.h"
 
 //extern int getFontIndex( const char *fontName );
 
@@ -63,6 +66,11 @@ void CGUIStringInfo::open(const char * filename)
     }
 }
 
+void CGUIStringInfo::open(const string & filename)
+{
+	CGUIStringInfo::open(filename.c_str());
+}
+
 // close the string.info file
 //
 void CGUIStringInfo::close()
@@ -98,7 +106,7 @@ void CGUIStringInfo::UTF8ToUnicode( char *&data, StringChar * wString, int &writ
       StringChar ch3 = *data++ & 0x3f;
 
       wString[writeIdx++] = ( ch1 << 12 ) | ( ch2 << 6 ) | ch3;
-   } 
+   }
    else if ( (*data & 0xe0) == 0xc0 &&
                (*(data + 1) & 0xc0) == 0x80 )
    {
@@ -106,7 +114,7 @@ void CGUIStringInfo::UTF8ToUnicode( char *&data, StringChar * wString, int &writ
       StringChar ch2 = *data++ & 0x3f;
 
       wString[writeIdx++] = ( ch1 << 6 ) | ch2;
-   } 
+   }
    else
    {
       if ( *data == '\\' )
@@ -169,6 +177,20 @@ void CGUIStringInfo::UTF8ToUnicode( char *&data, StringChar * wString, int &writ
    }
 }
 
+bool CGUIStringInfo::get( const string & stringKey, const CGUIFontId * fontId, CGUITextItem & result, int fontIndex = 0 )
+{
+	return get( (const char *)stringKey.c_str(), fontId, result, fontIndex );
+}
+
+bool CGUIStringInfo::get( const string & filename, const string & stringKey, const CGUIFontId * fontId, CGUITextItem & result, int fontIndex = 0 )
+{
+	DataLog( log_level_cgui_info ) << "CGUIStringInfo::get(filename=\"" << filename << " stringKey=\"" << stringKey << /*"\" fontId=" << (void *)fontId << */" result=" << (void *)&result << ")" << endmsg;
+	CGUIStringInfo::open(filename);
+	bool retval = get( (const char *)stringKey.c_str(), fontId, result, fontIndex );
+	CGUIStringInfo::close();
+	return retval;
+}
+
 // get that returns false if caller provides a null pointer or string as the key.
 //
 bool CGUIStringInfo::get( const char * stringKey, const CGUIFontId * fontId, CGUITextItem & result, int fontIndex = 0)
@@ -176,11 +198,11 @@ bool CGUIStringInfo::get( const char * stringKey, const CGUIFontId * fontId, CGU
     if( stringKey == NULL )
         return false;
     else
-        return get( fontId, result, stringKey, fontIndex ); 
+        return get( fontId, result, stringKey, fontIndex );
 }
 
 // main get routine called by all other gets.
-// 
+//
 bool CGUIStringInfo::get ( const CGUIFontId * fontId, CGUITextItem & result, const char * stringKey, int fontIndex = 0 )
 {
    if(_stringInfo != NULL) while (fgets(_lineBuffer, LineBufferSize, _stringInfo) != NULL)
@@ -276,7 +298,7 @@ bool CGUIStringInfo::getQuotedString(char *&data, StringChar *& wString)
 			if ( *data == '"' ) started = true;
 			data++;
 		}
-		else if ( started ) 
+		else if ( started )
 		{
            UTF8ToUnicode(data, wString, writeIdx);
 		}
@@ -324,7 +346,14 @@ bool CGUIStringInfo::parseLine ( char * p, const CGUIFontId * fontId, CGUITextIt
 		stylingRecord.attributes = attributes;
 		stylingRecord.region = CGUIRegion(x, y, width, height);
 		stylingRecord.fontSize = fontSize;
-		stylingRecord.fontId = fontId[fontSize + fontIndex*50];
+		int index = fontSize + fontIndex*50;
+
+		if( index >= MAX_FONTS || index < 0 )
+		{
+			_FATAL_ERROR(__FILE__, __LINE__, "Font size and index are outside font table boundries.");
+		}
+
+		stylingRecord.fontId = fontId[index];
 
 		// Populate the CGUITextItem class.
 		//
@@ -338,7 +367,7 @@ bool CGUIStringInfo::parseLine ( char * p, const CGUIFontId * fontId, CGUITextIt
 
 bool CGUIStringInfo::parseRange( char * p )
 {
-	bool result;
+	bool result = false;
 	unsigned int startRange, endRange;
 
 	if( sscanf( p, "%x %x", &startRange, &endRange ) == 2 )
@@ -350,32 +379,36 @@ bool CGUIStringInfo::parseRange( char * p )
 		{
 			q1++;
          int length = q2 - q1;
-			
+
 			char * fontName = new char[length+1];
          strncpy( fontName, q1, length );
 			fontName[length] = '\0';
 
-         FontRange *fontRange = new FontRange();
 			int index = getFontIndex( fontName );
 
-         fontRange->startIndex = startRange;
-         fontRange->endIndex = endRange;
-         fontRange->fontName = fontName;
-         fontRange->fontIndex = index;
+			if( index < MAX_FONTS || index >= 0 )
+			{
+				FontRange *fontRange = new FontRange;
 
-			result = CGUIText::addFontRange( fontRange );
-		
-			result = true;
+				fontRange->startIndex = startRange;
+				fontRange->endIndex = endRange;
+				fontRange->fontName = fontName;
+				fontRange->fontIndex = index;
+
+				result = CGUIText::addFontRange( fontRange );
+			}
+			else
+			{
+				DataLog( log_level_cgui_error ) << "line " << _line << ": wrong parameters from Font Range Table - " << _filename << endmsg;
+			}
 		}
 		else
 		{
-         result = false;
 			DataLog( log_level_cgui_error ) << "line " << _line << ": wrong parameters from Font Range Table - " << _filename << endmsg;
 		}
    }
 	else
 	{
-		result = false;
 		DataLog( log_level_cgui_error ) << "line " << _line << ": missing parameters from Font Range Table - " << _filename << endmsg;
 	}
 
@@ -386,7 +419,7 @@ bool CGUIStringInfo::setFontRange ( const string & filename )
 {
 	bool result = false;
 	CGUIStringInfo::open( filename );
-	
+
    if(_stringInfo != NULL) while (fgets(_lineBuffer, LineBufferSize, _stringInfo) != NULL)
    {
       _line += 1;

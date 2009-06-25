@@ -1,11 +1,13 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- *  $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_button.h 1.28 2009/01/08 00:55:20Z rm10919 Exp wms10235 $ 
+ *  $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_button.h 1.28 2009/01/08 00:55:20Z rm10919 Exp $
  *  This file defines the base class for all button styles in the common GUI.  An object of this class types
  *  can be used to generate a standard button.
- *  
+ *
  *  $Log: cgui_button.h $
+ *  Revision 1.28  2009/01/08 00:55:20Z  rm10919
+ *  Updates and bug fixes for shaded buttons.
  *  Revision 1.27  2008/11/13 20:31:23Z  rm10919
  *  Add initializer to button data struct. IT6488
  *  Revision 1.26  2008/11/06 22:24:15Z  rm10919
@@ -29,7 +31,7 @@
  *  Revision 1.17  2005/09/30 22:40:42Z  rm10919
  *  Get the variable database working!
  *  Revision 1.16  2005/04/26 23:16:47Z  rm10919
- *  Made changes to cgui_text and cgui_text_item, plus added 
+ *  Made changes to cgui_text and cgui_text_item, plus added
  *  classes for variable substitution in text strings.
  *  Revision 1.15  2005/04/04 18:02:57Z  rm10919
  *  Add ability to add char * strings to button text.
@@ -90,7 +92,7 @@
 
 
 class CGUIButton : public CGUIWindow
-{    
+{
 public:
    enum ButtonBehavior
    {
@@ -110,16 +112,16 @@ public:
 	struct ButtonIcon
 	{
 		ButtonIcon( void ){ _iconBitmap = NULL; _buttonStateType = NoButtonState; _iconId = 0; };
-	
+
 		ButtonIcon( CGUIDisplay & display, CGUIBitmapInfo * iconBitmapInfo, ButtonStateType buttonStateType, short x, short y ):
 						_buttonStateType( buttonStateType )
-		{ 
+		{
 			_iconId = setIconId();
 			_iconBitmap = new CGUIBitmap( display, CGUIRegion( x, y, 0, 0 ), *iconBitmapInfo);
 		};
 
 		~ButtonIcon(void)
-		{ 
+		{
 			if( _iconBitmap ) delete _iconBitmap;
 		}
 
@@ -129,7 +131,7 @@ public:
 		CGUIBitmap * getBitmap( void ){ return _iconBitmap; };
 		ButtonStateType getButtonStateType( void ){ return _buttonStateType; };
 		void setVisible( bool newVisible ){ _iconBitmap->setVisible( newVisible ); };
-   
+
 	private:
 
 		CGUIBitmap * _iconBitmap;
@@ -140,7 +142,7 @@ public:
 
 		int setIconId( void ){ if( _iconId < 1 ) _iconId = _iconCounter++; return _iconId; };
 	};	//  ButtonIcon struct
-  
+
    struct ButtonData
    {
       unsigned short left;               // position of top/left corner of button in screen pixels
@@ -166,7 +168,7 @@ public:
 
 		char alternateButtonId[MAX_BUTTON_LOG_SIZE+1];	// enabled text item ID is used.  If none, then this field is used
 
-      ButtonBehavior type;							// button behavior  
+      ButtonBehavior type;							// button behavior
 
 		ButtonData(void){ memset( this, 0, sizeof( *this )); type = RaiseAfterRelease; };
    };
@@ -178,13 +180,13 @@ protected:
 
    Message<long>           *_buttonMessagePointer; // used to communicate a message to other tasks when a button is pressed and released
    bool                     _enabled;              // current enabled/disabled state
-   
+
    CGUIText                *_enabledText;          // ptr to current text object
    CGUIBitmap              *_enabledBitmap;        // ptr to enabled bitmap object
-   
+
    CGUIText                *_disabledText;         // ptr to disabled text object
    CGUIBitmap              *_disabledBitmap;       // ptr to disabled bitmap object
-   
+
    CGUIText                *_pressedText;          // ptr to pressed text object
    CGUIBitmap              *_pressedBitmap;        // ptr to pressed bitmap object
 
@@ -194,17 +196,17 @@ protected:
    Message<long>           *_audioMessagePointer;  // ptr to audio message to send when button is pressed
    CallbackBase             _CBOnPressed;          // callback object to use when button is pressed
    CallbackBase             _CBOnReleased;         // callback object to use when button is released
-   
+
    bool                     _pressEventMessageEnabled;   // flag is true if message is sent on press of button
    bool                     _releasedEventMessageEnabled;// flag is true if message is sent on release of button
    bool                     _pressedCBEnabled;     // flag is true if callback is made on button press
    bool                     _releasedCBEnabled;    // flag is true is callbacl is made on button release
-   
+
    CGUIBitmap              *_iconPointer;          // ptr to the icon bitmap object
 
 	list< ButtonIcon *> _iconList;						// list of transparent icons
    ButtonBehavior           _behaviorType;         // how does button behave when pressed
-   
+
    DataLog_Level           *_btnDataLogLevel;      // level at which to log button press events
 
    char 				   _buttonPressLogText[MAX_BUTTON_LOG_SIZE+1];  // button press logging text
@@ -266,8 +268,8 @@ public:
    //SET MESSAGE
    // set an int message to be output when the button is pressed.  The default is for a message to be sent
    // on press and on release with the value of the message indicating which event occured.  This
-   // behavior can be modified to only send a message on press or release by using the enable/disable 
-   // methods provided below.  
+   // behavior can be modified to only send a message on press or release by using the enable/disable
+   // methods provided below.
    // NULL removes a previously set message from being sent.
    // There can be only one pressed message per button.  The message is automatically enabled after this call.
    void setMessage (Message<long>* newEventMessage);
@@ -318,7 +320,7 @@ public:
 
    // POINTER EVENT
    // virtual function in CGUIWindow class that is implemented here for buttons to apply the
-   // correct callback function and send the correct message based on the action taken 
+   // correct callback function and send the correct message based on the action taken
    // by the operator, i.e. press, release
    virtual void pointerEvent(const PointerEvent & event); // event structure received from UGL on button press/release
 
@@ -353,12 +355,12 @@ public:
    // TEXT METHODS //
 
    // SET TEXT
-   // set the text associated with the button.  
+   // set the text associated with the button.
    void setText(CGUITextItem * textItem); // ptr to a text object associated with the button
    void setText(const char * string); // ptr to a text object associated with the button
    void setText(const StringChar * string); // ptr to a text object associated with the button
    void setText();  // forces a redraw or update to button text.
-  
+
    void setEnabledText(CGUITextItem * textItem);
    void setEnabledText(const char * string);
    void setEnabledText(const StringChar * string);
@@ -373,11 +375,11 @@ public:
    void setPressedText();
 
    // SET TEXTSTYLE
-   // set/change the style of the text associated with this button in ALL states.  This is a pass-thru to the 
-   // text object previously set with this button.  
+   // set/change the style of the text associated with this button in ALL states.  This is a pass-thru to the
+   // text object previously set with this button.
    void setStylingRecord(StylingRecord * textStylingRecord); // style record with appropriate features set
 
-   // SET ENABLED TEXTSTYLE 
+   // SET ENABLED TEXTSTYLE
    // SET DISABLED TEXTSTYLE
    // SET PRESSED TEXTSTYLE
    // set/change the style of text associated with this button for each of the four states that the button
@@ -390,16 +392,16 @@ public:
    StylingRecord * getEnabledStylingRecord(void){ return _enabledText->getStylingRecord();}
    StylingRecord * getDisabledStylingRecord(void){ return _disabledText->getStylingRecord();}
    StylingRecord * getPressedStylingRecord(void){ return _pressedText->getStylingRecord();}
-  
+
    void setEnabledTextColor(CGUIColor color);
    void setDisabledTextColor(CGUIColor color);
    void setPressedTextColor(CGUIColor color);
    void setTextColor(CGUIColor color);
-   
+
    // ICON METHODS //
 
    // SET ICON
-   // set an icon to be associated with the button. 
+   // set an icon to be associated with the button.
    void setIcon(CGUIBitmapInfo *iconId,            // ptr to bitmap object for icon
                 const short x=-1,             // upper left X coordinate to start icon relative to button location (0 means coincident with x coordinate of upper left position of button)
                 const short y=-1,             // upper left Y coordinate to start icon relative to button location
@@ -420,7 +422,7 @@ public:
 
 	// change the button state type of an icon in the list
 	bool setIconButtonStateType( int iconId, ButtonStateType buttonStateType );
-	
+
 	// remove icon from icon list
 	bool removeIcon( int iconId );
 
@@ -451,7 +453,7 @@ protected:
    // Actions are:
    //  	if the button is invisible, reset to visible internally and with parent
    //   display enabled bitmap
-   //   display text in "enabled" text style 
+   //   display text in "enabled" text style
    virtual void doOnEnable();
 
    // DO ON DISABLE
@@ -485,16 +487,16 @@ protected:
 						  bool                 enabled = true,
 						  bool                 visible = true,
 						  bool                 pressed = false);
-	
+
    //Constructor for derived classes
 	CGUIButton( CGUIDisplay & display );
 
 private:
    bool _pressed;
 
-	CGUIButton();
-	CGUIButton( CGUIButton & copy );
-	CGUIButton operator = ( CGUIButton &object );
+	CGUIButton(void);
+	CGUIButton( const CGUIButton & copy );
+	CGUIButton operator = ( const CGUIButton &object );
 };
 
 #endif /* #ifndef _CGUI_BUTTON_INCLUDE */

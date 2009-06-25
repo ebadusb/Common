@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.h 1.3 2005/08/11 18:45:54Z pn02526 Exp wms10235 $
+ * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.h 1.4 2009/06/24 18:41:44Z wms10235 Exp pn02526 $
  * $Log: cgui_adjustor.h $
+ * Revision 1.3  2005/08/11 18:45:54Z  pn02526
+ * Fix logic for sensing if a button is held by the operator.
  * Revision 1.2  2005/08/10 12:01:14  pn02526
  * Revision 1.1  2005/07/25 13:29:45  pn02526
  * Initial revision
@@ -81,9 +83,9 @@ public:
                  AdjustorData  & adjustorData,            // reference to adjustor data for bitmaps, text and behavoir
                  const CallbackBase increaseEventCallback,   // callback for an increase
                  const CallbackBase decreaseEventCallback,   // callback for a decrease
-                 Message<long>      * increaseEventObject,// (NOT USED) ptr to int message object to output as long as increase button is pressed and held 
+                 Message<long>      * increaseEventObject,// (NOT USED) ptr to int message object to output as long as increase button is pressed and held
                                                           // should not be NULL if increaseEventCallback is NULL
-                 Message<long>      * decreaseEventObject,// (NOT USED) ptr to int message object to output as long as decrease button is pressed and held 
+                 Message<long>      * decreaseEventObject,// (NOT USED) ptr to int message object to output as long as decrease button is pressed and held
                                                           // should not be NULL if decreaseEventCallback is NULL
                  Message<long>      * increaseAudioMessage,    // (NOT USED) ptr to audio message to repeat while increase button is held
                  Message<long>      * decreaseAudioMessage,    // (NOT USED) ptr to audio message to repeat while decrease button is held
@@ -186,6 +188,10 @@ private:
    Direction _direction;                 // Current direction of changing value, enum INCREASING, DECREASING, NOCHANGE.
 
    DataLog_Level * _adjustorLevel;      // Datalog level object used to log button press events
+
+	CGUIAdjustor(void);
+	CGUIAdjustor(const CGUIAdjustor & copy);
+	CGUIAdjustor & operator=(const CGUIAdjustor & copy);
 };
 
 #endif /* ifndef _CGUI_ADJUSTOR */

@@ -6,6 +6,8 @@
  * cgui_list_box.cpp
  *
  * $Log: cgui_list_box.cpp $
+ * Revision 1.5  2007/02/08 19:28:04Z  rm10919
+ * Updates to add languages to string data.
  * Revision 1.4  2007/01/17 14:31:23Z  rm10919
  * Update to use a bitmap background.
  * Revision 1.3  2006/08/10 22:18:56Z  rm10919
@@ -21,20 +23,21 @@
 #include <vxworks.h>
 #include "cgui_list_box.h"
 #include "datalog_levels.h"
+#include "error.h"
 
-CGUIListBox::CGUIListBox(CGUIDisplay & display, CGUIWindow * parent, 
+CGUIListBox::CGUIListBox(CGUIDisplay & display, CGUIWindow * parent,
                          const CallbackBase & callback,
-                         list<CGUITextItem*> buttonNames, 
-                         CGUIButton::ButtonData * listButtonData, 
-                         CGUIButton::ButtonData * upButtonData, 
-                         CGUIButton::ButtonData * downButtonData, 
+                         list<CGUITextItem*> buttonNames,
+                         CGUIButton::ButtonData * listButtonData,
+                         CGUIButton::ButtonData * upButtonData,
+                         CGUIButton::ButtonData * downButtonData,
                          int numberOfButtons,
-                         bool haveBackground, 
+                         bool haveBackground,
                          CGUIColor backgroundColor,
                          int buttonSpacing):
                          CGUIWindow(display), _parent(parent), _callback(callback),
-                         _numberOfButtons(numberOfButtons), 
-                         _listSize(buttonNames.size()), 
+                         _numberOfButtons(numberOfButtons),
+                         _listSize(buttonNames.size()),
                          _buttonSpacing(buttonSpacing),
                          _backgroundBitmapId(NULL),
                          _backgroundBitmap(NULL),
@@ -53,17 +56,17 @@ CGUIListBox::CGUIListBox(CGUIDisplay & display, CGUIWindow * parent,
 }
 
 CGUIListBox::CGUIListBox(CGUIDisplay & display, CGUIWindow * parent,
-                         const CallbackBase & callback, 
-                         list<CGUITextItem*> buttonNames, 
-                         CGUIButton::ButtonData * listButtonData, 
-                         CGUIButton::ButtonData * upButtonData, 
-                         CGUIButton::ButtonData * downButtonData, 
+                         const CallbackBase & callback,
+                         list<CGUITextItem*> buttonNames,
+                         CGUIButton::ButtonData * listButtonData,
+                         CGUIButton::ButtonData * upButtonData,
+                         CGUIButton::ButtonData * downButtonData,
                          int numberOfButtons,
                          CGUIBitmapInfo * backgroundBitmapId,
                          int buttonSpacing):
                          CGUIWindow(display), _parent(parent), _callback(callback),
-                         _numberOfButtons(numberOfButtons), 
-                         _listSize(buttonNames.size()), 
+                         _numberOfButtons(numberOfButtons),
+                         _listSize(buttonNames.size()),
                          _buttonSpacing(buttonSpacing),
                          _backgroundBitmapId(backgroundBitmapId),
                          _listBoxBackground(NULL),
@@ -83,6 +86,11 @@ void CGUIListBox::initializeData(CGUIDisplay & display, CGUIWindow * parent, con
    CGUIRegion listBoxRegion;
    CGUIRegion buttonRegion;
 
+	if( numberOfButtons > MAX_NUMBER_LIST_BUTTONS || numberOfButtons < 0 )
+	{
+		_FATAL_ERROR(__FILE__, __LINE__, "Array bounds exceeded for list buttons.");
+	}
+
    if (_listSize < _numberOfButtons)
    {
       DataLog( log_level_cgui_error ) << "CGUIListBox: list size smaller that number button to display" << endmsg;
@@ -91,7 +99,7 @@ void CGUIListBox::initializeData(CGUIDisplay & display, CGUIWindow * parent, con
    // initialize to beginning of list
    _indexTopButton = _buttonNames.begin();
 
-   for (int i = 0; i <= MAX_NUMBER_LIST_BUTTONS; i++)
+   for (int i = 0; i < MAX_NUMBER_LIST_BUTTONS; i++)
    {
       _listButton[i] = NULL;
    }
@@ -108,9 +116,6 @@ void CGUIListBox::initializeData(CGUIDisplay & display, CGUIWindow * parent, con
       {
          listBoxRegion.height = listButtonData->enabledBitmapId->getHeight() * _numberOfButtons + _buttonSpacing * (_numberOfButtons-1)+ 2 * _buttonSpacing;
 
-//         listButtonData->left = _buttonSpacing;
-//         listButtonData->top = listButtonData->enabledBitmapId->getHeight() * i + _buttonSpacing * i + _buttonSpacing;
-
          for (int i = 0; i < numberOfButtons; i++)
          {
             buttonRegion = CGUIRegion( _buttonSpacing, (listButtonData->enabledBitmapId->getHeight() * i + _buttonSpacing * i + _buttonSpacing), listButtonData->enabledBitmapId->getWidth(), listButtonData->enabledBitmapId->getHeight());
@@ -119,7 +124,8 @@ void CGUIListBox::initializeData(CGUIDisplay & display, CGUIWindow * parent, con
             _listButton[i]->setRegion(buttonRegion);
             _listButton[i]->disable();
          }
-      } else
+      }
+		else
       {
          listBoxRegion.height = listButtonData->enabledBitmapId->getHeight() * _numberOfButtons;
 
@@ -131,7 +137,8 @@ void CGUIListBox::initializeData(CGUIDisplay & display, CGUIWindow * parent, con
             _listButton[i]->disable();
          }
       }
-   } else
+   }
+	else
    {
       _haveArrowButtons = true;
 
@@ -153,7 +160,8 @@ void CGUIListBox::initializeData(CGUIDisplay & display, CGUIWindow * parent, con
             _listButton[i]->setRegion(buttonRegion);
             _listButton[i]->disable();
          }
-      } else
+      }
+		else
       {
          listBoxRegion.height = upButtonData->enabledBitmapId->getHeight() * 2 + listButtonData->enabledBitmapId->getHeight() * _numberOfButtons;
          downArrowY = upButtonData->enabledBitmapId->getHeight() + listButtonData->enabledBitmapId->getHeight() * _numberOfButtons;
@@ -178,17 +186,17 @@ void CGUIListBox::initializeData(CGUIDisplay & display, CGUIWindow * parent, con
       _downArrowButton->setReleasedCallback(Callback<CGUIListBox>(this, &CGUIListBox::downButtonCallback));
    }
 
-   if (_listButton[0] != NULL) 
+   if (_listButton[0] != NULL)
       _listButton[0]->setReleasedCallback(Callback<CGUIListBox>(this, &CGUIListBox::listButton0Callback));
-   if (_listButton[1] != NULL) 
+   if (_listButton[1] != NULL)
       _listButton[1]->setReleasedCallback(Callback<CGUIListBox>(this, &CGUIListBox::listButton1Callback));
-   if (_listButton[2] != NULL) 
+   if (_listButton[2] != NULL)
       _listButton[2]->setReleasedCallback(Callback<CGUIListBox>(this, &CGUIListBox::listButton2Callback));
-   if (_listButton[3] != NULL) 
+   if (_listButton[3] != NULL)
       _listButton[3]->setReleasedCallback(Callback<CGUIListBox>(this, &CGUIListBox::listButton3Callback));
-   if (_listButton[4] != NULL) 
+   if (_listButton[4] != NULL)
       _listButton[4]->setReleasedCallback(Callback<CGUIListBox>(this, &CGUIListBox::listButton4Callback));
-   if (_listButton[5] != NULL && numberOfButtons == 5) 
+   if (_listButton[5] != NULL && numberOfButtons == 5)
       _listButton[5]->setReleasedCallback(Callback<CGUIListBox>(this, &CGUIListBox::listButton5Callback));
 
    // Set the region for the list box window
@@ -251,7 +259,7 @@ CGUITextItem * CGUIListBox::returnTextItem(void)
       return _returnTextItem;
    }
    else return NULL;
-} 
+}
 
 void CGUIListBox::upButtonCallback()
 {

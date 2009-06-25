@@ -6,6 +6,8 @@
  * list_box.h
  *
  * $Log: cgui_list_box.h $
+ * Revision 1.4  2007/01/17 14:31:23Z  rm10919
+ * Update to use a bitmap background.
  * Revision 1.3  2006/08/10 22:18:57Z  rm10919
  * Make border around list box if using a background.
  * Revision 1.2  2006/07/26 23:30:47Z  rm10919
@@ -32,7 +34,7 @@
 //   then the number of callback methods for
 //    list buttons will need to be modified!!!
 //  This means there are six buttons (0,1,2,3,4,5)
-#define  MAX_NUMBER_LIST_BUTTONS  5
+#define  MAX_NUMBER_LIST_BUTTONS  6
 
 class CGUIListBox : public CGUIWindow
 {
@@ -95,9 +97,9 @@ private:
    void updateButtons();
 
 private:
-   CGUIListBox();
-   CGUIListBox (CGUIListBox & copy);
-   CGUIListBox operator=(CGUIListBox &obj);
+   CGUIListBox(void);
+   CGUIListBox(const CGUIListBox & copy);
+   CGUIListBox operator=(const CGUIListBox &obj);
 }; // END of CGUIListBox Class Declaration
 
 #endif  //_CGUI_LIST_BOX_

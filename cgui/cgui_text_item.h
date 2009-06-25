@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.15 2009/04/13 22:34:00Z rm10919 Exp wms10235 $
  * $Log: cgui_text_item.h $
+ * Revision 1.15  2009/04/13 22:34:00Z  rm10919
+ * Add getFontSize. for IT 7042
  * Revision 1.14  2007/06/04 22:04:21Z  wms10235
  * IT83 - Updates for the common GUI project to use the unicode string class
  * Revision 1.13  2007/04/30 21:18:28Z  wms10235
@@ -91,10 +93,10 @@ public:
 
 	// Set the text for this CGUITextItem using a UTF8 string. The UTF8
 	// string is converted to wide character unicode.
-	void setText(const char * utf8String, LanguageId = currentLanguage);
+	void setText(const char * utf8String, LanguageId languageId = currentLanguage);
 
 	// Set the text for this CGUITextItem using a wide character string.
-	void setText(const StringChar * texString, LanguageId = currentLanguage);
+	void setText(const StringChar * texString, LanguageId languageId = currentLanguage);
 
 	// Get the language ID
 	LanguageId getLanguageId(void) const { return _languageId;}

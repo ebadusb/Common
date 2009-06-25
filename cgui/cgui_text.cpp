@@ -2,18 +2,20 @@
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.47 2009/05/29 23:11:49Z ms10234 Exp wms10235 $
  *
  * $Log: cgui_text.cpp $
+ * Revision 1.47  2009/05/29 23:11:49Z  ms10234
+ * -remove wvEvent calls which were checked in by mistake
  * Revision 1.46  2009/05/26 20:30:28Z  ms10234
  * 6768 - change to only load font range once
  * Revision 1.45  2009/03/02 20:46:25Z  adalusb
- * IT 6701. Added a function to map a char to a font name for reports. 
+ * IT 6701. Added a function to map a char to a font name for reports.
  * Revision 1.44  2009/01/07 16:52:12Z  adalusb
- * Tab width is now calculated using english language font instead of the styling record font. 
+ * Tab width is now calculated using english language font instead of the styling record font.
  * Revision 1.43  2008/12/17 21:35:47Z  rm10919
  * Correction on text length for combined fonts. IT 6562
  * Revision 1.42  2008/12/17 19:16:01Z  rm10919
  * Fix global variable definition for build.
  * Revision 1.41  2008/12/17 16:46:37Z  rm10919
- * Correct global varibale. 
+ * Correct global varibale.
  * Revision 1.40  2008/12/17 16:20:22Z  rm10919
  * Changes for combined fonts. IT6562
  * Revision 1.39  2008/12/16 22:01:42Z  rm10919
@@ -21,7 +23,7 @@
  * Revision 1.38  2008/12/16 06:03:03Z  rm10919
  * Add the ablility for combined fonts in text. IT 6562
  * Revision 1.37  2008/07/23 22:55:04Z  adalusb
- * Selection of the text wrapping algorithm based on the language loaded enabled. 
+ * Selection of the text wrapping algorithm based on the language loaded enabled.
  * Revision 1.36  2008/07/22 17:43:58Z  adalusb
  * Set the token algorithm to word based for now as strings have been frozen for MNC production ( English ). This will be changed for foreign languages.
  * Revision 1.35  2008/07/18 23:10:12Z  adalusb
@@ -106,6 +108,7 @@
 #include "cgui_window.h"
 #include "font_table.h"
 #include "datalog_levels.h"
+#include "error.h"
 
 #if CPU==SIMNT
 # include <string.h>
@@ -146,6 +149,7 @@ int simTextBold = 0;
 
 // Declare & initialize font range list.
 list< FontRange * > CGUIText::_fontRange;
+SEM_ID CGUIText::_fontRangeSem = semMCreate( SEM_Q_PRIORITY | SEM_INVERSION_SAFE );
 bool CGUIText::_fontRangeIdsAdded = false;
 
 CGUIText::CGUIText(CGUIDisplay & display)
@@ -183,7 +187,7 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
 	{
 		selectTokenSplitMethod();
 	}
-	
+
 	if (_textItem)
 	{
 		if (_textItem->isInitialized())
@@ -215,7 +219,7 @@ void CGUIText::initializeData(CGUITextItem * textItem, StylingRecord * stylingRe
 	_languageSetByApp = false;
 
 	// add any new fonts needed for text
-	if( !_fontRangeIdsAdded && ( _fontRange.size() > 0 ) )
+	if( !_fontRangeIdsAdded )
 	{
 		addFontRangeFonts();
 	}
@@ -281,8 +285,12 @@ void CGUIText::setFontSize(int fontSize)
 
 bool CGUIText::addFontRange( FontRange *fontRange )
 {
+	semTake(_fontRangeSem, WAIT_FOREVER);
+
 	// future add logic to insert in list in sorted order.
 	_fontRange.push_front( fontRange );
+
+	semGive( _fontRangeSem );
 
    return true;
 }
@@ -291,12 +299,19 @@ bool CGUIText::addFontRange( FontRange *fontRange )
 CGUIFontId CGUIText::getFontId( int currentChar )
 {
    CGUIFontId resultFontId = _stylingRecord.fontId;
-	
+
 	int fontIndex = checkInFontRange( currentChar );
 
    if( fontIndex != _defaultFontIndex )
 	{
-      resultFontId = _display._font[ _stylingRecord.fontSize + fontIndex * 50 ];
+		int index = _stylingRecord.fontSize + fontIndex * 50;
+
+		if( index >= MAX_FONTS || index < 0 )
+		{
+			_FATAL_ERROR(__FILE__, __LINE__, "Array bounds exceeded for font table.");
+		}
+
+      resultFontId = _display._font[index];
 	}
 
 	return resultFontId;
@@ -305,6 +320,8 @@ CGUIFontId CGUIText::getFontId( int currentChar )
 int CGUIText::checkInFontRange( int currentChar )
 {
 	int result = _defaultFontIndex;
+
+	semTake(_fontRangeSem, WAIT_FOREVER);
 
 	if( _fontRange.size() > 0 )
 	{
@@ -323,13 +340,17 @@ int CGUIText::checkInFontRange( int currentChar )
 			fontRangeIter++;
 		} // while not end of _fontRange list do
 	}
-	
+
+	semGive( _fontRangeSem );
+
 	return result;
 }
 
 bool CGUIText::getFontNameForChar(unsigned short currentChar,string& fontName)
 {
 	bool result = false;
+
+	semTake(_fontRangeSem, WAIT_FOREVER);
 
 	if( _fontRange.size() > 0 )
 	{
@@ -348,23 +369,27 @@ bool CGUIText::getFontNameForChar(unsigned short currentChar,string& fontName)
 			}
 
 			fontRangeIter++;
-		} 
+		}
 	}
-	
+
+	semGive( _fontRangeSem );
+
 	return result;
 }
 
 void CGUIText::clearFontRange()
 {
+	semTake(_fontRangeSem, WAIT_FOREVER);
+
 	if( _fontRange.size() > 0 )
 	{
 		list< FontRange * >::iterator fontRangeIter = _fontRange.begin();
 		FontRange * fontRange = NULL;
-		
+
 		while( fontRangeIter != _fontRange.end() )
 		{
          fontRange = ( *fontRangeIter );
-			
+
 			// go to next item in list
 			fontRangeIter++;
 
@@ -372,12 +397,16 @@ void CGUIText::clearFontRange()
 			delete( fontRange );
 		} // while not end of _fontRange list do
 	}
-	
+
 	_fontRange.clear();
+
+	semGive( _fontRangeSem );
 }
 
 void CGUIText::addFontRangeFonts()
 {
+	semTake(_fontRangeSem, WAIT_FOREVER);
+
 	if( _fontRange.size() > 0 )
 	{
 		list< FontRange * >::iterator fontRangeIter = _fontRange.begin();
@@ -394,6 +423,12 @@ void CGUIText::addFontRangeFonts()
 				for (int f=6; f<=32; f++)
 				{
 					int index = f + fontRange->fontIndex * 50;
+
+					if( index >= MAX_FONTS || index < 0 )
+					{
+						_FATAL_ERROR(__FILE__, __LINE__, "Array bounds exceeded for font table.");
+					}
+
 					_display._font[index] = _display.createFont( fontRange->fontName, f, bold);
 					uglFontInfo(_display._font[index], UGL_FONT_ANTI_ALIASING_SET, &option);
 	//				option = UGL_FONT_BOLD_LIGHT;
@@ -406,7 +441,8 @@ void CGUIText::addFontRangeFonts()
 	} //	font range list greater than zero
 
 	_fontRangeIdsAdded = true;
-		
+
+	semGive( _fontRangeSem );
 }
 
 void CGUIText::setLanguage(LanguageId configLanguage)
@@ -537,7 +573,8 @@ int CGUIText::getLength(void) const
 
 void CGUIText::getSize(CGUIRegion & region, int startIndex, int length, CGUIFontId fontId)
 {
-	if (( fontId == UGL_NULL_ID || _stylingRecord.fontId == UGL_NULL_ID) ||
+	if (( fontId == UGL_NULL_ID ||
+			_stylingRecord.fontId == UGL_NULL_ID) ||
 			!_textString.getLength() ||
 			startIndex >= _textString.getLength() )
 	{
@@ -583,8 +620,12 @@ void CGUIText::getTokenSize( CGUIRegion & region, int startIndex = -1, int lengt
 {
 	CGUIRegion resultRegion = CGUIRegion( 0, 0, 0, 0 );
 	CGUIFontId currentFontId = getFontId( _textString[ startIndex ]);	//_stylingRecord.fontId;
-	
-	if( _fontRange.size() > 0 )
+
+	semTake(_fontRangeSem, WAIT_FOREVER);
+	size_t listSize = _fontRange.size();
+	semGive( _fontRangeSem );
+
+	if( listSize > 0 )
 	{
 		int segmentLength = 0;
 
@@ -600,7 +641,7 @@ void CGUIText::getTokenSize( CGUIRegion & region, int startIndex = -1, int lengt
 
 				if( newFontId != currentFontId || ( i == ( startIndex + length )))
 				{
-					
+
 					//	update resultRegion to new values
 					getSize( resultRegion,( i - segmentLength ), segmentLength, currentFontId );
 
@@ -610,7 +651,7 @@ void CGUIText::getTokenSize( CGUIRegion & region, int startIndex = -1, int lengt
 					currentFontId = newFontId;
 				}
 				segmentLength++;
-				
+
 			}	// for text length
 		}	 // if greater than zero
 
@@ -678,8 +719,8 @@ CGUIText::GetTokenResult CGUIText::getCharBasedToken(int startIndex, bool startO
 			else
 			{
 				length+=1;
-				currentIndex+=1; 
-				forbiddenStartToken=true;  
+				currentIndex+=1;
+				forbiddenStartToken=true;
 			}
 		}
 		else if( checkIfForbiddenEnd(currentIndex) ) // Asian Forbidden End Char
@@ -693,7 +734,7 @@ CGUIText::GetTokenResult CGUIText::getCharBasedToken(int startIndex, bool startO
 				length+=1;
 				currentIndex+=1;
 				forbiddenEndToken=true;
-			}  
+			}
 		}
 		else if( checkIfEnglish(currentIndex) ) // English letters or numbers
 		{
@@ -721,7 +762,7 @@ CGUIText::GetTokenResult CGUIText::getCharBasedToken(int startIndex, bool startO
 				currentIndex+=1;
 			}
 		}
-		else   
+		else
 		{
 			// Floating point numbers
 			if( ( _textString[currentIndex] == decimalPoint || _textString[currentIndex] == decimalComma )
@@ -736,17 +777,17 @@ CGUIText::GetTokenResult CGUIText::getCharBasedToken(int startIndex, bool startO
 				{
 					length+=1;
 					currentIndex+=1;
-	
+
 					if( forbiddenStartToken ) forbiddenStartToken=false;
 					if( forbiddenEndToken )   forbiddenEndToken=false;
 				}
-	
+
 				if( englishToken )
 				{
 					englishToken=false;
 				}
-	
-				tokenEnded = true; 
+
+				tokenEnded = true;
 			}
 		}
 	}
@@ -794,7 +835,7 @@ bool CGUIText::checkIfEnglish(int index)
 	{
 		StringChar charPos = _textString[index];
 
-		if( ( charPos >= smallA[0] && charPos <= smallZ[0] ) || 
+		if( ( charPos >= smallA[0] && charPos <= smallZ[0] ) ||
 			 ( charPos >= bigA[0] && charPos <= bigZ[0] ) ||
 			 ( charPos >= zero[0] && charPos <= nine[0] ) )
 		{
@@ -810,7 +851,7 @@ bool CGUIText::checkIfForbiddenStart(int index)
 	bool result = false;
 
 	if( _forbiddenStartCharsAvailable )
-	{	
+	{
 		if( index < _textString.getLength() && index >= 0 )
 		{
 			if( _forbiddenStartCharList.find(_textString[index],0) != -1 )
@@ -884,7 +925,7 @@ void CGUIText::initializeForbiddenChars()
 		{
 			DataLog( log_level_cgui_info ) << "Couldn't find forbiddenStartCharList in string.info files" << endmsg;
 		}
-	
+
 		CGUITextItem* forbiddenEndCharList = CGUITextItem::_textMap.findString("forbiddenEndCharList");
 		if( forbiddenEndCharList != NULL )
 		{
@@ -1121,8 +1162,6 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
 
 				CGUIRegion tokenSize;
 
-				
-				
 				getTokenSize( tokenSize, currentIndex, tokenCharCount );
 
 				if ( convertLinePosition(currentSegmentPixelWidth+tokenSize.width, tokenSize.height, lineStartX, lineSize) )
@@ -1173,17 +1212,21 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
 
 			//	Check for conbination of fonts for line data
 			//
-			if( _fontRange.size() > 0 )
+			semTake(_fontRangeSem, WAIT_FOREVER);
+			size_t listSize = _fontRange.size();
+			semGive( _fontRangeSem );
+
+			if( listSize > 0 )
 			{
-				// check to see of font ids exsistj
+				// check to see if font ids exist
 				if( !_fontRangeIdsAdded )
 				{
 					addFontRangeFonts();
 				}
-				
+
 				LineData 	fontRangeLineData;
 				CGUIRegion fontRangeRegion( 0, 0, 0, 0 );
-				
+
 				fontRangeLineData.x = currentLineData.x;
 				fontRangeLineData.y = currentLineData.y;
 				fontRangeLineData.index = currentLineData.index;
@@ -1195,7 +1238,7 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
 					int currentChar = (int)_textString[i];
 					CGUIFontId newFontId = getFontId( currentChar );
 
-					if( newFontId == NULL ) 
+					if( newFontId == NULL )
 						newFontId = _stylingRecord.fontId;
 
 					if(( newFontId != currentFontId ) && ( i != (currentLineData.index + currentLineData.textLength )))
@@ -1217,17 +1260,17 @@ void CGUIText::convertTextToMultiline(CGUIRegion & region)
 					}
 					if( i != (currentLineData.index + currentLineData.textLength ))
                    fontRangeLineData.textLength++;	//	increment text length
-					
+
 				} //	for current line data
-				
+
 				_lineData.push_back( fontRangeLineData );
 			}
 			else
 			{
 				// associate fontId with line data
 				currentLineData.fontId = _stylingRecord.fontId;
-				// do what we always did 
-            _lineData.push_back(currentLineData);		
+				// do what we always did
+            _lineData.push_back(currentLineData);
 			}
 
 			xMax = (lineSize.x + lineSize.width - 1 > xMax) ? lineSize.x + lineSize.width - 1 : xMax;
@@ -1319,7 +1362,7 @@ void CGUIText::computeTextRegion(void)
 
 		CGUIRegion    textRegion;
 		convertTextToMultiline(textRegion);
-	
+
 		// find vertical region to place text
 		if (_stylingRecord.attributes & VJUSTIFY_CENTER)
 		{
@@ -1350,7 +1393,7 @@ void CGUIText::computeTextRegion(void)
 			// justify at top of requested region
 			textRegion.vertShift(_requestedRegion.y);
 		}
-	
+
 		setRegion(textRegion);
 	}
 }
@@ -1449,7 +1492,7 @@ void CGUIText::draw(UGL_GC_ID gc)
 	// make copy of text string to draw.
 	UnicodeString copyTextString( _textString );
 	copyTextString.replace( nonBreakingSpace, regularLatinSpace );
-	
+
 	//  let's write this out
    uglBackgroundColorSet(gc, backgroundColor);
    uglForegroundColorSet(gc, _stylingRecord.color);
@@ -1463,12 +1506,12 @@ void CGUIText::draw(UGL_GC_ID gc)
 		lineData.y = (*lineIter).y;
 		lineData.textLength = (*lineIter).textLength;
 		lineData.fontId = (*lineIter).fontId;
-		
+
 		uglFontSet( gc, (*lineIter).fontId );
       uglTextDrawW( gc, (*lineIter).x + _region.x, (*lineIter).y + _region.y, (*lineIter).textLength, &copyTextString[(*lineIter).index] );
 
       ++lineIter;
-		
+
    } /* while lineIter != _lineData.end() */
 } // END draw
 
@@ -1497,7 +1540,7 @@ bool FontRange::operator == ( const FontRange fontRange ) const
 		if( endIndex != fontRange.endIndex )
 		{
 			result = false;
-			break;	
+			break;
 		}
 
 	} while( false );   /* only do-while loop once */
@@ -1515,7 +1558,7 @@ bool FontRange::operator < ( const FontRange fontRange  ) const
 		{
 			result = true;
 			break;
-		}		
+		}
 
 		if( startIndex == fontRange.startIndex &&
 			 endIndex < fontRange.endIndex )
@@ -1523,7 +1566,7 @@ bool FontRange::operator < ( const FontRange fontRange  ) const
 			result = true;
 			break;
 		}
-		
+
 	}while( false );	  /* only do-while loop once */
 
 	return result;
@@ -1539,7 +1582,7 @@ bool FontRange::operator > ( const FontRange fontRange  ) const
 		{
 			result = true;
 			break;
-		}		
+		}
 
 		if( startIndex == fontRange.startIndex &&
 			 endIndex > fontRange.endIndex )
@@ -1547,7 +1590,7 @@ bool FontRange::operator > ( const FontRange fontRange  ) const
 			result = true;
 			break;
 		}
-		
+
 	}while( false );	  /* only do-while loop once */
 
 	return result;

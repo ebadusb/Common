@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window_object.h 1.6 2008/11/06 22:24:17Z rm10919 Exp wms10235 $
+ * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window_object.h 1.6 2008/11/06 22:24:17Z rm10919 Exp $
  * $Log: cgui_window_object.h $
+ * Revision 1.6  2008/11/06 22:24:17Z  rm10919
+ * Add transparent and shaded bitmaps and shaded buttons.
  * Revision 1.5  2007/07/09 18:48:40Z  jl11312
  * - added function to access _owner member
  * Revision 1.4  2005/02/21 17:17:14Z  cf10242
@@ -31,7 +33,7 @@ class CGUIWindow;
 class CGUIWindowObject
 {
    friend class CGUIWindow;
-	
+
 public:
    enum ClippingType { Clipped, Transparency, NotClipped };
 
@@ -62,7 +64,7 @@ protected:
 
 private:
    void initializeData(void);
-	
+
    virtual ClippingType clipSiblings(void) const = 0;
 
 protected:
@@ -73,11 +75,9 @@ protected:
    CGUIWindow  * _owner;
 
 private:
-   //CGUIWindowObject();
-   //CGUIWindowObject (CGUIWindowObject & copy);
-   //CGUIWindowObject operator=(CGUIWindowObject &obj);
-
+   CGUIWindowObject(void);
+   CGUIWindowObject (const CGUIWindowObject & copy);
+   CGUIWindowObject operator=(const CGUIWindowObject &obj);
 };
-
 
 #endif /* #ifndef _CGUI_WINDOW_OBJECT_INCLUDE */

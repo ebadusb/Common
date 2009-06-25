@@ -3,12 +3,14 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
  * $Log: cgui_text.h $
+ * Revision 1.26  2009/03/02 20:46:16Z  adalusb
+ * IT 6701. Added a function to map a char to a font name for reports.
  * Revision 1.25  2008/12/16 06:03:04Z  rm10919
  * Add the ablility for combined fonts in text. IT 6562
  * Revision 1.24  2008/11/06 22:24:16Z  rm10919
  * Add transparent and shaded bitmaps and shaded buttons.
  * Revision 1.23  2008/07/23 22:55:08Z  adalusb
- * Selection of the text wrapping algorithm based on the language loaded enabled. 
+ * Selection of the text wrapping algorithm based on the language loaded enabled.
  * Revision 1.22  2008/07/18 23:10:15Z  adalusb
  * Checked in changes for asian language text wrap. A new function getCharBasedToken() has been added.
  * Revision 1.21  2008/03/07 22:38:54Z  jl11312
@@ -196,7 +198,7 @@ public:
 	int getFontSize(void) const { return _stylingRecord.fontSize; }
 
 	// 	Add a font range to list.
-	// 
+	//
 	static bool addFontRange( FontRange *fontRange );
 	CGUIFontId getFontId( int currentChar );
 	int checkInFontRange( int currentChar );
@@ -208,7 +210,7 @@ public:
 	static bool getFontNameForChar(unsigned short currentChar,string& fontName);
 
 	// 	Clear font range list.
-	// 
+	//
 	static void clearFontRange( void );
 
 	// SET_LANGUAGE
@@ -264,7 +266,7 @@ public:
 	};
 
 	static TokenSplitMethod _tokenSplitMethod;
-   
+
 	static void selectTokenSplitMethod();
 
 protected:
@@ -315,15 +317,15 @@ protected:
 	StylingRecord  _stylingRecord;	// holds the styling record for an object
 	UnicodeString	_textString;		// Text string for dynamic user defined text
 
-	UnicodeString	_lastTextString;	// Last text string evaluated by computeTextRegion() 
+	UnicodeString	_lastTextString;	// Last text string evaluated by computeTextRegion()
 	bool				_forceCompute;		// if true, computeTextRegion() is forced to reevaluate string
 
 	list<LineData> _lineData;			// list of text lines for object
 	FormatData		_formatData;		// current paragraph format options
 
 	static list< FontRange * > _fontRange;	//  list of unicode ranges with associated font name and index of font
+	static SEM_ID	_fontRangeSem;
 
-	
 	// These are used to determine the background color for the text.
 	//
 	bool           _captureBackgroundColor;
@@ -339,7 +341,7 @@ protected:
 	bool checkIfArabicNumeral(int index);
 
 	// Forbidden Char lists are present in string.info files
-	// If present, they are read only once and then shared across all CGUItext objects 
+	// If present, they are read only once and then shared across all CGUItext objects
 
 	static UnicodeString _forbiddenStartCharList;
 	static bool _forbiddenStartCharsAvailable;
@@ -351,7 +353,7 @@ protected:
 
 	static void initializeForbiddenChars();
 	static bool _tokenSplitMethodSelected;
-	
+
 private:
 	// Text is never clipped by another window object and
 	// always appears on top.

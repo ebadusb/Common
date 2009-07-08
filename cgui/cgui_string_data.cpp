@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.cpp 1.12 2007/06/14 19:34:11Z wms10235 Exp wms10235 $
  * $Log: cgui_string_data.cpp $
+ * Revision 1.12  2007/06/14 19:34:11Z  wms10235
+ * Taos IT3439 - Discovered a bug where variable substitution was not functioning
  * Revision 1.11  2007/05/03 16:19:13Z  jl11312
  * - added semaphore protection for map structures
  * Revision 1.10  2007/04/30 18:26:07Z  jl11312
@@ -55,7 +57,6 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
 
 	// Loop reading string info records, converting them to CGUTextItems,
 	// and putting them in their proper places in the text map.
-	semTake(_lock, WAIT_FOREVER);
 	while ( stringInfo.get(fontId, textItem, NULL, fontIndex) )
 	{
 		// Define a pointer for a map entry's CGUITextItem.
@@ -66,6 +67,8 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
 
 		// Do the lookup thing for the textItem.
 		//
+		semTake(_lock, WAIT_FOREVER);
+
 		iter = _textMap.find(textItem.getId());
 
 		// If found the corresponding text item in map,
@@ -92,9 +95,9 @@ bool CGUIStringData::readDatabaseFile (const char * filename, CGUIFontId * fontI
 			DataLog( log_level_cgui_error ) << "line " << stringInfo.line() << ": Can't find string Id " << textItem.getId() << " in map!!!!! - " << filename << endmsg;
 			result = false;
 		}
-	}
 
-	semGive(_lock);
+		semGive(_lock);
+	}
 
 	// Check for premature end.
 	if( !stringInfo.endOfFile() )

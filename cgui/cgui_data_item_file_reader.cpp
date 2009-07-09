@@ -1,7 +1,9 @@
 /*
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item_file_reader.cpp 1.5 2009/06/24 18:41:45Z wms10235 Exp wms10235 $
+ * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item_file_reader.cpp 1.5 2009/06/24 18:41:45Z wms10235 Exp $
  *
  * $Log: cgui_data_item_file_reader.cpp $
+ * Revision 1.5  2009/06/24 18:41:45Z  wms10235
+ * IT6958 - Interrmittent page fault occurs at protocol load or during procedure
  * Revision 1.4  2007/11/15 21:02:37Z  rm10919
  * Create new data item class for clock type numeric strings.
  * Revision 1.3  2007/04/30 21:18:27Z  wms10235
@@ -45,6 +47,8 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
 
 	if( dataItemInfo )
 	{
+		DataLog( log_level_cgui_info ) << "readDataItemFile opened file " << filename << endmsg;
+
 		char * lineBuffer = new char[LineBufferSize+1];
 
 		while (fgets(lineBuffer, LineBufferSize, dataItemInfo) != NULL)
@@ -188,11 +192,14 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
 					retVal = false;
 				}
 			}
+
+			// taskDelay(0);
 		}
 
 		// Close file.
 		fclose(dataItemInfo);
 		delete [] lineBuffer;
+		DataLog( log_level_cgui_info ) << "readDataItemFile closed file " << filename << endmsg;
 	}
 	else
 	{

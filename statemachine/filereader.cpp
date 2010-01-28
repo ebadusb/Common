@@ -774,8 +774,11 @@ int FileReader :: getLine( char *buffer )
    // Read in 1 line from the File ...
    //
    fgetpos( _FilePtr, &_FilePos );
+
+   taskDelay( 1 );
    if ( fgets( buffer, FILEREADER_BUFFER_SIZE , _FilePtr ) != NULL )
    {
+	   taskDelay( 1 );
       _LineCount++;
 
       //

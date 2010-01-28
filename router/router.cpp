@@ -219,10 +219,18 @@ void Router::dispatchMessages()
       // Check the task's queue to see if we went over the high-water mark ...
       mq_attr qattributes;
       mq_getattr( _RouterQueue, &qattributes );
+
+
       if ( qattributes.mq_curmsgs > _MessageHighWaterMark )
       {
          _MessageHighWaterMark = _MessageHighWaterMarkPerPeriod = qattributes.mq_curmsgs;
-         DataLog( log_level_message_system_info ) << "mqueue max: " << _MessageHighWaterMark << "/" << qattributes.mq_maxmsg << endmsg;
+		 int priority = 0; taskPriorityGet(0, &priority);
+         DataLog( log_level_message_system_info ) << "mqueue max: " << _MessageHighWaterMark << "/" << qattributes.mq_maxmsg 
+			 << " priority: " << priority << endmsg;
+		 if(qattributes.mq_curmsgs >= MessageSystemConstant::DEFAULT_ROUTER_Q_SIZE) {
+			 DataLog( log_level_message_system_info ) << " Dumping router queue : " << endmsg; 
+			 dumpQueue( taskIdSelf(), _RouterQueue, DataLog( log_level_router_error ) );
+		 }
       }
       else 
       {
@@ -526,6 +534,7 @@ void Router::processMessage( MessagePacket &mp, int priority )
    //
    // Determine what type of message this is ...
    //
+
    switch ( mp.msgData().osCode() )
    {
    case MessageData::TASK_REGISTER:

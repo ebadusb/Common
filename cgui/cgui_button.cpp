@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.38  2009/05/21 21:49:31Z  jd11007
+ *  IT 7190 - Fix page fault.
  *  Revision 1.37  2009/02/25 22:20:12Z  rm10919
  *  Update pressed set text to be like enable and disable set text.
  *  Revision 1.36  2009/01/08 00:55:20Z  rm10919
@@ -95,6 +97,11 @@ using namespace GuiButtonPressMessageRes;
 // set static variable
 int CGUIButton::ButtonIcon::_iconCounter = 0;
 
+#if (BUILD_TYPE == DEMO)
+	extern multimap<CGUITextItem *, int> buttonCoordinates;
+#endif	
+
+
 // CONSTRUCTOR
 CGUIButton::CGUIButton  (CGUIDisplay        & display,          	   		// reference to a cguidisplay object for display context
                          CGUIWindow         * parent,            				// pointer to a parent window
@@ -158,6 +165,21 @@ void CGUIButton::initializeButton( CGUIDisplay & display, CGUIWindow * parent, B
 	}
 	// Button size is based on enabled bitmap (all bitmaps should be the same size anyway)
 	CGUIRegion buttonRegion = CGUIRegion(buttonData.left, buttonData.top, 0, 0); //buttonData.enabledBitmapId->getWidth(), buttonData.enabledBitmapId->getHeight());
+
+   	#if ( BUILD_TYPE == DEMO)
+	multimap<CGUITextItem *, int>::iterator buttonIterator;
+	/*if( buttonData.alternateButtonId[0] )
+	{
+		buttonData.enabledTextItem->setId(buttonData.alternateButtonId);
+	}
+	*/
+	buttonIterator = buttonCoordinates.find(buttonData.enabledTextItem);
+	if(buttonIterator == buttonCoordinates.end()) // Button Id not found in map. 
+   {
+		buttonCoordinates.insert(pair<CGUITextItem *, int>(buttonData.enabledTextItem,buttonData.left));
+		buttonCoordinates.insert(pair<CGUITextItem *, int>(buttonData.enabledTextItem,buttonData.top));
+	}
+	#endif
 
 	_enabled = enabled;
 

@@ -6,6 +6,8 @@
  *  An object of this class types can be used to generate a standard button.
  *  
  *  $Log: cgui_button.cpp $
+ *  Revision 1.39  2010/04/02 16:26:36Z  agauusb
+ *  IT 8232 - Updates for demo mode software
  *  Revision 1.38  2009/05/21 21:49:31Z  jd11007
  *  IT 7190 - Fix page fault.
  *  Revision 1.37  2009/02/25 22:20:12Z  rm10919
@@ -97,7 +99,7 @@ using namespace GuiButtonPressMessageRes;
 // set static variable
 int CGUIButton::ButtonIcon::_iconCounter = 0;
 
-#if (BUILD_TYPE == DEMO)
+#if DEMO_BUILD
 	extern multimap<CGUITextItem *, int> buttonCoordinates;
 #endif	
 
@@ -166,7 +168,7 @@ void CGUIButton::initializeButton( CGUIDisplay & display, CGUIWindow * parent, B
 	// Button size is based on enabled bitmap (all bitmaps should be the same size anyway)
 	CGUIRegion buttonRegion = CGUIRegion(buttonData.left, buttonData.top, 0, 0); //buttonData.enabledBitmapId->getWidth(), buttonData.enabledBitmapId->getHeight());
 
-   	#if ( BUILD_TYPE == DEMO)
+   #if DEMO_BUILD
 	multimap<CGUITextItem *, int>::iterator buttonIterator;
 	/*if( buttonData.alternateButtonId[0] )
 	{

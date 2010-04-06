@@ -3,6 +3,8 @@
  *
  * $Header: Z:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.21 2010/04/02 16:26:25Z agauusb Exp agauusb $
  * $Log: cgui_window.cpp $
+ * Revision 1.21  2010/04/02 16:26:25Z  agauusb
+ * IT 8232 - Updates for demo mode software
  * Revision 1.20  2008/11/06 22:24:17Z  rm10919
  * Add transparent and shaded bitmaps and shaded buttons.
  * Revision 1.19  2007/04/20 14:58:26Z  wms10235
@@ -628,7 +630,7 @@ void CGUIWindow::draw(UGL_GC_ID gc)
 
 #if CPU==SIMNT
       uglRegionUnion(_activeDrawRegion, winVisibleRegionGet(_id), _activeDrawRegion);
-#elif BUILD_TYPE==DEMO
+#elif DEMO_BUILD
 		uglRegionUnion(_activeDrawRegion, winVisibleRegionGet(_id), _activeDrawRegion);
 #else
       uglRegionUnion(_activeDrawRegion, winDirtyRegionGet(_id), _activeDrawRegion);

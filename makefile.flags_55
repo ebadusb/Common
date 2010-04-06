@@ -3,6 +3,8 @@
 # Makefile.flags - common compile-time options for vxWorks
 #
 # $Log: makefile.flags_55 $
+# Revision 1.11  2008/11/19 20:47:09Z  agauusb
+# IT94 - Updates for DEMO mode
 # Revision 1.10  2008/10/31 16:13:34Z  agauusb
 # Add DEMO mode to the BUILD_TYPE flags
 # Revision 1.9  2005/05/26 18:48:30Z  jheiusb
@@ -101,11 +103,9 @@ endif
 
 ifneq ($(BUILD_TYPE),DEBUG)
   ifneq ($(BUILD_TYPE),PRODUCTION)
-    ifneq ($(BUILD_TYPE),DEMO)
-      OPT_ERROR := Invalid BUILD_TYPE: $(BUILD_TYPE).  Valid types are CLEAN, DEBUG, PRODUCTION or DEMO.
+    OPT_ERROR := Invalid BUILD_TYPE: $(BUILD_TYPE).  Valid types are CLEAN, DEBUG or PRODUCTION.
       FORCE_REBUILD := 1
-    endif
-  endif
+   endif
 endif
 
 #
@@ -304,13 +304,6 @@ OPTFLAGS := -O0
 else
 OPTFLAGS := -O2 -Wuninitialized
 endif
-endif
-endif
-
-ifeq ($(BUILD_TYPE),DEMO)
-
-ifndef DBGFLAGS
-DBGFLAGS := -DDEMO_BUILD
 endif
 
 else

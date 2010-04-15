@@ -33,12 +33,12 @@
 // Void Constructor
 //
 CGUIDataItem::CGUIDataItem(void) :
-    _valueChanged(false)
+_valueChanged(false)
 {
 }
 
 CGUIDataItem::CGUIDataItem(bool valueChanged) :
-    _valueChanged(valueChanged)
+_valueChanged(valueChanged)
 {
 }
 
@@ -51,13 +51,13 @@ CGUIDataItem::~CGUIDataItem()
 // Void Constructor
 //
 CGUIDataItemInteger::CGUIDataItemInteger(void) :
-    _value(0)
+_value(0)
 {
 }
 
 CGUIDataItemInteger::CGUIDataItemInteger(int value) :
-    CGUIDataItem(true),
-    _value(value)
+CGUIDataItem(true),
+_value(value)
 {
 }
 
@@ -67,51 +67,51 @@ CGUIDataItemInteger::~CGUIDataItemInteger()
 
 const StringChar * CGUIDataItemInteger::convertToString(void)
 {
-    if( _valueChanged )
-    {
-        ostringstream textStream;
-        textStream.setf(ios::fixed);
-        textStream.precision(0);
-        textStream << _value;
-        _string = textStream.str().c_str();         
-        _valueChanged = false;
-    }
+   if ( _valueChanged )
+   {
+      ostringstream textStream;
+      textStream.setf(ios::fixed);
+      textStream.precision(0);
+      textStream << _value;
+      _string = textStream.str().c_str();         
+      _valueChanged = false;
+   }
 
-    return _string.getString();
+   return _string.getString();
 }
 
 void CGUIDataItemInteger::setValue(int value)
 {
-    if (_value != value)
-    {
-        _value = value;
-        _valueChanged = true;
-    }
+   if (_value != value)
+   {
+      _value = value;
+      _valueChanged = true;
+   }
 }
 
 //
 // Void Constructor
 //
 CGUIDataItemDouble::CGUIDataItemDouble(void) :
-    _separator(NULL),
-    _value(0.0),
-    _precision(0)
+_separator(NULL),
+_value(0.0),
+_precision(0)
 {
 }
 
 CGUIDataItemDouble::CGUIDataItemDouble(double value, int precision) :
-    CGUIDataItem(true),
-    _value(value),
-    _precision(precision),
-    _separator(NULL)
+CGUIDataItem(true),
+_value(value),
+_precision(precision),
+_separator(NULL)
 {
 }
 
 CGUIDataItemDouble::CGUIDataItemDouble(double value, int precision, CGUITextItem * separator) :
-    CGUIDataItem(true),
-    _value(value),
-    _precision(precision),
-    _separator(separator)
+CGUIDataItem(true),
+_value(value),
+_precision(precision),
+_separator(separator)
 {
 }
 
@@ -121,64 +121,64 @@ CGUIDataItemDouble::~CGUIDataItemDouble()
 
 const StringChar * CGUIDataItemDouble::convertToString(void)
 {
-    if( _valueChanged )
-    {
-        ostringstream textStream;
+   if ( _valueChanged )
+   {
+      ostringstream textStream;
 
-        textStream.setf(ios::fixed);
-        if (_precision < 0)
-            textStream.precision(0);
-        else
-            textStream.precision(_precision);
+      textStream.setf(ios::fixed);
+      if (_precision < 0)
+         textStream.precision(0);
+      else
+         textStream.precision(_precision);
 
-        textStream << _value;
+      textStream << _value;
 
-        _string = textStream.str().c_str();
+      _string = textStream.str().c_str();
 
-        if( _separator != NULL )
-        {
-            // replace 1st period with the given separator.
-            int seperatorPos = _string.find( (StringChar)'.' );
+      if ( _separator != NULL )
+      {
+         // replace 1st period with the given separator.
+         int seperatorPos = _string.find( (StringChar)'.' );
 
-            if( seperatorPos >= 0 )
-            {
-                _string.deleteChar( seperatorPos, 1 );
-                _string.insert( _separator->getTextObj(), seperatorPos );
-            }
-        }
+         if ( seperatorPos >= 0 )
+         {
+            _string.deleteChar( seperatorPos, 1 );
+            _string.insert( _separator->getTextObj(), seperatorPos );
+         }
+      }
 
-        _valueChanged = false;
-    }
+      _valueChanged = false;
+   }
 
-    return _string.getString();
+   return _string.getString();
 }
 
 void CGUIDataItemDouble::setValue(double value)
 {
-    if (_value != value)
-    {
-        _value = value;
-        _valueChanged = true;
-    }
+   if (_value != value)
+   {
+      _value = value;
+      _valueChanged = true;
+   }
 }
 
 void CGUIDataItemDouble::setPrecision(int precision)
 {
-    _precision = precision;
-    _valueChanged = true;
+   _precision = precision;
+   _valueChanged = true;
 }
 
 //
 // Void Constructor
 //
 CGUIDataItemTextItem::CGUIDataItemTextItem(void) :
-    _value(NULL)
+_value(NULL)
 {
 }
 
 CGUIDataItemTextItem::CGUIDataItemTextItem(CGUITextItem * value) :
-    CGUIDataItem(true),
-    _value(value)
+CGUIDataItem(true),
+_value(value)
 {
 }
 
@@ -188,13 +188,13 @@ CGUIDataItemTextItem::~CGUIDataItemTextItem()
 
 const StringChar * CGUIDataItemTextItem::convertToString()
 {
-    if (_valueChanged && _value != NULL)
-    {
-        _string = _value->getTextObj();
-        _valueChanged = false;
-    }
+   if (_valueChanged && _value != NULL)
+   {
+      _string = _value->getTextObj();
+      _valueChanged = false;
+   }
 
-    return _string.getString();
+   return _string.getString();
 }
 
 void CGUIDataItemTextItem::setValue(CGUITextItem * value)
@@ -235,9 +235,9 @@ CGUIDataItemText::CGUIDataItemText(void)
 }
 
 CGUIDataItemText::CGUIDataItemText(const char * value) :
-    CGUIDataItem(true)
+CGUIDataItem(true)
 {
-    _string = value;
+   _string = value;
 }
 
 CGUIDataItemText::~CGUIDataItemText()
@@ -251,9 +251,9 @@ const StringChar * CGUIDataItemText::convertToString()
 
 void CGUIDataItemText::setValue(const char * value)
 {
-    UnicodeString uValue = value;
+   UnicodeString uValue = value;
 
-   if( _string != uValue )
+   if ( _string != uValue )
    {
       _string = value;
       _valueChanged = true;
@@ -264,13 +264,13 @@ void CGUIDataItemText::setValue(const char * value)
 // Void Constructor
 //
 CGUIDataItemClock::CGUIDataItemClock(void) :
-    _value(0)
+_value(0)
 {
 }
 
 CGUIDataItemClock::CGUIDataItemClock(int value) :
-    CGUIDataItem(true),
-    _value(value)
+CGUIDataItem(true),
+_value(value)
 {
 }
 
@@ -280,41 +280,41 @@ CGUIDataItemClock::~CGUIDataItemClock()
 
 const StringChar * CGUIDataItemClock::convertToString(void)
 {
-    if( _valueChanged )
-    {
-        const char * intString = NULL;
-        ostringstream textStream;
+   if ( _valueChanged )
+   {
+      const char * intString = NULL;
+      ostringstream textStream;
 
-        textStream.setf(ios::fixed);
-        textStream.precision(0);
+      textStream.setf(ios::fixed);
+      textStream.precision(0);
 
-        if ( _value < 10 )
-            textStream << "0" << _value;
-        else
-            textStream << _value;
+      if ( _value < 10 )
+         textStream << "0" << _value;
+      else
+         textStream << _value;
 
-        intString = textStream.str().c_str();
+      intString = textStream.str().c_str();
 
-        //
-        // Copy value (string) into _string
-        //
-        if( intString )
-            _string = intString;
-        else
-            _string.empty();
+      //
+      // Copy value (string) into _string
+      //
+      if ( intString )
+         _string = intString;
+      else
+         _string.empty();
 
-        _valueChanged = false;
-    }
+      _valueChanged = false;
+   }
 
-    return _string.getString();
+   return _string.getString();
 }
 
 void CGUIDataItemClock::setValue(int value)
 {
-    if (_value != value)
-    {
-        _value = value;
-        _valueChanged = true;
-    }
+   if (_value != value)
+   {
+      _value = value;
+      _valueChanged = true;
+   }
 }
 

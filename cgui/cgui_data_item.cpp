@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.cpp 1.14 2010/04/27 21:07:24Z rm10919 Exp jl11312 $
  * $Log: cgui_data_item.cpp $
+ * Revision 1.13  2010/04/27 20:58:20Z  rm10919
+ * Make decimal separator for dataItemDouble class a static. IT 8256
  * Revision 1.12  2010/04/15 17:51:38Z  adalusb
  * Common IT 100. Fixed indentation issues.
  * Revision 1.9  2007/06/04 22:04:20Z  wms10235
@@ -95,7 +97,7 @@ void CGUIDataItemInteger::setValue( int value )
 // Void Constructor
 //
 
-CGUIDataItemDouble::_defaultSeparator = NULL;
+CGUITextItem * CGUIDataItemDouble::_defaultSeparator = NULL;
 
 CGUIDataItemDouble::CGUIDataItemDouble( void ):
 							_separator( NULL ),

@@ -3,6 +3,8 @@
  *
  * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.h 1.8 2010/04/27 21:26:08Z rm10919 Exp jl11312 $
  * $Log: cgui_data_item.h $
+ * Revision 1.7  2010/04/27 20:58:20Z  rm10919
+ * Make decimal separator for dataItemDouble class a static. IT 8256
  * Revision 1.6  2007/11/15 21:02:37Z  rm10919
  * Create new data item class for clock type numeric strings.
  * Revision 1.5  2007/06/04 22:04:20Z  wms10235
@@ -75,7 +77,7 @@ public:
 	void setPrecision( int precision );
 	
 	void setDecimalSeparator( CGUITextItem * separator ) { _separator = separator; _valueChanged = true; };
-	void setDefaultSeparator( CGUITextItem * defaultSeparator ) { _defaultSeparator = defaultSeparator; };
+	static void setDefaultSeparator( CGUITextItem * defaultSeparator ) { _defaultSeparator = defaultSeparator; };
 
 protected:
 	double	_value;

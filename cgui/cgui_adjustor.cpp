@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.cpp 1.4 2006/11/01 15:35:19Z cf10242 Exp pn02526 $
+ * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.cpp 1.4 2006/11/01 15:35:19Z cf10242 Exp $
  * $Log: cgui_adjustor.cpp $
+ * Revision 1.4  2006/11/01 15:35:19Z  cf10242
+ * IT 2194: button press logging
  * Revision 1.3  2005/08/11 22:31:31Z  pn02526
  * Fix logic for sensing if a button is held by the operator.
  * Revision 1.2  2005/08/10 11:55:09  pn02526
@@ -260,6 +262,36 @@ void CGUIAdjustor::decreaseReleased(void)
 //}
 
 void CGUIAdjustor::updateValue( char * valueString )
+{
+    _valueTextBox->setText( valueString );
+    if( _adjustorData.behavior == Continuous ) switch ( _direction )
+    {
+            case INCREASING:   // Increase still pressed?
+            {
+                // Send another _increaseCallback;
+                // Because _direction = INCREASING, when it queries via the increaseHeld() method
+                // the callback will see that the increase button is being held by the operator.
+                _increaseCallback();
+                break;
+            }
+            case DECREASING: //Decrease still pressed?
+            {
+                // Send another _decreaseCallback;
+                // Because _direction = DECREASING, when it queries via the decreaseHeld() method
+                // the callback will see that the decrease button is being held by the operator.
+                _decreaseCallback();
+                break;
+            }
+            case NOCHANGE:  // Neither pressed.
+            {
+                break;
+            }
+          // There is no default clause because _direction is an enum, and all possible
+          // values should be covered in case statements, above.
+    }
+}
+
+void CGUIAdjustor::updateValue( const StringChar * valueString )
 {
     _valueTextBox->setText( valueString );
     if( _adjustorData.behavior == Continuous ) switch ( _direction )

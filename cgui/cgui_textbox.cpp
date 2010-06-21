@@ -1,11 +1,13 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- *  $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_textbox.cpp 1.2 2005/09/30 22:42:12Z rm10919 Exp pn02526 $ 
+ *  $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_textbox.cpp 1.2 2005/09/30 22:42:12Z rm10919 Exp $ 
  *  This file defines the base class for all text boxes in the common GUI.
  *  An object of this class types can be used to generate a text box.
  *  
  *  $Log: cgui_textbox.cpp $
+ *  Revision 1.2  2005/09/30 22:42:12Z  rm10919
+ *  Take out the use of attachText().  Not longer supported for text.
  *  Revision 1.1  2005/07/19 15:01:12Z  pn02526
  *  Initial revision
  *
@@ -377,6 +379,24 @@ void CGUITextBox::setText (CGUITextItem * textItem, StylingRecord * stylingRecor
 }
 
 void CGUITextBox::setText (const char * string)
+{
+    if (string)
+    {
+       if (_text)
+       {
+          _text->setText(string);
+       }
+       else
+       {
+          _text = new CGUIText(_display);
+          _text->setText(string);
+          addObjectToFront( _text );
+       }      
+       _text->setVisible(true);
+    }
+}
+
+void CGUITextBox::setText (const StringChar * string)
 {
     if (string)
     {

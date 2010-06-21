@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.h 1.4 2009/06/24 18:41:44Z wms10235 Exp pn02526 $
+ * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.h 1.4 2009/06/24 18:41:44Z wms10235 Exp $
  * $Log: cgui_adjustor.h $
+ * Revision 1.4  2009/06/24 18:41:44Z  wms10235
+ * IT6958 - Interrmittent page fault occurs at protocol load or during procedure
  * Revision 1.3  2005/08/11 18:45:54Z  pn02526
  * Fix logic for sensing if a button is held by the operator.
  * Revision 1.2  2005/08/10 12:01:14  pn02526
@@ -100,6 +102,7 @@ public:
    virtual void initializeAdjustor(void);
    virtual void removeAdjustor(void);
    virtual void updateValue( char * );
+   virtual void updateValue( const StringChar * );
 
    // ENABLE
    // set the state of the adjustor's buttons to enabled.

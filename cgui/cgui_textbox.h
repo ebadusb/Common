@@ -1,11 +1,13 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- *  $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_textbox.h 1.1 2005/07/15 21:18:53Z pn02526 Exp pn02526 $ 
+ *  $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_textbox.h 1.1 2005/07/15 21:18:53Z pn02526 Exp $ 
  *  This file defines the base class for all text box styles in the common GUI.  An object of this class types
  *  can be used to generate a standard text box.
  *  
  *  $Log: cgui_textbox.h $
+ *  Revision 1.1  2005/07/15 21:18:53Z  pn02526
+ *  Initial revision
  *
  */
 #ifndef _CGUI_TEXTBOX_INCLUDE
@@ -190,6 +192,7 @@ public:
    // Set the text associated with the text box.  If none exists, implicitily creates one.
    void setText(CGUITextItem * textItem, StylingRecord * stylingRecord = NULL); // ptr to a text object to be associated with the text box
    void setText(const char * string); // ptr to a text string to be associated with the text box
+	void setText (const StringChar * string);
   
    // SET TEXT STYLE
    // set/get the style of the text associated with this text box.  This is a pass-thru to the 

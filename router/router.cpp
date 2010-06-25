@@ -276,7 +276,7 @@ void Router::dump( DataLog_Stream &outs )
          miiter != _MsgIntegrityMap.end() ;
          ++miiter )
    {
-      outs << "  Mid " << hex << (*miiter).first << " " << (*miiter).second;
+      outs << "  Mid " << hex << (*miiter).first << " " << (*miiter).second.c_str();
    }
    outs << endmsg;
    outs << " Message to Gateway Synch Map: size " << dec << _MsgToGatewaySynchMap.size();
@@ -382,7 +382,7 @@ void Router::msgDump()
          miiter != _MsgIntegrityMap.end() ;
          ++miiter )
    {
-      DataLog( log_level_router_info ) << "  Mid " << hex << (*miiter).first << " " << (*miiter).second;
+      DataLog( log_level_router_info ) << "  Mid " << hex << (*miiter).first << " " << (*miiter).second.c_str();
    }
    DataLog( log_level_router_info ) << endmsg;
 }

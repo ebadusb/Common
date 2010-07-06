@@ -1,8 +1,10 @@
 /*
  *  Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.cpp 1.14 2010/04/27 21:07:24Z rm10919 Exp jl11312 $
+ * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.cpp 1.14 2010/04/27 21:07:24Z rm10919 Exp $
  * $Log: cgui_data_item.cpp $
+ * Revision 1.14  2010/04/27 21:07:24Z  rm10919
+ * Fix type error from previous check-in.
  * Revision 1.13  2010/04/27 20:58:20Z  rm10919
  * Make decimal separator for dataItemDouble class a static. IT 8256
  * Revision 1.12  2010/04/15 17:51:38Z  adalusb
@@ -128,6 +130,16 @@ CGUIDataItemDouble::~CGUIDataItemDouble()
 
 const StringChar * CGUIDataItemDouble::convertToString( void )
 {
+	if ( !_separator &&
+		  _lastDefaultSeparator != _defaultSeparator )
+	{
+		// Default separator is being used and has been changed since this item
+		// was last rendered.  For the string representation to be updated.
+		//
+		_valueChanged = true;
+		_lastDefaultSeparator = _defaultSeparator;
+	}
+
    if( _valueChanged )
    {
       ostringstream textStream;

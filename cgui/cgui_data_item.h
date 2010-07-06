@@ -1,8 +1,10 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.h 1.8 2010/04/27 21:26:08Z rm10919 Exp jl11312 $
+ * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.h 1.8 2010/04/27 21:26:08Z rm10919 Exp $
  * $Log: cgui_data_item.h $
+ * Revision 1.8  2010/04/27 21:26:08Z  rm10919
+ * Forgot to make function static from previous check-in.
  * Revision 1.7  2010/04/27 20:58:20Z  rm10919
  * Make decimal separator for dataItemDouble class a static. IT 8256
  * Revision 1.6  2007/11/15 21:02:37Z  rm10919
@@ -82,7 +84,14 @@ public:
 protected:
 	double	_value;
 	int		_precision;
+
+	// If a separator is specified, the data item uses that instead of the default separator.
+	// If the default separator is used, the data item saves it as _lastDefaultSeparator.  That
+	// allows the system to detect when the defaultSeparator has been changed and force the
+	// string representation to be updated.
+	//
 	CGUITextItem * _separator;
+	CGUITextItem * _lastDefaultSeparator;
 	static CGUITextItem * _defaultSeparator;
 
 private:

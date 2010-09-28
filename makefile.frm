@@ -7,7 +7,7 @@
 # Revision 1.1  2007/02/07 17:29:51Z  jmedusb
 # Initial revision
 
-PRODUCTION_RMSG_DIR := \\bctquad3\HOME\BCT_Development\vxWorks\common\reserved_messages_builds
+PRODUCTION_RMSG_DIR := \\bctquad3\HOME\BCT_Development\optia_perforce\reserved_messages_builds
 PRODUCTION_RMSG_DIR_ECHO := $(subst \,/, $(PRODUCTION_RMSG_DIR))
 LRMBD := latest_rmsg_build_dir.mk
 

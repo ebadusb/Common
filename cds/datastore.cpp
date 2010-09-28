@@ -184,8 +184,10 @@ void DataStore::CreateSymbolTableEntry()
          << ".  Errno " << errnoMsg << "." << endmsg;
       _FATAL_ERROR(__FILE__, __LINE__, "_semaphore could not be created.");
    }
+#if 0
    else
       DataLog(log_level_cds_debug) << "_semaphore value(" << hex << _handle->_semaphore << dec << ")." << endmsg;
+#endif
 }
 
 
@@ -247,7 +249,7 @@ DataStore::DataStore(const char *name, Role role) :
       // (element values) to their last state.
       _pfrDataStoreList[ _name ] = _handle;
 
-      DataLog(log_level_cds_debug) << "First instance of " << _name << " created.  Saving datastore." << endmsg;
+      //DataLog(log_level_cds_debug) << "First instance of " << _name << " created.  Saving datastore." << endmsg;
    }
 
    semGive( datastoreInitSem );
@@ -316,14 +318,17 @@ bool DataStore::RetrieveAllPfData ()
    unsigned int location=0;
    for (DATASTORE_LISTTYPE::iterator datastoreIterator = _pfrDataStoreList.begin(); datastoreIterator != _pfrDataStoreList.end(); ++datastoreIterator)
    {
-      DataLog(log_level_cds_debug) << "retrieving PF data for datastore " << (*datastoreIterator).first << " " << (*datastoreIterator).second << endmsg;
+      //DataLog(log_level_cds_debug) << "retrieving PF data for datastore " << (*datastoreIterator).first << " " << (*datastoreIterator).second << endmsg;
+      
       if ( !( (*datastoreIterator).second->RetrievePfData( (unsigned char*)(_pfCompleteDataPtr+location) ) ) )
       {
          DataLog( log_level_cds_error ) << "PF data retrieve failed for datastore " << (*datastoreIterator).first << endmsg;
          return false;
       }
+
       location += (*datastoreIterator).second->_pfDataStoreLength;
    }
+
    return true;
 }
 
@@ -331,13 +336,15 @@ bool DataStore::RestoreAllPfData()
 {
    for (DATASTORE_LISTTYPE::iterator datastoreIterator = _pfrDataStoreList.begin(); datastoreIterator != _pfrDataStoreList.end(); ++datastoreIterator)
    {
-      DataLog(log_level_cds_debug) << "restoring datastore " << (*datastoreIterator).first << endmsg;
+      //DataLog(log_level_cds_debug) << "restoring datastore " << (*datastoreIterator).first << endmsg;
+
       if ( !( (*datastoreIterator).second->RestorePfData() ) )
       {
          DataLog( log_level_cds_error ) << "PF data restore failed for datastore " << (*datastoreIterator).first << endmsg;
          return false;
       }
    }
+
    return true;
 }
 
@@ -435,7 +442,7 @@ void DataStoreSymbolContainer::Unlock( Role role )
 //
 void DataStore::AddElement (BaseElementSymbolContainerAbs *element, unsigned int size )
 { 
-   DataLog( log_level_cds_debug ) << "Add element to datastore " << _name << endmsg;
+   //DataLog( log_level_cds_debug ) << "Add element to datastore " << _name << endmsg;
 
    //
    // Add the crc to the size totals once, determined if this
@@ -581,7 +588,7 @@ bool DataStoreSymbolContainer::RestorePfData( )
    //
    if ( _pfDataStoreLength == 0 )
    {
-      DataLog( log_level_cds_debug ) << "Data length for datastore " << _name << " was 0." << endmsg;
+      //DataLog( log_level_cds_debug ) << "Data length for datastore " << _name << " was 0." << endmsg;
       return true;
    }
 
@@ -607,15 +614,18 @@ bool DataStoreSymbolContainer::RestorePfData( )
    unsigned int pos = ( 2*sizeof( unsigned long ) ) + _name.size();
    int count = 0;
    Lock( ROLE_RW );
+
    for (ELEMENT_LISTTYPE::iterator pfrListIterator = _pfrList.begin(); pfrListIterator != _pfrList.end(); ++pfrListIterator)
    {
       count++;
-      DataLog(log_level_cds_debug) << "restoring element " << count << " in " << _name << " to PFR File." << endmsg;
+      //DataLog(log_level_cds_debug) << "restoring element " << count << " in " << _name << " to PFR File." << endmsg;
       pos += (*pfrListIterator)->Restore( _pfDataPtr+pos );
    }
+
    Unlock( ROLE_RW );
 
    DataLog(log_level_cds_info) << "restored " << count << " elements in " << _name << "." << endmsg;
+
    return true;
 }
 

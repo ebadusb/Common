@@ -9,7 +9,7 @@
 # Revision 1.1  2007/02/07 17:29:51Z  jmedusb
 # Initial revision
 
-PRODUCTION_RMSG_DIR := \\bctquad3\HOME\BCT_Development\reserved_messages_perforce_builds
+PRODUCTION_RMSG_DIR := k:\BCT_Development\reserved_messages_perforce_builds
 PRODUCTION_RMSG_DIR_ECHO := $(subst \,/, $(PRODUCTION_RMSG_DIR))
 LRMBD := latest_rmsg_build_dir.mk
 dir_path := $(subst \,/,$(shell cmd /C cd))/

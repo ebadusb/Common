@@ -61,8 +61,8 @@ string				_buttonResponseClass;
 string				_buttonResponseMember;
 string				_buttonResponsePlaceHolder;
 
-// Loads in string IDs from a given string.info file
-bool loadStringInfo(char *stringInfoPath)
+// reads in string IDs from a given string.info file
+bool readStringInfo(char *stringInfoPath)
 {
 	FILE *pFile = fopen(stringInfoPath, "r");
 	if (pFile == NULL)
@@ -244,10 +244,8 @@ int verifyButtonName(string buttonGroupName)
 	return retVal;
 }
 
-// Reads in alarm.info and sets up all of our link lists that 
-// are needed to generate our alarm_id.h and alarm_config.cpp files.
-// Also calls verifyString if the user gave us a string.info file path.
-int readStringInfo(char *pStrPath, char *pStrButtons)
+// Reads in button info file 
+int readButtonInfo(char *pStrButtons)
 {
 	int retVal = 0;
 	int lineNo = 0;
@@ -367,7 +365,16 @@ int readStringInfo(char *pStrPath, char *pStrButtons)
 		}
 	}
 	fclose(pBtnFile);
+	return retVal;
+}
 	
+// Reads in alarm.info and sets up all of our link lists that 
+// are needed to generate our alarm_id.h and alarm_config.cpp files.
+// Also calls verifyString if the user gave us a string.info file path.
+int readAlarmInfo(char *pStrPath)
+{
+
+	int retVal = 0;
 	// ----------------------------------------
 	// ALARM CONFIG
 	// ----------------------------------------
@@ -381,7 +388,8 @@ int readStringInfo(char *pStrPath, char *pStrButtons)
 		return -1;
 	}
 
-	lineNo = 0;
+	int lineNo = 0;
+	char lineBuffer[LineBufferSize];
 	bool bReadingAlarms = false;
 	bool bCauseActionList = false;
 	int currentItem = 1;
@@ -910,12 +918,12 @@ int generateAlarmConfig(char *sysName, char *pStrPath)
 	return 0;
 }
 
-char **ParseStringInfoArray(char *stringInfo)
+char **ParseFileArray(char *fileArray)
 {
 	int arrayIndex = 0;
 	char **pArray = new char *[MAX_PATH];
 	pArray[arrayIndex] = new char[MAX_PATH];
-	pArray[arrayIndex] = strtok(stringInfo, ",");
+	pArray[arrayIndex] = strtok(fileArray, ",");
 	while (pArray[arrayIndex] != NULL)
 	{
 		arrayIndex++;
@@ -940,7 +948,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		printf("Missing arguments.\n");
 		printf("Arguments are:\n");
 		printf("  -n system name (Taos, Trima, etc...used for TaosLinkElement::)\n");
-		printf("  -p alarm.info path\n");
+		printf("  -p alarm.info array (array of string.info files comma separated without spaces) (Output files will be placed in directory of path for the first file in the list)\n");
 		printf("  -b alarm_button.info path\n");
 		printf("  [-s stringInfoFileArray] (array of string.info files comma separated without spaces)\n\n");
 		printf("Example:\n");
@@ -989,56 +997,73 @@ int _tmain(int argc, _TCHAR* argv[])
 		printf("Missing arguments.\n");
 		printf("Arguments are:\n");
 		printf("  -n system name (Taos, Trima, etc...used for TaosLinkElement::)\n");
-		printf("  -p alarm.info path\n");
+		printf("  -p alarm.info array (array of string.info files comma separated without spaces) (Output files will be placed in directory of path for the first file in the list)\n");
 		printf("  -b alarm_button.info path\n");
 		printf("  [-s stringInfoFileArray] (array of string.info files comma separated without spaces)\n\n");
 		printf("Example:\n");
-		printf("   build_alarm_data -n Taos -p ../../base/safety/alarm.info -b ../../base/alarm_button.info -s ../../base/gui/string.info,../../base/generic.info\n");
+		printf("   build_alarm_data -n Taos -p ../../base/safety/alarm.info,./alarm.info -b ../../base/alarm_button.info -s ../../base/gui/string.info,../../base/generic.info\n");
 		return -1;
 	}
 
 	_stringInfoIDList.clear();
 	int arrayIndex = 0;
-	char **pFileName = ParseStringInfoArray(stringInfo);
-	while (pFileName[arrayIndex] != NULL)
+	char **pStringFileName = ParseFileArray(stringInfo);
+	while (pStringFileName[arrayIndex] != NULL)
 	{
-		if (!loadStringInfo(pFileName[arrayIndex]))
+		if (!readStringInfo(pStringFileName[arrayIndex]))
 		{
-			printf("ERROR: %s file not found.\n", pFileName[arrayIndex]);
+			printf("ERROR: %s file not found.\n", pStringFileName[arrayIndex]);
 			return -1;
 		}
 		arrayIndex++;
 	}
 
-	int retVal = readStringInfo(path, buttons);
-	if (retVal == 0)
+	int retVal = 0;
+	retVal = readButtonInfo(buttons);
+	
+	arrayIndex = 0;
+	char *outputPath = 0;
+	char **pAlarmInfoFileName = ParseFileArray(path);
+	while (pAlarmInfoFileName[arrayIndex] != NULL)
+	{
+		if ( !outputPath ) outputPath = pAlarmInfoFileName[arrayIndex];
+		if ((retVal = readAlarmInfo(pAlarmInfoFileName[arrayIndex])) != 0)
+		{
+			break;
+		}
+		arrayIndex++;
+	}
+
+	if ( retVal == 0 )
 	{
 		// MUST BE CALLED IN THIS ORDER...
 		// generateAlarmID();
 		// generateAlarmConfig();
-		retVal = generateAlarmID(path);
+		retVal = generateAlarmID(outputPath);
 		if (retVal == 0)
 		{
-			retVal = generateAlarmConfig(sysName, path);
-
-			// generate .dfile for vxworks makfile
-			char *pLastSlash = strrchr(path, '\\');
-			if (pLastSlash == NULL)
+			retVal = generateAlarmConfig(sysName, outputPath);
+			if (retVal == 0)
 			{
-				pLastSlash = strrchr(path, '/');
+				// generate .dfile for vxworks makfile
+				char *pLastSlash = strrchr(outputPath, '\\');
+				if (pLastSlash == NULL)
+				{
+					pLastSlash = strrchr(outputPath, '/');
+				}
+				*pLastSlash = 0;
+		
+				string dfilePath = outputPath;
+				if (dfilePath.rfind('/') == dfilePath.length())
+					dfilePath += ".dfile/alarm_config_cpp.d";
+				else if (dfilePath.rfind('\\') == dfilePath.length())
+					dfilePath += ".dfile\\alarm_config_cpp.d";
+				else
+					dfilePath += "/.dfile/alarm_config_cpp.d";
+				FILE *dfile = fopen(dfilePath.c_str(), "w");
+				fprintf(dfile, "alarm_config.cpp alarm_id.h : alarm.info");
+				fclose(dfile);
 			}
-			*pLastSlash = 0;
-
-			string dfilePath = path;
-			if (dfilePath.rfind('/') == dfilePath.length())
-				dfilePath += ".dfile/alarm_config_cpp.d";
-			else if (dfilePath.rfind('\\') == dfilePath.length())
-				dfilePath += ".dfile\\alarm_config_cpp.d";
-			else
-				dfilePath += "/.dfile/alarm_config_cpp.d";
-			FILE *dfile = fopen(dfilePath.c_str(), "w");
-			fprintf(dfile, "alarm_config.cpp alarm_id.h : alarm.info");
-			fclose(dfile);
 		}
 	}
 	

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2003 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/option_file.c 1.2 2003/11/05 19:28:49Z jl11312 Exp jl11312 $
+ * $Header$
  * $Log: option_file.c $
  * Revision 1.2  2003/11/05 19:28:49Z  jl11312
  * - close file at end of processing

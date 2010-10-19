@@ -2,7 +2,7 @@
 rem
 rem create_common.bat - Rebuild Common under vxWorks
 rem
-rem $Header: K:/BCT_Development/vxWorks/Common/rcs/create_common.bat 1.5 2003/02/04 16:00:30Z ms10234 Exp jl11312 $
+rem $Header$
 rem
 rem $Log: create_common.bat $
 rem Revision 1.5  2003/02/04 16:00:30Z  ms10234

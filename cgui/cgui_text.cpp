@@ -1,5 +1,5 @@
 /*
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.cpp 1.47 2009/05/29 23:11:49Z ms10234 Exp wms10235 $
+ * $Header$
  *
  * $Log: cgui_text.cpp $
  * Revision 1.47  2009/05/29 23:11:49Z  ms10234

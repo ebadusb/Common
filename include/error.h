@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/error.h 1.11 2002/10/29 21:19:03Z jl11312 Exp $
+ * $Header$
  * $Log: error.h $
  * Revision 1.11  2002/10/29 21:19:03Z  jl11312
  * - change char * to const char * for _FATAL_ERROR arguments

@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2005 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_types.h 1.2 2007/02/12 16:07:00Z wms10235 Exp wms10235 $
+ * $Header$
  *
  * This file contains type definitions for the firewire routines.
  *

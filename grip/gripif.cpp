@@ -4,7 +4,7 @@
 *  NOTE: MODIFICATIONS TO THIS FILE MAY NEED TO BE REFLECTED IN THE INTERFACE CONTROL DOCUMENT
 *        SERVICE TOOLS SUITE, MAINTAINED BY THE START GROUP, AND IN THE STS SOFTWARE.
 *
-* $Header: //bctquad3/HOME/BCT_Development/vxWorks/Common/grip/rcs/gripif.cpp 1.4 2006/11/29 22:18:02Z wtucusb Exp wtucusb $
+* $Header$
 *
 * Derived from Taos thedif.cpp Revision 1.5  2004/08/09 11:36:52  ms10234
 * $Log: gripif.cpp $

@@ -1,5 +1,5 @@
 /*
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item_file_reader.cpp 1.5 2009/06/24 18:41:45Z wms10235 Exp $
+ * $Header$
  *
  * $Log: cgui_data_item_file_reader.cpp $
  * Revision 1.5  2009/06/24 18:41:45Z  wms10235

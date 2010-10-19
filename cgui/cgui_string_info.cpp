@@ -2,7 +2,7 @@
  *	Copyright (c) 2006 by Gambro BCT, Inc.  All rights reserved.
  *
  * Derived from cgui_string_data.cpp revision 1.7  2006/07/25 15:42:37  cf10242
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_info.cpp 1.7 2008/12/16 22:01:41Z rm10919 Exp wms10235 $
+ * $Header$
  * $Log: cgui_string_info.cpp $
  * Revision 1.7  2008/12/16 22:01:41Z  rm10919
  * Correct include file name.

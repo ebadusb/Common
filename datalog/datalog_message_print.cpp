@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_print.cpp 1.7 2003/02/25 16:10:17Z jl11312 Exp jl11312 $
+ * $Header$
  * $Log: datalog_message_print.cpp $
  * Revision 1.7  2003/02/25 16:10:17Z  jl11312
  * - modified buffering scheme to help prevent buffer overruns

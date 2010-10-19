@@ -1,4 +1,4 @@
-// $Header: Q:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_file.cpp 1.7 2007/10/29 17:18:35Z jl11312 Exp $
+// $Header$
 //
 // Configuration file class
 //

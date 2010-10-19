@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.h 1.6 2007/05/03 16:19:14Z jl11312 Exp wms10235 $
+ * $Header$
  * $Log: cgui_string_data.h $
  * Revision 1.6  2007/05/03 16:19:14Z  jl11312
  * - added semaphore protection for map structures

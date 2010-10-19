@@ -15,7 +15,7 @@
 
 *************************< TRIMA CONFIG Conversion >****************************
 
-$Header: //bctquad3/home/BCT_Development/Common/disk_build/install_source/cfgconv_common/rcs/new_drvr_element.cpp 1.1 2001/08/16 13:50:15 jl11312 Exp $
+$Header$
 $Log: new_drvr_element.cpp $
 Revision 1.1  2001/08/16 13:50:15  jl11312
 Initial revision

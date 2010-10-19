@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.h 1.19 2007/06/04 22:04:20Z wms10235 Exp $
+ * $Header$
  * $Log: cgui_graphics.h $
  * Revision 1.19  2007/06/04 22:04:20Z  wms10235
  * IT83 - Updates for the common GUI project to use the unicode string class

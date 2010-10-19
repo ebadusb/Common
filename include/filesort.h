@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/include/rcs/filesort.h 1.2 2003/05/13 09:00:40 jl11312 Exp pn02526 $
+ * $Header$
  * $Log: filesort.h $
  * Revision 1.1  2002/09/19 22:16:15Z  jl11312
  * Initial revision

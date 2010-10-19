@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: I:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_buffer.cpp 1.7 2003/11/10 17:46:05Z jl11312 Exp $
+ * $Header$
  * $Log: datalog_buffer.cpp $
  * Revision 1.7  2003/11/10 17:46:05Z  jl11312
  * - corrections from data log unit tests (see IT 6598)

@@ -1,5 +1,5 @@
 /*
- * $Header: $
+ * $Header$
  *
  * Tools for reading in configuration files
  *

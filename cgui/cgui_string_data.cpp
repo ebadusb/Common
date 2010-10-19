@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data.cpp 1.12 2007/06/14 19:34:11Z wms10235 Exp wms10235 $
+ * $Header$
  * $Log: cgui_string_data.cpp $
  * Revision 1.12  2007/06/14 19:34:11Z  wms10235
  * Taos IT3439 - Discovered a bug where variable substitution was not functioning

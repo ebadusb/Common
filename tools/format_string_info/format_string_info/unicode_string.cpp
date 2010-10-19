@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2007 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/unicode_string/rcs/unicode_string.cpp 1.2 2007/06/04 22:05:17Z wms10235 Exp $
+ * $Header$
  *
  *	Wide character string class
  *

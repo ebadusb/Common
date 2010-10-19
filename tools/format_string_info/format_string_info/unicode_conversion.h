@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2007 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/unicode_string/rcs/unicode_conversion.h 1.1 2007/05/18 16:19:18Z wms10235 Exp $
+ * $Header$
  *
  *	This class is responsible for unicode format conversions.
  * It can convert USC (16-bit unicode characters) to UTF8

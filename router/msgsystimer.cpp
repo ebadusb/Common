@@ -3,7 +3,7 @@
  *
  * TITLE:      msgsystimer.cpp, Message System Timer
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/router/rcs/msgsystimer.cpp 1.31 2009/06/03 15:28:34Z jsylusb Exp $
+ * $Header$
  * $Log: msgsystimer.cpp $
  * Revision 1.31  2009/06/03 15:28:34Z  jsylusb
  * Fixed improper use of iterators which can cause page faults.

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2002 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/BCT_Development/vxWorks/Common/clocks/rcs/auxclock.cpp 1.14 2004/01/26 18:56:15Z jl11312 Exp $
+ * $Header$
  * $Log: auxclock.cpp $
  * Revision 1.14  2004/01/26 18:56:15Z  jl11312
  * - modifications for building under Tornado 2.2

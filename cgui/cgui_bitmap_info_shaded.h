@@ -1,5 +1,5 @@
 /*
-* $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info_shaded.h 1.1 2008/11/06 22:19:41Z rm10919 Exp rm10919 $
+* $Header$
 *	This file defines the CGUIShadedBitmapInfo class which defines and creates 
 *		a CGUIBitmapInfo that is the shaded bitmap data.  This class could also be
 *		used when needing a bitmap for the button class.

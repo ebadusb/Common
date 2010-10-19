@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.h 1.8 2010/04/27 21:26:08Z rm10919 Exp $
+ * $Header$
  * $Log: cgui_data_item.h $
  * Revision 1.8  2010/04/27 21:26:08Z  rm10919
  * Forgot to make function static from previous check-in.

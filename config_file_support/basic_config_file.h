@@ -1,5 +1,5 @@
 /*
- * $Header: //bctquad3/home/BCT_Development/Atreus/control/sysinit/rcs/basic_config_file.h 1.1 2005/05/16 22:35:00Z ms10234 Exp $
+ * $Header$
  *
  * Utilities for reading in configuration files
  *

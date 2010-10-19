@@ -2,7 +2,7 @@
  *	Copyright (c) 2006 by Gambro BCT, Inc.  All rights reserved.
  *
  * Derived from cgui_string_data.h revision 1.2  2006/07/25 15:42:37  cf10242
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_info.h 1.6 2008/12/16 06:03:02Z rm10919 Exp wms10235 $
+ * $Header$
  * $Log: cgui_string_info.h $
  * Revision 1.6  2008/12/16 06:03:02Z  rm10919
  * Add the ablility for combined fonts in text. IT 6562

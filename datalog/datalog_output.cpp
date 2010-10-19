@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_output.cpp 1.15 2008/05/19 21:14:02Z estausb Exp jl11312 $
+ * $Header$
  * $Log: datalog_output.cpp $
  * Revision 1.15  2008/05/19 21:14:02Z  estausb
  * Modified the windows port of datalog.

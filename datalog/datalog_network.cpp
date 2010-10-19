@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: I:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_network.cpp 1.5 2003/12/09 14:14:28Z jl11312 Exp $
+ * $Header$
  * $Log: datalog_network.cpp $
  * Revision 1.5  2003/12/09 14:14:28Z  jl11312
  * - corrected time stamp problem (IT 6668)

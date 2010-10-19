@@ -1,7 +1,7 @@
 /*
  * Copyright 2002 GambroBCT Lakewood, Colorado
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/msgcrc.cpp 1.2 2002/07/17 18:54:38 ms10234 Exp $
+ * $Header$
  * $Log: msgcrc.cpp $
  * Revision 1.2  2002/07/17 18:54:38  ms10234
  * Added msgcrc.cpp and made vxWorks.h the first include file

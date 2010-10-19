@@ -4,7 +4,7 @@
  *  Define the class to create an empty non-filled frame.
  * 	- Add method to fill in background with a CGUIColor.
  *
- * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_frame.h 1.6 2007/12/04 01:06:00Z rm10919 Exp rm10919 $
+ * $Header$
  * $Log: cgui_frame.h $
  * Revision 1.6  2007/12/04 01:06:00Z  rm10919
  * Fix potential memory leak.

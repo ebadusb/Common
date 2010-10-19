@@ -1,4 +1,4 @@
-// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/rcs/config_parse.h 1.1 2005/05/11 15:15:10Z jl11312 Exp jl11312 $
+// $Header$
 //
 // Configuration file parse tool
 //

@@ -1,5 +1,5 @@
 /*
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_reserved_stream.h 1.7 2006/11/30 17:56:56Z jmedusb Exp $ 
+ * $Header$ 
  *
  *  This defined the DataLogReserved class constructor and stream
  *  manipulator template functions, as well as the dec/hex and

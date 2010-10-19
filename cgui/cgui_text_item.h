@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text_item.h 1.15 2009/04/13 22:34:00Z rm10919 Exp wms10235 $
+ * $Header$
  * $Log: cgui_text_item.h $
  * Revision 1.15  2009/04/13 22:34:00Z  rm10919
  * Add getFontSize. for IT 7042

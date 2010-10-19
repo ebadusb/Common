@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window_object.cpp 1.5 2005/03/02 01:37:51Z cf10242 Exp jl11312 $
+ * $Header$
  * $Log: cgui_window_object.cpp $
  * Revision 1.5  2005/03/02 01:37:51Z  cf10242
  * deleting objects that are already deleted causing issues on TAOS

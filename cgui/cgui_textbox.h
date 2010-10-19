@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- *  $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_textbox.h 1.1 2005/07/15 21:18:53Z pn02526 Exp $ 
+ *  $Header$ 
  *  This file defines the base class for all text box styles in the common GUI.  An object of this class types
  *  can be used to generate a standard text box.
  *  

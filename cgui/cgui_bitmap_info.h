@@ -1,5 +1,5 @@
 /*
-* $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info.h 1.9 2007/04/14 18:04:41Z jl11312 Exp rm10919 $
+* $Header$
 * This file defines the class that defines the bitmaps compiled into the application.
 * Each bitmap will have automatically generated an object of this type via the
 * build_bitmap_info file.

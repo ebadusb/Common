@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_variable_database.h 1.3 2007/05/03 16:19:14Z jl11312 Exp wms10235 $
+ * $Header$
  * $Log: cgui_variable_database.h $
  * Revision 1.3  2007/05/03 16:19:14Z  jl11312
  * - added semaphore protection for map structures

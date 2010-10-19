@@ -1,6 +1,6 @@
 @echo off
 
-rem $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/unit_test/test1/rcs/test1.bat 1.1 2005/05/11 16:12:04Z jl11312 Exp jl11312 $
+rem $Header$
 rem $Log: test1.bat $
 rem Revision 1.1  2005/05/11 16:12:04Z  jl11312
 rem Initial revision

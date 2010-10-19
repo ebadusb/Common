@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2007 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: $
+ * $Header$
  * $Log: $
  *
  */

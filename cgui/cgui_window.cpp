@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: Z:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.cpp 1.21 2010/04/02 16:26:25Z agauusb Exp agauusb $
+ * $Header$
  * $Log: cgui_window.cpp $
  * Revision 1.21  2010/04/02 16:26:25Z  agauusb
  * IT 8232 - Updates for demo mode software

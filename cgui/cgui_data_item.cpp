@@ -1,7 +1,7 @@
 /*
  *  Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_data_item.cpp 1.14 2010/04/27 21:07:24Z rm10919 Exp $
+ * $Header$
  * $Log: cgui_data_item.cpp $
  * Revision 1.14  2010/04/27 21:07:24Z  rm10919
  * Fix type error from previous check-in.

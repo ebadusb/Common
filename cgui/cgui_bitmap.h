@@ -4,7 +4,7 @@
  *  Bitmap display manager for the common GUI.  Uses the CGUIBitmapInfo class to keep track
  *  of the bitmap information and do the actual display of the graphics.
  *
- * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap.h 1.5 2007/03/28 15:18:28Z wms10235 Exp rm10919 $
+ * $Header$
  * $Log: cgui_bitmap.h $
  * Revision 1.5  2007/03/28 15:18:28Z  wms10235
  * IT2888 - Correcting GUI memory leak

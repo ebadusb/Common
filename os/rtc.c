@@ -5,7 +5,7 @@
  * included as part of the build for an vxWorks OS image and is not intended
  * to be compiled separately.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/os/rcs/rtc.c 1.1 2002/05/30 13:00:52Z jl11312 Exp $
+ * $Header$
  * $Log: rtc.c $
  * Revision 1.1  2002/05/30 13:00:52Z  jl11312
  * Initial revision

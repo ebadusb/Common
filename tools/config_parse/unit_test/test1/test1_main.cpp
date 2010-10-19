@@ -1,4 +1,4 @@
-// $Header: K:/BCT_Development/vxWorks/Common/tools/config_parse/unit_test/test1/rcs/test1_main.cpp 1.1 2005/05/11 15:15:03Z jl11312 Exp jl11312 $
+// $Header$
 //
 // Main program for config_parse unit test 1
 //

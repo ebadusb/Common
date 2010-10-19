@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_init.cpp 1.11 2005/09/30 17:00:29Z ms10234 Exp $
+ * $Header$
  * $Log: datalog_init.cpp $
  * Revision 1.11  2005/09/30 17:00:29Z  ms10234
  * - fix memory leak and copy/paste error

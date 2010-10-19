@@ -18,7 +18,7 @@
 
 *************************< TRIMA CONFIG Conversion >****************************
 
-$Header: //bctquad3/home/BCT_Development/Common/disk_build/install_source/cfgconv_common/rcs/common_defs.h 1.1 2001/08/16 13:50:24 jl11312 Exp $
+$Header$
 $Log: common_defs.h $
 Revision 1.1  2001/08/16 13:50:24  jl11312
 Initial revision

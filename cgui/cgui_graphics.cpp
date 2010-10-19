@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_graphics.cpp 1.27 2007/05/10 16:35:46Z jl11312 Exp rm10919 $
+ * $Header$
  * $Log: cgui_graphics.cpp $
  * Revision 1.27  2007/05/10 16:35:46Z  jl11312
  * - add option to specify timeout in waiting for UGL events in message loop (Taos IT 3315)

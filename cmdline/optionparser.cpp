@@ -1,5 +1,5 @@
 /* FILENAME: OptionParser.cpp
- * $Header: K:/BCT_Development/vxWorks/Common/cmdline/rcs/optionparser.cpp 1.6 2002/12/20 23:28:19Z td07711 Exp $
+ * $Header$
  * PURPOSE: option parsing class
  * CHANGELOG:
  *   $Log: optionparser.cpp $

@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_string_data_container.h 1.1 2005/04/27 13:40:47Z rm10919 Exp $
+ * $Header$
  * $Log: cgui_string_data_container.h $
  * Revision 1.1  2005/04/27 13:40:47Z  rm10919
  * Initial revision

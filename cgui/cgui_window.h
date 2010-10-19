@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window.h 1.12 2007/04/20 14:58:26Z wms10235 Exp rm10919 $
+ * $Header$
  * $Log: cgui_window.h $
  * Revision 1.12  2007/04/20 14:58:26Z  wms10235
  * IT2354 - Removing function bringToTop() since it is a duplicate of raiseScreenPriority()

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-1999 by Cobe BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/clocks/rcs/ostime.cpp 1.12 2002/11/22 21:13:18 pn02526 Exp jl11312 $
+ * $Header$
  * $Log: ostime.cpp $
  * Revision 1.12  2002/11/22 21:13:18  pn02526
  * Change the nanosec member of the timeFromTick struct to a long to 1) facilitate computation of negative time deltas, and 2) agree with the timespec struct in <time.h>.

@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.h 1.4 2009/06/24 18:41:44Z wms10235 Exp $
+ * $Header$
  * $Log: cgui_adjustor.h $
  * Revision 1.4  2009/06/24 18:41:44Z  wms10235
  * IT6958 - Interrmittent page fault occurs at protocol load or during procedure

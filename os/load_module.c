@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2003 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/load_module.c 1.2 2003/05/23 16:10:43Z jl11312 Exp jl11312 $
+ * $Header$
  * $Log: load_module.c $
  * Revision 1.2  2003/05/23 16:10:43Z  jl11312
  * - added parameter to get load information

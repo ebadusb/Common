@@ -15,7 +15,7 @@
 
 *************************< TRIMA CONFIG Conversion >****************************
 
-$Header: //bctquad3/home/BCT_Development/Common/disk_build/install_source/cfgconv_common/rcs/old_cfg_collect.cpp 1.1 2001/08/16 13:50:18 jl11312 Exp $
+$Header$
 $Log: old_cfg_collect.cpp $
 Revision 1.1  2001/08/16 13:50:18  jl11312
 Initial revision

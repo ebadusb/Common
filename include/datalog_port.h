@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_port.h 1.20 2005/05/31 20:27:14Z jheiusb Exp $
+ * $Header$
  * $Log: datalog_port.h $
  * Revision 1.20  2005/05/31 20:27:14Z  jheiusb
  * IT32 Make changes to common to accommodate the Trima 5.2 vxWorks 5.5 port

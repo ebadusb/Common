@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog.cpp 1.16 2005/09/29 21:59:50Z ms10234 Exp $
+ * $Header$
  * $Log: datalog.cpp $
  * Revision 1.16  2005/09/29 21:59:50Z  ms10234
  * IT42 - allow generation of new log files without rebooting

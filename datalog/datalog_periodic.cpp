@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_periodic.cpp 1.6 2005/05/31 20:26:46Z jheiusb Exp $
+ * $Header$
  * $Log: datalog_periodic.cpp $
  * Revision 1.6  2005/05/31 20:26:46Z  jheiusb
  * it32 Make changes to common to accommodate the Trima 5.2 vxWorks  5.5 port

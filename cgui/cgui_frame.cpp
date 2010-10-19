@@ -1,5 +1,5 @@
 /*
- * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_frame.cpp 1.6 2007/11/15 21:01:51Z rm10919 Exp rm10919 $
+ * $Header$
  *
  * Implement the class to create an empty non-filled frame.
  *

@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_variable_db_container.cpp 1.4 2007/06/04 22:04:22Z wms10235 Exp $
+ * $Header$
  * $Log: cgui_variable_db_container.cpp $
  * Revision 1.4  2007/06/04 22:04:22Z  wms10235
  * IT83 - Updates for the common GUI project to use the unicode string class

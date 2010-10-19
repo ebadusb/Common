@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_internal.h 1.13 2004/10/26 20:19:01Z rm70006 Exp $
+ * $Header$
  * $Log: datalog_internal.h $
  * Revision 1.13  2004/10/26 20:19:01Z  rm70006
  * Ported datalog code to be compatible with windows compiler.  No functional changes made.  Re-ran unit test and it passed.

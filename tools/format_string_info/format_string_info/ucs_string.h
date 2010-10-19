@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2007 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/unicode_string/rcs/ucs_string.h 1.1 2007/05/18 16:19:18Z wms10235 Exp $
+ * $Header$
  *
  *	Common wide character string functions. These functions have
  * the same functionality as the ANSI functions except take StringChar

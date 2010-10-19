@@ -1,5 +1,5 @@
 /*
-* $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info_shaded.cpp 1.4 2009/02/03 00:38:08Z rm10919 Exp $
+* $Header$
 *
 *	This file defines the CGUIBitmapInfoShaded class which defines and creates
 *		a CGUIBitmapInfo object that is the shaded bitmap data.  This class could also be

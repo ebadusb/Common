@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: Z:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_button_shaded.cpp 1.3 2009/01/08 17:04:54Z rm10919 Exp agauusb $
+ * $Header$
  *
  *
  * $Log: cgui_button_shaded.cpp $

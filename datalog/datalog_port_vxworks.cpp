@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port_vxworks.cpp 1.12 2003/12/16 21:56:59Z jl11312 Exp rm70006 $
+ * $Header$
  * $Log: datalog_port_vxworks.cpp $
  * Revision 1.12  2003/12/16 21:56:59Z  jl11312
  * - replaced binary semaphore with mutex semaphore to avoid potential priority inversion

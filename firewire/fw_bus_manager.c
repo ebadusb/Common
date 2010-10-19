@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_bus_manager.c 1.4 2007/02/20 22:53:01Z wms10235 Exp wms10235 $
+ * $Header$
  *
  * This file contains the firewire routines for the Bus Manager.
  *

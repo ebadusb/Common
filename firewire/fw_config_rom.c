@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_config_rom.c 1.1 2007/02/07 15:22:29Z wms10235 Exp $
+ * $Header$
  *
  * This file contains the firewire configuration ROM routines.
  *

@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_list_box.h 1.4 2007/01/17 14:31:23Z rm10919 Exp wms10235 $
+ * $Header$
  *
  * list_box.h
  *

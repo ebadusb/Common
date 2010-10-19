@@ -3,7 +3,7 @@
  *
  *	vxWorks utilities for logging debug information after a system failure is detected
  *
- * $Header: K:/BCT_Development/vxWorks/Common/debug/rcs/failure_debug.cpp 1.12 2004/03/24 19:47:47Z ms10234 Exp jl11312 $
+ * $Header$
  * $Log: failure_debug.cpp $
  * Revision 1.12  2004/03/24 19:47:47Z  ms10234
  * 6910 - added network message debug logging

@@ -1,4 +1,4 @@
-# $Header: K:/vxWorks/Common/rcs/makefile.frm 1.3 2007/04/09 20:12:42Z jl11312 Exp $
+# $Header$
 # $Log: makefile.frm $
 # Revision 1.3  2007/04/09 20:12:42Z  jl11312
 # - moved reserved messages directory (IT 76)

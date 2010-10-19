@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_driver.c 1.4 2007/02/15 21:10:28Z wms10235 Exp wms10235 $
+ * $Header$
  *
  * This file contains the firewire driver level routines.
  *

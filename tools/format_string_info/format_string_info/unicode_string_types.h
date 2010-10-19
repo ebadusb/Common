@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2007 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/unicode_string/rcs/unicode_string_types.h 1.1 2007/05/18 16:19:16Z wms10235 Exp $
+ * $Header$
  *
  *	Wide character string types.
  *

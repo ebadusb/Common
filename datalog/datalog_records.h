@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: I:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_records.h 1.2 2004/06/07 16:55:54Z jl11312 Exp $
+ * $Header$
  * $Log: datalog_records.h $
  * Revision 1.2  2004/06/07 16:55:54Z  jl11312
  * - correct compiler wanrings for simpc under VXWorks 5.5

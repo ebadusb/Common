@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- *  $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_button.h 1.28 2009/01/08 00:55:20Z rm10919 Exp $
+ *  $Header$
  *  This file defines the base class for all button styles in the common GUI.  An object of this class types
  *  can be used to generate a standard button.
  *

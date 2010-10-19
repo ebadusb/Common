@@ -1,4 +1,4 @@
-// $Header: K:/BCT_Development/Taos/tools/config_parse/unit_test/test2/rcs/test2_main.cpp 1.1 2005/01/25 20:54:38Z jl11312 Exp jl11312 $
+// $Header$
 //
 // Main program for config_parse unit test 2
 //

@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_link_layer.c 1.3 2007/02/13 22:46:47Z wms10235 Exp wms10235 $
+ * $Header$
  *
  * This file contains the firewire level routines to access
  * and manipulate the link layer.

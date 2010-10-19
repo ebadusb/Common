@@ -1,7 +1,7 @@
 /*
  * copyright 1995, 1996 Cobe BCT Lakewood, Colorado
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/msgcrc.h 1.1 2002/05/01 14:44:09 ms10234 Exp $
+ * $Header$
  * $Log: msgcrc.h $
  * Revision 1.1  2002/05/01 14:44:09  ms10234
  * Initial revision

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2002 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: Q:/BCT_Development/vxWorks/Common/include/rcs/auxclock.h 1.10 2004/05/18 15:58:58Z jl11312 Exp $
+ * $Header$
  * $Log: auxclock.h $
  * Revision 1.10  2004/05/18 15:58:58Z  jl11312
  * - added missing struct in argument declaration

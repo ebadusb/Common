@@ -1,5 +1,5 @@
 /*
- * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap_info.cpp 1.7 2007/04/14 18:04:40Z jl11312 Exp rm10919 $
+ * $Header$
  *
  * This file implements the class that manages the bitmaps compiled into the application.
  * Each bitmap will have automatically generated an object of this type via the

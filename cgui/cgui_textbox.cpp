@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- *  $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_textbox.cpp 1.2 2005/09/30 22:42:12Z rm10919 Exp $ 
+ *  $Header$ 
  *  This file defines the base class for all text boxes in the common GUI.
  *  An object of this class types can be used to generate a text box.
  *  

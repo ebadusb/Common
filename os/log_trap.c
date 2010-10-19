@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2003 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/log_trap.c 1.3 2003/06/19 20:05:59Z jl11312 Exp jl11312 $
+ * $Header$
  * $Log: log_trap.c $
  * Revision 1.3  2003/06/19 20:05:59Z  jl11312
  * - corrected logging of system startup/install messages

@@ -4,7 +4,7 @@
  *  NOTE: MODIFICATIONS TO THIS FILE MAY NEED TO BE REFLECTED IN THE INTERFACE CONTROL DOCUMENT
  *        SERVICE TOOLS SUITE, MAINTAINED BY THE START GROUP, AND IN THE STS SOFTWARE.
  *
- * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/grip/rcs/gripif.h 1.5 2006/12/05 17:28:10Z wtucusb Exp pn02526 $
+ * $Header$
  *
  * Derived from Taos thedif.h Revision 1.20  2005/06/01 09:23:01  jl11312
  *  and the STS ICD revision 1.4.

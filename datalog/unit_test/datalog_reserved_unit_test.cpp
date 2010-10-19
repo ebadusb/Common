@@ -1,5 +1,5 @@
 /*
- * $Header: Z:/vxWorks/Common/datalog/unit_test/rcs/datalog_reserved_unit_test.cpp 1.1 2006/11/30 17:52:02Z jmedusb Exp jmedusb $ 
+ * $Header$ 
  * Secondary Unit Test for passing the __FILE__, and __LINE__ defines
  * To the DataLogReservedStream Calls, fixes a bug where only the file and line
  * of the class where used, instead of the calling file

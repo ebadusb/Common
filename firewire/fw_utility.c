@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_utility.c 1.2 2007/02/13 22:46:48Z wms10235 Exp wms10235 $
+ * $Header$
  *
  * This file contains firewire utility routines.
  *

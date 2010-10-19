@@ -1,5 +1,5 @@
 /*
- * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_bitmap.cpp 1.5 2007/04/14 18:04:40Z jl11312 Exp rm10919 $
+ * $Header$
  *
  * Implement bitmap display manager for the common GUI.  Uses the CGUIBitmapInfo class to keep track
  * of the bitmap information and do the actual display of the graphics.

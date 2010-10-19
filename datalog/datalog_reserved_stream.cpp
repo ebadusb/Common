@@ -1,5 +1,5 @@
 /*
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_reserved_stream.cpp 1.3 2006/11/30 17:59:32Z jmedusb Exp $
+ * $Header$
  * Defines constants used for the DataLogReserved message type
  * RESERVED_HEADER is the text tag name for reserved messages
  * DEFAULT_NAME is used when no name is passed into a DataLogReserved call

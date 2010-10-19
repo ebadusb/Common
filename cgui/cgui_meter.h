@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_meter.h 1.1 2004/09/24 21:59:49Z rm10919 Exp rm10919 $
+ * $Header$
  * This file defines the CGUIMeter class, which provides the ability for 
  * showing a sliding rectanglar meter with a background color and a fill 
  * color.  The parent window will have to create and manipulate any labeling 

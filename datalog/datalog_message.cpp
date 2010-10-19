@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message.cpp 1.7 2003/11/24 23:06:11Z jl11312 Exp $
+ * $Header$
  * $Log: datalog_message.cpp $
  * Revision 1.7  2003/11/24 23:06:11Z  jl11312
  * - added missing API function

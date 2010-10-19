@@ -1,5 +1,5 @@
 /*
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/language_file_support/rcs/module_languages.cpp 1.3 2007/03/13 22:27:58Z MS10234 Exp MS10234 $
+ * $Header$
  *
  * Utility for loading language information
  *

@@ -3,7 +3,7 @@
  *
  *	vxWorks utilities for accessing the real-time clock.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/rtc.h 1.4 2002/10/08 15:35:17Z jl11312 Exp $
+ * $Header$
  * $Log: rtc.h $
  * Revision 1.4  2002/10/08 15:35:17Z  jl11312
  * - added ifdefs for C++ compile

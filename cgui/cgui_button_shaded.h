@@ -1,5 +1,5 @@
 /*
- * $Header: J:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_button_shaded.h 1.1 2008/11/06 22:19:40Z rm10919 Exp rm10919 $
+ * $Header$
  *
  *		Base class definition for creating buttons using CGUIBitmapInfoShaded to 
  *			create the button bitmaps for each button state ( Released, Disabled, Pressed),

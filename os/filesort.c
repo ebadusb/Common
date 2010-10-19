@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/filesort.c 1.3 2003/05/13 15:01:00Z jl11312 Exp jl11312 $
+ * $Header$
  * $Log: filesort.c $
  * Revision 1.3  2003/05/13 15:01:00Z  jl11312
  * - fileSort no longer performs final callback with NULL file name

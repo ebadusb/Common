@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/include/rcs/datalog_levels.h 1.13 2007/02/26 23:28:29Z wms10235 Exp ssunusb $
+ * $Header$
  * $Log: datalog_levels.h $
  * Revision 1.13  2007/02/26 23:28:29Z  wms10235
  * IT74 - Added Firewire logging level and moved functions under the C++ area

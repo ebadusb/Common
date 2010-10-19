@@ -1,6 +1,6 @@
 @echo off
 
-rem $Header: K:/BCT_Development/Taos/tools/config_parse/unit_test/test2/rcs/test2.bat 1.1 2005/01/25 17:53:14Z jl11312 Exp jl11312 $
+rem $Header$
 rem $Log: test2.bat $
 rem Revision 1.1  2005/01/25 17:53:14Z  jl11312
 rem Initial revision

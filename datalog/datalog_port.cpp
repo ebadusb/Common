@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: I:/BCT_Development/vxWorks/Common/datalog/rcs/datalog_port.cpp 1.2 2002/08/15 20:53:57Z jl11312 Exp $
+ * $Header$
  * $Log: datalog_port.cpp $
  * Revision 1.2  2002/08/15 20:53:57Z  jl11312
  * - added support for periodic logging

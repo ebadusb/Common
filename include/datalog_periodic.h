@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/datalog_periodic.h 1.2 2004/01/26 18:51:28Z jl11312 Exp $
+ * $Header$
  * $Log: datalog_periodic.h $
  * Revision 1.2  2004/01/26 18:51:28Z  jl11312
  * - modifications for building under Tornado 2.2

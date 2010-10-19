@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_window_object.h 1.6 2008/11/06 22:24:17Z rm10919 Exp $
+ * $Header$
  * $Log: cgui_window_object.h $
  * Revision 1.6  2008/11/06 22:24:17Z  rm10919
  * Add transparent and shaded bitmaps and shaded buttons.

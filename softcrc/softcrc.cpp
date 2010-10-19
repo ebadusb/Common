@@ -4,7 +4,7 @@
  * FILENAME: softcrc.c
  * PURPOSE: main code for crc utilities
  * CHANGELOG:
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/softcrc/rcs/softcrc.cpp 1.10 2003/06/26 22:33:44Z jl11312 Exp $
+ * $Header$
  * $Log: softcrc.cpp $
  * Revision 1.10  2003/06/26 22:33:44Z  jl11312
  * - moved base crc generation function into OS image

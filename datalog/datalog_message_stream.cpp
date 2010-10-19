@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2002 Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //bctquad3/home/BCT_Development/vxWorks/Common/datalog/rcs/datalog_message_stream.cpp 1.12 2003/11/25 16:10:03Z jl11312 Exp rm70006 $
+ * $Header$
  * $Log: datalog_message_stream.cpp $
  * Revision 1.12  2003/11/25 16:10:03Z  jl11312
  * - corrected output of unsigned char data

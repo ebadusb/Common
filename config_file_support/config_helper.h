@@ -1,5 +1,5 @@
 /*
- * $Header: Q:/BCT_Development/vxWorks/Common/config_file_support/rcs/config_helper.h 1.2 2007/05/02 14:08:22Z jl11312 Exp jd11007 $
+ * $Header$
  *
  * Utilities for managing configuration files
  *

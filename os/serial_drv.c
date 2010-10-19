@@ -9,7 +9,7 @@
  *		- support for handling multiple serial ports on a single interrupt
  *		- support for full range of baud rates
  *
- * $Header: K:/BCT_Development/vxWorks/Common/os/rcs/serial_drv.c 1.1 2002/06/07 21:43:16 jl11312 Exp jl11312 $
+ * $Header$
  * $Log: serial_drv.c $
  * Revision 1.1  2002/06/07 21:43:16  jl11312
  * Initial revision

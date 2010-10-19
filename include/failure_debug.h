@@ -3,7 +3,7 @@
  *
  *	vxWorks utilities for logging debug information after a system failure is detected
  *
- * $Header: K:/BCT_Development/vxWorks/Common/include/rcs/failure_debug.h 1.5 2004/03/26 19:26:01Z jl11312 Exp jl11312 $
+ * $Header$
  * $Log: failure_debug.h $
  * Revision 1.5  2004/03/26 19:26:01Z  jl11312
  * - added support for logging historical network stats and raw network packet upon system failure (IT 6910)

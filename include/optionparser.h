@@ -1,5 +1,5 @@
 /* FILENAME: OptionParser.hpp
- * $Header: I:/BCT_Development/vxWorks/Common/include/rcs/optionparser.h 1.3 2002/12/20 21:29:40Z ms10234 Exp td07711 $
+ * $Header$
  * PURPOSE: used to parse options from command line or elsewhere
  * CHANGELOG:
  *   $Log: optionparser.h $

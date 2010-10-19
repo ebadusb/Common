@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2007 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/unicode_string/rcs/unicode_unit_test.cpp 1.1 2007/05/18 16:19:17Z wms10235 Exp wms10235 $
+ * $Header$
  *
  * Unicode string library unit test functions
  *

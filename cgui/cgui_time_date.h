@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_time_date.h 1.6 2007/03/22 20:57:49Z pn02526 Exp wms10235 $
+ * $Header$
  * $Log: cgui_time_date.h $
  * Revision 1.6  2007/03/22 20:57:49Z  pn02526
  * Add ability to specifiy time value.

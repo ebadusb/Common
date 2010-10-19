@@ -4,7 +4,7 @@
  * FILENAME: crcgen.h
  * PURPOSE: function prototype for crcgen32()
  * CHANGELOG:
- *  $Header: K:/BCT_Development/vxWorks/Common/include/rcs/crcgen.h 1.7 2003/05/21 20:01:26Z jl11312 Exp jl11312 $
+ *  $Header$
  *  $Log: crcgen.h $
  *  Revision 1.7  2003/05/21 20:01:26Z  jl11312
  *  - enhanced memory protection (IT 6091)

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_adjustor.cpp 1.4 2006/11/01 15:35:19Z cf10242 Exp $
+ * $Header$
  * $Log: cgui_adjustor.cpp $
  * Revision 1.4  2006/11/01 15:35:19Z  cf10242
  * IT 2194: button press logging

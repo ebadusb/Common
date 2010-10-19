@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_variable_db_container.h 1.2 2005/11/22 00:34:43Z rm10919 Exp wms10235 $
+ * $Header$
  * $Log: cgui_variable_db_container.h $
  * Revision 1.2  2005/11/22 00:34:43Z  rm10919
  * Get data item database to work with software layers.

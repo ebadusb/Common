@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2006 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_csr.c 1.1 2007/02/07 15:22:29Z wms10235 Exp wms10235 $
+ * $Header$
  *
  * This file contains the CSR definitions and routines
  * to update and manage the standard CSRs.

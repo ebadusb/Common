@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_text.h 1.26 2009/03/02 20:46:16Z adalusb Exp wms10235 $
+ * $Header$
  * $Log: cgui_text.h $
  * Revision 1.26  2009/03/02 20:46:16Z  adalusb
  * IT 6701. Added a function to map a char to a font name for reports.

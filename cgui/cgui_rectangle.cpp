@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: K:/BCT_Development/vxWorks/Common/cgui/rcs/cgui_rectangle.cpp 1.3 2005/04/15 21:35:18Z cf10242 Exp jl11312 $
+ * $Header$
  * $Log: cgui_rectangle.cpp $
  * Revision 1.3  2005/04/15 21:35:18Z  cf10242
  * override region method for rectangle

@@ -1,7 +1,7 @@
 /*
  *	Copyright (c) 2004 by Gambro BCT, Inc.  All rights reserved.
  *
- * $Header: //BCTquad3/home/BCT_Development/vxWorks/Common/cgui/rcs/cgui_time_date.cpp 1.8 2007/03/21 12:59:54 pn02526 Exp pn02526 $
+ * $Header$
  * $Log: cgui_time_date.cpp $
  * Revision 1.8  2007/03/21 12:59:54  pn02526
  * Add two CGUITextItem pointers for AM  and PM strings (suffixes for 12-hour time strings) to the calling sequence of the constructor, plus functions to get and set them post-construction. The two new constructor arguments are transparent to existing code. If NULL in the constructor or the set function, the class does not attempt to append anything to twelve-hour time strings. To internationalize this, the string handling within the class has been changed to use the wide character type StringChar used internally in the CGUIText and CGUITextItem classes.  The stringCharxxxx functions have been added for this.  

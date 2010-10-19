@@ -1,7 +1,7 @@
 /*
  *  Copyright(c) 2005 by Gambro BCT, Inc. All rights reserved.
  *
- * $Header: H:/BCT_Development/vxWorks/Common/firewire/rcs/fw_pci_support.h 1.1 2007/02/07 15:22:37Z wms10235 Exp $
+ * $Header$
  *
  * This file defines the firewire PCI hardware initialization routines.
  * These routines detect any OHCI v1.1 compatible firewire cards in

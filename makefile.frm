@@ -16,7 +16,7 @@ dir_path := $(subst \,/,$(shell cmd /C cd))/
 
 .PHONY: find_rmsg
 find_rmsg:
-	@rm -f -r .rmsg
+	@if exist .rmsg rmdir /S /Q .rmsg
 	@mkdir .rmsg
 	@if exist $(LRMBD) (echo Default Reserved Message directory overridden $(dir_path))
 	@if exist $(LRMBD) (echo $(subst /,\,$(subst .\,$(dir_path),$(shell cmd /C if exist $(LRMBD) cat $(LRMBD)))) > .rmsg\$(LRMBD))

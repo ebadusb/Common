@@ -302,6 +302,8 @@ public:
 
    int recursionLimit(void) { return subDirLimit; }
 
+   bool caseSensitiveCompare (void) { return caseSensitive; }
+
 private:
    int processFileList(const char * fileListName, const char * rootDir);
    bool setOptions(char * cmdLine);
@@ -316,6 +318,7 @@ private:
    char *         verifyFileName;   // verify file name (-verify)
    unsigned long  initCRC;          // initial CRC value (-initcrc)
    int            subDirLimit;      // subdirectory recursion limit (-limit)
+   bool           caseSensitive;    // flag to specify if we use case sensitive comparison when sorting the dir list
 
    unsigned long  currentCRC;
 };
@@ -567,7 +570,7 @@ void FileList::processDir(const char * dirName, unsigned long * crc)
  
          size_t nameListIdx = 0;
          while ( nameListIdx < nameListCount-1 &&
-                stricmp(dirEntry->d_name,nameList[nameListIdx]) > 0 ) 
+               ( _crcObj->caseSensitiveCompare()? (strcmp(dirEntry->d_name,nameList[nameListIdx]) > 0) : (stricmp(dirEntry->d_name,nameList[nameListIdx]) > 0) ) )
          {
             nameListIdx += 1;
          }
@@ -652,6 +655,7 @@ SoftCRC::SoftCRC(void)
         verifyFileName(NULL),
         initCRC(INITCRC_DEFAULT),
         subDirLimit(10),
+        caseSensitive(false),
         currentCRC(0)
 {
 }
@@ -849,6 +853,10 @@ bool SoftCRC::setOptions(char * cmdLine)
             verifyFileName = new char[strlen(token)+1];
             strcpy(verifyFileName, token);
          }
+      }
+      else if ( strcmp(token, "-caseSensitive") == 0 )
+      {
+         caseSensitive = true;
       }
 
       if ( result )

@@ -33,8 +33,12 @@ grep -q "_VERSION *\"5.4" %WIND_BASE%\target\h\version.h
 if ERRORLEVEL 1 goto check_55
 
 echo vxWorks version 5.4.x
-attrib -r makefile.flags
-del makefile.flags
+
+if exist makefile.flags (
+    attrib -r makefile.flags
+    del makefile.flags
+)
+
 copy makefile.flags_54 makefile.flags
 attrib +r makefile.flags
 goto start_build
@@ -44,8 +48,12 @@ grep -q "_VERSION *\"5.5" %WIND_BASE%\target\h\version.h
 if ERRORLEVEL 1 goto unknown_version
 
 echo vxWorks version 5.5.x
-attrib -r makefile.flags
-del makefile.flags
+
+if exist makefile.flags (
+    attrib -r makefile.flags
+    del makefile.flags
+)
+
 copy makefile.flags_55 makefile.flags
 attrib +r makefile.flags
 goto start_build

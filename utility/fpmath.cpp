@@ -10,9 +10,8 @@
 #include <math.h>
 #include "fpmath.h"
 
-using namespace FPMath;
 
-char fpCompare(const double lhs, const double rhs)
+int FPMath::fpCompare(const double lhs, const double rhs)
 {
 	double epsilon = 10 * FLT_EPSILON * ( lhs == 0 ? 1 : fabs(lhs) );
 

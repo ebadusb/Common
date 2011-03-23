@@ -2,7 +2,7 @@
  *
  * TITLE:      fpmath.h
  *
- * ABSTRACT:   This namespace supports floating point math helper functions
+ * ABSTRACT:   This class supports floating point math helper functions
  *
  */
 
@@ -21,7 +21,7 @@ namespace FPMath
 //    0 - the parameter are equal to each other, within the epsilon value
 //    1 - the first parameter is greater than the second
 //
-char fpCompare(const double lhs, const double rhs);
+int fpCompare(const double lhs, const double rhs);
 
 };
 

@@ -13,11 +13,11 @@
 
 .PHONY: clean
 clean:
-	rm -f $(COMMON_CLEAN_FILELIST)
-	rm -f $(ADDN_CLEAN)
-	rm -f $(APP_LIST)
+	rm -f $(subst \,/, $(COMMON_CLEAN_FILELIST))
+	rm -f $(subst \,/, $(ADDN_CLEAN))
+	rm -f $(subst \,/, $(APP_LIST))
 ifneq ($(strip $(MAP_LIST)),)
-	rm -f $(MAP_LIST)
+	rm -f $(subst \,/, $(MAP_LIST))
 endif 
 
 $(APP_LIST) :

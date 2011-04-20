@@ -44,21 +44,21 @@ lib : $(LIB_ARCHIVE)
 ifneq ($(ARCHIVE_TYPE),OBJFILE)
 $(LIB_ARCHIVE) : $(LIB_DEPEND) $(LIB_OBJ)
 	@if not exist $(ARCHIVE_DIR) mkdir $(ARCHIVE_DIR)
-	@rm -f $@
+	@rm -f $(subst \,/, $@)
 	$(AR) -rcs $@ $(LIB_OBJ)
 else
 $(LIB_ARCHIVE) : $(LIB_DEPEND) $(LIB_OBJ)
 	@if not exist $(ARCHIVE_DIR) mkdir $(ARCHIVE_DIR)
-	@rm -f $@
+	@rm -f $(subst \,/, $@)
 	$(LD) $(LDFLAGS) $(LIB_OBJ) -o $@
 endif
 
 ifeq ($(BUILD_TYPE),CLEAN)
 .PHONY: clean
 clean:
-	rm -f $(LIB_ARCHIVE)
-	rm -f $(COMMON_CLEAN_FILELIST)
-	rm -f $(ADDN_CLEAN)
+	rm -f $(subst \,/, $(LIB_ARCHIVE))
+	rm -f $(subst \,/, $(COMMON_CLEAN_FILELIST))
+	rm -f $(subst \,/, $(ADDN_CLEAN))
 endif
 
 ifneq ($(BUILD_TYPE),CLEAN)

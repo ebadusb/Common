@@ -97,8 +97,8 @@ CGUIButtonShaded::CGUIButtonShaded( CGUIDisplay & display, CGUIWindow * parent, 
 
 	buttonData.enabledBitmapId = CGUIBitmapInfoShaded::createShadedBitmapData( enabledButtonDataShaded.colorScheme, enabledButtonDataShaded.shadeType, enabledButtonDataShaded.borderWidth, region.width, region.height );
 	buttonData.enabledTextItem = enabledButtonDataShaded.textItem;
-	buttonData.enabledStylingRecord = pressedButtonDataShaded.stylingRecord;
-	buttonData.enabledButtonIcon = pressedButtonDataShaded.buttonIcon;
+	buttonData.enabledStylingRecord = enabledButtonDataShaded.stylingRecord;
+	buttonData.enabledButtonIcon = enabledButtonDataShaded.buttonIcon;
 
 	buttonData.disabledBitmapId =  CGUIBitmapInfoShaded::createShadedBitmapData( disabledButtonDataShaded.colorScheme, disabledButtonDataShaded.shadeType, disabledButtonDataShaded.borderWidth, region.width, region.height );
 	buttonData.disabledTextItem = disabledButtonDataShaded.textItem;

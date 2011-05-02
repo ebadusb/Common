@@ -300,7 +300,24 @@ bool CGUIStringInfo::getQuotedString(char *&data, StringChar *& wString)
 		}
 		else if ( started )
 		{
-           UTF8ToUnicode(data, wString, writeIdx);
+			// Added 4/29/2011: Strip out the segmentation tags as we load the strings
+            // D.S. (x4664)
+            if (data[0] == '#' && data[1] == '!' && data[2] == '[' &&
+				((data[3] == 'B' && data[4] == 'e' && data[5] == 'g' && data[6] == 'i' && data[7] == 'n' && data[8] == 'S' && data[9] == 'e' && data[10] == 'g') ||
+				 (data[3] == 'E' && data[4] == 'n' && data[5] == 'd' && data[6] == 'S' && data[7] == 'e' && data[8] == 'g')))
+			{
+				// Keep moving forward until we find the end of the tag,
+				// or the end of the buffer, or the end of the quoted section.
+				while (*data != ']' && *data != '\0' && *data != '"') 
+					data++;
+				
+				// Bump it one more, as long as this isn't the end of string.
+				if (*data == ']') data++;
+				else DataLog (log_level_cgui_error) << "Unterminated markup tag at line " << _line << endmsg;
+			}
+			// This is the normal case.  Deal with a standard character.
+			else 
+			UTF8ToUnicode(data, wString, writeIdx);
 		}
 	}
 

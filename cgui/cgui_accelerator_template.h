@@ -5,6 +5,8 @@
 #ifndef _CGUI_ACCELERATOR_TEMPLATE_INCLUDE
 #define _CGUI_ACCELERATOR_TEMPLATE_INCLUDE
 
+#include "ostime.hpp"
+
 template< class T >
 
 class CGUIAccelerator
@@ -42,9 +44,9 @@ private:
 
 #endif /* ifndef _CGUI_ACCELERATOR_TEMPLATE_INCLUDE */
 
+#include "
 
 template< class T >
-
 CGUIAccelerator<T>::CGUIAccelerator( T minLimit, T maxLimit, unsigned int valueUpdateFrequencyMS, unsigned int incrementUpdateFrequencyMS, T initIncrement, T maxIncrement ):
 											_minLimit( minLimit ), _maxLimit( maxLimit ), _valueUpdateFrequencyMS( valueUpdateFrequencyMS ), _incrementUpdateFrequencyMS( incrementUpdateFrequencyMS ),
 											_initIncrement( initIncrement ), _currIncrement( initIncrement ), _maxIncrement( maxIncrement )

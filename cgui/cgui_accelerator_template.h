@@ -8,7 +8,6 @@
 #include "ostime.hpp"
 
 template< class T >
-
 class CGUIAccelerator
 {
 public:
@@ -43,8 +42,6 @@ private:
 };
 
 #endif /* ifndef _CGUI_ACCELERATOR_TEMPLATE_INCLUDE */
-
-#include "
 
 template< class T >
 CGUIAccelerator<T>::CGUIAccelerator( T minLimit, T maxLimit, unsigned int valueUpdateFrequencyMS, unsigned int incrementUpdateFrequencyMS, T initIncrement, T maxIncrement ):

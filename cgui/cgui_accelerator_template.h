@@ -1,5 +1,15 @@
 /*
 	Accelerator class that increases or decrease a given value over a period of time.
+		This is a template class for any number type. The constructor sets up the frequency
+		of  when the value of the is updated and the frequency of when the increment
+		( or decrement if it is negative ) is updated. It also set is the _initIncrement, the _maxIncrement,
+		the limits for the _value.  The startAccelerator() and stopAccelerator() methods will 
+		start and stop the accelerator.  The startAccelerator() must have the initial value to start 
+		accelerate and the stopAccelerator() return the _value of when the accelerator is stopped.
+		The getCurrentValue() is where the owner of this object gets the accelerated value while the
+		accelerator is running to update the display or media or value that needs the accelertor.
+		If the _value to be accelerated needs to be changed before the timer updates, the owner will need
+		to update the _value it passes in startsAccelerator().
 */
 
 #ifndef _CGUI_ACCELERATOR_TEMPLATE_INCLUDE
@@ -14,9 +24,13 @@ public:
 	CGUIAccelerator( T minLimit, T maxLimit, unsigned int valueUpdateFrequencyMS, unsigned int incrementUpdateFrequencyMS, T initIncrement, T maxIncrement );
 	~CGUIAccelerator();
 
+	// Returns the current _value of the accelerated object.
 	T getCurrentValue( void );
 
+	// Starts the accelerator or changing _value.
 	void startAccelerator( T currentValue );
+
+	// Stops the accelerator or changing the value and returns the current _value.
 	T stopAccelerator( void );
 
 protected:
@@ -72,6 +86,8 @@ T CGUIAccelerator<T>::getCurrentValue( void )
 		// Decreasing
 		if( _currIncrement < _maxIncrement  && _initIncrement > _maxIncrement )
 			_currIncrement = _maxIncrement;
+
+		osTime::snapshotRawTime( _updateIncrementTime );		
 	}	
 
 	if( osTime::howLongMilliSec( _updateValueTime ) >= _valueUpdateFrequencyMS )
@@ -102,7 +118,8 @@ T CGUIAccelerator<T>::getCurrentValue( void )
 			{
 				_value = _minLimit;
 			}
-		}
+		}		
+		osTime::snapshotRawTime( _updateValueTime );		
 	}
 	
 	return _value;

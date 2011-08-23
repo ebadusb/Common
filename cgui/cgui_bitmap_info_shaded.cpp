@@ -455,6 +455,9 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 	_shadedBitmapInfoCache[ bitmapMetrics ] = shadedBitmapInfo;
 	semGive( _lock );
 
+	if( colors ) delete [] colors;
+	if( bitmapData ) delete [] bitmapData;
+
 	return true;
 }
 

@@ -33,6 +33,10 @@ public:
 	// Stops the accelerator or changing the value and returns the current _value.
 	T stopAccelerator( void );
 
+	// Returns true if the value has been updated. This is useful if the accelerator is returning
+	// a delta that is no longer changing but whose value still needs to be sent periodically.
+	bool valueUpdated(){return _valueUpdated;};
+
 protected:
 	rawTime _updateValueTime; //Last value update
 	rawTime _updateIncrementTime;	// Last increment update
@@ -53,6 +57,7 @@ private:
 	CGUIAccelerator();
 	CGUIAccelerator ( const CGUIAccelerator &obj );
 	CGUIAccelerator operator=( CGUIAccelerator &obj );
+	bool _valueUpdated;
 };
 
 #endif /* ifndef _CGUI_ACCELERATOR_TEMPLATE_INCLUDE */
@@ -60,7 +65,7 @@ private:
 template< class T >
 CGUIAccelerator<T>::CGUIAccelerator( T minLimit, T maxLimit, unsigned int valueUpdateFrequencyMS, unsigned int incrementUpdateFrequencyMS, T initIncrement, T maxIncrement ):
 											_minLimit( minLimit ), _maxLimit( maxLimit ), _valueUpdateFrequencyMS( valueUpdateFrequencyMS ), _incrementUpdateFrequencyMS( incrementUpdateFrequencyMS ),
-											_initIncrement( initIncrement ), _currIncrement( initIncrement ), _maxIncrement( maxIncrement )
+											_initIncrement( initIncrement ), _currIncrement( initIncrement ), _maxIncrement( maxIncrement ),_valueUpdated(false)
 {
 
 	osTime::snapshotRawTime( _updateValueTime );		
@@ -119,7 +124,12 @@ T CGUIAccelerator<T>::getCurrentValue( void )
 				_value = _minLimit;
 			}
 		}		
-		osTime::snapshotRawTime( _updateValueTime );		
+		osTime::snapshotRawTime( _updateValueTime );
+		_valueUpdated=true;
+	}
+	else
+	{
+		_valueUpdated=false;
 	}
 	
 	return _value;
@@ -132,6 +142,7 @@ void CGUIAccelerator<T>::startAccelerator( T currentValue )
 	
 	osTime::snapshotRawTime( _updateValueTime );		
 	osTime::snapshotRawTime( _updateIncrementTime );
+	_valueUpdated=false;
 }
 
 template< class T >
@@ -139,6 +150,7 @@ T CGUIAccelerator<T>::stopAccelerator( void )
 {
 	// Set back to initial value.
 	_currIncrement = _initIncrement;
+	_valueUpdated=false;
 	
 	return( _value );
 }

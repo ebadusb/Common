@@ -1,0 +1,26 @@
+<SCRIPT language="javascript" type="text/javascript">
+    var shell = new ActiveXObject("WScript.Shell");
+    var dlogName = external.menuArguments.document.selection.createRange().text;
+    var strCmd = "dlog.exe \"" + dlogName + "\"";
+    var regex = /[TASPCW]\d{1,5}_\d{8,8}_\d{1,3}/i;
+    var matchArr = regex.exec(dlogName);
+    if (matchArr)
+    {   
+        dlogName = matchArr[0];
+        //filename, Window State, true-Wait for dlog.exe to complete
+        var exitCode = shell.Run(strCmd, 1, true);
+        switch(exitCode)
+        {
+            case 1:
+                alert("The dlog file " + dlogName + " was not found in the quad.");
+                break;
+            case 5:
+                alert("The dlog name: " + dlogName + " :doesn't make any sense to me!");
+                break;
+            case -1:
+                alert("You found an error! Please mail dlog.log to the author.");               break;
+        }
+    }
+    else
+        alert("Invalid dlog Name");
+</SCRIPT>

@@ -313,17 +313,27 @@ const StringChar * CGUIDataItemClock::convertToString(void)
 {
    if( _valueChanged )
    {
+      const char * intString = NULL;
       ostringstream textStream;
 
       textStream.setf( ios::fixed );
       textStream.precision( 0 );
 
       if( _value < 10 )
-         textStream << "0" << _value << ends;
+         textStream << "0" << _value;
       else
-         textStream << _value << ends;
+         textStream << _value;
 
-      _string = textStream.str().c_str();
+      intString = textStream.str().c_str();
+
+      //
+      // Copy value (string) into _string
+      //
+      if( intString )
+         _string = intString;
+      else
+         _string.empty();
+
       _valueChanged = false;
    }
 

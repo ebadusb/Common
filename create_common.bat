@@ -17,6 +17,8 @@ rem Revision 1.1  2002/04/30 20:07:22  rm70006
 rem Initial revision
 rem
 
+set CYGWIN=nodosfilewarning
+
 if not exist .\makefile.vxc goto not_common_sandbox
 if not exist .\create_common.bat goto not_common_sandbox
 if not exist .\convert goto not_common_sandbox

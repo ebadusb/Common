@@ -9,6 +9,8 @@
 #ifndef __FP_MATH_H__
 #define __FP_MATH_H__
 
+#include <list>
+
 namespace FPMath
 {
 
@@ -23,6 +25,22 @@ namespace FPMath
 //
 int fpCompare(const double lhs, const double rhs);
 
+//
+// Same as above, but lets the user of the function dictate what epsilon is
+//
+int fpCompare(const double lhs, const double rhs, const double epsilon);
+
+// 
+// Returns the average of a linked list of doubles
+//
+double fpAvg(std::list<double> &listToAvg);
+
+//
+// Returns the standard deviation of a linked list of doubles
+// 
+double fpStdDev(std::list<double> &list);
+
 };
 
 #endif
+

@@ -20,9 +20,14 @@ int FPMath::fpCompare(const double lhs, const double rhs)
 
 int FPMath::fpCompare(const double lhs, const double rhs, const double epsilon)
 {
+   double minEpsilon = 10 * FLT_EPSILON * ( lhs == 0 ? 1 : fabs(lhs) );
+
+   double realEpsilon = epsilon;
+   if (epsilon < minEpsilon) realEpsilon = minEpsilon;
+
    int retVal;
-   if ( lhs > rhs + epsilon ) retVal = 1;
-   else if ( lhs < rhs - epsilon ) retVal = -1;
+   if ( lhs > rhs + realEpsilon ) retVal = 1;
+   else if ( lhs < rhs - realEpsilon ) retVal = -1;
    else retVal = 0;
 
    return retVal;

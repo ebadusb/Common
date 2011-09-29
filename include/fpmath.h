@@ -27,6 +27,8 @@ int fpCompare(const double lhs, const double rhs);
 
 //
 // Same as above, but lets the user of the function dictate what epsilon is
+//    Note: epsilon will be set = (10 * FLT_EPSILON * first parameter)
+//    if epsilon is < (10 * FLT_EPSILON * first parameter)
 //
 int fpCompare(const double lhs, const double rhs, const double epsilon);
 

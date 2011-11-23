@@ -29,7 +29,12 @@
 
 static vector<ConfigFile *> configFile;
 
-static void generateHeaderFile(FILE * fp, const char * outputName, const char * exportOutputFile, const char * sourceFileBase, const char *fileNamesHeaderDir, const char *configHelperHeaderDir)
+static void generateHeaderFile(FILE * fp, 
+                               const char * outputName, 
+                               const char * exportOutputFile, 
+                               const char * sourceFileBase, 
+                               const char *fileNamesHeaderDir, 
+                               const char *configHelperHeaderDir)
 {
 	fprintf(fp,
 		"/*\n"
@@ -258,7 +263,7 @@ void parseFileList(void)
 			error = true;
 			continue;
 		}
-
+      
 		error |= configFile[file]->parseFile(cfg_file);
 		fclose(cfg_file);
 	}

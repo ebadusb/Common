@@ -26,6 +26,7 @@ include $(MAINDIR)/makefile.vxc
 APP_NAME := test1
 test1_dir = out
 test1_cxx_files = test1.cpp test1_main.cpp
+test1_libs = $(MAINDIR)/config_file_support/lib/libconfigfilesupport.a
 include $(MAINDIR)/makefile.process_app
 
 #
@@ -33,4 +34,5 @@ include $(MAINDIR)/makefile.process_app
 #
 include $(MAINDIR)/makefile.build_apps
 app : $(APP_LIST)
+test1.out : libconfigfilesupport.a
 

@@ -13,7 +13,7 @@ all: check_opt_change app
 # style) directory separators if they are needed.
 #
 MAINDIR = ..\..\..\..
-ADDN_INCDIR = -I$(MAINDIR) 
+ADDN_INCDIR = -I$(MAINDIR) -I$(MAINDIR)/include
 
 include $(MAINDIR)/makefile.vxc
 
@@ -24,6 +24,7 @@ include $(MAINDIR)/makefile.vxc
 APP_NAME := test2
 test2_dir = out
 test2_cxx_files = test2.cpp test2_main.cpp
+test2_libs = $(MAINDIR)/config_file_support/lib/libconfigfilesupport.a
 include $(MAINDIR)/makefile.process_app
 
 #
@@ -31,4 +32,5 @@ include $(MAINDIR)/makefile.process_app
 #
 include $(MAINDIR)/makefile.build_apps
 app : $(APP_LIST)
+test2.out : libconfigfilesupport.a
 

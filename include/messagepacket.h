@@ -126,6 +126,7 @@ public:
 
 protected:
 
+   //lint --e{10}
    unsigned long   _NetSequenceNum __attribute__ ((packed));// network packet sequence number
    unsigned long   _MsgId __attribute__ ((packed));         // hashed message id
    unsigned long   _NodeId __attribute__ ((packed));        // node ID number

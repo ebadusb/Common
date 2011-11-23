@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include "parameter.h"
 #include "section.h"
 
@@ -50,7 +51,11 @@ public:
 	Parameter * getParameter(int param) { return _parameter[param]; }
 	int parameterCount(void) { return _parameter.size(); }
 	int sectionCount(void) { return _section.size(); }
-
+   // This operation will find any existing parameter with a matching
+   // parameter name and section name. Returns true if a duplicate is found and
+   // assigns the paramter pointer to the duplicate vector element or returns
+   // false if no duplicate is found.
+   vector<Parameter *>::iterator ConfigFile::findDuplicate(Parameter*& paramPtr);
 	// Class name related functions
 	//
 	const char * className(void) { return _className.c_str(); }
@@ -62,8 +67,8 @@ public:
  	bool noOutputFile(void) { return _noOutputFile; }
 
 	// Error related functions
-	//
-	void printError(const char * format, ...);
+	// 
+	void printError(bool fatal, const char * format, ...);
 
 	// Code generation related functions
 	//
@@ -87,7 +92,7 @@ private:
 	int getChar(void);
 	bool getNextToken(void);
 	void getOption(void);
-	void processParameter(void);
+   void processParameter(void);
 	void processFileOptions(void);
 	void processParameterOptions(Parameter * parameter);
 	bool convertNumericValue(Parameter::Value & value, Parameter::Type & type);
@@ -111,15 +116,17 @@ private:
 
 	string _projectName;
 
-	string _fileName;		// name for .cfg file
+	string _fileName;		// name for .cfg file(s) being parsed
 	int _lineNumber;		// current line number while reading .cfg file
 
-	FILE * _fp;					// FILE pointer for .cfg file
-	bool _parseError;			// true if an error was detected while parsing the .cfg file
-	string _parseToken;		// current token being parsed
-	string _sectionName;		// current section name
-	int _sectionArraySize;	// array size for current section (0 if not an array)
-	string _parameterName;	// current parameter name
+	FILE * _fp;					      // FILE pointer for .cfg file
+	bool _parseError;			      // true if an error was detected while parsing the .cfg file
+	string _parseToken;		      // current token being parsed
+	string _sectionName;          // current section name
+	int _sectionArraySize;	      // array size for current section (0 if not an array)
+	string _parameterName;	      // current parameter name
+   string _variableName;         // current variable name
+   string _stringValue;          // current string value
 
 	vector<Parameter *> _parameter;
 	vector<Section *>	  _section;
@@ -133,6 +140,8 @@ private:
 	string _backupCRCName;
 	string _formatVersion;
 	string _dataVersion;
+   // Name of an optional included cfg file
+   string _configFileName;
 
 	bool _readWrite;
 	bool _hasBackup;

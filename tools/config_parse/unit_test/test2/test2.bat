@@ -7,7 +7,7 @@ rem Initial revision
 
 rm -rf tmp_data > nul
 echo Parsing configuration files
-..\..\release\config_parse -project taos -output Test2 -data_file_dir tmp_data test2_a test2_b test2_c test2_d test2_e test2_f test2_g test2_h test2_i test2_j test2_k test2_l test2_m
+..\..\release\config_parse -project taos -file_names ..\..\..\..\..\base\config -config_helper ..\..\..\..\config_file_support -output Test2 -data_file_dir tmp_data test2_a test2_b test2_c test2_d test2_e test2_f test2_g test2_h test2_i test2_j test2_k test2_l test2_m
 if errorlevel 1 goto fail
 
 echo.

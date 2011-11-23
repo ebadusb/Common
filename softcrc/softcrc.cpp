@@ -231,6 +231,7 @@ int crcgen32(unsigned long * pcrc, const unsigned char * pdata, long length)
    // do crc calc
    while(length--)
       *pcrc = crctable[ (*pcrc ^ *pdata++) & 0xFFL] ^ (*pcrc >> 8);
+   
 
 	return 0;
 }

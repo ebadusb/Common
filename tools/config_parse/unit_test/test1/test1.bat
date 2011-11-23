@@ -11,7 +11,7 @@ rem Initial revision
 
 rm -rf tmp_data > nul
 echo Parsing configuration files
-..\..\release\config_parse -project taos -file_names .. -config_helper .. -output Test1 -export_output test1_enum.h -data_file_dir tmp_data test1_a test1_b test1_c test1_d test1_e test1_f test1_g test1_h test1_i test1_j test1_k test1_l test1_m test1_n test1_o test1_p
+..\..\release\config_parse -project taos -file_names ..\..\..\..\..\base\config -config_helper ..\..\..\..\config_file_support -output Test1 -export_output test1_enum.h -data_file_dir tmp_data test1_a test1_b test1_c test1_d test1_e test1_f test1_g test1_h test1_i test1_j test1_k test1_l test1_m test1_n test1_o test1_p test1_q test1_s
 if errorlevel 1 goto fail
 
 echo.
@@ -28,6 +28,9 @@ echo - tmp_data\taos\file1_k.dat
 echo - tmp_data\taos\file1_l.dat
 echo - tmp_data\taos\file1_m.dat
 echo - tmp_data\taos\file1_o.dat
+echo - tmp_data\taos\file1_p.dat
+echo - tmp_data\taos\file1_q.dat
+echo - tmp_data\taos\file1_s.dat
 echo - tmp_data\taos\subdir1a\subdir2\subdir3\file1_a.dat
 echo - tmp_data\taos\subdir1b\subdir2\subdir3\file1_c.dat
 

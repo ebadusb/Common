@@ -44,8 +44,9 @@ Parameter::Parameter(const string & section, const string & name, const string &
 		_index = -1;
 		_parameterName = name;
 	}
+   
+   _variableName = _parameterName;
 
-	_variableName = _parameterName;
 }
 
 LongParameter::LongParameter(const string & section, const string & name, const string & stringValue, long value)

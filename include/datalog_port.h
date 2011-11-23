@@ -374,6 +374,7 @@ void datalog_StartNetworkClientTask(int clientSocket, struct sockaddr_in * clien
 
 Packing_Structure_Directive typedef struct
 {
+   //lint --e{10}
 	DataLog_UINT8	_day Packing_Element_Directive;		/* 1-31 */
 	DataLog_UINT8	_month Packing_Element_Directive;		/* 1-12 */
 	DataLog_UINT16	_year Packing_Element_Directive;
@@ -384,6 +385,7 @@ Packing_Structure_Directive typedef struct
 
 Packing_Structure_Directive typedef struct
 {
+   //lint --e{10}
 	DataLog_UINT32	_seconds Packing_Element_Directive;
 	DataLog_UINT32	_nanoseconds Packing_Element_Directive;
 } DataLog_TimeStamp;

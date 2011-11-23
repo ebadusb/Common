@@ -32,7 +32,7 @@ public:
 	virtual string getDeclarationString(void);
 	virtual string getPtrDeclarationString(void);
 
-	const string & sectionName(void) { return _section; }
+   const string & sectionName(void) { return _section; }
 	const string & variableName(void) { return _variableName; }
 	const string & parameterName(void) { return _parameterName; }
 	const string & value(void) { return _stringValue; }
@@ -90,7 +90,7 @@ class LongParameter : public Parameter
 public:
 	LongParameter(const string & section, const string & name, const string & stringValue, long value);
 	virtual Type getType(void) { return TLong; }
-
+   void setValue(long value, const string& stringValue){ _value = value; _stringValue = stringValue; }
 protected:
 	long _value;
 };
@@ -100,7 +100,7 @@ class DoubleParameter : public Parameter
 public:
 	DoubleParameter(const string & section, const string & name, const string & stringValue, double value);
 	virtual Type getType(void) { return TDouble; }
-
+   virtual void setValue(double value, const string& stringValue){ _value = value; _stringValue = stringValue; }
 protected:
 	double _value;
 };
@@ -110,13 +110,15 @@ class StringParameter : public Parameter
 public:
 	StringParameter(const string & section, const string & name, const string & value);
 	virtual Type getType(void) { return TString; }
+   void setValue(string stringValue){ _stringValue = stringValue; }
 };
 
 class BoolParameter : public Parameter
 {
 public:
-	BoolParameter(const string & section, const string & name, const string & stringValue, bool value);
-	virtual Type getType(void) { return TBool; }
+   BoolParameter(const string & section, const string & name, const string & stringValue, bool value);
+   virtual Type getType(void) { return TBool; }
+   void setValue(bool value, const string& stringValue){ _value = value; _stringValue = stringValue;}
 
 protected:
 	bool _value;
@@ -127,6 +129,7 @@ class EnumParameter : public Parameter
 public:
 	EnumParameter(const string & section, const string & name, const string & value);
 	virtual Type getType(void) { return TEnum; }
+   void setValue(const string& stringValue){ _stringValue = stringValue; }
 };
 
 #endif /* ifndef _PARAMETER_INCLUDE */

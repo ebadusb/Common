@@ -86,7 +86,7 @@ const char * LinkElement::name(void)
 }
 
 void LinkElement::do_link(
-	LinkGroup * group,	// group in which element resides  
+	LinkGroup * group,	// group in which element resides
 	LinkElement ** top,	// storage location for current top level element
 	unsigned int level,	// level at which object should be linked
 	LinkType linkType 	// ordering option for link

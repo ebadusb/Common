@@ -101,6 +101,8 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
 
 				if (entry.id && entry.type)
 				{
+					CGUIDataItem *dataItem = NULL;
+
 					if (strcmp(entry.type, "TextItem") == 0)
 					{
 						// Declare variables for string - text item mapping.
@@ -110,8 +112,7 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
 
 							if( pTextItem )
 							{
-								CGUIDataItemTextItem * dataItemTextItem = new CGUIDataItemTextItem(pTextItem);
-								variableDictionary->addDataItem(entry.id, dataItemTextItem);
+								dataItem = new CGUIDataItemTextItem(pTextItem);
 							}
 							else
 							{
@@ -130,8 +131,7 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
 						// Declare variables for string - text.
 						if( entry.initialize )
 						{
-							CGUIDataItemText * dataItemText = new CGUIDataItemText(entry.initialize);
-							variableDictionary->addDataItem(entry.id, dataItemText);
+							dataItem = new CGUIDataItemText(entry.initialize);
 						}
 						else
 						{
@@ -145,8 +145,7 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
 
 						if( entry.precision && entry.initialize )
 						{
-							CGUIDataItemDouble * dataItemDouble = new CGUIDataItemDouble(atof(entry.initialize), atoi(entry.precision));
-							variableDictionary->addDataItem(entry.id, dataItemDouble);
+							dataItem = new CGUIDataItemDouble(atof(entry.initialize), atoi(entry.precision));
 						}
 						else
 						{
@@ -158,8 +157,7 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
 					{
 						if( entry.initialize )
 						{
-							CGUIDataItemInteger * dataItemInteger = new CGUIDataItemInteger(atoi(entry.initialize));
-							variableDictionary->addDataItem(entry.id, dataItemInteger);
+							dataItem = new CGUIDataItemInteger(atoi(entry.initialize));
 						}
 						else
 						{
@@ -171,8 +169,7 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
 					{
 						if( entry.initialize )
 						{
-							CGUIDataItemClock * dataItemClock = new CGUIDataItemClock(atoi(entry.initialize));
-							variableDictionary->addDataItem(entry.id, dataItemClock);
+							dataItem = new CGUIDataItemClock(atoi(entry.initialize));
 						}
 						else
 						{
@@ -185,6 +182,20 @@ static bool readDataItemFile (const char * filename, CGUIVariableDatabase * vari
 						DataLog( log_level_cgui_error ) << "Error in file at line " << line << ": unknown DATA ITEM TYPE - " << filename << endmsg;
 						retVal = false;
 					}
+	
+					if ( dataItem )
+					{
+						if ( variableDictionary->getDataItem(entry.id) )
+						{
+							DataLog( log_level_cgui_error ) << "Error in file at line " << line << ": duplicate DATA ITEM(" << entry.id << ") - " << filename << endmsg;
+							retVal = false;
+						}
+						else
+						{
+							variableDictionary->addDataItem(entry.id, dataItem);
+						}
+					}
+
 				}
 				else
 				{

@@ -77,6 +77,7 @@ public:
 
 	void setValue( double value );
 	void setPrecision( int precision );
+	void setDecimalForcedOn(bool decimalForcedOn);
 	
 	void setDecimalSeparator( CGUITextItem * separator ) { _separator = separator; _valueChanged = true; };
 	static void setDefaultSeparator( CGUITextItem * defaultSeparator ) { _defaultSeparator = defaultSeparator; };
@@ -84,6 +85,7 @@ public:
 protected:
 	double	_value;
 	int		_precision;
+	bool _decimalForcedOn;
 
 	// If a separator is specified, the data item uses that instead of the default separator.
 	// If the default separator is used, the data item saves it as _lastDefaultSeparator.  That

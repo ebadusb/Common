@@ -101,10 +101,11 @@ void CGUIDataItemInteger::setValue( int value )
 
 CGUITextItem * CGUIDataItemDouble::_defaultSeparator = NULL;
 
-CGUIDataItemDouble::CGUIDataItemDouble( void ):
+CGUIDataItemDouble::CGUIDataItemDouble(void):
 							_separator( NULL ),
 							_value( 0.0 ),
-							_precision( 0 )
+							_precision( 0 ),
+							_decimalForcedOn(false)
 {
 }
 
@@ -112,7 +113,8 @@ CGUIDataItemDouble::CGUIDataItemDouble( double value, int precision ):
 							CGUIDataItem( true ),
 							_value( value ),
 							_precision( precision ),
-							_separator( NULL )
+							_separator( NULL ),
+							_decimalForcedOn(false)
 {
 }
 
@@ -120,12 +122,17 @@ CGUIDataItemDouble::CGUIDataItemDouble( double value, int precision, CGUITextIte
 							CGUIDataItem(	true ),
 							_value( value ),
 							_precision( precision ),
-							_separator( separator )
+							_separator( separator ),
+							_decimalForcedOn(false)
 {
 }
 
 CGUIDataItemDouble::~CGUIDataItemDouble()
 {
+}
+void CGUIDataItemDouble::setDecimalForcedOn(bool decimalForcedOn)
+{
+	_decimalForcedOn=decimalForcedOn;
 }
 
 const StringChar * CGUIDataItemDouble::convertToString( void )
@@ -165,6 +172,10 @@ const StringChar * CGUIDataItemDouble::convertToString( void )
             _string.deleteChar( seperatorPos, 1 );
             _string.insert( _separator->getTextObj(), seperatorPos );
          }
+         else if(_decimalForcedOn)
+         {
+     		_string+= _separator->getTextObj();
+         }
       }
 		else if( _defaultSeparator != NULL )
 		{	
@@ -176,6 +187,10 @@ const StringChar * CGUIDataItemDouble::convertToString( void )
 				_string.deleteChar( seperatorPos, 1 );
 				_string.insert( _defaultSeparator->getTextObj(), seperatorPos );
 			}
+	        else if(_decimalForcedOn)
+	        {
+	     		_string+= _separator->getTextObj();
+	        }
 		}
 
       _valueChanged = false;

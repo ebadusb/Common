@@ -278,11 +278,10 @@ ConfigFile::WriteStatus ConfigFile::writeData(const ConfigData::DataMap * const 
    }
    else
    {
-      const char * sectionName = "";
+      const char * sectionName = NULL;
       for ( int idx=0; idx<dataMapSize; idx+=1 )
       {
-         if ( (0 != strcmp(sectionName, "")) ||
-               (0 != strcmp(sectionName, dataMap[idx]._sectionName) ) )
+         if ( !sectionName ||strcmp(sectionName, dataMap[idx]._sectionName) != 0)
          {
             if ( sectionName ) fprintf(dataFile, "\n");
             sectionName = dataMap[idx]._sectionName;

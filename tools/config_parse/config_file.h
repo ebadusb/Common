@@ -52,10 +52,9 @@ public:
 	int parameterCount(void) { return _parameter.size(); }
 	int sectionCount(void) { return _section.size(); }
    // This operation will find any existing parameter with a matching
-   // parameter name and section name. Returns true if a duplicate is found and
-   // assigns the paramter pointer to the duplicate vector element or returns
-   // false if no duplicate is found.
-   vector<Parameter *>::iterator ConfigFile::findDuplicate(Parameter*& paramPtr);
+   // parameter name and section name. This operation will return an iterator 
+   // that points to the duplicate if found or to the end of the vector.
+   vector<Parameter *>::iterator ConfigFile::findDuplicate(Parameter* const & paramPtr);
 	// Class name related functions
 	//
 	const char * className(void) { return _className.c_str(); }

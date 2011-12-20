@@ -542,7 +542,7 @@ bool ConfigFile::getNextToken(void)
 
 // Check and see if a parameter with this parameter name and section name already exists in the vector
 // A pointer to that element in vector is returned  or 0 (NULL) if a dup is not found
-vector<Parameter *>::iterator ConfigFile::findDuplicate(Parameter*& paramPtr)
+vector<Parameter *>::iterator ConfigFile::findDuplicate(Parameter*const & paramPtr)
 {
    vector<Parameter *>::iterator pIter = _parameter.begin();
 
@@ -704,7 +704,7 @@ void ConfigFile::processFileOptions(void)
             FILE * cfg_file = fopen(_configFileName.c_str(), "r");
             if ( !cfg_file )
             {
-               fprintf(stderr, "Unable to access file \"%s\"\n", _configFileName.c_str());
+               printError(true, "Unable to access file \"%s\"\n", _configFileName.c_str());
             }
             else
             {
@@ -755,7 +755,6 @@ void ConfigFile::processFileOptions(void)
       }
       else if ( _parseToken == "file-name" )
       {
-         //TODO CJM fix
          if ( _dataFileName.empty() && 
               getNextToken() &&
               _parseToken[0] == '"' )
@@ -772,7 +771,6 @@ void ConfigFile::processFileOptions(void)
       }
       else if ( _parseToken == "default-file-name" )
       {
-         // TODO CJM Fix this .empty may be creating issues
          if ( _defaultFileName.empty() && 
               getNextToken() &&
               _parseToken[0] == '"' )

@@ -253,6 +253,10 @@ public:
    // returns true if the button is enabled
    bool isEnabled() const {return _enabled;};
 
+   // IS PRESSED
+   // returns true if the button is pressed
+   bool isPressed() const {return _pressed;};
+
    virtual void attach(CGUIWindow * window);
 
    // INVISIBLE

@@ -1556,9 +1556,9 @@ const char * Test1::_C_Test1_Q::_name[7] =
   "FormatVersion",
   "DataVersion",
   "ReadOnly",
+  "FileName",
   "Param1",
   "Param2",
-  "FileName",
   "Param1"
 };
 
@@ -1576,9 +1576,9 @@ Test1::_C_Test1_Q::_C_Test1_Q(Test1_Q_Data & data)
   _dataMap[0].setMap(_sectionName[0], _name[0], TString, (void *)&data.Version.FormatVersion, NULL, NULL, NULL);
   _dataMap[1].setMap(_sectionName[0], _name[1], TString, (void *)&data.Version.DataVersion, NULL, NULL, NULL);
   _dataMap[2].setMap(_sectionName[1], _name[2], TBool, (void *)&data.FileInfo.ReadOnly, NULL, NULL, NULL);
-  _dataMap[3].setMap(_sectionName[2], _name[3], TLong, (void *)&data.Section2.Param1, NULL, NULL, NULL);
-  _dataMap[4].setMap(_sectionName[3], _name[4], TLong, (void *)&data.Section3.Param2, NULL, NULL, NULL);
-  _dataMap[5].setMap(_sectionName[1], _name[5], TString, (void *)&data.FileInfo.FileName, NULL, NULL, NULL);
+  _dataMap[3].setMap(_sectionName[1], _name[3], TString, (void *)&data.FileInfo.FileName, NULL, NULL, NULL);
+  _dataMap[4].setMap(_sectionName[2], _name[4], TLong, (void *)&data.Section2.Param1, NULL, NULL, NULL);
+  _dataMap[5].setMap(_sectionName[3], _name[5], TLong, (void *)&data.Section3.Param2, NULL, NULL, NULL);
   _dataMap[6].setMap(_sectionName[4], _name[6], TLong, (void *)&data.Section1.Param1, NULL, (RangeFunc *)&Test1::_C_Test1_Q::_C_Section1::_C_Param1::getRange, NULL);
 }
 
@@ -1591,17 +1591,17 @@ Test1::_C_Test1_Q::_C_Version::_C_Version(void)
 Test1::_C_Test1_Q::_C_FileInfo::_C_FileInfo(void)
 {
   ReadOnly.initialize(2);
-  FileName.initialize(5);
+  FileName.initialize(3);
 }
 
 Test1::_C_Test1_Q::_C_Section2::_C_Section2(void)
 {
-  Param1.initialize(3);
+  Param1.initialize(4);
 }
 
 Test1::_C_Test1_Q::_C_Section3::_C_Section3(void)
 {
-  Param2.initialize(4);
+  Param2.initialize(5);
 }
 
 Test1::_C_Test1_Q::_C_Section1::_C_Section1(void)

@@ -117,10 +117,6 @@ bool ConfigFile::parseFile(FILE * fp)
       Section * versionSection = new Section("Version", 0);
       _section.push_back(versionSection);
    }
-   else
-   {
-      printError(false, "Duplicate Version Section Found!");
-   }
 
    // Check if a  'FileInfo' section already exists in this file with the same name and size   
    match = false;
@@ -139,10 +135,7 @@ bool ConfigFile::parseFile(FILE * fp)
       Section * fileInfoSection = new Section("FileInfo", 0);
       _section.push_back(fileInfoSection);
    }
-   else
-   {
-      cout << "Duplicate FileInfo Section Found!" << endl;
-   }
+
    processFileOptions();
 
    PRINT_INF("Begin Parsing CFG File: " << _fileName)
@@ -733,14 +726,22 @@ void ConfigFile::processFileOptions(void)
          if ( getNextToken() &&
                isalpha(_parseToken[0]) )
          {
-            if ( _className.empty())
+            // Check whether an included config file is being parsed
+            if ( _configFileName.empty() )
             {
-               _className = _parseToken;
+               if ( _className.empty())
+               {
+                  _className = _parseToken;
+               }
+               else
+               {
+                  // Non-fatal error. Duplicate class name will be ignored
+                  printError(false, "Error previously declared class name!");
+               }
             }
             else
             {
-               // Non-fatal error. Duplicate class name will be ignored
-               printError(false, "Error previously declared class name!");
+               printError(false, " included config file specified 'class-name' option");
             }
          }
          else
@@ -785,7 +786,15 @@ void ConfigFile::processFileOptions(void)
       }
       else if ( _parseToken == "read-write" )
       {
-         _readWrite = true;
+         // Check whether an included config file is being parsed
+         if ( _configFileName.empty() )
+         {
+            _readWrite = true;
+         }
+         else
+         {
+            printError(false, " included config file specified 'read-write' option");
+         }
       }
       else if ( _parseToken == "include" )
       {
@@ -863,10 +872,18 @@ void ConfigFile::processFileOptions(void)
               getNextToken() &&
               _parseToken[0] == '"' )
          {
-            _formatVersion = _parseToken.substr(1, _parseToken.size()-1);
+            // Check whether an included config file is being parsed
+            if ( _configFileName.empty() )
+            {
+               _formatVersion = _parseToken.substr(1, _parseToken.size()-1);
 
-            Parameter * param = new StringParameter("Version", "FormatVersion", _formatVersion);
-            addParameter(param);
+               Parameter * param = new StringParameter("Version", "FormatVersion", _formatVersion);
+               addParameter(param);
+            }
+            else
+            {
+               printError(false, " included config file specified 'format-version' option");
+            }
          }
          else
          {
@@ -880,10 +897,18 @@ void ConfigFile::processFileOptions(void)
               getNextToken() &&
               _parseToken[0] == '"' )
          {
-            _dataVersion = _parseToken.substr(1, _parseToken.size()-1);
+            // Check whether an included config file is being parsed
+            if ( _configFileName.empty() )
+            {
+               _dataVersion = _parseToken.substr(1, _parseToken.size()-1);
 
-            Parameter * param = new StringParameter("Version", "DataVersion", _dataVersion);
-            addParameter(param);
+               Parameter * param = new StringParameter("Version", "DataVersion", _dataVersion);
+               addParameter(param);
+            }
+            else
+            {
+               printError(false, " included config file specified 'data-version' parameter");
+            }
          }
          else
          {
@@ -919,8 +944,6 @@ void ConfigFile::processFileOptions(void)
       if ( 0 == ((*bIter)->sectionName()).compare("FileInfo") &&
            0 == ((*bIter)->parameterName()).compare("ReadOnly") )
       {
-
-         printError(false, "Duplicate ReadOnly FileInfo parameter found!");
          match = true;
       }
    }
@@ -937,8 +960,24 @@ void ConfigFile::processFileOptions(void)
       addParameter(readOnlyParam);
    }
 
-   Parameter * filenameParam = new StringParameter("FileInfo","FileName",_dataFileName.c_str());
-   addParameter(filenameParam);
+   // Search for an existing FileName parameter
+   match = false;
+   bIter = _parameter.begin();
+   for (; bIter != _parameter.end(); bIter++)
+   {
+      if ( 0 == ((*bIter)->sectionName()).compare("FileInfo") &&
+           0 == ((*bIter)->parameterName()).compare("FileName") )
+      {
+         match = true;
+      }
+   }
+   if (!match)
+   {
+      cout << " Setting _dataFileName = " << _dataFileName << endl;
+      Parameter * filenameParam = new StringParameter("FileInfo","FileName",_dataFileName.c_str());
+      addParameter(filenameParam);
+   }
+
 
    if ( _noOutputFile &&
          ( !_dataFileName.empty() ||
@@ -1547,6 +1586,7 @@ void ConfigFile::generateHeaderAccessClass(FILE * fp)
    fprintf(fp,
          "		void logData( DataLog_Level * level, ConfigFile::ReadStatus s );\n"
          "		void logData( DataLog_Level * level, ConfigFile::WriteStatus s);\n\n");
+ 
 
    fprintf(fp,
          "  public:\n"

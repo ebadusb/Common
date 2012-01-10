@@ -736,12 +736,12 @@ void ConfigFile::processFileOptions(void)
                else
                {
                   // Non-fatal error. Duplicate class name will be ignored
-                  printError(false, "Error previously declared class name!");
+                  printError(true, "Error previously declared class name!");
                }
             }
             else
             {
-               printError(false, " included config file specified 'class-name' option");
+               printError(true, " included config file specified 'class-name' option");
             }
          }
          else
@@ -793,7 +793,7 @@ void ConfigFile::processFileOptions(void)
          }
          else
          {
-            printError(false, " included config file specified 'read-write' option");
+            printError(true, " included config file specified 'read-write' option");
          }
       }
       else if ( _parseToken == "include" )
@@ -882,7 +882,7 @@ void ConfigFile::processFileOptions(void)
             }
             else
             {
-               printError(false, " included config file specified 'format-version' option");
+               printError(true, " included config file specified 'format-version' option");
             }
          }
          else
@@ -907,7 +907,7 @@ void ConfigFile::processFileOptions(void)
             }
             else
             {
-               printError(false, " included config file specified 'data-version' parameter");
+               printError(true, " included config file specified 'data-version' parameter");
             }
          }
          else
@@ -973,7 +973,6 @@ void ConfigFile::processFileOptions(void)
    }
    if (!match)
    {
-      cout << " Setting _dataFileName = " << _dataFileName << endl;
       Parameter * filenameParam = new StringParameter("FileInfo","FileName",_dataFileName.c_str());
       addParameter(filenameParam);
    }

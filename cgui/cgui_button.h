@@ -244,7 +244,7 @@ public:
    
    // ENABLEIFRELEASED
    // Only enable the button if it has been released
-   void enableIfReleased(void) { if (!isPressed()) enable();};
+   void enableIfReleased(void);
 
 	// ENABLEPRESSED
 	void enablePressed(void);

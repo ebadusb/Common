@@ -687,6 +687,11 @@ void CGUIButton::disable()
    }
 }
 
+void CGUIButton::enableIfReleased(void)
+{
+   if (!isPressed()) enable();
+}
+
 // INVISIBLE
 //  Make the button invisible.  Uses CGUIWindow class to do this.
 void CGUIButton::invisible()

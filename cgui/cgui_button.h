@@ -241,6 +241,10 @@ public:
    // set the state of the button to enabled with enable bitmap on top.  If currently invisible, the button is made visible.
    void enableWhenPressed(void);
 	void enableReleased( void );
+   
+   // ENABLEIFRELEASED
+   // Only enable the button if it has been released
+   void enableIfReleased(void) { if (!isPressed()) enable();};
 
 	// ENABLEPRESSED
 	void enablePressed(void);

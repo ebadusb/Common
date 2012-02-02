@@ -72,16 +72,16 @@ public:
    void attach(CGUIWindow * window, WIN_ATTRIB winAttrib = WIN_ATTRIB_VISIBLE);
    void detach(void);
 
-   void addObjectToFront (CGUIWindowObject * obj);
-   void addObjectToBack  (CGUIWindowObject * obj);
-   void deleteObject     (CGUIWindowObject * obj);
+   virtual void addObjectToFront (CGUIWindowObject * obj);
+   virtual void addObjectToBack  (CGUIWindowObject * obj);
+   virtual void deleteObject     (CGUIWindowObject * obj);
    void moveObjectToFront(CGUIWindowObject * obj);
    void moveObjectToBack (CGUIWindowObject * obj);
    void setObjectRegion  (CGUIWindowObject * obj, const CGUIRegion & newRegion);
-   void setObjectVisible (CGUIWindowObject * obj, bool newVisible);
+   virtual void setObjectVisible (CGUIWindowObject * obj, bool newVisible);
    void invalidateObjectRegion(CGUIWindowObject * obj);
 
-   void setWindowVisibility(bool newVisible);
+   virtual void setWindowVisibility(bool newVisible);
    bool getWindowVisibility(void){ return winVisibleGet(_id);}
 
 	void invalidateWindow(void);

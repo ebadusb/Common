@@ -241,11 +241,11 @@ public:
 	// This methods sets the text string.  When using these method
 	// only use strings from the text database.
 	//
-	void setText(CGUITextItem * textItem);
-	void setText(const char * text);
-	void setText(const StringChar * text);
-	void setText(const UnicodeString & text);
-	void setText(void);  // Sets _textString to the string in the _textItem memeber.
+	virtual void setText(CGUITextItem * textItem);
+	virtual void setText(const char * text);
+	virtual void setText(const StringChar * text);
+	virtual void setText(const UnicodeString & text);
+	virtual void setText(void);  // Sets _textString to the string in the _textItem memeber.
 
 	const StringChar * getText(void);
 	const UnicodeString& getTextObj(void);

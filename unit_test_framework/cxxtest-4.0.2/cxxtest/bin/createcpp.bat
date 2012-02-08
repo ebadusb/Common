@@ -1,0 +1,1 @@
+python "%CXXTEST%\bin\cxxadaptor.py" %1 %2

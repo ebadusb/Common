@@ -18,7 +18,7 @@
  * ./test1_n.cfg formatVersion= dataVersion=
  * ./test1_o.cfg formatVersion=1 dataVersion=1
  * ./test1_p.cfg formatVersion=1p dataVersion=d1p
- * ./test1_q.cfg formatVersion=1 dataVersion=1
+ * ./test1_q.cfg formatVersion=1.1c dataVersion=1.1c
  * ./test1_s.cfg formatVersion=1 dataVersion=1
  *
  */
@@ -3055,7 +3055,7 @@ private:
   public:
     _C_Test1_Q(Test1_Q_Data & data);
     const char * name(void) { return "Test1_Q"; }
-    const char * formatVersion(void) { return "1"; }
+    const char * formatVersion(void) { return "1.1c"; }
     const char * fileName(void) { return TAOS_PATH "/file1_q.dat"; }
     const char * crcFileName(void) { return NULL; }
     const char * backupFileName(void) { return NULL; }

@@ -200,7 +200,7 @@ int test1_main(void)
          strcmp(Test1::Test1_M_Access.formatVersion(), "1m")  != 0 ||
          strcmp(Test1::Test1_O_Access.formatVersion(), "1")   != 0 ||
          strcmp(Test1::Test1_P_Access.formatVersion(), "1p")  != 0 ||
-         strcmp(Test1::Test1_Q_Access.formatVersion(), "1")   != 0 ||
+         strcmp(Test1::Test1_Q_Access.formatVersion(), "1.1c")   != 0 ||
          strcmp(Test1::Test1_S_Access.formatVersion(), "1")   != 0)
    {
       fprintf(stderr, "test failed\n");

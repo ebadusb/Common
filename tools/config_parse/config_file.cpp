@@ -127,7 +127,8 @@ bool ConfigFile::parseFile(FILE * fp)
          match = true;
       }
    }
-
+   
+   // If no File Info section exists create one
    if (!match)
    {
       // Add empty file info section
@@ -868,22 +869,22 @@ void ConfigFile::processFileOptions(void)
       }
       else if ( _parseToken == "format-version" )
       {
-         if ( _formatVersion.empty() && 
-              getNextToken() &&
-              _parseToken[0] == '"' )
+         if ( getNextToken() && _parseToken[0] == '"' )
          {
             // Check whether an included config file is being parsed
             if ( _configFileName.empty() )
             {
                _formatVersion = _parseToken.substr(1, _parseToken.size()-1);
 
-               Parameter * param = new StringParameter("Version", "FormatVersion", _formatVersion);
-               addParameter(param);
             }
             else
             {
-               printError(true, " included config file specified 'format-version' option");
+               
+               // Find the existing formatVersion parameter and append the common file version
+               _formatVersion = _formatVersion + "." + _parseToken.substr(1, _parseToken.size()-1);
             }
+            Parameter *param = new StringParameter("Version", "FormatVersion", _formatVersion);
+            addParameter(param);
          }
          else
          {
@@ -893,22 +894,23 @@ void ConfigFile::processFileOptions(void)
       }
       else if ( _parseToken == "data-version" )
       {
-         if ( _dataVersion.empty() && 
-              getNextToken() &&
-              _parseToken[0] == '"' )
+         if ( getNextToken() && _parseToken[0] == '"' )
          {
             // Check whether an included config file is being parsed
             if ( _configFileName.empty() )
             {
                _dataVersion = _parseToken.substr(1, _parseToken.size()-1);
 
-               Parameter * param = new StringParameter("Version", "DataVersion", _dataVersion);
-               addParameter(param);
             }
             else
             {
-               printError(true, " included config file specified 'data-version' parameter");
+               // Find the existing dataVersion parameter and append the common file version
+               _dataVersion = _dataVersion + "." + _parseToken.substr(1, _parseToken.size()-1);
             }
+
+            Parameter * param = new StringParameter("Version", "DataVersion", _dataVersion);
+            addParameter(param);
+
          }
          else
          {

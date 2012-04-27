@@ -25,6 +25,8 @@
 #include "config_helper.h"
 #include "crcgen.h"
 
+using namespace std;
+
 void ConfigData::readConfigData(GetConfigFileObj * getConfigFileObj, 
       DataLog_Level * logLevel, DataLog_Level * errorLevel,
       ConfigData::BackupPermissionsType backupPermissions)
@@ -566,6 +568,12 @@ bool ConfigFile::checkRange(const ConfigData::DataMap * const dataMap, const cha
    return result;
 }
 
+void ConfigFile::stripCommentsIfAny(string& line)
+{
+	size_t commentStart = line.find_first_of("#");
+	if( commentStart != string::npos ) line.erase( commentStart ); 
+}
+
 bool ConfigFile::readDataFromFile(const ConfigData::DataMap * const dataMap, int dataMapSize, const char * fileName, const char * crcName)
 {
    enum { MaxLineSize = 256 };
@@ -604,6 +612,9 @@ bool ConfigFile::readDataFromFile(const ConfigData::DataMap * const dataMap, int
          DataLog(*_errorLevel) << name() << " data file line too long " << fileName << ":" << line << endmsg;
          goto done;
       }
+
+		// Copy the line for logging purposes, but strip out comments
+		string lineDataCopy(lineData);
 
       if ( (len = stripLine(lineData, len)) != 0 )
       {
@@ -673,8 +684,9 @@ bool ConfigFile::readDataFromFile(const ConfigData::DataMap * const dataMap, int
 
             if ( !paramOK )
             {
-               DataLog(*_errorLevel) << name() << " bad parameter value format " << fileName << ":" << line << endmsg;
-               goto done;
+					stripCommentsIfAny(lineDataCopy);
+					DataLog(*_errorLevel) << name() << " bad parameter value format " << fileName << "(" << line << ") : <" << lineDataCopy.c_str() << ">" << endmsg;
+					goto done;
             }
 
             if ( strcmp(dataMap[idx]._sectionName, "Version") == 0 &&
@@ -683,17 +695,25 @@ bool ConfigFile::readDataFromFile(const ConfigData::DataMap * const dataMap, int
                if ( dataMap[idx]._type != ConfigData::TString ||
                      strcmp(*(char **)dataMap[idx]._value, formatVersion()) != 0 )
                {
-                  DataLog(*_errorLevel) << name() << " wrong format version - expected \"" << formatVersion() << "\" " << fileName << ":" << line << endmsg;
-                  goto done;
+						stripCommentsIfAny(lineDataCopy);
+						DataLog(*_errorLevel) << name() << " wrong format version - expected \"" << formatVersion() << "\" " << fileName << "(" << line << ") : <" << lineDataCopy.c_str() << ">" << endmsg;
+						goto done;
                }
             }
 
-            if ( dataMap[idx]._rangeFunc && !checkRange(dataMap, fileName, line, idx) ) goto done;
+            if ( dataMap[idx]._rangeFunc && !checkRange(dataMap, fileName, line, idx) )
+				{
+					stripCommentsIfAny(lineDataCopy);
+					DataLog(*_errorLevel) << name() << " out of range parameter value " << fileName << "(" << line << ") : <" << lineDataCopy.c_str() << ">" << endmsg; 
+					goto done;
+				}
+
             if ( dataMap[idx]._validateFunc &&
                   !(*dataMap[idx]._validateFunc)(dataMap[idx]._value) )
             {
-               DataLog(*_errorLevel) << name() << " invalid parameter value " << fileName << ":" << line << endmsg;
-               goto done;
+					stripCommentsIfAny(lineDataCopy);
+					DataLog(*_errorLevel) << name() << " invalid parameter value " << fileName << "(" << line << ") : <" << lineDataCopy.c_str() << ">" << endmsg;
+					goto done;
             }
          }
       }

@@ -16,6 +16,8 @@
 #ifndef _CONFIG_HELPER_INCLUDE
 #define _CONFIG_HELPER_INCLUDE
 
+#include <string.h>
+
 #include "callback.h"
 #include "datalog_levels.h"
 #include "basic_config_file.h"
@@ -102,6 +104,7 @@ protected:
 	void logData(DataLog_Level * level, const ConfigData::DataMap * const dataMap, int dataMapSize, bool logDataOK);
 	void logEnum(DataLog_Level * level, const ConfigData::DataMap & dataMap, long value);
 	void logString(DataLog_Level * level, const ConfigData::DataMap & dataMap, const char * str);
+	void stripCommentsIfAny(string& line);
 
 private:
 	bool readDataFromFile(const ConfigData::DataMap * const dataMap, int dataMapSize, const char * fileName, const char * crcName);

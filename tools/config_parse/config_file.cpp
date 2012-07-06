@@ -980,14 +980,10 @@ void ConfigFile::processFileOptions(void)
    }
 
 
-   if ( _noOutputFile &&
-         ( !_dataFileName.empty() ||
-               !_className.empty() ||
-               !_formatVersion.empty() ||
-               !_dataVersion.empty() ))
+   if ( _noOutputFile && (!_dataFileName.empty() || !_className.empty()) )
    {
       // Fatal Error will halt parsing
-      printError(true, "file-name, class-name, format-version, and data-version can not be specified with \"no-output-file\" option");
+      printError(true, "file-name and class-name can not be specified with \"no-output-file\" option");
    }
    else if ( !_noOutputFile &&
          ( _dataFileName.empty() ||

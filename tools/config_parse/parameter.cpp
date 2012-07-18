@@ -20,7 +20,7 @@
 #include "parameter.h"
 
 Parameter::Parameter(const string & section, const string & name, const string & value)
-	: _section(section), _stringValue(value), _const(false)
+	: _section(section), _stringValue(value), _const(false), _overrideUserConfig(false)
 {
 	if ( name[name.size()-1] == ']' )
 	{

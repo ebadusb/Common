@@ -44,7 +44,9 @@ public:
 	void setValidateFunction(const string & func) { _validateFunc = func; }
 
 	bool isConst(void) { return _const; }
+   bool isOverridden(void) { return _overrideUserConfig; }
 	void setConst(void) { _const = true; }
+   void setOverridden(void) { _overrideUserConfig = true; }
 
 	bool hasRange(void) { return ( !_min.empty() && !_max.empty() ); }
 	bool hasRangeFunc(void) { return ( !_rangeFunc.empty() ); }
@@ -83,6 +85,7 @@ protected:
 
 	string _rangeFunc;
 	string _validateFunc;
+   bool  _overrideUserConfig;
 };
 
 class LongParameter : public Parameter

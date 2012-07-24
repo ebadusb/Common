@@ -294,7 +294,7 @@ void DataLog_LocalOutputTask::flushOutput(void)
 void DataLog_LocalOutputTask::writeLogFileHeader(const char * platformName, const char * nodeName, const char * platformInfo)
 {
 	DataLog_CommonData common;
-	static const char * plainTextMsg = "CONFIDENTIAL: This file is intended only for the use of CaridianBCT and contains information that "
+	static const char * plainTextMsg = "CONFIDENTIAL: This file is intended only for the use of Terumo BCT and contains information that "
 												  "is proprietary and confidential. You are hereby notified that any use, dissemination, distribution, "
 												  "or copying of this file is strictly prohibited."
 												  "\nLog file: ";

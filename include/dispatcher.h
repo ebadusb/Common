@@ -67,6 +67,8 @@ public:
 
    void dump( DataLog_Stream &outs );
 
+   unsigned int messageRemaining (void) const { mq_attr qattributes; mq_getattr(_MyQueue, &qattributes); return (unsigned int)qattributes.mq_curmsgs; };
+
 protected:
 
 

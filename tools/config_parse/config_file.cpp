@@ -2056,7 +2056,7 @@ void ConfigFile::generateDataFile(const char * dataFileDir)
                // If this parameter is flagged to override existing user config setting output
                // this textual key into the dat file. As the parameters are read in by the update toas script
                // this key will be used to indicate that the user config setting on the machine should be overwritten.
-               fprintf(fp, "   {@override-user-config@}");
+               fprintf(fp, "   @{override-user-config@}");
             }
             fprintf(fp, "\n");
          }

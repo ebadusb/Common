@@ -94,7 +94,8 @@ void sockAddr::error (const char* msg) const
 sockbuf::sockbuf (int descriptor) :
    rep (new sockcnt (descriptor, 1)),
    stmo (-1),
-   rtmo (-1)
+   rtmo (-1),
+   _logErrors(true)
 {
 #ifdef _S_NOLIBGXX
    xflags (0);
@@ -111,7 +112,8 @@ sockbuf::sockbuf (int domain, sockbuf::type socket_type, int proto) :
    streambuf(),
    rep (0),
    stmo (-1),
-   rtmo (-1)
+   rtmo (-1),
+   _logErrors(true)
 {
    // Create the socket.
    int soc = ::socket (domain, socket_type, proto);
@@ -140,7 +142,8 @@ sockbuf::sockbuf (const sockbuf& sb) :
    streambuf(),
    rep (sb.rep),
    stmo (sb.stmo),
-   rtmo (sb.rtmo)
+   rtmo (sb.rtmo),
+   _logErrors(sb._logErrors)
 {
 #ifdef _S_NOLIBGXX
    xflags (0);
@@ -502,10 +505,12 @@ int sockbuf::send (const void* buf, int len, int msgf)
 
 int sockbuf::sendto (const sockAddr& sa, const void* buf, int len, int msgf)
 {
-   if(stmo != -1 && is_writeready (stmo)==0) return 0;
+   if (stmo != -1 && is_writeready (stmo)==0) 
+      return 0;
 
-	char * cbuf = (char *)buf;
+   char * cbuf = (char *)buf;
    int wlen=0;
+
    while(len>0)
    {
       int  wval;
@@ -768,7 +773,10 @@ int sockbuf::recvbufsz (int sz) const
 
 void sockbuf::error (const char* msg) const
 {
-   sock_error ("class sockbuf: ", msg);
+   if (_logErrors)
+   {
+      sock_error ("class sockbuf: ", msg);
+   }
 }
 
 isockstream::~isockstream ()

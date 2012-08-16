@@ -163,6 +163,8 @@ public:
 protected:
    DataLog_Critical _fatal;
 
+   bool _logErrors;
+
    struct sockcnt
    {
       int   sock;
@@ -292,6 +294,9 @@ public:
    int     recvbufsz (int sz=-1)   const;
 
    void    error (const char* errmsg) const;
+   void    turnOnLogging() { _logErrors = true; };	
+   void    turnOffLogging() { _logErrors = false; };	
+   bool    loggingOn() const { return _logErrors; };	
 };
 
 class isockstream: public istream

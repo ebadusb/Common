@@ -1,0 +1,9 @@
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Debug\ResolveAssemblyReference.cache
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Debug\GenerateResource.read.1.tlog
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Debug\GenerateResource.write.1.tlog
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\bin\Debug\StackTraceUI.exe
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\bin\Debug\StackTraceUI.pdb
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Debug\StackTraceUI.Properties.Resources.resources
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Debug\StackTraceUI.exe
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Debug\StackTraceUI.pdb
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Debug\StackTraceUI.Form1.resources

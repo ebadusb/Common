@@ -1,0 +1,9 @@
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\bin\Release\StackTraceUI.exe
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\bin\Release\StackTraceUI.pdb
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Release\ResolveAssemblyReference.cache
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Release\StackTraceUI.Properties.Resources.resources
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Release\GenerateResource.read.1.tlog
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Release\GenerateResource.write.1.tlog
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Release\StackTraceUI.exe
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Release\StackTraceUI.pdb
+U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Release\StackTraceUI.Form1.resources

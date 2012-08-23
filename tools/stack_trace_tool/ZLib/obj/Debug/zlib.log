@@ -1,0 +1,57 @@
+﻿Build started 8/22/2012 9:51:48 AM.
+     1>Project "C:\Documents and Settings\chowusb\Desktop\datalog_tools\ZLib\zlib.vcxproj" on node 2 (build target(s)).
+     1>PrepareForBuild:
+         Creating directory "C:\Documents and Settings\chowusb\Desktop\datalog_tools\ZLib\\bin\Debug\".
+       InitializeBuildStatus:
+         Creating "obj\Debug\zlib.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         c:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _LIB /D _DEBUG /D _VC80_UPGRADE=0x0600 /D _MBCS /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"obj\Debug\\" /Fd"obj\Debug\vc100.pdb" /Gd /TC /wd4996 /analyze- /errorReport:prompt adler32.c compress.c crc32.c deflate.c gzio.c infblock.c infcodes.c inffast.c inflate.c inftrees.c infutil.c maketree.c trees.c uncompr.c zutil.c
+         zutil.c
+         uncompr.c
+         trees.c
+         maketree.c
+         infutil.c
+         inftrees.c
+         inflate.c
+         inffast.c
+         infcodes.c
+         infblock.c
+         gzio.c
+         deflate.c
+         crc32.c
+         compress.c
+         adler32.c
+         Generating Code...
+       Lib:
+         c:\Program Files\Microsoft Visual Studio 10.0\VC\bin\Lib.exe /OUT:"C:\Documents and Settings\chowusb\Desktop\datalog_tools\ZLib\\bin\Debug\zlib.lib" /NOLOGO obj\Debug\adler32.obj
+         obj\Debug\compress.obj
+         obj\Debug\crc32.obj
+         obj\Debug\deflate.obj
+         obj\Debug\gzio.obj
+         obj\Debug\infblock.obj
+         obj\Debug\infcodes.obj
+         obj\Debug\inffast.obj
+         obj\Debug\inflate.obj
+         obj\Debug\inftrees.obj
+         obj\Debug\infutil.obj
+         obj\Debug\maketree.obj
+         obj\Debug\trees.obj
+         obj\Debug\uncompr.obj
+         obj\Debug\zutil.obj
+         zlib.vcxproj -> C:\Documents and Settings\chowusb\Desktop\datalog_tools\ZLib\\bin\Debug\zlib.lib
+       PostBuildEvent:
+         xcopy \\bctquad3\home\BCT_Development\Trima5.R\Trima\common_builds\common_build_6.298\include\zlib.h C:\Documents and Settings\chowusb\Desktop\datalog_tools\ZLib\\bin\Debug\ /y
+         xcopy \\bctquad3\home\BCT_Development\Trima5.R\Trima\common_builds\common_build_6.298\include\zconf.h C:\Documents and Settings\chowusb\Desktop\datalog_tools\ZLib\\bin\Debug\ /y
+         
+         :VCEnd
+         Invalid number of parameters
+         Invalid number of parameters
+     1>C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppCommon.targets(113,5): error MSB3073: The command "xcopy \\bctquad3\home\BCT_Development\Trima5.R\Trima\common_builds\common_build_6.298\include\zlib.h C:\Documents and Settings\chowusb\Desktop\datalog_tools\ZLib\\bin\Debug\ /y
+C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppCommon.targets(113,5): error MSB3073: xcopy \\bctquad3\home\BCT_Development\Trima5.R\Trima\common_builds\common_build_6.298\include\zconf.h C:\Documents and Settings\chowusb\Desktop\datalog_tools\ZLib\\bin\Debug\ /y
+C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppCommon.targets(113,5): error MSB3073: 
+C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppCommon.targets(113,5): error MSB3073: :VCEnd" exited with code 4.
+     1>Done Building Project "C:\Documents and Settings\chowusb\Desktop\datalog_tools\ZLib\zlib.vcxproj" (build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:01.90

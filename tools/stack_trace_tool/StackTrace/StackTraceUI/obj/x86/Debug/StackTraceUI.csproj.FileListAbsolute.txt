@@ -1,0 +1,24 @@
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Debug\StackTraceUI.About.resources
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Debug\StackTraceUI.Properties.Resources.resources
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Debug\StackTraceUI.StackTraceUI.resources
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Debug\GenerateResource.read.1.tlog
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Debug\GenerateResource.write.1.tlog
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\bin\Debug\StackTraceUI.exe
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\bin\Debug\StackTraceUI.pdb
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\bin\Debug\AddinUtility.dll
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\bin\Debug\AddinUtility.pdb
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Debug\StackTraceUI.exe
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Debug\StackTraceUI.pdb
+C:\Taos\Taos\Common\tools\stack_trace_tool\StackTrace\StackTraceUI\obj\x86\Debug\StackTraceUI.exe
+C:\Taos\Taos\Common\tools\stack_trace_tool\StackTrace\StackTraceUI\obj\x86\Debug\StackTraceUI.pdb
+C:\Taos\Taos\Common\tools\stack_trace_tool\StackTrace\StackTraceUI\bin\Debug\StackTraceUI.exe
+C:\Taos\Taos\Common\tools\stack_trace_tool\StackTrace\StackTraceUI\bin\Debug\StackTraceUI.pdb
+C:\Taos\Taos\Common\tools\stack_trace_tool\StackTrace\StackTraceUI\bin\Debug\AddinUtility.dll
+C:\Taos\Taos\Common\tools\stack_trace_tool\StackTrace\StackTraceUI\bin\Debug\AddinUtility.pdb
+C:\Taos\Taos\Common\tools\stack_trace_tool\StackTrace\StackTraceUI\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\Taos\Taos\Common\tools\stack_trace_tool\StackTrace\StackTraceUI\obj\x86\Debug\StackTraceUI.About.resources
+C:\Taos\Taos\Common\tools\stack_trace_tool\StackTrace\StackTraceUI\obj\x86\Debug\StackTraceUI.Properties.Resources.resources
+C:\Taos\Taos\Common\tools\stack_trace_tool\StackTrace\StackTraceUI\obj\x86\Debug\StackTraceUI.StackTraceUI.resources
+C:\Taos\Taos\Common\tools\stack_trace_tool\StackTrace\StackTraceUI\obj\x86\Debug\GenerateResource.read.1.tlog
+C:\Taos\Taos\Common\tools\stack_trace_tool\StackTrace\StackTraceUI\obj\x86\Debug\GenerateResource.write.1.tlog

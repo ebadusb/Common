@@ -1,0 +1,50 @@
+# @(#) $Header: //bctquad3/home/BCT_Development/vxWorks/Common/zlib/rcs/makefile.vx 1.2 2003/05/13 15:49:31Z jl11312 Exp $
+#
+# Makefile - makefile for compression library
+#
+# $Log: makefile.vx $
+# Revision 1.2  2003/05/13 15:49:31Z  jl11312
+# - renamed library
+# Revision 1.1  2002/09/03 14:25:42Z  jl11312
+# Initial revision
+#
+
+ifeq ($(BUILD_TYPE),CLEAN)
+.PHONY: all
+all: clean
+else
+.PHONY: all
+all: check_opt_change lib
+endif
+
+#
+# MAINDIR should be set to the relative path from this makefile directory
+# to the base project directory.  MAINDIR must use \ (DOS/Windows
+# style) directory separators if they are needed.
+#
+MAINDIR = ..
+COMDIR = ..
+include $(MAINDIR)/makefile.vxc
+
+#
+# The following should define all of the source files of each type
+# to be compiled for the library
+#
+LIB_C_FILES   = adler32.c compress.c crc32.c gzio.c uncompr.c deflate.c trees.c \
+                zutil.c inflate.c infblock.c inftrees.c infcodes.c infutil.c inffast.c
+LIB_CXX_FILES =
+LIB_S_FILES =
+
+#
+# The following should define the location of the resulting library.  Note
+# that ARCHIVE_DIR is used in DOS shell commands, and must use \ directory
+# separators.
+#
+ARCHIVE_NAME = libzlib.a
+ARCHIVE_DIR = lib
+
+#
+# This is the standard makefile for Trima libraries
+#
+include $(MAINDIR)/makefile.lib
+

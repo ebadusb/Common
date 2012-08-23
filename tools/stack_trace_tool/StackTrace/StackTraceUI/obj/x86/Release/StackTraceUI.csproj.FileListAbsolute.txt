@@ -1,0 +1,12 @@
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Release\ResolveAssemblyReference.cache
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Release\StackTraceUI.About.resources
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Release\StackTraceUI.Properties.Resources.resources
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Release\StackTraceUI.StackTraceUI.resources
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Release\GenerateResource.read.1.tlog
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Release\GenerateResource.write.1.tlog
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\bin\Release\StackTraceUI.exe
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\bin\Release\StackTraceUI.pdb
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\bin\Release\AddinUtility.dll
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\bin\Release\AddinUtility.pdb
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Release\StackTraceUI.exe
+C:\Documents and Settings\chowusb\Desktop\datalog_tools\StackTrace\StackTraceUI\obj\x86\Release\StackTraceUI.pdb

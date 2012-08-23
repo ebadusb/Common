@@ -24,19 +24,7 @@ namespace StackTraceUI
          this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutClicked);
          this.button1.Click += new System.EventHandler(this.okClicked);
          this.button2.Click += new System.EventHandler(this.cancelClicked);
-
-         //this.Focus();
-         //System.Console.WriteLine("can focus: " + this.button1.CanFocus.ToString());
-         //this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.enterPressed);
       }
-
-      //private void enterPressed(object sender, System.Windows.Forms.KeyPressEventArgs kea)
-      //{
-         //if (kea.KeyChar == '\r')
-            //System.Console.WriteLine("Purr Monster");  
-      //}
-         
-
 
       private void openClicked(object sender, System.EventArgs ea)
       {

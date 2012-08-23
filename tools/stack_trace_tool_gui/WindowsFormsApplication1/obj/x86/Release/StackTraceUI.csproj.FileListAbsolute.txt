@@ -7,3 +7,5 @@ U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Release\Gener
 U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Release\StackTraceUI.exe
 U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Release\StackTraceUI.pdb
 U:\MySrc\WindowsFormsApplication1\WindowsFormsApplication1\obj\x86\Release\StackTraceUI.Form1.resources
+C:\Taos\Taos\Common\tools\stack_trace_tool_gui\WindowsFormsApplication1\obj\x86\Release\StackTraceUI.exe
+C:\Taos\Taos\Common\tools\stack_trace_tool_gui\WindowsFormsApplication1\obj\x86\Release\StackTraceUI.pdb

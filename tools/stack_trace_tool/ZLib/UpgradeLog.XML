@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="zlib">
+</Property><Property Name="Solution File" Value="D:\Trima\Trima_6.0\engr_tools\datalog_tools\ZLib\zlib.sln">
+</Property><Property Name="Date" Value="Thursday, August 26, 2010">
+</Property><Property Name="Time" Value="10:27 AM">
+</Property></Properties><Event ErrorLevel="0" Project="zlib" Source="zlib.vcproj" Description="Converting project file 'D:\Trima\Trima_6.0\engr_tools\datalog_tools\ZLib\zlib.vcproj'.">
+</Event><Event ErrorLevel="1" Project="zlib" Source="zlib.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="0" Project="zlib" Source="zlib.vcproj" Description="Done converting to new project file 'D:\Trima\Trima_6.0\engr_tools\datalog_tools\ZLib\zlib.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="zlib" Source="zlib.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="zlib.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="zlib.sln" Description="Converted">
+</Event></UpgradeLog>

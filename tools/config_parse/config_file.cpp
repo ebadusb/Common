@@ -1034,19 +1034,6 @@ void ConfigFile::processParameterOptions(Parameter * parameter)
          parameter->setVariableName(_parseToken);
          _parseToken = "@}";
       }
-      else if (_parseToken == "override-user-config")
-      {
-         if (readWrite())
-         {
-            // Set parameter's flag to indicate that this user config setting should
-            // be override with the new sw load
-            parameter->setOverridden();
-         }
-         else
-         {
-            printError(true, "Trying to override user config value in read only file");
-         }
-      }
       else if ( _parseToken == "const" )
       {
          parameter->setConst();
@@ -2042,23 +2029,14 @@ void ConfigFile::generateDataFile(const char * dataFileDir)
                   fputc(value[i], fp);
                }
 
-               fprintf(fp, "\"");
+               fprintf(fp, "\"\n");
             }
             else
             {
                fprintf(fp,
-                     "%s",
+                     "%s\n",
                      _parameter[paramIdx]->value().c_str());
             }
-
-            if (_parameter[paramIdx]->isOverridden())
-            {
-               // If this parameter is flagged to override existing user config setting output
-               // this textual key into the dat file. As the parameters are read in by the update toas script
-               // this key will be used to indicate that the user config setting on the machine should be overwritten.
-               fprintf(fp, "   @{override-user-config@}");
-            }
-            fprintf(fp, "\n");
          }
       }
    }

@@ -10,6 +10,7 @@
 #include <vxWorks.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <fstream>
 #include "test2.h"
 
 static bool checkDouble(double d1, double d2)
@@ -29,6 +30,117 @@ static bool checkDouble(double d1, double d2)
    }
 
    return ( d1 >= low && d1 <= high );
+}
+
+// This operation will search for the override-user-config tag left in the config tool output
+// It will verify that the correct section and parameter contain the tag and then remove the tag
+// from the dat file so that the dat file read operation does not fail.
+bool checkUserConfigOverride(const char * fileName, const char * sectionName, const char * paramName)
+{
+   bool retVal = false;
+
+   const string overrideKey("@{override-user-config@}");
+
+   // Input File Stream used to read in the dat file contents
+   std::ifstream inputFile(fileName, std::ios::in);
+   // Output File Stream Used to write out the contents after the @{override-user-config@} tag is removed
+   std::ofstream outFile("./temp.txt", std::ios::out);
+
+   // temp string used for intermediate string operations during processing.
+   string line;
+
+   // Keep track of the last Section encountered while parsing the file
+   string currentSection;
+   // The last Parameter Name encountered while parsing
+   string currentParam;
+
+   // Verify that the dat file could be opened
+   if ( inputFile.is_open() )
+   {
+      // Loop over the dat file contents
+      while (std::getline(inputFile, line) )
+      {
+         try
+         {
+            // See if the line contains the '[' and ']' delimiters
+            if (line.find('=') == string::npos &&
+                line.find('[') != string::npos &&
+                line.find(']') != string::npos)
+            {
+               size_t begin = line.find('[') + 1;
+               size_t end = line.find(']') -  begin;
+
+               // Parse out just the section name of interest
+               currentSection.assign( line.substr(begin, end) );
+            }
+         }
+         catch(...)
+         {
+            fprintf(stderr, "Caught Unknown exception trying to find the current section");
+         }
+
+         try
+         {
+            // See if the current line contains the override tag
+            if (line.find(overrideKey.c_str()) != string::npos)
+            {
+               // Grab the parameter name from in front of the '='
+               currentParam.assign(line.substr(0, line.find('=')));
+
+               // See if the section and param being parsed match the expected Section/Param passed in
+               // If they match the correct section and parameter contained the override tag
+               if (!currentParam.compare(paramName)&& !currentSection.compare(sectionName))
+               {
+                  retVal = true;
+                  // Remove the override
+                  line.erase(line.find("@{"), overrideKey.length() );
+               }
+            }
+         }
+         catch(...)
+         {
+            fprintf(stderr, "Caught Unknown exception trying to parse the param.");
+         }
+
+         // Copy the parsed line to the temp output file
+         outFile << line << endl;
+      }
+
+      // Reset the File Pointer to the beginning of the file
+      inputFile.seekg (0, ios::beg);
+      int fileSize = inputFile.tellg();
+      inputFile.close();
+      outFile.close();
+   }
+   else
+   {
+      fprintf(stderr, "File open FAILED for %s\n", fileName);
+   }
+
+   // If the override-user-config tag was found overwrite the dat
+   // file with the temp file contents
+   if (retVal)
+   {
+      remove(fileName);
+      inputFile.open("./temp.txt");
+      outFile.open(fileName, std::ios::out);
+      line.erase();
+
+      // Copy each line of the temp file back into a dat file with the same
+      // name as the file passed in.
+      while(std::getline(inputFile, line))
+      {
+         outFile << line << endl;
+      }
+
+      inputFile.close();
+      remove("./temp.txt");
+      outFile.close();
+
+   }
+
+   return retVal;
+
 }
 
 int test2_main(void)
@@ -126,7 +238,9 @@ int test2_main(void)
    // Check file read operation
    //
    fprintf(stderr, "Test 2.5 ...\n");
-   if ( Test2::Test2_A_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadOK )
+   if ( (!checkUserConfigOverride(Test2::Test2_A_Access.fileName(), "Section2", "Param3[0]")) ||
+        (!checkUserConfigOverride(Test2::Test2_A_Access.fileName(), "Section2", "Param3[1]")) ||
+        (Test2::Test2_A_Access.readFile(&log_level_config_data_info, &log_level_config_data_error) != ConfigFile::ReadOK ) )
    {
       fprintf(stderr, "test failed\n");
       return -1;

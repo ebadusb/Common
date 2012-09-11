@@ -397,7 +397,7 @@ void ConfigFile::printError(bool fatal, const char * format, ...)
    fprintf(stderr, "\n");
 
    fprintf(stderr, "Current token = %s\n", _parseToken.c_str());
-   _parseError = (_parseError && fatal);
+   _parseError = (_parseError || fatal);
 }
 
 int ConfigFile::getChar(void)
@@ -1012,15 +1012,16 @@ void ConfigFile::processParameterOptions(Parameter * parameter)
    while ( getNextToken() &&
          _parseToken == "@{" )
    {
-      if ( parameter->index() > 0 )
-      {
-         // Fatal Error will halt parsing
-         printError(true, "options for array parameters valid only for array element 0");
-      }
-      else if ( !getNextToken() )
+
+      if ( !getNextToken() )
       {
          // Fatal Error will halt parsing
          printError(true, "missing option name");
+      }
+      else if ( parameter->index() > 0  && _parseToken != "override-user-config")
+      {
+         // Fatal Error will halt parsing
+         printError(true, "options for array parameters other than 'override-user-config' valid only for array element 0");
       }
       else if ( _parseToken == "variable-name" )
       {
@@ -1033,6 +1034,19 @@ void ConfigFile::processParameterOptions(Parameter * parameter)
          getOption();
          parameter->setVariableName(_parseToken);
          _parseToken = "@}";
+      }
+      else if (_parseToken == "override-user-config")
+      {
+         if (readWrite())
+         {
+            // Set parameter's flag to indicate that this user config setting should
+            // be override with the new sw load
+            parameter->setOverridden();
+         }
+         else
+         {
+            printError(true, "Trying to override user config value in read only file");
+         }
       }
       else if ( _parseToken == "const" )
       {
@@ -2029,14 +2043,23 @@ void ConfigFile::generateDataFile(const char * dataFileDir)
                   fputc(value[i], fp);
                }
 
-               fprintf(fp, "\"\n");
+               fprintf(fp, "\"");
             }
             else
             {
                fprintf(fp,
-                     "%s\n",
+                     "%s",
                      _parameter[paramIdx]->value().c_str());
             }
+
+            if (_parameter[paramIdx]->isOverridden())
+            {
+               // If this parameter is flagged to override existing user config setting output
+               // this textual key into the dat file. As the parameters are read in by the update toas script
+               // this key will be used to indicate that the user config setting on the machine should be overwritten.
+               fprintf(fp, "   @{override-user-config@}");
+            }
+            fprintf(fp, "\n");
          }
       }
    }

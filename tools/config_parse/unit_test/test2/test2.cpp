@@ -127,6 +127,7 @@ const char * Test2::_C_Test2_A::_sectionName[4] =
 };
 
 Test2::_C_Test2_A::_C_Test2_A(Test2_A_Data & data)
+  : Version(_dataMap), FileInfo(_dataMap), Section1(_dataMap), Section2(_dataMap)
 {
   _dataMap[0].setMap(_sectionName[0], _name[0], TString, (void *)&data.Version.FormatVersion, NULL, NULL, NULL);
   _dataMap[1].setMap(_sectionName[0], _name[1], TString, (void *)&data.Version.DataVersion, NULL, NULL, NULL);
@@ -160,50 +161,50 @@ Test2::_C_Test2_A::_C_Test2_A(Test2_A_Data & data)
   _dataMap[29].setMap(_sectionName[3], _name[29], TDouble, (void *)&data.Section2.Param13[1], NULL, NULL, NULL);
 }
 
-Test2::_C_Test2_A::_C_Version::_C_Version(void)
+Test2::_C_Test2_A::_C_Version::_C_Version(const DataMap * dataMap)
 {
-  FormatVersion.initialize(0);
-  DataVersion.initialize(1);
+  FormatVersion.initialize(dataMap, 0);
+  DataVersion.initialize(dataMap, 1);
 }
 
-Test2::_C_Test2_A::_C_FileInfo::_C_FileInfo(void)
+Test2::_C_Test2_A::_C_FileInfo::_C_FileInfo(const DataMap * dataMap)
 {
-  ReadOnly.initialize(2);
-  FileName.initialize(3);
+  ReadOnly.initialize(dataMap, 2);
+  FileName.initialize(dataMap, 3);
 }
 
-Test2::_C_Test2_A::_C_Section1::_C_Section1(void)
+Test2::_C_Test2_A::_C_Section1::_C_Section1(const DataMap * dataMap)
 {
-  Param1[0].initialize(4);
-  Param2[0].initialize(5);
-  Param1[1].initialize(6);
-  Param2[1].initialize(7);
+  Param1[0].initialize(dataMap, 4);
+  Param2[0].initialize(dataMap, 5);
+  Param1[1].initialize(dataMap, 6);
+  Param2[1].initialize(dataMap, 7);
 }
 
-Test2::_C_Test2_A::_C_Section2::_C_Section2(void)
+Test2::_C_Test2_A::_C_Section2::_C_Section2(const DataMap * dataMap)
 {
-  Param3[0].initialize(8);
-  Param3[1].initialize(9);
-  Param4[0].initialize(10);
-  Param4[1].initialize(11);
-  Param5[0].initialize(12);
-  Param5[1].initialize(13);
-  Param6[0].initialize(14);
-  Param6[1].initialize(15);
-  Param7[0].initialize(16);
-  Param7[1].initialize(17);
-  Param8[0].initialize(18);
-  Param8[1].initialize(19);
-  Param9[0].initialize(20);
-  Param9[1].initialize(21);
-  Param10[0].initialize(22);
-  Param10[1].initialize(23);
-  Param11[0].initialize(24);
-  Param11[1].initialize(25);
-  Param12[0].initialize(26);
-  Param12[1].initialize(27);
-  Param13[0].initialize(28);
-  Param13[1].initialize(29);
+  Param3[0].initialize(dataMap, 8);
+  Param3[1].initialize(dataMap, 9);
+  Param4[0].initialize(dataMap, 10);
+  Param4[1].initialize(dataMap, 11);
+  Param5[0].initialize(dataMap, 12);
+  Param5[1].initialize(dataMap, 13);
+  Param6[0].initialize(dataMap, 14);
+  Param6[1].initialize(dataMap, 15);
+  Param7[0].initialize(dataMap, 16);
+  Param7[1].initialize(dataMap, 17);
+  Param8[0].initialize(dataMap, 18);
+  Param8[1].initialize(dataMap, 19);
+  Param9[0].initialize(dataMap, 20);
+  Param9[1].initialize(dataMap, 21);
+  Param10[0].initialize(dataMap, 22);
+  Param10[1].initialize(dataMap, 23);
+  Param11[0].initialize(dataMap, 24);
+  Param11[1].initialize(dataMap, 25);
+  Param12[0].initialize(dataMap, 26);
+  Param12[1].initialize(dataMap, 27);
+  Param13[0].initialize(dataMap, 28);
+  Param13[1].initialize(dataMap, 29);
 }
 
 void Test2::_C_Test2_A::logData( DataLog_Level * level, ConfigFile::ReadStatus readStatus )
@@ -267,6 +268,198 @@ min=0; max=0x22222; return true;
 bool Test2::_C_Test2_A::_C_Section2::_C_Param10::getRange(double & min, double & max)
 {
 min=0; max=0; return false;
+
+}
+
+bool Test2::_C_Test2_A::_C_Version::_C_FormatVersion::set(const char * value)
+{
+  bool setOK = true;
+  const char ** valuePtr = (const char **)_dataMap[_mapIdx]._value;
+  if ( setOK )
+  {
+    if ( *valuePtr ) delete[] *valuePtr;
+    *valuePtr = new char[strlen(value)+1];
+    strcpy(*(char **)valuePtr, value);
+  }
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_Version::_C_DataVersion::set(const char * value)
+{
+  bool setOK = true;
+  const char ** valuePtr = (const char **)_dataMap[_mapIdx]._value;
+  if ( setOK )
+  {
+    if ( *valuePtr ) delete[] *valuePtr;
+    *valuePtr = new char[strlen(value)+1];
+    strcpy(*(char **)valuePtr, value);
+  }
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_FileInfo::_C_ReadOnly::set(bool value)
+{
+  bool setOK = true;
+  bool * valuePtr = (bool *)_dataMap[_mapIdx]._value;
+  if ( setOK ) *valuePtr = value;
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_FileInfo::_C_FileName::set(const char * value)
+{
+  bool setOK = true;
+  const char ** valuePtr = (const char **)_dataMap[_mapIdx]._value;
+  if ( setOK )
+  {
+    if ( *valuePtr ) delete[] *valuePtr;
+    *valuePtr = new char[strlen(value)+1];
+    strcpy(*(char **)valuePtr, value);
+  }
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_Section1::_C_Param2::set(TParam2 value)
+{
+  bool setOK = true;
+  TParam2 * valuePtr = (TParam2 *)_dataMap[_mapIdx]._value;
+  if ( !validate((void *)&value) ) setOK = false;
+
+  if ( setOK ) *valuePtr = value;
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_Section2::_C_Param3::set(bool value)
+{
+  bool setOK = true;
+  bool * valuePtr = (bool *)_dataMap[_mapIdx]._value;
+  if ( setOK ) *valuePtr = value;
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_Section2::_C_Param4::set(const char * value)
+{
+  bool setOK = true;
+  const char ** valuePtr = (const char **)_dataMap[_mapIdx]._value;
+  if ( setOK )
+  {
+    if ( *valuePtr ) delete[] *valuePtr;
+    *valuePtr = new char[strlen(value)+1];
+    strcpy(*(char **)valuePtr, value);
+  }
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_Section2::_C_Param5::set(long value)
+{
+  bool setOK = true;
+  long * valuePtr = (long *)_dataMap[_mapIdx]._value;
+  if ( value < -100 || value > 100 ) setOK = false;
+
+  if ( setOK ) *valuePtr = value;
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_Section2::_C_Param6::set(long value)
+{
+  bool setOK = true;
+  long * valuePtr = (long *)_dataMap[_mapIdx]._value;
+  if ( value < 0x00 || value > 0x7f ) setOK = false;
+
+  if ( setOK ) *valuePtr = value;
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_Section2::_C_Param7::set(long value)
+{
+  bool setOK = true;
+  long * valuePtr = (long *)_dataMap[_mapIdx]._value;
+  long min, max;
+  if ( getRange(min, max) &&
+       ( value < min || value > max )) setOK = false;
+
+  if ( setOK ) *valuePtr = value;
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_Section2::_C_Param8::set(long value)
+{
+  bool setOK = true;
+  long * valuePtr = (long *)_dataMap[_mapIdx]._value;
+  if ( !validate((void *)&value) ) setOK = false;
+
+  if ( setOK ) *valuePtr = value;
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_Section2::_C_Param9::set(double value)
+{
+  bool setOK = true;
+  double * valuePtr = (double *)_dataMap[_mapIdx]._value;
+  if ( value < 0 || value > 10.0 ) setOK = false;
+
+  if ( setOK ) *valuePtr = value;
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_Section2::_C_Param10::set(double value)
+{
+  bool setOK = true;
+  double * valuePtr = (double *)_dataMap[_mapIdx]._value;
+  double min, max;
+  if ( getRange(min, max) &&
+       ( value < min || value > max )) setOK = false;
+
+  if ( setOK ) *valuePtr = value;
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_Section2::_C_Param11::set(double value)
+{
+  bool setOK = true;
+  double * valuePtr = (double *)_dataMap[_mapIdx]._value;
+  if ( !validate((void *)&value) ) setOK = false;
+
+  if ( setOK ) *valuePtr = value;
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_Section2::_C_Param12::set(double value)
+{
+  bool setOK = true;
+  double * valuePtr = (double *)_dataMap[_mapIdx]._value;
+  if ( value < -1000 || value > 0 ) setOK = false;
+
+  if ( !validate((void *)&value) ) setOK = false;
+
+  if ( setOK ) *valuePtr = value;
+  return setOK;
+
+}
+
+bool Test2::_C_Test2_A::_C_Section2::_C_Param13::set(double value)
+{
+  bool setOK = true;
+  double * valuePtr = (double *)_dataMap[_mapIdx]._value;
+  if ( value < 0.0 || value > 1000.0 ) setOK = false;
+
+  if ( !validate((void *)&value) ) setOK = false;
+
+  if ( setOK ) *valuePtr = value;
+  return setOK;
 
 }
 

@@ -454,8 +454,10 @@ private:
       {
       public:
         const char * name(void) { return _name[_mapIdx]; }
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(const char * value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
@@ -463,13 +465,15 @@ private:
       {
       public:
         const char * name(void) { return _name[_mapIdx]; }
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(const char * value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
     public:
-      _C_Version(void);
+      _C_Version(const DataMap * dataMap);
       static const char * name(void) { return _sectionName[0]; }
 
       _C_FormatVersion FormatVersion;
@@ -482,8 +486,10 @@ private:
       {
       public:
         const char * name(void) { return _name[_mapIdx]; }
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(bool value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
@@ -491,13 +497,15 @@ private:
       {
       public:
         const char * name(void) { return _name[_mapIdx]; }
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(const char * value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
     public:
-      _C_FileInfo(void);
+      _C_FileInfo(const DataMap * dataMap);
       static const char * name(void) { return _sectionName[1]; }
 
       _C_ReadOnly ReadOnly;
@@ -511,8 +519,9 @@ private:
       public:
         const char * name(void) { return _name[_mapIdx]; }
         static bool validate(void * valuePtr);
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
@@ -521,13 +530,15 @@ private:
       public:
         const char * name(void) { return _name[_mapIdx]; }
         static bool validate(void * valuePtr);
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(TParam2 value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
     public:
-      _C_Section1(void);
+      _C_Section1(const DataMap * dataMap);
       static const char * name(void) { return _sectionName[2]; }
 
       _C_Param1 Param1[2];
@@ -540,8 +551,10 @@ private:
       {
       public:
         const char * name(void) { return _name[_mapIdx]; }
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(bool value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
@@ -549,8 +562,10 @@ private:
       {
       public:
         const char * name(void) { return _name[_mapIdx]; }
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(const char * value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
@@ -559,8 +574,10 @@ private:
       public:
         const char * name(void) { return _name[_mapIdx]; }
         static bool getRange(long & min, long & max) { min=-100; max=100; return true; }
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(long value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
@@ -569,8 +586,10 @@ private:
       public:
         const char * name(void) { return _name[_mapIdx]; }
         static bool getRange(long & min, long & max) { min=0x00; max=0x7f; return true; }
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(long value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
@@ -579,8 +598,10 @@ private:
       public:
         const char * name(void) { return _name[_mapIdx]; }
         static bool getRange(long & min, long & max);
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(long value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
@@ -590,8 +611,10 @@ private:
         const char * name(void) { return _name[_mapIdx]; }
         static bool validate(void * valuePtr);
         static bool getRange(long & min, long & max) { return false; }
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(long value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
@@ -600,8 +623,10 @@ private:
       public:
         const char * name(void) { return _name[_mapIdx]; }
         static bool getRange(double & min, double & max) { min=0; max=10.0; return true; }
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(double value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
@@ -610,8 +635,10 @@ private:
       public:
         const char * name(void) { return _name[_mapIdx]; }
         static bool getRange(double & min, double & max);
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(double value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
@@ -621,8 +648,10 @@ private:
         const char * name(void) { return _name[_mapIdx]; }
         static bool validate(void * valuePtr);
         static bool getRange(double & min, double & max) { return false; }
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(double value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
@@ -632,8 +661,10 @@ private:
         const char * name(void) { return _name[_mapIdx]; }
         static bool validate(void * valuePtr);
         static bool getRange(double & min, double & max) { min=-1000; max=0; return true; }
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(double value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
@@ -643,13 +674,15 @@ private:
         const char * name(void) { return _name[_mapIdx]; }
         static bool validate(void * valuePtr);
         static bool getRange(double & min, double & max) { min=0.0; max=1000.0; return true; }
-        void initialize(int mapIdx) { _mapIdx = mapIdx; }
+        void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(double value);
       private:
+        const DataMap * _dataMap;
         int _mapIdx;
       };
 
     public:
-      _C_Section2(void);
+      _C_Section2(const DataMap * dataMap);
       static const char * name(void) { return _sectionName[3]; }
 
       _C_Param3 Param3[2];

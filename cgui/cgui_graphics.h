@@ -130,7 +130,7 @@ public:
 
    CGUIFontId     _font[MAX_FONTS];
 
-   CGUIDisplay(const CallbackBase & startCB=CallbackBase(), const CallbackBase & wakeupCB=CallbackBase(), unsigned int idleTimeoutMSec = 100);
+   CGUIDisplay(const CallbackBase& startCB = CallbackBase(), const CallbackBase& wakeupCB = CallbackBase(), unsigned int idleTimeoutMSec = 100);
    virtual ~CGUIDisplay();
 
    //
@@ -141,15 +141,15 @@ public:
    //
    void flush(void);
 
-	// The off screen flush function is used to save the screen to an off-screen bitmap
-	// then allocate a device independent bitmap to store the resulting screen. Note
-	// That the caller is responsible for freeing the memory allocated.
-	UGL_DIB * offscreenFlush(void);
+   // The off screen flush function is used to save the screen to an off-screen bitmap
+   // then allocate a device independent bitmap to store the resulting screen. Note
+   // That the caller is responsible for freeing the memory allocated.
+   UGL_DIB* offscreenFlush(void);
 
    //
    // Font management
    //
-   CGUIFontId createFont(const char * familyName, unsigned char pixelSize, unsigned char weight = 0);
+   CGUIFontId createFont(const char *familyName, unsigned char pixelSize, unsigned char weight = 0);
    void deleteFont(CGUIFontId font);
    //
    // The top left of the display is fixed at 0,0.  The following
@@ -162,8 +162,8 @@ public:
    // The CGUIDisplay class maintains a list of active windows for use in
    // the flush() function.
    //
-   void addWindow(CGUIWindow * window) { _windowList.push_front(window);}
-   void removeWindow(CGUIWindow * window) { _windowList.remove(window);}
+   void addWindow(CGUIWindow *window) { _windowList.push_front(window);}
+   void removeWindow(CGUIWindow *window) { _windowList.remove(window);}
 
    //
    // These functions are declared public to allow access by other
@@ -176,9 +176,11 @@ public:
    UGL_WINDOW_ID rootWindow(void) const { return _uglRootWindow;}
 
    //
-   // These functions get and set the cursor position.
+   // These functions access the cursor.
    // Only used in Service Mode.
    //
+   void cursorHide();   // later version of UGL provides a function by this name
+   void cursorShow();   // later version of UGL provides a function by this name
    void setCursorPos(int x, int y);
    void getCursorPos(int &x, int &y);
 

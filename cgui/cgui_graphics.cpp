@@ -272,12 +272,20 @@ void CGUIDisplay::deleteFont(CGUIFontId font)
    uglFontDestroy(font);
 }
 
+// Private method, called by the constructor to initialize the system cursor.
+// Each system may have only one cursor.
+//
 void CGUIDisplay::cursorInit(void)
 {
    uglCursorInit(_uglDisplay, 20, 20, _width/2, _height/2);
 
 #if CPU==SIMNT
+   cursorShow();
+#endif
+}
 
+void CGUIDisplay::cursorShow()
+{
    UGL_CDIB pointerDib;
 
    /* bitmap of cursor image */
@@ -313,10 +321,9 @@ void CGUIDisplay::cursorInit(void)
    /* color of cursor */
    static UGL_ARGB cursorClut[] =
    {
-      UGL_MAKE_ARGB (0xff,0x00, 0x00, 0x00),
-      UGL_MAKE_ARGB (0xff,0xFF, 0xFF, 0xFF)
+      UGL_MAKE_ARGB(0xff, 0x00, 0x00, 0x00),
+      UGL_MAKE_ARGB(0xff, 0xFF, 0xFF, 0xFF)
    };
-
 
    pointerDib.width = 11;
    pointerDib.stride = 11;
@@ -330,11 +337,12 @@ void CGUIDisplay::cursorInit(void)
    UGL_CDDB_ID pointerImage = uglCursorBitmapCreate(_uglDisplay, &pointerDib);
    uglCursorImageSet(_uglDisplay, pointerImage);
    uglCursorOn(_uglDisplay);
-
-#endif /* if CPU==SIMNT */
-
 }
 
+void CGUIDisplay::cursorHide()
+{
+   uglCursorOff(_uglDisplay);
+}
 
 void CGUIDisplay::drawRootWindow(void)
 {

@@ -1,7 +1,0 @@
-C:\Documents and Settings\chowusb\Desktop\datalog_tools\DlogPath\bin\Debug\DlogPath.exe
-C:\Documents and Settings\chowusb\Desktop\datalog_tools\DlogPath\bin\Debug\DlogPath.pdb
-C:\Documents and Settings\chowusb\Desktop\datalog_tools\DlogPath\bin\Debug\AddinUtility.dll
-C:\Documents and Settings\chowusb\Desktop\datalog_tools\DlogPath\bin\Debug\AddinUtility.pdb
-C:\Documents and Settings\chowusb\Desktop\datalog_tools\DlogPath\obj\x86\Debug\ResolveAssemblyReference.cache
-C:\Documents and Settings\chowusb\Desktop\datalog_tools\DlogPath\obj\x86\Debug\DlogPath.exe
-C:\Documents and Settings\chowusb\Desktop\datalog_tools\DlogPath\obj\x86\Debug\DlogPath.pdb

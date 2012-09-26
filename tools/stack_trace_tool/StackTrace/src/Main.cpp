@@ -49,14 +49,19 @@ int main(int argc, char* argv[])
 			if(count > 3)
 			{
 				std::cerr << kStrErrorHelp << std::endl;
+            while (std::cin.get() != '\n');
+            std::cerr << "Press any button to exit ... ";
+            std::cin.get();
 				exit(0);
 			}
 			std::cerr << "Enter Dlog name: " << std::endl;
 			std::cin >> filename;
-			if(filename.empty()) {
-				std::cerr << kStrErrorHelp << std::endl;
-				exit(0);
-			}
+			//if(filename.empty()) {
+			//	std::cerr << kStrErrorHelp << std::endl;
+   //         std::cerr << "Press any button to exit ... ";
+   //         std::cin.get();
+			//	exit(0);
+			//}
 			
 			//Check file exists
 			std::ifstream inputfile(filename);
@@ -103,18 +108,27 @@ int main(int argc, char* argv[])
 			std::ofstream tracefile(tracefilename.c_str(), std::ios_base::out);
 			tracefile << output.str() << std::endl;
 			tracefile.close();
+
+         std::cerr << "Press any button to continue ... ";
+         std::cin.get();
 			//Launch
 			_execl(editorCmd.c_str(), editorCmd.c_str(), tracefilename.c_str(), NULL);
 		break;
 		}
 	case DECODER::LogReader::kResultFileOpenFailed:
 		std::cerr << kStrErrorFailed << std::endl;
+      std::cerr << "Press any button to exit ... ";
+      std::cin.get();
 		break;
 	case DECODER::LogReader::kResultInvalidHeaderType:
 		std::cerr << kStrErrorInvalid << std::endl;
+      std::cerr << "Press any button to exit ... ";
+      std::cin.get();
 		break;
 	case DECODER::LogReader::kResultInvalidVersion:
 		std::cerr << kStrErrorUnsupported << std::endl;
+      std::cerr << "Press any button to exit ... ";
+      std::cin.get();
 		break;
 	}
 	

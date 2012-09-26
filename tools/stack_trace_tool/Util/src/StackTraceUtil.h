@@ -80,8 +80,8 @@ static const char *kStrCurrent = "\\current_build";
 static const char *kStrPathname = "\\\\bctquad3\\home";
 
 
-static const char *kAltSysPathTrima = "/vxboot,/trima/safety/boot";
-static const char *kAltSysPathOptia = "/vxboot,/vxboot,/vxboot"; /* control, safety, apc*/
+static const char *kAltSysPathTrima = "/vxboot,/trima/safety/boot"; /* control, safety */
+static const char *kAltSysPathOptia = "/../base/vxworks_target/control,/../base/vxworks_target/apc,/../base/vxworks_target/safety"; /* control, apc, safety */
 static const char *kAltSysPathCes	= "/vxboot,/ces";
 
 /* Types *********************************************************************/

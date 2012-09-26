@@ -28,41 +28,42 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(About));
-            this.label1 = new System.Windows.Forms.Label();
-            this.lblAbout = new System.Windows.Forms.Label();
-            this.SuspendLayout();
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(13, 13);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(0, 13);
-            this.label1.TabIndex = 0;
-            // 
-            // lblAbout
-            // 
-            this.lblAbout.AutoSize = true;
-            this.lblAbout.Location = new System.Drawing.Point(12, 9);
-            this.lblAbout.Name = "lblAbout";
-            this.lblAbout.Size = new System.Drawing.Size(35, 13);
-            this.lblAbout.TabIndex = 1;
-            this.lblAbout.Text = "label2";
-            // 
-            // About
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(305, 115);
-            this.Controls.Add(this.lblAbout);
-            this.Controls.Add(this.label1);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MaximizeBox = false;
-            this.Name = "About";
-            this.Text = "About Stack Trace Tool 1.0.0";
-            this.ResumeLayout(false);
-            this.PerformLayout();
+           System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(About));
+           this.label1 = new System.Windows.Forms.Label();
+           this.lblAbout = new System.Windows.Forms.Label();
+           this.SuspendLayout();
+           // 
+           // label1
+           // 
+           this.label1.AutoSize = true;
+           this.label1.Location = new System.Drawing.Point(13, 13);
+           this.label1.Name = "label1";
+           this.label1.Size = new System.Drawing.Size(0, 13);
+           this.label1.TabIndex = 0;
+           // 
+           // lblAbout
+           // 
+           this.lblAbout.AutoSize = true;
+           this.lblAbout.Location = new System.Drawing.Point(12, 9);
+           this.lblAbout.Name = "lblAbout";
+           this.lblAbout.Size = new System.Drawing.Size(35, 13);
+           this.lblAbout.TabIndex = 1;
+           this.lblAbout.Text = "label2";
+           // 
+           // About
+           // 
+           this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+           this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+           this.AutoScroll = true;
+           this.ClientSize = new System.Drawing.Size(645, 494);
+           this.Controls.Add(this.lblAbout);
+           this.Controls.Add(this.label1);
+           this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+           this.MaximizeBox = false;
+           this.Name = "About";
+           this.Text = "About Stack Trace Tool 1.1";
+           this.ResumeLayout(false);
+           this.PerformLayout();
 
         }
 

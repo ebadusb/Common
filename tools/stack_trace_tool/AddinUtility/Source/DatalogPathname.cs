@@ -27,9 +27,9 @@ public class DatalogPathname {
     
     //Searches only "well known" locations in the quad. *Will break*
     //years from now.
-    public static readonly String defaultConfig = "DatalogPaths.config";
+   public static readonly String defaultConfig = Path.Combine(Application.StartupPath, "DatalogPaths.config");
     
-    public static String GetCompletePathname(String text)
+   public static String GetCompletePathname(String text)
     {        
         if(!System.IO.File.Exists(defaultConfig)) {
             CreateDefaultConfig(defaultConfig);
@@ -152,14 +152,14 @@ public class DatalogPathname {
 		XmlSerializer serializer = null;
 		List<String> folders = new List<String>();
 
-		folders.Add("\\\\bctquad3\\rundata\\");
-		folders.Add("\\\\bctquad3\\Atreus\\rundata\\");
-		folders.Add("\\\\uspsr200a\\Optia\\rundata\\");
-		folders.Add("\\\\uspsr200b\\ces\\rundata\\");
+		folders.Add("\\\\bctquad3\\rundata");
+		folders.Add("\\\\bctquad3\\Atreus\\rundata");
+		folders.Add("\\\\uspsr200a\\Optia\\rundata");
+		folders.Add("\\\\uspsr200b\\ces\\rundata");
 
 		try {
 			serializer = new XmlSerializer(typeof(List<String>));
-			writer = new XmlTextWriter(defaultConfig, System.Text.Encoding.Default);
+			writer = new XmlTextWriter(file, System.Text.Encoding.Default);
 			serializer.Serialize(writer, folders);
 		}
 		catch {

@@ -14,9 +14,19 @@ namespace StackTraceUI
         public About()
         {
             InitializeComponent();
-            lblAbout.Text = "[-location buildpath] [-version (2.02 | 2.20)]\n\t[-osfile filename] [-ospath pathnames]\n[-pathalias old[:new]]\n[-address values]\nfilename";
-        }
+
+            System.IO.StreamReader inputStream = null;
+            try
+            {
+               inputStream = new System.IO.StreamReader(System.IO.Path.Combine(Program.exeDir, "README.txt")); 
+               lblAbout.Text = inputStream.ReadToEnd();
+            }
+            finally
+            {
+               inputStream.Dispose();
+               inputStream.Close();
+            }
+        } // end constructor
      
-   
-    }
+    } // end class
 }

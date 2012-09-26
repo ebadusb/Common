@@ -23,35 +23,43 @@ using System.Xml;
 using System.Xml.Serialization;
 using AddinUtility;
 
-    using DatalogLauncher;
+//using DatalogLauncher;
 
 /* Classes *******************************************************************/
 
 public class LauncherEngine {
+
+   public static readonly String kStartupPath = System.Windows.Forms.Application.StartupPath;
+   public static readonly String kDatalogApps = "DatalogApps.config";
+
 	#region Constructor
 	public LauncherEngine()
 	{
 		mSettings = new LauncherSettings();
 		mApplication = "";
-		mDirectories = DatalogPathname.GetFolderSettings("DatalogPaths.config");
+
+      if(!File.Exists(DatalogPathname.defaultConfig)) 
+         DatalogPathname.CreateDefaultConfig(DatalogPathname.defaultConfig);
+
+		mDirectories = DatalogPathname.GetFolderSettings(DatalogPathname.defaultConfig);
 	}
 	#endregion
 
 	#region Settings
 	public void LoadSettings()
 	{
-		if (System.IO.File.Exists("DatalogApps.config")) {
+		if (System.IO.File.Exists(Path.Combine(kStartupPath, kDatalogApps))) {
 			XmlTextReader reader = null;
 			XmlSerializer serializer = null;
 
 			try {
 				serializer = new XmlSerializer(mSettings.GetType());
-				reader = new XmlTextReader("DatalogApps.config");
+				reader = new XmlTextReader(Path.Combine(kStartupPath, kDatalogApps));
 				mSettings = (LauncherSettings)serializer.Deserialize(reader);
 			}
 			catch {
 				System.Windows.Forms.MessageBox.Show(
-						"Could not read \"DatalogApps.config\"",
+						"Could not read " + Path.Combine(kStartupPath, kDatalogApps),
 						"Error",
 						System.Windows.Forms.MessageBoxButtons.OK,
 						System.Windows.Forms.MessageBoxIcon.Error);
@@ -70,12 +78,12 @@ public class LauncherEngine {
 
 		try {
 			serializer = new XmlSerializer(mSettings.GetType());
-			writer = new XmlTextWriter("DatalogApps.config", System.Text.Encoding.Default);
+			writer = new XmlTextWriter(Path.Combine(kStartupPath, kDatalogApps), System.Text.Encoding.Default);
 			serializer.Serialize(writer, mSettings);
 		}
 		catch {
 			System.Windows.Forms.MessageBox.Show(
-					"Could not create \"DatalogApps.config\"",
+					"Could not create " + Path.Combine(kStartupPath, kDatalogApps),
 					"Error",
 					System.Windows.Forms.MessageBoxButtons.OK,
 					System.Windows.Forms.MessageBoxIcon.Error);
@@ -115,7 +123,7 @@ public class LauncherEngine {
 	private void ProcessDatalog(String text)
 	{
 		String logname = DatalogPathname.ExtractDatalogName(text);
-		String filename = DatalogPathname.GetCompletePathname(logname);
+		String filename = DatalogPathname.GetCompletePathname(logname, mDirectories);
 
 		if (System.IO.File.Exists(filename)) {
 			if (String.IsNullOrEmpty(mApplication)) {

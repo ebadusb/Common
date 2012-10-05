@@ -10,6 +10,7 @@
 #define __FP_MATH_H__
 
 #include <list>
+#include <math.h>
 
 namespace FPMath
 {
@@ -41,6 +42,17 @@ double fpAvg(std::list<double> &listToAvg);
 // Returns the standard deviation of a linked list of doubles
 // 
 double fpStdDev(std::list<double> &list);
+
+//
+// Rounds the value to the given precision. Use 0 to negative precision for integers.
+//
+template<class T>
+T precise_round(T value, int precision)
+{
+	T rounded_value;
+	rounded_value = static_cast<T>(floor(value * pow(10.0, precision) + .5) / pow(10.0, precision));
+	return rounded_value;
+}
 
 };
 

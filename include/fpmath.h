@@ -44,10 +44,10 @@ double fpAvg(std::list<double> &listToAvg);
 double fpStdDev(std::list<double> &list);
 
 //
-// Rounds the value to the given precision. Use 0 to negative precision for integers.
+// Returns the value rounded to the given precision. Use 0 to negative precision for integers.
 //
 template<class T>
-T precise_round(T value, int precision)
+T fpPreciseRound(T value, int precision)
 {
 	T rounded_value;
 	rounded_value = static_cast<T>(floor(value * pow(10.0, precision) + .5) / pow(10.0, precision));

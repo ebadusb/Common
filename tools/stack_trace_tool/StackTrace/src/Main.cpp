@@ -37,6 +37,7 @@ int main(int argc, char* argv[])
 	DECODER::Result results = DECODER::LogReader::kResultNone;
 	TRACE::StackTrace::Arguments arguments;
 	std::string filename;
+
 	if(argc > 1)
 		filename = (argv[argc - 1]);
 

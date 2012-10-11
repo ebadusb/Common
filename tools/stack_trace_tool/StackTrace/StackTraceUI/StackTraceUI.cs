@@ -103,9 +103,15 @@ namespace StackTraceUI
                   args = args.Insert(loc, "-" + cfgValuesPair.Key + " " + cfgValuesPair.Value + " ");
                    
 
-            // Pass everything to the command line tool
+            // Pass everything to the command line tool, making sure working directory is set
+            //  to installation directory
             //
-            Process.Start(Path.Combine(Program.exeDir, "StackTrace.exe"), args);
+            var startInfo = new ProcessStartInfo();
+            startInfo.WorkingDirectory = Program.exeDir;
+            startInfo.FileName = Path.Combine(Program.exeDir, "StackTrace.exe");
+            startInfo.Arguments = args;
+            //Process.Start(Path.Combine(Program.exeDir, "StackTrace.exe"), args);
+            Process.Start(startInfo);
             Application.Exit();
         }
 
@@ -157,8 +163,11 @@ namespace StackTraceUI
             ofd.ShowDialog();
             string xmlFileName = ofd.FileName;
 
-            if (!String.IsNullOrEmpty(xmlFileName)) 
+            if (!String.IsNullOrEmpty(xmlFileName))
+            { 
+               btnClearConfig_Click(sender, e);
                LoadOptionsConfig(xmlFileName);
+            }
         }
 
 

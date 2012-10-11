@@ -60,6 +60,7 @@ static const char *kTabTask = "Task: ";
 // Commands for extracting debug sysbols
 static const char *kStrCommand2_20 = "nmpentium.exe --numeric-sort --demangle ";
 static const char *kStrCommand2_02 = "objdump386.exe --syms ";
+//static const char *kStrCommand2_02 = "nm386.exe --numeric-sort --demangle ";
 
 // Tornado tool versions
 static const char *kVerTornado2_20 = "2.2";

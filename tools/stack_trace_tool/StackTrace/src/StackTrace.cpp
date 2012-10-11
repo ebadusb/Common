@@ -515,18 +515,7 @@ void StackTrace::GuessCommandLineSettings(void)
  */
 DECODER::String StackTrace::GetBuildPath(void) const
 {
-	String& pathname = (mAltBuildPath.empty() ? mBuildPath : mAltBuildPath) + DECODER::UTIL::kStrCurrent;
-
-	if (mAltBuildPath.empty() && (mRecordLogInfo.mDeviceType == DECODER::TRIMA) && (pathname.find("AutomatedBuilds") != pathname.npos))
-	{
-		
-		if(pathname.find("I80486.current_build") == pathname.npos) {
-			String insertStr("I80486.");
-			pathname.insert(pathname.find("current_build"), insertStr);
-		}
-	}
-
-	return pathname;
+   return mAltBuildPath.empty() ? (mBuildPath + DECODER::UTIL::kStrCurrent) : mAltBuildPath;
 }
 
 /**

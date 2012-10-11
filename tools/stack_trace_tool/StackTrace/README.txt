@@ -32,37 +32,39 @@ Configuration TextBoxes:
 
 *** Location - 
 
-	Enter an optional root build location (requires full path). This directory must contain the subdirectory "current_build".
-	If a location is not supplied, the directory in the data log file is used. If the directory in the data log file is inaccessible,
-	then "\\bctquad3\home" is substituted for the drive, and then that is used as the root build directory.  In the case of Trima,
-	if the build path includes "Automated Builds", "current_build" is prepended with "I80486.".  
+	Enter an optional build location (requires full path). Usually, this is a path to a "current_build" or similarly named 
+	directory. Be sure to include the name of this directory in the path. If a location is not supplied, the directory in the
+	data log file is used upon appending "current_build". In this case, if such a directory is inaccessible,
+	then as a last attempt, "\\bctquad3\home" is substituted for the drive and that is used for the build directory.  
 
 *** OSPath - 
 
 	Paths to Safety, APC (if applicable), and Control OS images can be optionally included in "OSPaths" field. If used, 
-	supply relative paths from "current_build" (assumed a subdirectory of the build path), include all nodes, delimit with
-	commas (use quotes if there are spaces), and order as Control, APC (if applicable), and then Safety. The defaults for
-	Trima, Optia, and CES are "/vxboot,/trima/safety/boot", 
+	supply relative paths from the build path as supplied by the user or determined automatically from StackTrace.  Be
+	sure to include all nodes, delimit with	commas (use quotes if there are any spaces), and order as Control, APC (if applicable),
+	and then Safety. The defaults for Trima, Optia, and CES are "/vxboot,/trima/safety/boot", 
 	"/../base/vxworks_target/control,/../base/vxworks_target/apc,/../base/vxworks_target/safety",
-	and "/vxboot,/ces", respectively.
+	and "/vxboot,/ces", respectively. For other systems, you must explicitly specify these strings.
 
 *** Version - 
 
 	Enter toolchain version.  In most cases, StackTrace can determine the device type and version, and a version need not
-	be entered.  If not, select 2.02 to make use of "objdump386.exe" and 2.2 for "nmpentium.exe", respectively, to extract
-	symbols from object files.
+	be entered.  If not, select 2.02 to make use of "nm386.exe" and 2.2 for "nmpentium.exe", respectively, to extract
+	symbols from object files. NOTE: You must have the location of these executables set in your system path (they are
+	in the StackTrace installation directory).
 
 *** OSFile -
 
 	Enter name of OS images.  Examples include "vxWorks", "vxWorks_ampro", and "vxWorks_versalogic".  If not supplied, a name
 	is attempted via the data log file.  Note that if neither "vxWorks_ampro" or "vxWorks_versalogic" was deduced in this
-	manner, then a default of "vxWorks" is utilized.
+	manner, a default of "vxWorks" will be utilized. Currently, StackTrace cannot handle mixtures of these names.
 
 *** Alias -
 
-	If your modules reside in a different location than the build location, or are named something different, then this option
-	allows you to change all or portions of filename strings to something else prior to looking up their symbols.  Use the format
-	"old:new" where "old" represents the old string and "new" represents the new string.
+	This option allows you to change all or portions of folders or filename strings to something else. This is done prior to
+	looking up any symbols, so this could be used, e.g., if your module names change or portions of your build tree hierarchy
+	are located at separate locale.  Use the format "old:new" where "old" represents the old string and "new" represents
+	the new string. NOTE: Be careful since string replacement occurs wherever it can.
 
 *** Address -
 
@@ -80,11 +82,11 @@ prior to hitting "Stack Trace" the last time you used will already be loaded.
 
 Right-click Startup:
  
-StackTraceUI can be launched from any data log file by making use of the right-click menu. To enable this, go into
-"Tools" -> "Folder Options" under any Windows Explorer and click on the "File Types" tab and select "DLOG". Then under the 
-"Advanced" button, add a New action using "<Path to StackTraceUI>\StackTraceUI.exe" "%L" as the "Application" and your choice 
-of "Action" (e.g., "Open with StackTraceUI").  Alternatively, copy a shortcut icon to "StackTraceUI.exe" into your SendTo folder 
-located in your "Documents and Settings". The latter enables you to right click a dlog and send it to a shortcut to "StackTraceUI.exe"
-(which can be renamed to whatever you want).
+StackTraceUI can be launched from any data log file by making use of the right-click menu. To enable this, go into "Tools" -> "Folder Options"
+under any Windows Explorer and click on the "File Types" tab and select "DLOG". Then under the "Advanced" button, add a New action
+using "<StackTrace installation directory>\StackTraceUI.exe" "%L" as the "Application" and your choice of "Action" (e.g., "Open
+with StackTraceUI").  Alternatively, copy a shortcut icon to this "StackTraceUI.exe" into your "SendTo" folder located in your
+"Documents and Settings". The latter enables you to right click a data log file and send it to a shortcut to "StackTraceUI.exe" 
+(which can be renamed as "Open with StackTraceUI" or whatever you want).
 
   

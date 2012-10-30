@@ -97,7 +97,7 @@ public: \
    \
    static void *newObject() \
    {  \
-      return new __objclassname__##( ); \
+      return new __objclassname__( ); \
    }; \
    \
 // End of DECLARE_OBJ macro
@@ -106,7 +106,7 @@ public: \
 #define DEFINE_OBJ( __objclassname__ ) \
    \
    static ObjDictionaryEntry entry##__objclassname__\
-                    ( #__objclassname__, &__objclassname__##::newObject ); \
+                    ( #__objclassname__, &__objclassname__::newObject ); \
    \
 // End of DEFINE_OBJ macro
 

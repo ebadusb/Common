@@ -74,3 +74,115 @@ double FPMath::fpStdDev(std::list<double> &list)
    return stddev;
 }
 
+
+bool FPMath::compareEqual(double lhs, double rhs, double epsilon)
+{
+  return (fabs(lhs - rhs) > epsilon) ? false : true;
+}
+
+bool FPMath::compareEqual(double lhs, double rhs)
+{
+  return compareEqual(lhs, rhs, DBL_EPSILON);
+}
+
+bool FPMath::compareGreater(double lhs, double rhs, double epsilon)
+{
+  return (lhs > (rhs + epsilon));
+}
+
+bool FPMath::compareGreater(double lhs, double rhs)
+{
+  return compareGreater(lhs, rhs, DBL_EPSILON);
+}
+
+bool FPMath::compareLess(double lhs, double rhs, double epsilon)
+{
+  return ( lhs < (rhs - epsilon));
+}
+
+bool FPMath::compareLess(double lhs, double rhs)
+{
+  return FPMath::compareLess(lhs, rhs, DBL_EPSILON);
+}
+
+bool FPMath::compareGreaterOrEqual(double lhs, double rhs, double epsilon)
+{
+  return compareEqual(lhs, rhs, epsilon) || compareGreater(lhs, rhs, epsilon);
+}
+bool FPMath::compareGreaterOrEqual(double lhs, double rhs)
+{
+  return compareGreaterOrEqual(lhs, rhs, DBL_EPSILON);
+}
+
+bool FPMath::compareLessOrEqual(double lhs,double rhs, double epsilon)
+{
+  return compareEqual(lhs, rhs, epsilon) || compareLess(lhs, rhs, epsilon);
+}
+bool FPMath::compareLessOrEqual(double lhs, double rhs)
+{
+  return compareLessOrEqual(lhs, rhs, DBL_EPSILON);
+}
+
+bool FPMath::compareInRange(double value, double min, double max)
+{
+  return compareInRange(value, min, max, DBL_EPSILON);
+}
+
+bool FPMath::compareInRange(double value, double min, double max, double epsilon)
+{
+  return (compareLessOrEqual(value, max, epsilon) && compareGreaterOrEqual(value, min, epsilon));
+}
+
+int FPMath::getNumberOfIntegralDigits(double value)
+{
+  if(FPMath::compareLess(value, 0.0))
+    value = -value;
+  return static_cast<int>(log(value)/log(10.0)) + 1;
+}
+
+bool FPMath::isNan(double value)
+{
+  return value != value;
+}
+
+bool FPMath::isInf(double value)
+{
+   if ((value == value) && ((value - value) != 0.0))
+     return true;
+   else
+     return false;
+
+}
+
+double FPMath::floor(double value)
+{
+  if(compareGreater(value, 0.0))
+    return static_cast<double>(static_cast<int>(value + 0.5));
+  else
+  {
+    double temp = ceiling(value);
+    if(FPMath::compareEqual(temp - value, 0.0))
+      return value;
+    else
+      return static_cast<double>(static_cast<int>(value - 1.0));
+  }
+}
+
+double FPMath::ceiling(double value)
+{
+  if(compareGreater(value, 0.0))
+  {
+    double temp = floor(value);
+    if(FPMath::compareEqual(temp - value, 0.0))
+      return value;
+    else
+      return static_cast<double>(static_cast<int>(value + 1.0));
+  }
+  else // Less than 0
+    return static_cast<double>(static_cast<int>(value - 0.5));
+}
+int FPMath::round(double value)
+{
+  return ( value > 0 ) ? (int)( value + 0.5 ) : (int)( value - 0.5 );
+}
+

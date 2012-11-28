@@ -53,7 +53,38 @@ T fpPreciseRound(T value, int precision)
 	rounded_value = static_cast<T>(floor(value * pow(10.0, precision) + .5) / pow(10.0, precision));
 	return rounded_value;
 }
+/// \return true if the value in lhs is within epsilon of rhs.
+bool compareEqual(double lhs, double rhs, double epsilon);
+/// This version of the comparison implicitly uses DBL_EPSILON
+/// as a comparison value.
+bool compareEqual(double lhs, double rhs);
 
+/// (lhs > rhs)
+bool compareGreater(double lhs, double rhs, double epsilon);
+bool compareGreater(double lhs, double rhs);
+
+/// (lhs < rhs)
+bool compareLess(double lhs, double rhs, double epsilon);
+bool compareLess(double lhs, double rhs);
+
+/// (lhs >= rhs)
+bool compareGreaterOrEqual(double lhs, double rhs, double epsilon);
+bool compareGreaterOrEqual(double lhs, double rhs);
+
+bool compareLessOrEqual(double lhs, double rhs, double epsilon);
+bool compareLessOrEqual(double lhs, double rhs);
+
+bool compareInRange(double value, double min, double max, double epsilon);
+bool compareInRange(double value, double min, double max);
+
+bool isNan(double value);
+bool isInf(double value);
+
+double floor(double value);
+double ceiling(double value);
+int round(double value);
+
+int getNumberOfIntegralDigits(double value);
 };
 
 #endif

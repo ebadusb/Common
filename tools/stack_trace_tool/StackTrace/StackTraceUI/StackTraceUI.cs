@@ -136,9 +136,7 @@ namespace StackTraceUI
         }
 
 
-        private void viewToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-        }
+        private void viewToolStripMenuItem_Click(object sender, EventArgs e) { }
 
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
@@ -149,7 +147,7 @@ namespace StackTraceUI
             ofd.ShowDialog();
 
             if (!String.IsNullOrEmpty(ofd.FileName))
-                txtDlogName.Text = ofd.FileName;
+                txtDlogName.Text = "\"" + ofd.FileName + "\"";
             
             txtDlogName.Focus();
         }

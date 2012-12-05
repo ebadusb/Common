@@ -52,9 +52,9 @@ static const char* splitArgs = " \t";
 /* Constants - Used in main.cpp  *********************************************/
 
 static const char *kStrErrorHelp = 
-		"StackTrace version 1.9\n"
+		"StackTrace version 2.0\n"
 		"Creates a crash report from the data found in a given datalog.\n"
-		"StackTrace [-location buildpath] [-version (2.02 | 2.20)] [-osfile filename] [-ospath pathnames] [-pathalias old[:new]] [-address values] filename\n";
+		"StackTrace [-location buildpath] [-version (2.02 | 2.2)] [-osfile filename] [-ospath pathnames] [-pathalias old[:new]] [-address values] filename\n";
 static const char *kStrErrorFailed = "Error: Failed to open file.";
 static const char *kStrErrorInvalid = "Error: Invalid header type.";
 static const char *kStrErrorUnsupported = "Error: Log file version is unsupported.";
@@ -208,7 +208,7 @@ void StackTrace::PreProcess(void)
  */
 void StackTrace::PostProcess(void)
 {
-	GuessCommandLineSettings();
+	//GuessCommandLineSettings();
 
 	DECODER::UTIL::SymbolsTable symbolTable;
 	DECODER::UTIL::TaskIDList taskIDList;
@@ -248,7 +248,6 @@ void StackTrace::PostProcess(void)
 	if (!mLoadedComponents.empty()) {
 		for_each(mLoadedComponents.rbegin(), mLoadedComponents.rend(), printModules);
 	}
-
 
 	if (!mPagefaults.empty()) {
 		for_each(mPagefaults.rbegin(), mPagefaults.rend(), printPagefault);
@@ -378,7 +377,7 @@ StackTrace::Result StackTrace::CreateCrashReport(const String &filename, const A
 	extractor.mAltPathAlias = "";
 	extractor.mAltAddress = "";
 	
-	// Set build path setting
+	// Set alternative build path setting
 	if (flagLocationIter != flagEnd){
 		extractor.mAltBuildPath = flagLocationIter->second;
 	}
@@ -386,7 +385,7 @@ StackTrace::Result StackTrace::CreateCrashReport(const String &filename, const A
 		extractor.mAltBuildPath = envLocation;
 	}
 
-	// Set OS binary name
+	// Set alternative OS binary name
 	if (flagOSFileIter != flagEnd){
 		extractor.mAltSystemName = flagOSFileIter->second;
 	}
@@ -394,7 +393,7 @@ StackTrace::Result StackTrace::CreateCrashReport(const String &filename, const A
 		extractor.mAltSystemName = envOSFile;
 	}
 
-	// Set OS path names
+	// Set alternative OS path names
 	if (flagOSPathIter != flagEnd) {
 		extractor.mAltSystemPaths = flagOSPathIter->second;
 	}
@@ -402,7 +401,7 @@ StackTrace::Result StackTrace::CreateCrashReport(const String &filename, const A
 		extractor.mAltSystemPaths = envOSPath;
 	}
 
-	// Set path alias
+	// Set alternative path alias
 	if (flagAliasIter != flagEnd){
 		extractor.mAltPathAlias = flagAliasIter->second;
 	}
@@ -410,7 +409,7 @@ StackTrace::Result StackTrace::CreateCrashReport(const String &filename, const A
 		extractor.mAltPathAlias = envAlias;
 	}
 
-	// Set build address setting
+	// Set alternative address setting
 	if (flagAddress != flagEnd){
 		extractor.mAltAddress = flagAddress->second;
 	}
@@ -418,90 +417,29 @@ StackTrace::Result StackTrace::CreateCrashReport(const String &filename, const A
 		extractor.mAltAddress = envAddress;
 	}
 
+   // Set alternative symbol command
 	if (flagVersionIter != flagEnd) {
 		if (flagVersionIter->second == DECODER::UTIL::kVerTornado2_20) {
 			extractor.mAltSymbolCommand = DECODER::UTIL::kStrCommand2_20;
-			extractor.mOsVersion = DECODER::UTIL::kVerTornado2_20;
+			//extractor.mOsVersion = DECODER::UTIL::kVerTornado2_20;
 		}
 		else if (flagVersionIter->second == DECODER::UTIL::kVerTornado2_02) {
 			extractor.mAltSymbolCommand = DECODER::UTIL::kStrCommand2_02;
-			extractor.mOsVersion = DECODER::UTIL::kVerTornado2_02;
+			//extractor.mOsVersion = DECODER::UTIL::kVerTornado2_02;
 		}
 	}
 	else if (envVersion != NULL) {
 		if (envVersion == DECODER::UTIL::kVerTornado2_20) {
 			extractor.mAltSymbolCommand = DECODER::UTIL::kStrCommand2_20;
-			extractor.mOsVersion = DECODER::UTIL::kVerTornado2_20;
+			//extractor.mOsVersion = DECODER::UTIL::kVerTornado2_20;
 		}
 		else if (envVersion == DECODER::UTIL::kVerTornado2_02) {
 			extractor.mAltSymbolCommand = DECODER::UTIL::kStrCommand2_02;
-			extractor.mOsVersion = DECODER::UTIL::kVerTornado2_02;
+			//extractor.mOsVersion = DECODER::UTIL::kVerTornado2_02;
 		}
 	}
-
-	
 		
-	//Set pathnames if not provided. For eg. Trima pathnames are always /vxboot,/trima/safety/boot
-
-			
 	return DECODER::ProcessLogData(filename.c_str(), extractor);
-}
-
-/**
- *
- * GetOsVersion
- *
- * Gets the Tornado Version
- *
- * @return The Tornado Version.
- *
- */
-void StackTrace::GuessCommandLineSettings(void) 
-{
-	const DECODER::RecordLogInfo& info = mRecordLogInfo;
-	const String& log = info.mLogFilename;
-
-	//OsVersion
-	if(mAltSymbolCommand.empty())
-	{
-		
-		const String& rev = info.mBuildRevision;
-		
-		//Is Trima?
-		if(info.mDeviceType == DECODER::TRIMA)
-		{
-			 //Trima versions 5.1 or 5.2
-			if( (rev.find("6.") != rev.npos) || (rev.find("7.") != rev.npos) ) 
-				mAltSymbolCommand = DECODER::UTIL::kStrCommand2_02;
-			
-			else 
-				mAltSymbolCommand = DECODER::UTIL::kStrCommand2_20;
-			
-		}
-		else 
-		{
-			mAltSymbolCommand = DECODER::UTIL::kStrCommand2_20;
-		}
-		
-	}
-	
-
-	//OsPath - Trima - ospath is /vxboot
-	if(mAltSystemPaths.empty())
-	{
-		if(info.mDeviceType == DECODER::TRIMA)
-		{
-			mAltSystemPaths.append(DECODER::UTIL::kAltSysPathTrima);
-		}
-		else if(info.mDeviceType == DECODER::OPTIA)
-		{
-			mAltSystemPaths.append(DECODER::UTIL::kAltSysPathOptia);
-		}
-		else if(info.mDeviceType == DECODER::CES)
-		{
-			mAltSystemPaths.append(DECODER::UTIL::kAltSysPathCes);
-		}
-	}
 }
 
 /**
@@ -557,9 +495,24 @@ DECODER::String StackTrace::GetSystemFile(void) const
  * @return The command.
  *
  */
-DECODER::String StackTrace::GetSymbolCommand(void) const
+DECODER::String StackTrace::GetSymbolCommand(void) 
 {
-	//Look at mDatalogInfo. Find the BUILD REVISION. Find out if Build uses T22 or T202. 
+	if(mAltSymbolCommand.empty())
+	{		
+		const String &rev = mRecordLogInfo.mBuildRevision;
+      const DECODER::DeviceType &device = mRecordLogInfo.mDeviceType; 		
+
+		//Is Trima?
+		if(device == DECODER::TRIMA)
+		{
+			 //Trima versions 5.1 or 5.2
+			if( (rev.find("6.") != rev.npos) || (rev.find("7.") != rev.npos) ) 
+				mAltSymbolCommand = DECODER::UTIL::kStrCommand2_02;
+			else 
+				mAltSymbolCommand = DECODER::UTIL::kStrCommand2_20;
+		}
+	}
+
 	return mAltSymbolCommand.empty() ? DECODER::UTIL::kStrCommand2_20 : mAltSymbolCommand;
 }
 
@@ -572,9 +525,30 @@ DECODER::String StackTrace::GetSymbolCommand(void) const
  * @return The paths.
  *
  */
-DECODER::String StackTrace::GetSystemPaths(void) const
+DECODER::String StackTrace::GetSystemPaths(void) 
 {
-	return mAltSystemPaths.empty() ? mSystemPaths : mAltSystemPaths;
+   // Currently, no processing functor extracts system paths from dlog, so always use alternative.
+   // Also currently, only Trima, Optia, and CES are implemented.
+
+	if(mAltSystemPaths.empty())
+	{
+      const DECODER::DeviceType &device = mRecordLogInfo.mDeviceType; 		
+
+		if(device == DECODER::TRIMA)
+		{
+			mAltSystemPaths = DECODER::UTIL::kAltSysPathTrima;
+		}
+		else if(device == DECODER::OPTIA)
+		{
+			mAltSystemPaths = DECODER::UTIL::kAltSysPathOptia;
+		}
+		else if(device == DECODER::CES)
+		{
+			mAltSystemPaths = DECODER::UTIL::kAltSysPathCes;
+		}
+	}
+
+	return mAltSystemPaths;
 }
 
 /**

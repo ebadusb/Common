@@ -1,16 +1,25 @@
-StackTraceUI v1.1 (GUI version of StackTrace Tool)
+StackTraceUI v1.2 (GUI version of StackTrace Tool)
 
+$ Log: StackTraceUI $
+Revision 1.2  2012/12/03  chowusb
+- pre- and postfix quotes to dlog name whenever user opens dlog via menubar
+Revision 1.1  2012/10/11  chowusb
+- modified the way build path is located (user-specified path must now include path to "current_build")
+- added objdump386 capability for older toolchain
+- removed necessity for user to manually set their path
+Revision 1.0  2012/09/26  chowusb
+- initial revision
 
 Description:
 
-The StackTrace GUI wraps the command line-driven StackTrace Tool so that commonly used options need not be specified every
+The StackTraceUI wraps the command line-driven StackTrace Tool so that commonly used options need not be specified every
 time, but can be saved and used at a later time.  This README file documents the behavior of each of these options, how
 they should be supplied by the user, and how the user can save and reload specific configurations for later use. 
 
 
 Command Line Usage: 
 
- [-location buildpath] [-version (2.02 | 2.20)] [-osfile filename] [-ospath pathnames] [-pathalias old:new] ...
+ [-location buildpath] [-version (2.02 | 2.2)] [-osfile filename] [-ospath pathnames] [-pathalias old:new] ...
  ... [-address values] dlogFileName
 
  The command-line usage is still available and can be entered in the data log file name textbox.  Note that any

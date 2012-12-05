@@ -125,12 +125,12 @@ private:
 	String GetBuildPath(void) const;
 	String GetOsVersion(void) const;
 	String GetSystemFile(void) const;
-	String GetSymbolCommand(void) const;
-	String GetSystemPaths(void) const;
+	String GetSymbolCommand(void);
+	String GetSystemPaths(void);
 	String GetPathAlias(void) const;
 	String GetAddresses(void) const;
 	
-	void GuessCommandLineSettings(void);
+	//void GuessCommandLineSettings(void);
 	
 	Stream &mStream;
 

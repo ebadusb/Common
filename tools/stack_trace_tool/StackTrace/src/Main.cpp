@@ -17,9 +17,9 @@
 /* Constants *****************************************************************/
 
 static const char *kStrErrorHelp = 
-		"StackTrace version 1.9\n"
+		"StackTrace version 2.0\n"
 		"Creates a crash report from the data found in a given datalog.\n"
-		"StackTrace [-location buildpath] [-version (2.02 | 2.20)] [-osfile filename] [-ospath pathnames] [-pathalias old[:new]] [-address values] filename\n";
+		"StackTrace [-location buildpath] [-version (2.02 | 2.2)] [-osfile filename] [-ospath pathnames] [-pathalias old[:new]] [-address values] filename\n";
 static const char *kStrErrorFailed = "Error: Failed to open file.";
 static const char *kStrErrorInvalid = "Error: Invalid header type.";
 static const char *kStrErrorUnsupported = "Error: Log file version is unsupported.";
@@ -57,12 +57,6 @@ int main(int argc, char* argv[])
 			}
 			std::cerr << "Enter Dlog name: " << std::endl;
 			std::cin >> filename;
-			//if(filename.empty()) {
-			//	std::cerr << kStrErrorHelp << std::endl;
-   //         std::cerr << "Press any button to exit ... ";
-   //         std::cin.get();
-			//	exit(0);
-			//}
 			
 			//Check file exists
 			std::ifstream inputfile(filename);
@@ -91,12 +85,6 @@ int main(int argc, char* argv[])
 	std::string tracefilename(kTraceFilePath + dlogname + kTraceFileExtn);
 	std::ifstream itf(tracefilename);
 	std::string editorCmd(kEditorPath);
-	//if(itf)
-	//{
-	//	//Launch
-	//	
-	//	_execl(editorCmd.c_str(), editorCmd.c_str(), tracefilename.c_str(), NULL);
-	//}
 
 	std::cerr << "Processing " << filename << std::endl;
 	results = TRACE::StackTrace::CreateCrashReport(filename, arguments, output);

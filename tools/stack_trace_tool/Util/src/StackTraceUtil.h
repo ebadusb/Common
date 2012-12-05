@@ -56,9 +56,11 @@ static const char *kTabTaskState = "Task state:";
 static const char *kTabMsgID = "Mid ";
 static const char *kTabPC = "Program Counter : ";
 static const char *kTabTask = "Task: ";
+static const char *kTabMachine = "/machine";
 
 // Commands for extracting debug sysbols
 static const char *kStrCommand2_20 = "nmpentium.exe --numeric-sort --demangle ";
+//static const char *kStrCommand2_20 = "nmsimpc.exe --numeric-sort --demangle ";
 static const char *kStrCommand2_02 = "objdump386.exe --syms ";
 //static const char *kStrCommand2_02 = "nm386.exe --numeric-sort --demangle ";
 
@@ -471,7 +473,6 @@ public:
 			std::string pathname = record.mMessage.substr(0, tabModuleEnd);
 			std::string address = record.mMessage.substr(tabAddressBegin + tabAddressLen, tabAddressEnd - tabAddressBegin);
 			unsigned int value = 0;
-
 			sscanf(address.c_str(), "%x", &value);
 			mAddressMap[record.mNodeID][value] = pathname;
 		}
@@ -670,7 +671,7 @@ private:
 class PrintSymbolData {
 public:
 	PrintSymbolData(const String &pathname, 
-			const String& osVersion,
+			const String& osVersion, // not utilized
 			const TaskNodeMap &taskNodes,
 			const NodeAddressMap &components, 
 			const String &command,
@@ -788,7 +789,10 @@ protected:
 			offset = address - loc->first;
 
 			if (sym == mSymbols[node].end()) {
-				this->IncludeLoadedFunctions(node, loc->first, mPathname + loc->second);
+            String module = loc->second;
+            if (module.find(kTabMachine) == 0)
+               module.replace(0, std::strlen(kTabMachine), "");
+            this->IncludeLoadedFunctions(node, loc->first, mPathname + module);
 				sym = mSymbols[node].find(loc->first);
 			}
 

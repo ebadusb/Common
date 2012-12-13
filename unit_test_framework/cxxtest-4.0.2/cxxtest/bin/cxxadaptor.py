@@ -26,12 +26,12 @@ if __name__ == "__main__":
         name = args[0]
 
         if options.headers and os.path.isfile(name + ".lst"):
-            cxxtestgen = "python " + os.path.join(os.environ["CXXTEST"], "bin\\cxxtestgen.py") + " --xunit-printer -w \"" + \
+            cxxtestgen = "python " + os.path.join(os.path.dirname(sys.argv[0]), "cxxtestgen.py") + " --xunit-printer -w \"" + \
                            name + "\" --xunit-file=" + "\"" + name + " Results.xml\" -o \"" + name + ".cpp\" " + \
                             "--headers=\"" + name + ".lst\""
 
         elif os.path.isfile(name + ".h"):
-            cxxtestgen = "python " + os.path.join(os.environ["CXXTEST"], "bin\\cxxtestgen.py") + " --xunit-printer -w \"" + \
+            cxxtestgen = "python " + os.path.join(os.path.dirname(sys.argv[0]),"cxxtestgen.py") + " --xunit-printer -w \"" + \
                            name + "\" --xunit-file=" + "\"" + name + " Results.xml\" -o \"" + name + ".cpp\" " + \
                             "\"" + name + ".h\""
 

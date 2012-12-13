@@ -1,1 +1,2 @@
-python "%CXXTEST%\bin\cxxadaptor.py" %1 %2
+set bPath=%~dp0
+python "%bPath%cxxadaptor.py" %1 %2

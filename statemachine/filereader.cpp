@@ -73,7 +73,6 @@ int FileReader :: init( const char *file, StateAbs *state )
 
 int FileReader :: readFile()
 {
-
    int status = NORMAL;
    char constBuffer[FILEREADER_BUFFER_SIZE]="";
    char changableBuffer[FILEREADER_BUFFER_SIZE]="";
@@ -118,6 +117,7 @@ int FileReader :: readFile()
       // Duplicate the buffer ...
       //
       strcpy (changableBuffer , constBuffer );
+
       //
       // Read a new state (including transitions) if found ...
       //
@@ -130,6 +130,7 @@ int FileReader :: readFile()
          break;
       }
    }
+
    //
    // Close the file ...
    //
@@ -208,12 +209,14 @@ int FileReader :: readState( char *buffer )
    //
    char *savePtr=0;
    char *p = strtok_r( buffer, DELIMITERS, &savePtr );
+
    if ( strncmp( p, "[state]", 7 ) == 0 )
    {
       //
       // Parse the state name ...
       //
       p = strtok_r( NULL, DELIMITERS, &savePtr );
+
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -227,6 +230,7 @@ int FileReader :: readState( char *buffer )
       // Create the new state ...
       //
       StateAbs *newState = (StateAbs*)StateDictionary::create( p );
+
       if ( !newState ) 
       {
          //
@@ -235,6 +239,7 @@ int FileReader :: readState( char *buffer )
          fLog("Cannot find state name in dictionary", p );
          return PROCESSING_ERROR;
       }
+
       _CurrentState = newState;
       _CurrentState->stateName( p );
 
@@ -242,6 +247,7 @@ int FileReader :: readState( char *buffer )
       // Parse the parent state name ...
       //
       p = strtok_r( NULL, DELIMITERS, &savePtr );
+
       if ( !p || strlen( p ) == 0 ) 
       {
          _StateList->push_back( newState );
@@ -261,6 +267,7 @@ int FileReader :: readState( char *buffer )
             fLog("Did not find parent in state list", p);
             return PROCESSING_ERROR;
          }
+
          pPtr->addSubstate( newState );
          _AllStatesList.push_front( newState );
       }
@@ -288,6 +295,9 @@ int FileReader :: readState( char *buffer )
          fLog("Reading the transitions for the state", newState->stateName() );
          return PROCESSING_ERROR;
       }
+
+      // Give the system time to digest that.  States can do lots of message registration
+      taskDelay(1);
    }
 
    return NORMAL;
@@ -358,6 +368,7 @@ int FileReader :: readMonitor( char *buffer, StateAbs *state )
       // Parse the monitor name ...
       //
       p = strtok_r( NULL, DELIMITERS, &savePtr );
+
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -366,10 +377,12 @@ int FileReader :: readMonitor( char *buffer, StateAbs *state )
          fLog("No monitor name given", p );
          return PROCESSING_ERROR;
       }
+
       //
       // Create the new monitor ...
       //
       MonitorBase* newMonitor=(MonitorBase*)ObjDictionary::create( p );
+
       if ( !newMonitor ) 
       {
          //
@@ -378,23 +391,30 @@ int FileReader :: readMonitor( char *buffer, StateAbs *state )
          fLog("Cannot find monitor name in dictionary", p );
          return PROCESSING_ERROR;
       }
+
       state->addMonitor( newMonitor );
+
+      // Give the system time to digest that.  States can do lots of message registration
+      taskDelay(1);
    }
    else
    {
       return NO_MONITORS;
    }
+
    return NORMAL;
 }
 
 int FileReader :: readTransitions( TransComplex *trans, int numTrans )
 {
    int numRead=0;
+
    //
    // Read the transitions ...
    //
    char constBuffer[FILEREADER_BUFFER_SIZE]="";
    char changableBuffer[FILEREADER_BUFFER_SIZE]="";
+
    while ( getLine( constBuffer ) != PROCESSING_ERROR )
    {
       //
@@ -413,6 +433,7 @@ int FileReader :: readTransitions( TransComplex *trans, int numTrans )
       // Read in the transitions ...
       //
       int status=NORMAL;
+
       if ( ( ( status=readComplexTrans( changableBuffer, trans )) == NO_TRANSITION ) &&
            ( ( status=readCondTrans( changableBuffer, trans )) == NO_TRANSITION ) &&
            ( ( status=readUncondTrans( changableBuffer, trans )) == NO_TRANSITION ) &&
@@ -424,6 +445,7 @@ int FileReader :: readTransitions( TransComplex *trans, int numTrans )
          //
          return restorePosition();
       }
+
       if ( status == PROCESSING_ERROR ) 
       {
          //
@@ -432,7 +454,9 @@ int FileReader :: readTransitions( TransComplex *trans, int numTrans )
          fLog("Reading transitions", constBuffer );
          return PROCESSING_ERROR;
       }
+
       numRead++;
+
       //
       // Check for too many transitions read ...
       //
@@ -440,7 +464,11 @@ int FileReader :: readTransitions( TransComplex *trans, int numTrans )
       {
          break;
       }
+
+      // Give the system time to digest that.  States can do lots of message registration
+      taskDelay(1);
    }
+
    return NORMAL;
 }
 
@@ -453,6 +481,7 @@ int FileReader :: readComplexTrans( char *constBuffer, TransComplex *trans )
    char buffer[FILEREADER_BUFFER_SIZE];
    strcpy( buffer, constBuffer );
    char *p = strtok_r( buffer, DELIMITERS, &savePtr );
+
    if ( strncmp( p, "[complex]", 9 ) == 0 ) 
    {
       //
@@ -465,6 +494,7 @@ int FileReader :: readComplexTrans( char *constBuffer, TransComplex *trans )
       // Parse the number of transitions under this one
       //
       p = strtok_r( NULL, DELIMITERS, &savePtr );
+
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -473,12 +503,14 @@ int FileReader :: readComplexTrans( char *constBuffer, TransComplex *trans )
          fLog("No transition count given", p );
          return PROCESSING_ERROR;
       }
+
       int transitionCount = (int)strtol( p, NULL, 10 );
 
       //
       // Parse the condition type ...
       //
       p = strtok_r( NULL, DELIMITERS, &savePtr );
+
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -487,7 +519,9 @@ int FileReader :: readComplexTrans( char *constBuffer, TransComplex *trans )
          fLog("No condition type given", p );
          return PROCESSING_ERROR;
       }
+
       LogicalOperationType::Type t = LogicalOperationType::type( p );
+
       if ( t == LogicalOperationType::nullOperation )
       {
          //
@@ -496,12 +530,14 @@ int FileReader :: readComplexTrans( char *constBuffer, TransComplex *trans )
          fLog("Invalid condition type", p );
          return PROCESSING_ERROR;
       }
+
       newTrans->conditionType( LogicalOperationType::type( p ) ); 
 
       //
       // Parse the transition state name ...
       //
       p = strtok_r( NULL, DELIMITERS, &savePtr );
+
       if ( p && strlen( p ) > 0 ) 
       {
          //
@@ -515,8 +551,10 @@ int FileReader :: readComplexTrans( char *constBuffer, TransComplex *trans )
             fLog("Invalid transition state name", p );
             return PROCESSING_ERROR;
          }
+
          newTrans->transitionState( p );
       }
+
       //
       // Read the transitions ...
       //
@@ -528,11 +566,15 @@ int FileReader :: readComplexTrans( char *constBuffer, TransComplex *trans )
          fLog("Reading the transitions",buffer);
          return PROCESSING_ERROR;
       }
+
+      // Give the system time to digest that.  States can do lots of message registration
+      taskDelay(1);
    }
    else
    {
       return NO_TRANSITION;
    }
+
    return NORMAL;
 }
 
@@ -545,6 +587,7 @@ int FileReader :: readCondTrans( char *constBuffer, TransComplex *trans )
    char buffer[FILEREADER_BUFFER_SIZE];
    strcpy( buffer, constBuffer );
    char *p = strtok_r( buffer, DELIMITERS, &savePtr );
+
    if ( strncmp( buffer, "[conditional]", 13 ) == 0 )
    {
       //
@@ -556,7 +599,8 @@ int FileReader :: readCondTrans( char *constBuffer, TransComplex *trans )
       //
       // Parse the return code
       //
-      p = strtok_r( NULL, DELIMITERS, &savePtr );
+      p = strtok_r( NULL, DELIMITERS, &savePtr ); 
+
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -565,12 +609,14 @@ int FileReader :: readCondTrans( char *constBuffer, TransComplex *trans )
          fLog("No return code given", p );
          return PROCESSING_ERROR;
       }
+
       newTrans->statusFlag( (int)strtol( p, NULL, 10 ) );
 
       //
       // Parse the transition state name ...
       //
-      p = strtok_r( NULL, DELIMITERS, &savePtr );
+      p = strtok_r( NULL, DELIMITERS, &savePtr ); 
+
       if ( p && strlen( p ) > 0 ) 
       {
          //
@@ -584,14 +630,18 @@ int FileReader :: readCondTrans( char *constBuffer, TransComplex *trans )
             fLog("Invalid transition state name", p );
             return PROCESSING_ERROR;
          }
+
          newTrans->transitionState( p );
       }
 
+      // Give the system time to digest that.  States can do lots of message registration
+      taskDelay(1);
    }
    else
    {
       return NO_TRANSITION;
    }
+
    return NORMAL;
 }
 
@@ -604,6 +654,7 @@ int FileReader :: readUncondTrans( char *constBuffer, TransComplex *trans )
    char buffer[FILEREADER_BUFFER_SIZE];
    strcpy( buffer, constBuffer );
    char *p = strtok_r( buffer, DELIMITERS, &savePtr );
+
    if ( strncmp( buffer, "[unconditional]", 13 ) == 0 )
    {
       //
@@ -616,6 +667,7 @@ int FileReader :: readUncondTrans( char *constBuffer, TransComplex *trans )
       // Parse the transition state name ...
       //
       p = strtok_r( NULL, DELIMITERS, &savePtr );
+
       if ( p && strlen( p ) > 0 ) 
       {
          //
@@ -629,14 +681,18 @@ int FileReader :: readUncondTrans( char *constBuffer, TransComplex *trans )
             fLog("Invalid transition state name", p );
             return PROCESSING_ERROR;
          }
+
          newTrans->transitionState( p );
       }
 
+      // Give the system time to digest that.  States can do lots of message registration
+      taskDelay(1);
    }
    else
    {
       return NO_TRANSITION;
    }
+
    return NORMAL;
 }
 
@@ -649,6 +705,7 @@ int FileReader :: readTimerTrans( char *constBuffer, TransComplex *trans )
    char buffer[FILEREADER_BUFFER_SIZE];
    strcpy( buffer, constBuffer );
    char *p = strtok_r( buffer, DELIMITERS, &savePtr );
+
    if ( strncmp( buffer, "[timer]", 7 ) == 0 ) 
    {
       //
@@ -661,6 +718,7 @@ int FileReader :: readTimerTrans( char *constBuffer, TransComplex *trans )
       // Parse the timeout time
       //
       p = strtok_r( NULL, DELIMITERS, &savePtr );
+
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -669,6 +727,7 @@ int FileReader :: readTimerTrans( char *constBuffer, TransComplex *trans )
          fLog("No timeout time given", p );
          return PROCESSING_ERROR;
       }
+
       int time = (int)strtol( p, NULL, 10 );
       newTrans->init( time );
 
@@ -676,6 +735,7 @@ int FileReader :: readTimerTrans( char *constBuffer, TransComplex *trans )
       // Parse the transition state name ...
       //
       p = strtok_r( NULL, DELIMITERS, &savePtr );
+
       if ( p && strlen( p ) > 0 ) 
       {
          //
@@ -688,10 +748,14 @@ int FileReader :: readTimerTrans( char *constBuffer, TransComplex *trans )
             // 
             fLog("Invalid transition state name", p );
             return PROCESSING_ERROR;
-         }
+         }     
+
          newTrans->transitionState( p );
       }
 
+
+      // Give the system time to digest that.  States can do lots of message registration
+      taskDelay(1);
    }
    else
    {
@@ -709,6 +773,7 @@ int FileReader :: readMessageTrans( char *constBuffer, TransComplex *trans )
    char buffer[FILEREADER_BUFFER_SIZE];
    strcpy( buffer, constBuffer );
    char *p = strtok_r( buffer, DELIMITERS, &savePtr );
+
    if ( strncmp( buffer, "[message]", 9 ) == 0 ) 
    {
       //
@@ -721,6 +786,7 @@ int FileReader :: readMessageTrans( char *constBuffer, TransComplex *trans )
       // Parse the message enumeration
       //
       p = strtok_r( NULL, DELIMITERS, &savePtr );
+
       if ( !p || strlen( p ) == 0 ) 
       {
          //
@@ -745,6 +811,7 @@ int FileReader :: readMessageTrans( char *constBuffer, TransComplex *trans )
       // Parse the transition state name ...
       //
       p = strtok_r( NULL, DELIMITERS, &savePtr );
+
       if ( p && strlen( p ) > 0 ) 
       {
          //
@@ -758,8 +825,12 @@ int FileReader :: readMessageTrans( char *constBuffer, TransComplex *trans )
             fLog("Invalid transition state name", p );
             return PROCESSING_ERROR;
          }
+
          newTrans->transitionState( p );
       }
+
+      // Give the system time to digest that.  States can do lots of message registration
+      taskDelay(1);
    }
    else
    {
@@ -775,10 +846,8 @@ int FileReader :: getLine( char *buffer )
    //
    fgetpos( _FilePtr, &_FilePos );
 
-   taskDelay( 1 );
    if ( fgets( buffer, FILEREADER_BUFFER_SIZE , _FilePtr ) != NULL )
    {
-	   taskDelay( 1 );
       _LineCount++;
 
       //

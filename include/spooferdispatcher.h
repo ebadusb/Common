@@ -46,6 +46,12 @@ public:
    // Crash the message crc.
    static void sendCorruptMessage( MessageBase &mb );
 
+   //
+   // Simulate a latent message by spoofing the send time.
+   // If useSentTime is true, uses mb.sentTime(); else, uses current clock time.
+   static void sendLatentMessage( MessageBase &mb, unsigned long msecsDelay,
+                                  bool useSentTime=true );
+
 protected:
 
    //

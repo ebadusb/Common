@@ -13,6 +13,7 @@
 #include "datalog_levels.h"
 #include "spooferdispatcher.h"
 #include "messagesystem.h"
+#include "auxclock.h"
 
 
 SpooferDispatcher :: SpooferDispatcher( ) : Dispatcher()
@@ -38,7 +39,7 @@ void SpooferDispatcher :: spoofMessage( MessageBase &mb )
 
 void SpooferDispatcher :: spoofMessage( MessageBase &mb, const CallbackBase &cb )
 {
-   DataLog( log_level_message_spoof_info ) << "Spoofing message " << hex << mb.msgId() 
+   DataLog( log_level_message_spoof_info ) << "Spoofing message " << hex << mb.msgId() << dec
                                            << " (" << mb.messageName() << ")" << endmsg;
 
    //
@@ -79,7 +80,7 @@ void SpooferDispatcher :: spoofMessage( MessageBase &mb, const CallbackBase &cb 
 
 void SpooferDispatcher :: despoofMessage( MessageBase &mb )
 {
-   DataLog( log_level_message_spoof_info ) << "Despoofing message " << hex << mb.msgId() 
+   DataLog( log_level_message_spoof_info ) << "Despoofing message " << hex << mb.msgId() << dec
                                            << " (" << mb.messageName() << ")" << endmsg;
 
    //
@@ -136,6 +137,70 @@ void SpooferDispatcher :: sendCorruptMessage( MessageBase &mb )
       MessageSystem::MsgSystem()->dispatcher().send( *(*pckt) );
 
       DataLog( log_level_message_spoof_info ) << "sendCorruptMessage:msg send " << endmsg;
+   }
+}
+
+void SpooferDispatcher::sendLatentMessage( MessageBase& mb,
+                                           unsigned long msecsDelay,
+                                           bool useSentTime )
+{
+   const long E3( 1000 );       // 1x10^3
+   const long E6( 1000000 );    // 1x10^6
+   const long E9( 1000000000 ); // 1x10^9
+
+   struct timespec fakeTime = {0};
+   if ( useSentTime )
+   {
+      fakeTime = mb.sentTime();
+   }
+   else // Base the latency on current clock time.
+   {
+      // Get the current tick count and the initialization time
+      rawTime  currentTickCount;
+      auxClockTimeGet( &currentTickCount );
+      auxClockInitTimeGet( &fakeTime );
+
+      // Calculate the current time
+      fakeTime.tv_sec  += currentTickCount.sec;
+      fakeTime.tv_nsec += currentTickCount.nanosec;
+      if ( fakeTime.tv_nsec >= E9 )
+      {
+         fakeTime.tv_nsec -= E9;
+         ++fakeTime.tv_sec;
+      }
+   }
+
+   // fake the latency by subtracting the delay from the original sent time
+   fakeTime.tv_sec  -= (msecsDelay / E3);
+   fakeTime.tv_nsec -= (msecsDelay % E3) * E6;
+   if ( fakeTime.tv_nsec < 0 )
+   {
+      fakeTime.tv_nsec += E9;
+      --fakeTime.tv_sec;
+   }
+
+#if 0
+   // Check our work for debug using latency()
+   struct timespec origTime = mb._SentTime;
+   mb._SentTime = fakeTime;
+   DataLog( log_level_message_spoof_info ) << __FUNCTION__ << "(): spoofing latency="
+         << mb.latency() << " (delay=" << msecsDelay << " msecs) on node=" << mb.originNode()
+         << " mid=0x" << hex << mb.msgId() << dec << " : " << mb.messageName()
+         << endmsg;
+   mb._SentTime = origTime;
+#endif
+
+   //
+   // Change the message packet list send times and send them along
+   //
+   list< MessagePacket* >::iterator pckt;
+   for ( pckt  = mb._PacketList.begin();
+         pckt != mb._PacketList.end() ;
+         ++pckt )
+   {
+      (*pckt)->msgData().sendTime( fakeTime );
+      (*pckt)->updateCRC();
+      MessageSystem::MsgSystem()->dispatcher().send( *(*pckt) );
    }
 }
 

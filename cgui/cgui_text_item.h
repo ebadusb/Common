@@ -2,38 +2,6 @@
  *	Copyright (c) 2005 by Gambro BCT, Inc.  All rights reserved.
  *
  * $Header$
- * $Log: cgui_text_item.h $
- * Revision 1.15  2009/04/13 22:34:00Z  rm10919
- * Add getFontSize. for IT 7042
- * Revision 1.14  2007/06/04 22:04:21Z  wms10235
- * IT83 - Updates for the common GUI project to use the unicode string class
- * Revision 1.13  2007/04/30 21:18:28Z  wms10235
- * IT2354 - Updated the getTextItem() method to be a static
- * Revision 1.12  2007/04/26 16:47:20Z  wms10235
- * IT2354 - Updated the assignment operator and copy contructor
- * Revision 1.11  2007/02/21 21:06:53Z  rm10919
- * Add methods for variable substitution and stringLength.  Fix copy constructor and equals operator.
- * Revision 1.10  2006/07/13 20:31:51Z  cf10242
- * IT 1220: eliminate private copy contrstuctor
- * Revision 1.9  2006/07/12 23:36:08Z  rm10919
- * Updates from adding cguiListBox class.
- * Revision 1.8  2006/06/28 00:56:37Z  MS10234
- * - add include file for cgui_string_data_container.h
- * Revision 1.7  2005/11/22 00:34:43Z  rm10919
- * Get data item database to work with software layers.
- * Revision 1.6  2005/08/01 23:31:39Z  cf10242
- * Revision 1.5  2005/04/26 23:16:48Z  rm10919
- * Made changes to cgui_text and cgui_text_item, plus added
- * classes for variable substitution in text strings.
- * Revision 1.4  2005/04/04 18:03:53Z  rm10919
- * Add int getLength(void) method for text string.
- * Revision 1.3  2005/03/15 00:21:36Z  rm10919
- * Change CGUIText to not add object to window object list of parent in constructor.
- * Revision 1.2  2005/02/21 17:17:13Z  cf10242
- * IT 133 - delete all allocated memory to avoid unrecovered memory
- * Revision 1.1  2005/01/31 17:36:39Z  rm10919
- * Initial revision
- *
  */
 
 #ifndef _CGUI_TEXT_ITEM_INCLUDE
@@ -45,11 +13,11 @@
 
 struct StylingRecord
 {
-	CGUIColor     color;       // color of the text as applied to whole string
-	unsigned int  attributes;  // attributes from the attribute enums above
-	CGUIRegion    region;      // placement in window or _owner relative
-	CGUIFontId    fontId;      // font used, this should use the _owner default value
-	int           fontSize;    // size of font most of the time
+	CGUIColor     color;       ///< color of the text as applied to whole string
+	unsigned int  attributes;  ///< bits are defined in cgui_text.h
+	CGUIRegion    region;      ///< placement in window or _owner relative
+	CGUIFontId    fontId;      ///< font used, this should use the _owner default value
+	int           fontSize;    ///< size of font most of the time
 };
 
 //

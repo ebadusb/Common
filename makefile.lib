@@ -1,16 +1,9 @@
-# @(#) $Header$
+################################################################################
 #
 # Makefile.lib - common makefile for libraries
 #
-# $Log: makefile.lib $
-# Revision 1.4  2002/09/11 16:10:56  jl11312
-# - corrected file suffix for assembly language files
-# Revision 1.3  2002/08/15 20:46:32  jl11312
-# - added support for BUILD_TYPE=CLEAN
-# Revision 1.2  2002/04/19 17:28:54  jl11312
-# - moved output directory creation to .o build rule
-# Revision 1.1  2002/04/18 14:27:47  jl11312
-# Initial revision
+################################################################################
+
 #
 # This file should be included as the last line in makefile.vx
 # The following variables need to be defined
@@ -30,35 +23,54 @@
 #    
 LIB_OBJ := $(addprefix $(CPU)/, $(notdir $(LIB_C_FILES:.c=.o))) \
            $(addprefix $(CPU)/, $(notdir $(LIB_CXX_FILES:.cpp=.o))) \
-	   $(addprefix $(CPU)/, $(notdir $(LIB_S_FILES:.s=.o)))
+           $(addprefix $(CPU)/, $(notdir $(LIB_S_FILES:.s=.o)))
 
 DEPEND_CXX_FILES := $(addprefix .dfile/, $(notdir $(LIB_CXX_FILES:.cpp=.d)))
 DEPEND_C_FILES   := $(addprefix .dfile/, $(notdir $(LIB_C_FILES:.c=.d)))
 DEPEND_S_FILES   := $(addprefix .dfile/, $(notdir $(LIB_S_FILES:.s=.d)))
-LIB_DEPEND := $(DEPEND_CXX_FILES) $(DEPEND_C_FILES) $(DEPEND_S_FILES)
-LIB_ARCHIVE := $(ARCHIVE_DIR)/$(ARCHIVE_NAME)
+LIB_DEPEND       := $(DEPEND_CXX_FILES) $(DEPEND_C_FILES) $(DEPEND_S_FILES)
+LIB_ARCHIVE      := $(subst \,/,$(ARCHIVE_DIR)/$(ARCHIVE_NAME))
+# This alias prevents false circular dependency for 'lib:' when ARCHIVE_DIR=lib
+LIB_DIR_ALIAS    := $(subst \,/,$(ARCHIVE_DIR))/.
 
 .PHONY: lib
-lib : $(LIB_ARCHIVE)
-
-ifneq ($(ARCHIVE_TYPE),OBJFILE)
-$(LIB_ARCHIVE) : $(LIB_DEPEND) $(LIB_OBJ)
-	@if not exist $(ARCHIVE_DIR) mkdir $(ARCHIVE_DIR)
-	@rm -f $(subst \,/, $@)
-	$(AR) -rcs $@ $(LIB_OBJ)
+ifeq ($(BUILD_TYPE),CLEAN)
+lib : ;
 else
-$(LIB_ARCHIVE) : $(LIB_DEPEND) $(LIB_OBJ)
-	@if not exist $(ARCHIVE_DIR) mkdir $(ARCHIVE_DIR)
-	@rm -f $(subst \,/, $@)
-	$(LD) $(LDFLAGS) $(LIB_OBJ) -o $@
+lib : $(LIB_ARCHIVE)
 endif
+
+$(LIB_ARCHIVE) : $(LIB_DEPEND) $(LIB_OBJ) | $(LIB_DIR_ALIAS)
+  ifeq ($(TERSE),true)
+	@echo x Creating: $(@F)
+	@if not exist $(@D) echo z FYI_FIXME_FOR_PMAKE: mkdir $(@D) from $(BASEDIR) 
+  endif
+	@if not exist $(@D) mkdir $(subst /,\,$(@D))
+	@rm -f $@
+  ifneq ($(ARCHIVE_TYPE),OBJFILE)
+	$(Q)$(AR) -rcs $@ $(LIB_OBJ)
+  else
+	$(Q)$(LD) $(LDFLAGS) $(LIB_OBJ) -o $@
+  endif
+
+$(LIB_DEPEND) : | .dfile
+$(LIB_OBJ)    : | $(CPU)
+
+$(LIB_DIR_ALIAS) :
+  ifeq ($(TERSE),true)
+	@echo z Making directory: $@ from $(BASEDIR)
+  endif
+	$(Q)mkdir $(subst /,\,$@)
 
 ifeq ($(BUILD_TYPE),CLEAN)
 .PHONY: clean
-clean:
-	rm -f $(subst \,/, $(LIB_ARCHIVE))
-	rm -f $(subst \,/, $(COMMON_CLEAN_FILELIST))
-	rm -f $(subst \,/, $(ADDN_CLEAN))
+clean::
+  ifeq ($(TERSE),true)
+	@echo x Cleaning: $(BASEDIR)
+  endif
+	$(Q)rm -f $(subst \,/, $(LIB_ARCHIVE))
+	$(Q)rm -f $(subst \,/, $(COMMON_CLEAN_FILELIST))
+	$(Q)rm -f $(subst \,/, $(ADDN_CLEAN))
 endif
 
 ifneq ($(BUILD_TYPE),CLEAN)

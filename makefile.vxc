@@ -1,26 +1,22 @@
-# @(#) $Header$
+################################################################################
 #
 # Makefile.vxc - common makefile for common/vxWorks
 #
-# $Log: makefile.vxc $
-# Revision 1.8  2007/03/14 21:07:47Z  jmedusb
-# Added Check for reserved messages directory.
-# Revision 1.7  2007/02/20 22:54:02Z  wms10235
-# IT74 - Adding the firewire driver to the common build
-# Revision 1.6  2005/11/14 20:12:31Z  jl11312
-# - modified for Windows XP (IT 1077)
-# Revision 1.5  2004/12/02 22:05:09Z  jl11312
-# - removed BUILD_TYPE from list of changes that force a rebuild (IT 14)
-# Revision 1.4  2002/08/15 20:49:19Z  jl11312
-# - added support for addition option checking
-# - added a default rule to improve error reporting
-# Revision 1.3  2002/06/18 19:29:18  jl11312
-# - corrected comments
-# Revision 1.2  2002/05/16 17:39:25  jl11312
-# - allow for overrides of INCDIR variable
-# Revision 1.1  2002/04/18 14:27:46  jl11312
-# Initial revision
+################################################################################
+
 #
+# For makefile debugging:
+# - TERSE=true can be used to abbreviate echoed output (good for parallel builds);
+#   It defines $(Q) as an alias for make's recipe suppression prefix, '@';
+#   otherwise, Q is left undefined, such that it has no effect.
+# - BASEDIR is like `basename $PWD`, the tail portion of working directory.
+#
+ifeq ($(TERSE),true)
+ Q=@
+endif
+ifndef BASEDIR
+ BASEDIR := $(notdir $(shell cmd /c cd))
+endif
 
 #
 # After execution of these assignments, RMSGDIR_STATUS will hold
@@ -62,9 +58,8 @@ OLD_ADDN_OPT_TEST:= $(strip $(shell cat .opt/addn))
 
 #
 # If build options have changed, we need to force a rebuild.  We do it
-# by removing all of the dependency files.  The rule for rebuild each
-# dependency file in turn deletes the associated object file, so that
-# those will be rebuilt as well.  It is important that any target which
+# by removing all of the dependency and object files per the definition 
+# of COMMON_CLEAN_FILELIST. It is important that any target which
 # depends on an object file also has the .dfile file listed as a dependency
 # (before the .o file) to insure that this works correctly.
 #
@@ -133,7 +128,7 @@ else
 	@echo $(COMDIR_STATUS): $(COMDIR)
     endif
     ifdef FORCE_REBUILD
-	@echo Build settings changed - forcing rebuild of all targets
+	@echo Build settings changed - forcing rebuild of all targets in: $(BASEDIR)
       ifeq ($(ADDN_OPT_TEST),)
 	@echo Current build: "$(BUILD_TYPE)" "$(CPU)"
 	@echo Previous build: $(OLD_BUILD_TYPE) $(OLD_CPU)

@@ -1,32 +1,43 @@
-# @(#) $Header$
+################################################################################
 #
-# Makefile.builds_app - common makefile for vxWorks applications
+# Makefile.build_apps - common makefile for vxWorks applications
 #
-# $Log: makefile.build_apps $
-# Revision 1.3  2003/07/08 09:17:00  pn02526
-# Change to allow /'s in .out directory path for CES project.
-# Revision 1.2  2002/11/27 07:59:58  jl11312
-# - added command to remove intermediate files after app build
-# Revision 1.1  2002/08/15 20:20:41  jl11312
-# Initial revision
+# This file is post-processor for makefile.process_app. To build multiple
+# applications, include makefile.process_app after each set of APP_NAME
+# variables. Then include makefile.build_apps to finalize things. 
 #
+################################################################################
 
 .PHONY: clean
-clean:
-	rm -f $(subst \,/, $(COMMON_CLEAN_FILELIST))
-	rm -f $(subst \,/, $(ADDN_CLEAN))
-	rm -f $(subst \,/, $(APP_LIST))
+clean::
+  ifeq ($(TERSE),true)
+	@echo x Cleaning: $(BASEDIR)
+  endif
+	$(Q)rm -f $(subst \,/, $(COMMON_CLEAN_FILELIST))
+	$(Q)rm -f $(subst \,/, $(ADDN_CLEAN))
+	$(Q)rm -f $(subst \,/, $(APP_LIST))
 ifneq ($(strip $(MAP_LIST)),)
-	rm -f $(subst \,/, $(MAP_LIST))
+	$(Q)rm -f $(subst \,/, $(MAP_LIST))
 endif 
 
-$(APP_LIST) :
+$(APP_LIST) : | $(APP_DIRS)
+  ifeq ($(TERSE),true)
+	@echo x Linking: $(@F) from $(BASEDIR)
+	@if not exist $(@D) echo y FYI_FIXME_FOR_PMAKE: mkdir $(@D) from $(BASEDIR)
+  else
 	@echo Building $(*F).out
-	@if not exist $(subst /,\, $($(*F)_dir)) mkdir $(subst /,\, $($(*F)_dir))
-	@rm -f $@ $(CPU)/.ctdt.c $(CPU)/.ctdt.o $(CPU)/.partialImage.o
-	$(LD) $(LDFLAGS) $($(*F)_OBJS) $($(*F)_LIB_LIST_OPT) -( $($(*F)_libs) -) -o $(CPU)/.partialImage.o
-	$(NM) $(CPU)/.partialImage.o | $(MUNCH) > $(CPU)/.ctdt.c
-	$(CC) -fdollars-in-identifiers $(CXXFLAGS) $(CPU)/.ctdt.c -o $(CPU)/.ctdt.o
-	$(LD) $(LDFLAGS) $(LD_ARCH_RELOC) $($(*F)_MAP_OPT) $(CPU)/.partialImage.o $(CPU)/.ctdt.o -o $@
-	@rm -f $(CPU)/.ctdt.c $(CPU)/.ctdt.o $(CPU)/.partialImage.o
+  endif
+	@if not exist $(@D) mkdir $(subst /,\, $(@D))
+	@rm -f $@ $(addprefix $(CPU)/, $(*F).ctdt.c $(*F).ctdt.o $(*F).partialImage.o)
+	$(Q)$(LD) $(LDFLAGS) $($(*F)_OBJS) $($(*F)_LIB_LIST_OPT) -( $($(*F)_libs) -) -o $(CPU)/$(*F).partialImage.o
+	$(Q)$(NM) $(CPU)/$(*F).partialImage.o | $(MUNCH) > $(CPU)/$(*F).ctdt.c
+	$(Q)$(CC) -fdollars-in-identifiers $(CXXFLAGS) $(CPU)/$(*F).ctdt.c -o $(CPU)/$(*F).ctdt.o
+	$(Q)$(LD) $(LDFLAGS) $(LD_ARCH_RELOC) $($(*F)_MAP_OPT) $(CPU)/$(*F).partialImage.o $(CPU)/$(*F).ctdt.o -o $@
+	@rm -f $(addprefix $(CPU)/, $(*F).ctdt.c $(*F).ctdt.o $(*F).partialImage.o)
+
+$(APP_DIRS) :
+  ifeq ($(TERSE),true)
+	@echo y Making directory: $(BASEDIR)/$@
+  endif
+	$(Q)mkdir $(subst /,\,$@)
 

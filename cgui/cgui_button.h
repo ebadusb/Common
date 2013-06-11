@@ -4,65 +4,6 @@
  *  $Header$
  *  This file defines the base class for all button styles in the common GUI.  An object of this class types
  *  can be used to generate a standard button.
- *
- *  $Log: cgui_button.h $
- *  Revision 1.28  2009/01/08 00:55:20Z  rm10919
- *  Updates and bug fixes for shaded buttons.
- *  Revision 1.27  2008/11/13 20:31:23Z  rm10919
- *  Add initializer to button data struct. IT6488
- *  Revision 1.26  2008/11/06 22:24:15Z  rm10919
- *  Add transparent and shaded bitmaps and shaded buttons.
- *  Revision 1.25  2008/05/20 20:29:20Z  jl11312
- *  - corrected handling of alternate logging text
- *  Revision 1.24  2006/11/13 20:21:14Z  jd11007
- *  IT 65 - Memory leak fixes.
- *  Revision 1.23  2006/11/01 16:35:34Z  rm10919
- *  Add enableWhenPressed to have enable bitmap move to front regardless of button state.
- *  Revision 1.22  2006/10/11 21:33:15Z  rm10919
- *  Take account for vMargin and hMargin in determining text region.
- *  Revision 1.21  2006/10/07 19:27:41Z  cf10242
- *  IT 59: generic button press logging
- *  Revision 1.20  2006/09/18 23:38:28Z  cf10242
- *  IT 56: allow button to be attached to root window
- *  Revision 1.19  2006/06/16 16:10:07Z  MS10234
- *   - add a variable to keep the state of the button based on the event callback
- *  Revision 1.18  2006/05/15 21:48:45Z  rm10919
- *  Add setTextColor method to change text color for all states of the button.
- *  Revision 1.17  2005/09/30 22:40:42Z  rm10919
- *  Get the variable database working!
- *  Revision 1.16  2005/04/26 23:16:47Z  rm10919
- *  Made changes to cgui_text and cgui_text_item, plus added
- *  classes for variable substitution in text strings.
- *  Revision 1.15  2005/04/04 18:02:57Z  rm10919
- *  Add ability to add char * strings to button text.
- *  Revision 1.14  2005/03/15 00:21:35Z  rm10919
- *  Change CGUIText to not add object to window object list of parent in constructor.
- *  Revision 1.13  2005/02/21 17:17:11Z  cf10242
- *  IT 133 - delete all allocated memory to avoid unrecovered memory
- *  Revision 1.12  2005/01/28 23:52:17Z  rm10919
- *  CGUITextItem class changed and put into own file.
- *  Revision 1.11  2005/01/03 20:41:25Z  cf10242
- *  add an enablePressed method a button can shown as enabled and pressed
- *  Revision 1.10  2004/12/17 15:10:18Z  rm10919
- *  Change disableIcon to public not protected.
- *  Revision 1.9  2004/11/19 18:14:47Z  cf10242
- *  Integration checkin
- *  Revision 1.8  2004/11/18 22:33:37Z  rm10919
- *  Added ability to modify button text.
- *  Revision 1.7  2004/11/04 20:19:08Z  rm10919
- *  Common updates and changes.
- *  Revision 1.6  2004/11/02 20:48:19Z  rm10919
- *  change setText() fucntions & add checks for bitmaps in enable() & disable().
- *  Revision 1.5  2004/11/01 17:27:22Z  cf10242
- *  Change TextItem to CGUITextItem
- *  Revision 1.4  2004/10/29 15:11:13Z  rm10919
- *  Revision 1.3  2004/10/22 20:14:34Z  rm10919
- *  CGUIButton updates and changes.
- *  Revision 1.2  2004/09/30 17:00:52Z  cf10242
- *  Correct for initial make to work
- *  Revision 1.1  2004/09/20 18:18:04Z  rm10919
- *  Initial revision
- *
  */
 #ifndef _CGUI_BUTTON_INCLUDE
 #define _CGUI_BUTTON_INCLUDE
@@ -236,6 +177,8 @@ public:
    // ENABLE
    // set the state of the button to enabled.  If currently invisible, the button is made visible
    void enable(void);
+   // enable or disable
+   void enable(bool beEnabled);
 
    // ENABLEWHENPRESSED
    // set the state of the button to enabled with enable bitmap on top.  If currently invisible, the button is made visible.

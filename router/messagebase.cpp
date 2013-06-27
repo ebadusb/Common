@@ -389,9 +389,13 @@ bool MessageBase::notify( MessageBase &me, const MessagePacket &mp, const Callba
                   && (*pckt)->msgData().nodeId() == mp.msgData().nodeId() ) ) // wasn't from the same sender
           {
              allMsgsIn = false;
-             DataLog(log_level_message_system_error) << "Message clash for Id=" << hex << (*pckt)->msgData().msgId()
-                                    << ", sender1=" << (*pckt)->msgData().taskId() << " node1=" << mp.msgData().nodeId() 
-                                    << " and sender2=" <<  mp.msgData().taskId() << " node2=" << mp.msgData().nodeId() << endmsg;
+             DataLog(log_level_message_system_error) << "Message clash for message " << me._MessageName
+                                                     << '(' << me._PacketList.size() << " packets) "
+                                                     << ", Id=" << hex << (*pckt)->msgData().msgId()
+                                                     << ", sender1=" << (*pckt)->msgData().taskId() 
+                                                     << " node1=" << mp.msgData().nodeId() 
+                                                     << " and sender2=" <<  mp.msgData().taskId() 
+                                                     << " node2=" << mp.msgData().nodeId() << endmsg;
           }
       }
    }

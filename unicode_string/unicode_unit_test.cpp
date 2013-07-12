@@ -312,6 +312,42 @@ void unicodeStringUT(void)
 			printf("passed\n");
 		}
 
+      // UTF8 conversion check
+      StringChar testUtf8[5];
+
+      testUtf8[0] = 0x41; // A
+      testUtf8[1] = 0x42; // B
+      testUtf8[2] = 0x43; // C
+      testUtf8[3] = 0x2103; // degree celsius
+      testUtf8[4] = 0x0; // terminator
+
+      UnicodeString checkUtf8 = testUtf8;
+      std::string utf8String = checkUtf8.getUTF8();
+      const unsigned char* utf8ConvStr = (const unsigned char*)utf8String.c_str();
+
+      if ( utf8String.size() == 6 &&
+           utf8ConvStr[0] == 0x41 &&
+           utf8ConvStr[1] == 0x42 &&
+           utf8ConvStr[2] == 0x43 &&
+           utf8ConvStr[3] == 0xE2 &&
+           utf8ConvStr[4] == 0x84 &&
+           utf8ConvStr[5] == 0x83)
+      {
+         printf("Testing Unicode string UTF8 conversion:passed (");
+      }
+      else
+      {
+         printf("Testing Unicode string UTF8 conversion:failed (");
+      }
+
+      for (unsigned int i=0; i<utf8String.size(); i++)
+      {
+         unsigned int tmp = utf8ConvStr[i];
+         printf("0x%X ", tmp);
+      }
+
+      printf(")\n");
+
 	} while(false);
 
 	if( pTestStr3 )

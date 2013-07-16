@@ -19,7 +19,7 @@ using ICSharpCode.SharpZipLib.GZip;
 
 #endregion
 
-namespace Log_Grep
+namespace DLGrep
 {
 	#region File Manager Class
 	/// <summary>
@@ -27,38 +27,30 @@ namespace Log_Grep
 	/// This class will take care of getting filenames of files that need to be searched.
 	/// The main reason for this class is to keep it seperate from the main code.
 	/// </summary>
-	/// 
-
-
-
+	///
 	class FileManager
 	{
 		public bool done = false;
-		Stack FileStack =new Stack();
+		Stack FileStack = new Stack();
 
 		// this function returns the next file that is found
-		public string Next()
+		public FileInfo Next()
 		{
-			object Current;
-			DirectoryInfo CurrentDir;
-			FileSystemInfo[] Items;
-			Current=FileStack.Pop();
-			
-			
+            object Current = FileStack.Pop();
 			if (Current is FileInfo)
 			{
-				Debug.WriteLine("test:file name");
+				Debug.WriteLine("test: file FullName");
 				Debug.WriteLine(((FileInfo)Current).FullName);
-				return ((FileInfo)Current).FullName;
+                return (FileInfo)Current;
 			}
 			else if (Current is DirectoryInfo)
 			{
-				CurrentDir=(DirectoryInfo)Current;
+                DirectoryInfo CurrentDir = (DirectoryInfo)Current;
 				Debug.WriteLine("test: directory name");
 				Debug.WriteLine(CurrentDir.Name);
 				try
 				{
-					Items = CurrentDir.GetFileSystemInfos();
+                    FileSystemInfo[] Items = CurrentDir.GetFileSystemInfos();
 					foreach ( FileSystemInfo Item in Items)
 					{
 						FileStack.Push(Item);
@@ -70,8 +62,7 @@ namespace Log_Grep
 							Debug.WriteLine(((DirectoryInfo)Item).FullName);
 						else
 							Debug.WriteLine("WTF");
-
-							#endregion
+                        #endregion
 					}
 					return Next();
 				}
@@ -79,44 +70,44 @@ namespace Log_Grep
 				{
 					return Next();
 				}
-
 			}
 			else if (Current is String)
 			{
 				done = true;
 				FileStack.Push(Current);
-				return "EOS";
+                return new FileInfo("EOS");
 			}
 			else
 			{
-				return "EOS";
+                return new FileInfo("EOS");
 			}
 		}
 		
-		// this unction initiates the file stack, and puts the first few bits on it
-		public void Initialize(string FileName)
+		// this function initiates the file stack, and puts the first few bits on it.
+		public bool Initialize(string FileName)
 		{
+            bool okay = true;
 			FileInfo FileArgument;
 			DirectoryInfo DirectoryArgument;
-			if (Directory.Exists(FileName))
+
+            FileStack.Push( "EOS" );               // bottom of the stack
+
+            if (Directory.Exists(FileName))
 			{
 				DirectoryArgument = new DirectoryInfo(FileName);
-				FileStack.Push("EOS");
 				FileStack.Push(DirectoryArgument);
 			}
-			else if (File.Exists(FileName))
-			{
-				FileArgument = new FileInfo(FileName);
-				FileStack.Push("EOS");
-				FileStack.Push(FileArgument);
-			}
-			else
-			{
-				FileStack.Push("EOS");
-			}
+            else if (File.Exists(FileName))
+            {
+                FileArgument = new FileInfo(FileName);
+                FileStack.Push(FileArgument);
+            }
+            else
+            {
+                okay = false;
+            }
+            return okay;
 		}
-
-		
 	}
 	#endregion
 }

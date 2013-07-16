@@ -2,6 +2,7 @@
 using System;
 using System.Text;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -20,7 +21,7 @@ using ICSharpCode.SharpZipLib.GZip;
 #endregion
 
 
-namespace Log_Grep
+namespace DLGrep
 {
 	#region Log Time Class
 	/// <summary>
@@ -42,9 +43,9 @@ namespace Log_Grep
 	/// LogDefinition.
 	/// This is a utility class that takes care of the IO to the log file. 
 	/// There is a routine that opens the file, and there is a routine that
-	/// will read the file untill it gets a string message. If you reach the end 
-	/// of te file before you reach a stream message it will return an empty
-	/// string
+	/// will read the file until it gets a string message. If you reach the end 
+	/// of the file before you reach a stream message, it will return an empty
+	/// string.
 	/// </summary>
 	class LogDefinition
 	{
@@ -59,12 +60,8 @@ namespace Log_Grep
 		GZipInputStream GzipLogFile;
 		byte MagicByte=0xa5;		
 		MemoryStream LogFile;
-		// Console variables
 
-		
-		
-
-		// these variables are defined in the Start Of Log File Record
+        // these variables are defined in the Start Of Log File Record
 		int SizeOfChar, SizeOfInt,SizeOfLong,SizeOfFloat,SizeOfDouble,SizeOfDataLogTaskID;		
 		int SizeOfDataLogNodeID;
 
@@ -84,9 +81,16 @@ namespace Log_Grep
 		int SizeOfPeriodicLogItemRecord;
 		int SizeOfBinaryRecord;
 		LogTime ValueOfTime;
-		string NodeIDName="";
+        DateTime Time0;
+        int NodeID = 0;
+        string NodeIDName = "";
 		byte MajorVersion;
 		byte MinorVersion;
+
+        Dictionary<long, string> TaskIdMap = new Dictionary<long, string>();
+
+        int cntPrintRecs = 0;
+        int cntStreamRecs = 0;
 
 		// the return string for the read function
 		StringBuilder StreamString = new StringBuilder(1048576);
@@ -160,14 +164,14 @@ namespace Log_Grep
 				{
 					tempInt1=Log.Read(data,0,data.Length);
 					DecodedFileStream.Write(data,0,tempInt1);
-					i=i+tempInt1;
+					i += tempInt1;
 				}
 				else
 				{
 					tempInt1=Convert.ToInt32(Log.Length-i);
 					tempInt1=Log.Read(data,0,tempInt1);
 					DecodedFileStream.Write(data,0,tempInt1);
-					i=i+tempInt1;
+					i += tempInt1;
 				}
 			}
 			
@@ -184,13 +188,17 @@ namespace Log_Grep
 			#endregion
 
 			#region Plain Text Read
-			// first read the plain text w/ normal file I/O
-			done=false;
+			// first read the plain text w/ normal file I/O until we see: 0x1a 0x04 0x00
+            Debug.WriteLine("0---------1---------2---------3---------4---------5---------6---------7---------8---------9---------X");
+            done = false;
 			while(!done)
 			{
-				DecodedFileStream.Read(data,0,1);
-				Debug.Write(DecodedFileStream.Position + ":"+Convert.ToChar(data[0]));
-				if (DecodedFileStream.Position>=Log.Position)
+                if (DecodedFileStream.Position > 0 && DecodedFileStream.Position % 100 == 0) 
+                    Debug.WriteLine("[" + DecodedFileStream.Position + "]");
+                DecodedFileStream.Read(data, 0, 1);
+				Debug.Write(Convert.ToChar(data[0]));
+                // Debug.Write(DecodedFileStream.Position + ":" + Convert.ToChar(data[0]));
+                if (DecodedFileStream.Position >= Log.Position)
 				{
 					throw new IOException("Not a Dlog file");
 				}
@@ -208,14 +216,12 @@ namespace Log_Grep
 				}
 			}
 			#endregion
-
 			
 			#region Read the log settings
 			tempInt1=DecodedFileStream.Read(data,0,18);
-			#region DEBUG
-			 
+			#region DEBUG			 
 			{
-				Debug.WriteLine("first read successfull :");
+				Debug.WriteLine("\nfirst read successfull :");
 				Debug.WriteLine("  return Value of the read : "+tempInt1);
 				Debug.Write("  Data from the first read : ");
 				for (i=0;i<17;i++)
@@ -225,7 +231,6 @@ namespace Log_Grep
 				Debug.WriteLine(string.Format("{0,1:x}",data[17]));
 			}
 			#endregion
-
 			
 			// load the log settings
 			SizeOfChar=BitConverter.ToInt16(data,6);
@@ -249,7 +254,8 @@ namespace Log_Grep
 			DecodedFileStream.Read(data,0,tempInt1);
 			// read Node ID
 			DecodedFileStream.Read(data,0,SizeOfDataLogNodeID);
-			NodeIDName="";
+            NodeID = BitConverter.ToInt32(data, 0);  // hack: assuming 32-bit node id
+            NodeIDName = "";
 			for (i=0;i<SizeOfDataLogNodeID;i++)
 			{
 				NodeIDName=NodeIDName+data[i].ToString("X")+" ";
@@ -264,6 +270,9 @@ namespace Log_Grep
 			ValueOfTime.Hour=Convert.ToInt16(data[4]);
 			ValueOfTime.Minute=Convert.ToInt16(data[5]);
 			ValueOfTime.Second=Convert.ToInt16(data[6]);
+            Time0 = new DateTime(ValueOfTime.Year, ValueOfTime.Month, ValueOfTime.Day,
+                                 ValueOfTime.Hour, ValueOfTime.Minute, ValueOfTime.Second);
+
 			// find the length of the node name
 			DecodedFileStream.Read(data,0,2);
 			tempInt1=BitConverter.ToInt16(data,0);
@@ -298,7 +307,7 @@ namespace Log_Grep
 					Debug.Write(Convert.ToChar(data[i]));
 				}
 				Debug.WriteLine("");
-				Debug.WriteLine("  Network Node ID = "+ NodeIDName);
+				Debug.WriteLine("  Network Node ID = " + NodeIDName + " as Int32: " + NodeID);
 				Debug.WriteLine("End of Log File Header Information");
 			}
 			
@@ -306,17 +315,11 @@ namespace Log_Grep
 			Compute();
 			#endregion
 
-			
-
 			#region Open the Gzip file and loading it into memory
 			try
-			{
-				
+			{				
 				#region DEBUG
-				
-			{
-				Debug.WriteLine("Opening the Zlib stream");
-			}
+			    Debug.WriteLine("Opening the Zlib stream");
 				#endregion
 				GzipPosition=DecodedFileStream.Position;
 				GzipLogFile = new GZipInputStream(DecodedFileStream);
@@ -342,7 +345,7 @@ namespace Log_Grep
 				}
 				
 			}
-				#region catches
+			#region catches
 			catch (ApplicationException ApEx)
 			{
 				if (ApEx.Message == "Deflated stream ends early.")
@@ -384,55 +387,46 @@ namespace Log_Grep
 			#endregion
 
 		}
-
 		
-
-		
-		// this function will read the file untill it finds a stream record. this record is 
-		// passed back as the string. 
+		// This function will read the file until it finds a stream record.
+        // This record is passed back as the string. 
 		public string ReadMessage()
 		{
-			
-			
 			#region variables
 			#region tempVars
 			int tempInt1, tempInt2, i, tempInt3, index;// these are temporary variables to clean 
-			char tempChar;						// internal computation.
-			
+			char tempChar;						// internal computation.			
 			bool tempBool;
-			
 			#endregion
 			int ByteCount, TotalByteCount,type;		// these variables are used to navigate stream records.
-
-			int LogType = 0;					// 2 byte value that specifies record type being read.
+			int LogType = 0;				    	// 2 byte value that specifies record type being read.
 			long RecordSecond, RecordNanosecond, RecordLevelID, RecordTaskID, RecordNodeID, RecordLine;
 			string RecordFile;
-			bool done=false;					// this is a controll variable.
-			StreamString.Remove(0,StreamString.Length);
+            double dtMsecs;
+            DateTime timeStamp;
+            string taskName;
+			bool done = false;					// this is a control variable.
 			#endregion
 			
 			// rebuild and used as a return value.]
-			#region DEBUG
-			 Debug.WriteLine("Entering the main loop in ReadMessages");
+            StreamString.Remove(0, StreamString.Length);
+            
+            #region DEBUG
+            Debug.WriteLine("");
+            Debug.WriteLine("Entering the main loop in ReadMessages");
 			#endregion
 			while ( !done )
 			{
 				if ( LogFile.Read(data,0,2) <= 0 ) break;
 				LogType=BitConverter.ToUInt16(data,0);
 				#region DEBUG
-				
-				Debug.WriteLine("");
-				Debug.Write("Log Type HEX = ");
-				Debug.Write(string.Format("{0,1:x} ",data[0]));
-				Debug.WriteLine(string.Format("{0,1:x}",data[1]));
-				Debug.WriteLine("Log Type = " + LogType);
-		
+                Debug.Write(string.Format("LogType 0x{0:x} -> ", LogType));
 				#endregion
 				switch ( LogType )
 				{
 					case 0x5501: // Log level record
 						#region Log Level Record
-						 Debug.WriteLine("Log Level Record");
+                        Debug.WriteLine("Log Level Record");
 						LogFile.Read(data,0,SizeOfLogLevelRecord);
 						
 						Debug.WriteLine("Hex Dump :");
@@ -444,10 +438,13 @@ namespace Log_Grep
 						LogFile.Read(data,0,tempInt1);
 						break;
 						#endregion
-					case 0x5502: // Print record
-						//old
-						#region Print record
-						/*
+
+                    case 0x5502: // Print record
+                        cntPrintRecs++;
+
+                        //old
+                        #region Print record (old)
+                        /*
 						 Debug.WriteLine("Print Record");
 						LogFile.Read(data,0,SizeOfPrintOutputRecord);
 						#region DEBUG
@@ -677,11 +674,10 @@ namespace Log_Grep
 						}
 						*/
 						#endregion
-						
-						
+							
 						//new
-						#region parse
-						//Debug.WriteLine("Print Record");
+						#region Print record (new)
+                        Debug.WriteLine("Print Record");
 						LogFile.Read(data,0,SizeOfPrintOutputRecord);
 						#region DEBUG
 						//Debug.WriteLine("Size of Print Output Record = "+SizeOfPrintOutputRecord);
@@ -692,40 +688,40 @@ namespace Log_Grep
 						RecordNanosecond=BitConverter.ToInt32(data,4);
 						RecordLevelID=BitConverter.ToInt16(data,8);
 						StreamString.Remove(0,StreamString.Length);
-					switch(SizeOfDataLogTaskID)
-					{
-						case 0:
-							RecordTaskID=0;
-							break;
-						case 2:
-							RecordTaskID=BitConverter.ToInt16(data,10);
-							break;
-						case 4:
-							RecordTaskID=BitConverter.ToInt32(data,10);
-							break;
-						case 8:
-							RecordTaskID=BitConverter.ToInt64(data,10);
-							break;
-						default:
-							throw new Exception("Bad Node ID");
-					}
-					switch(SizeOfDataLogNodeID)
-					{
-						case 0:
-							RecordNodeID=0;
-							break;
-						case 2:
-							RecordNodeID=BitConverter.ToInt16(data,(10+SizeOfDataLogTaskID));
-							break;
-						case 4:
-							RecordNodeID=BitConverter.ToInt32(data,(10+SizeOfDataLogTaskID));
-							break;
-						case 8:
-							RecordNodeID=BitConverter.ToInt64(data,(10+SizeOfDataLogTaskID));
-							break;
-						default:
-							throw new Exception("Bad Node ID");
-					}
+					    switch(SizeOfDataLogTaskID)
+					    {
+						    case 0:
+							    RecordTaskID=0;
+							    break;
+						    case 2:
+							    RecordTaskID=BitConverter.ToInt16(data,10);
+							    break;
+						    case 4:
+							    RecordTaskID=BitConverter.ToInt32(data,10);
+							    break;
+						    case 8:
+							    RecordTaskID=BitConverter.ToInt64(data,10);
+							    break;
+						    default:
+							    throw new Exception("Bad Node ID");
+					    }
+					    switch(SizeOfDataLogNodeID)
+					    {
+						    case 0:
+							    RecordNodeID=0;
+							    break;
+						    case 2:
+							    RecordNodeID=BitConverter.ToInt16(data,(10+SizeOfDataLogTaskID));
+							    break;
+						    case 4:
+							    RecordNodeID=BitConverter.ToInt32(data,(10+SizeOfDataLogTaskID));
+							    break;
+						    case 8:
+							    RecordNodeID=BitConverter.ToInt64(data,(10+SizeOfDataLogTaskID));
+							    break;
+						    default:
+							    throw new Exception("Bad Node ID");
+					    }
 						tempInt1=BitConverter.ToUInt16(data,(SizeOfPrintOutputRecord-6));
 						tempInt2=BitConverter.ToUInt16(data,(SizeOfPrintOutputRecord-4));
 						LogFile.Read(dataSave,0,tempInt1);
@@ -751,10 +747,18 @@ namespace Log_Grep
 						//Debug.WriteLine("Line number : "+RecordLine);
 						#endregion
 						StreamString.Remove(0,StreamString.Length);
-						index=0;
+
+                        // Prepend the timestamp, task name and file info so that they are grep-able too
+                        dtMsecs = RecordSecond * 1000 + RecordNanosecond / 1000000;
+                        timeStamp = Time0.AddMilliseconds(dtMsecs);
+                        taskName = TaskIdMap.ContainsKey(RecordTaskID) ? TaskIdMap[RecordTaskID] : "taskNA";
+                        StreamString.Append(timeStamp.ToString("yyyy'/'MM'/'dd'_'HH':'mm':'ss'.'fffK"));
+                        StreamString.AppendFormat(" <{0},{1}:{2}> ", taskName, RecordFile, RecordLine);
+
+                        index = 0;
 						while(index<tempInt1)
 						{
-							#region prinf printing
+							#region printf printing
 							if(Convert.ToChar(dataSave[index])=='%')
 							{
 								index++;
@@ -765,10 +769,8 @@ namespace Log_Grep
 									{
 										// TODO Clean up this hack
 										//Debug.Write(".");
-										if ((Convert.ToChar(dataSave[index])=='0')||(Convert.ToChar(dataSave[index])=='1')||(Convert.ToChar(dataSave[index])=='2')
-										 || (Convert.ToChar(dataSave[index])=='3')||(Convert.ToChar(dataSave[index])=='4')||(Convert.ToChar(dataSave[index])=='5')
-										 || (Convert.ToChar(dataSave[index])=='6')||(Convert.ToChar(dataSave[index])=='7')||(Convert.ToChar(dataSave[index])=='8')
-										 || (Convert.ToChar(dataSave[index])=='9'))
+                                        char c = Convert.ToChar(dataSave[index]);
+										if (c >= '0' || c <= '9')
 										{
 											//Debug.WriteLine(Convert.ToChar(dataSave[index]));
 											dataSave[index]=0x25;
@@ -897,8 +899,8 @@ namespace Log_Grep
 									}
 								}
 							}
-								#endregion
-								#region sting printing 
+							#endregion
+							#region string printing 
 							else
 							{
 								tempChar = Convert.ToChar(dataSave[index++]);
@@ -906,12 +908,14 @@ namespace Log_Grep
 							}
 							#endregion
 						}
-						#endregion
+                        #endregion
 						return StreamString.ToString();		
-					case 0x5503: // Stream record
+
+                    case 0x5503: // Stream record
+                        cntStreamRecs++;
 						
 						//old:
-						# region Stream Records
+						# region Stream record (old)
 						/*
 						Debug.WriteLine("Stream Record");
 						LogFile.Read(data,0,SizeOfStreamOutputRecord);
@@ -1014,47 +1018,47 @@ namespace Log_Grep
 						#endregion
 
 						//new
-						# region Parse
-						//Debug.WriteLine("Stream Record");
+						# region Stream record (new)
+						Debug.WriteLine("Stream Record");
 						LogFile.Read(data,0,SizeOfStreamOutputRecord);
 						RecordSecond=BitConverter.ToInt32(data,0);
 						RecordNanosecond=BitConverter.ToInt32(data,4);
 						RecordLevelID=BitConverter.ToInt16(data,8);
 						StreamString.Remove(0,StreamString.Length);
-					switch(SizeOfDataLogTaskID)
-					{
-						case 0:
-							RecordTaskID=0;
-							break;
-						case 2:
-							RecordTaskID=BitConverter.ToInt16(data,10);
-							break;
-						case 4:
-							RecordTaskID=BitConverter.ToInt32(data,10);
-							break;
-						case 8:
-							RecordTaskID=BitConverter.ToInt64(data,10);
-							break;
-						default:
-							throw new Exception("Bad Node ID");
-					}
-					switch(SizeOfDataLogNodeID)
-					{
-						case 0:
-							RecordNodeID=0;
-							break;
-						case 2:
-							RecordNodeID=BitConverter.ToInt16(data,(10+SizeOfDataLogTaskID));
-							break;
-						case 4:
-							RecordNodeID=BitConverter.ToInt32(data,(10+SizeOfDataLogTaskID));
-							break;
-						case 8:
-							RecordNodeID=BitConverter.ToInt64(data,(10+SizeOfDataLogTaskID));
-							break;
-						default:
-							throw new Exception("Bad Node ID");
-					}
+					    switch(SizeOfDataLogTaskID)
+					    {
+						    case 0:
+							    RecordTaskID=0;
+							    break;
+						    case 2:
+							    RecordTaskID=BitConverter.ToInt16(data,10);
+							    break;
+						    case 4:
+							    RecordTaskID=BitConverter.ToInt32(data,10);
+							    break;
+						    case 8:
+							    RecordTaskID=BitConverter.ToInt64(data,10);
+							    break;
+						    default:
+							    throw new Exception("Bad Node ID");
+					    }
+					    switch(SizeOfDataLogNodeID)
+					    {
+						    case 0:
+							    RecordNodeID=0;
+							    break;
+						    case 2:
+							    RecordNodeID=BitConverter.ToInt16(data,(10+SizeOfDataLogTaskID));
+							    break;
+						    case 4:
+							    RecordNodeID=BitConverter.ToInt32(data,(10+SizeOfDataLogTaskID));
+							    break;
+						    case 8:
+							    RecordNodeID=BitConverter.ToInt64(data,(10+SizeOfDataLogTaskID));
+							    break;
+						    default:
+							    throw new Exception("Bad Node ID");
+					    }
 							
 						// retrieve the filename "filename(line):"
 						tempInt1=BitConverter.ToUInt16(data,(SizeOfStreamOutputRecord-4));
@@ -1064,6 +1068,14 @@ namespace Log_Grep
 						RecordFile=StreamString.ToString();
 						RecordLine=tempInt2;
 						StreamString.Remove(0,StreamString.Length);
+
+                        // Prepend the timestamp, task name and file info so that they are grep-able too
+                        dtMsecs = RecordSecond * 1000 + RecordNanosecond / 1000000;
+                        timeStamp = Time0.AddMilliseconds(dtMsecs);
+                        taskName = TaskIdMap.ContainsKey(RecordTaskID) ? TaskIdMap[RecordTaskID] : "taskNA";
+                        StreamString.Append( timeStamp.ToString("yyyy'/'MM'/'dd'_'HH':'mm':'ss'.'fffK") );
+                        StreamString.AppendFormat(" <{0},{1}:{2}> ", taskName, RecordFile, RecordLine);
+
 						#region Debug
 						//Debug.WriteLine("File Name  :"+RecordFile);
 						//Debug.WriteLine("File Line  :"+RecordLine);
@@ -1089,7 +1101,6 @@ namespace Log_Grep
 
 							switch (type)
 							{
-
 								case 1: // signed char
 								case 2: //unsigned char
 									StreamString.Append(Convert.ToChar(data[ByteCount]));
@@ -1137,21 +1148,18 @@ namespace Log_Grep
 								case 101: // change precision setting
 									ByteCount = 1+ByteCount;							
 									break;
-								default:
-									
-								{
+								default:					
 									//Debug.WriteLine("");
 									//Debug.WriteLine("Bad argument type : "+type);
-								}
-
 									break;
 							}
 						}
 						#endregion
 						return StreamString.ToString();
-					case 0x5504: // Periodic log output record
+
+                    case 0x5504: // Periodic log output record
 						#region Periodic log output record
-						 Debug.WriteLine("Periodic Log Output Record");
+                        Debug.WriteLine("Periodic Log Output Record");
 						LogFile.Read(data,0,SizeOfPeriodicLogOutputRecord);
 						tempInt1=BitConverter.ToUInt16(data,(SizeOfPeriodicLogOutputRecord-2));
 						for(i=0;i<tempInt1;i++)
@@ -1162,17 +1170,19 @@ namespace Log_Grep
 						}
 						break;
 						#endregion
-					case 0x5505: //Periodic set record
+
+                    case 0x5505: //Periodic set record
 						#region Periodic set record
-						 Debug.WriteLine("Periodic set Record");
+                        Debug.WriteLine("Periodic set Record");
 						LogFile.Read(data,0,SizeOfPeriodicSetRecord);
 						tempInt1=BitConverter.ToUInt16(data,(SizeOfPeriodicSetRecord-2));
 						LogFile.Read(data,0,tempInt1);
 						break;
 						#endregion
-					case 0x5506: // Periodic log item record
+
+                    case 0x5506: // Periodic log item record
 						#region Periodic Log Item Record
-						 Debug.WriteLine("Periodic Log Item Record");
+                        Debug.WriteLine("Periodic Log Item Record");
 						LogFile.Read(data,0,SizeOfPeriodicLogItemRecord);
 						tempInt3=BitConverter.ToInt16(data,SizeOfPeriodicLogItemRecord-6);
 						tempInt2=BitConverter.ToInt16(data,SizeOfPeriodicLogItemRecord-4);
@@ -1182,67 +1192,81 @@ namespace Log_Grep
 						LogFile.Read(data,0,tempInt3);
 						break;
 						#endregion
-					case 0x5507: // Task create record
+
+                    case 0x5507: // Task create record
 						#region Task create record
-						 Debug.WriteLine("Task Create Record");
+                        Debug.WriteLine("Task Create Record");
 						LogFile.Read(data,0,SizeOfCreateTaskRecord);
-						
-						tempInt1=BitConverter.ToUInt16(data,(SizeOfCreateTaskRecord-2));
-						#region DEBUG
-						Debug.WriteLine("Size of the string read = "+tempInt1);
+						RecordSecond=BitConverter.ToInt32(data,0);
+						RecordNanosecond=BitConverter.ToInt32(data,4);
+						RecordLevelID=BitConverter.ToInt16(data,8);
+                        RecordTaskID = BitConverter.ToInt32(data, 10);
+                        RecordNodeID = BitConverter.ToInt32(data, (10 + SizeOfDataLogTaskID));
+						tempInt1 = BitConverter.ToUInt16(data,(SizeOfCreateTaskRecord-2));
 						LogFile.Read(data,0,tempInt1);
-						
+						taskName = Encoding.ASCII.GetString(data, 0, tempInt1);
+
+                        #region DEBUG
+                        Debug.WriteLine("node: " + RecordNodeID + " taskId: " + RecordTaskID);
+                        Debug.WriteLine("taskName: " + taskName + " len: " + tempInt1);
 						#endregion
+                        
+                        // Add/Replace this task ID/Name pair to the map
+                        TaskIdMap[RecordTaskID] = taskName;
 						break;
 						#endregion
 						
 					case 0x5508: // Task delete record
 						#region Task Delete record
-						 Debug.WriteLine("Task Delete Record");
+                        Debug.WriteLine("Task Delete Record");
 						LogFile.Read(data,0,SizeOfTaskDeletedRecord);
 						break;
 						#endregion
-					case 0x5509: // Network log header
+
+                    case 0x5509: // Network log header
 						#region Network Log Header
-						 Debug.WriteLine("Network Log Record");
+                        Debug.WriteLine("Network Log Record");
 						LogFile.Read(data,0,SizeOfStartOfNetworkConnectionRecord);
 						tempInt1=BitConverter.ToUInt16(data,(SizeOfStartOfNetworkConnectionRecord-2));
 						LogFile.Read(data,0,tempInt1);
 						break;
 						#endregion
-					case 0x55f0: // Binary record
+
+                    case 0x55f0: // Binary record
 						#region Binary Record
-						 Debug.WriteLine("Binary Record Record");
+                        Debug.WriteLine("Binary Record Record");
 						LogFile.Read(data,0,SizeOfBinaryRecord); // from Spec
 						tempInt1=BitConverter.ToInt32(data,SizeOfBinaryRecord-4);
 						LogFile.Read(data,0,tempInt1);
 						break;
 						#endregion
-					case 0x55fd: // End of log file record
+
+                    case 0x55fd: // End of log file record
 						#region End of Log File Record
-						 Debug.WriteLine("End Of Log File Record");
+                        Debug.WriteLine("End Of Log File Record");
 						LogFile.Read(data,0,SizeOfEndOfLogFileRecord);
 						break;
 						#endregion
-					case 0x55fe: // Time stamp record
+
+                    case 0x55fe: // Time stamp record
 						#region Time Stamp Record
-						 Debug.WriteLine("Time Stamp Record");
+                        Debug.WriteLine("Time Stamp Record");
 						LogFile.Read(data,0,SizeOfTimeStampRecord);
 						
 						break;
 						#endregion
-					case 0x55ff: // Missing record definition
+
+                    case 0x55ff: // Missing record definition
 						#region DEBUG
-						 Debug.WriteLine("Missing Record Definition");
+                        Debug.WriteLine("Missing Record Definition");
 						#endregion
 						break;
 
 					default: 
 						#region DEBUG
-						 Debug.WriteLine("Missing Record Definition");
+                        Debug.WriteLine("Unknown Record Definition");
 						#endregion
-						throw new IOException("Missing Record");
-						
+						throw new IOException("Missing Record");						
 				}
 			}
 		

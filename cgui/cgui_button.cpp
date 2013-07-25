@@ -194,13 +194,13 @@ void CGUIButton::initializeButton( CGUIDisplay & display, CGUIWindow * parent, B
 	//
 	// Text stuff
 	//
-	if (buttonData.hMargin > 0)
+	if (buttonData.hMargin > 0 && _enabledBitmap)
 	{
 		_textRegion.x = buttonData.hMargin;      
 		_textRegion.width = _enabledBitmap->getRegion().width - 2 * buttonData.hMargin;
 		_haveTextRegion = true;
 	}
-	if (buttonData.vMargin > 0 )
+	if (buttonData.vMargin > 0 && _enabledBitmap)
 	{
 		_textRegion.y = buttonData.vMargin;
 		_textRegion.height = _enabledBitmap->getRegion().height - 2 * buttonData.hMargin;
@@ -223,8 +223,11 @@ void CGUIButton::initializeButton( CGUIDisplay & display, CGUIWindow * parent, B
 		}
 		else if ((buttonData.enabledStylingRecord->region.width == 0) && (buttonData.enabledStylingRecord->region.height == 0))
 		{
-			buttonData.enabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
-			buttonData.enabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
+		   if (_enabledBitmap)
+		   {
+		      buttonData.enabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
+		      buttonData.enabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
+		   }
 		}
 
 		_enabledText = new CGUIText(display, buttonData.enabledTextItem, buttonData.enabledStylingRecord);
@@ -266,8 +269,11 @@ void CGUIButton::initializeButton( CGUIDisplay & display, CGUIWindow * parent, B
 		}
 		else if ((buttonData.disabledStylingRecord->region.width == 0) && (buttonData.disabledStylingRecord->region.height == 0))
 		{
-			buttonData.disabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
-			buttonData.disabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
+		   if (_enabledBitmap)
+		   {
+		      buttonData.disabledStylingRecord->region.width = _enabledBitmap->getRegion().width;
+		      buttonData.disabledStylingRecord->region.height = _enabledBitmap->getRegion().height;
+		   }
 		}
 
 		_disabledText = new CGUIText(display, buttonData.disabledTextItem, buttonData.disabledStylingRecord);
@@ -294,8 +300,11 @@ void CGUIButton::initializeButton( CGUIDisplay & display, CGUIWindow * parent, B
 		}
 		else if ((buttonData.pressedStylingRecord->region.width == 0) && (buttonData.pressedStylingRecord->region.height == 0))
 		{
-			buttonData.pressedStylingRecord->region.width = _enabledBitmap->getRegion().width;
-			buttonData.pressedStylingRecord->region.height = _enabledBitmap->getRegion().height;
+		   if (_enabledBitmap)
+		   {
+		      buttonData.pressedStylingRecord->region.width = _enabledBitmap->getRegion().width;
+		      buttonData.pressedStylingRecord->region.height = _enabledBitmap->getRegion().height;
+		   }
 		}
 
 		_pressedText = new CGUIText(display, buttonData.pressedTextItem, buttonData.pressedStylingRecord);
@@ -1059,7 +1068,8 @@ void CGUIButton::setEnabledText (const StringChar * string = NULL)
 
 void CGUIButton::setEnabledText()
 {
-   _enabledText->setText();
+   if (_enabledText)
+      _enabledText->setText();
 }
 
 void CGUIButton::setDisabledText (CGUITextItem * textItem = NULL)
@@ -1159,7 +1169,8 @@ void CGUIButton::setDisabledText (const StringChar * string = NULL)
 
 void CGUIButton::setDisabledText()
 {
-   _disabledText->setText();
+   if (_disabledText)
+      _disabledText->setText();
 }
 
 void CGUIButton::setPressedText (CGUITextItem * textItem = NULL)
@@ -1247,7 +1258,8 @@ void CGUIButton::setPressedText (const StringChar * string = NULL)
 
 void CGUIButton::setPressedText()
 {
-   _pressedText->setText();
+   if (_pressedText)
+      _pressedText->setText();
 }
 
 // SET TEXTSTYLE
@@ -1284,17 +1296,20 @@ void CGUIButton::setPressedStylingRecord (StylingRecord * pressedTextStylingReco
   
 void CGUIButton::setEnabledTextColor(CGUIColor color)
 {
-   _enabledText->setColor(color);
+   if (_enabledText)
+      _enabledText->setColor(color);
 }
 
 void CGUIButton::setDisabledTextColor(CGUIColor color)
 {
-   _disabledText->setColor(color);
+   if (_disabledText)
+      _disabledText->setColor(color);
 }
 
 void CGUIButton::setPressedTextColor(CGUIColor color)
 {
-   _pressedText->setColor(color);
+   if (_pressedText)
+      _pressedText->setColor(color);
 }
 
 void CGUIButton::setTextColor(CGUIColor color)
@@ -1416,7 +1431,7 @@ void CGUIButton::setIcon (CGUIBitmapInfo * iconId,  // ptr to bitmap object for 
       _iconPointer = NULL;
    }
 
-   if (iconId)
+   if (iconId && _enabledBitmap)
    {
       CGUIRegion bitmapSize;
       CGUIRegion buttonSize;

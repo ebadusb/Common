@@ -94,8 +94,6 @@
 #include "crcgen.h"
 
 
-
-
 #define DS_LOCK_EVENT      10
 #define DS_UNLOCK_EVENT    30
 #define DS_CREATE_EVENT    50

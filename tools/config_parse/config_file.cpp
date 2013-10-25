@@ -912,7 +912,8 @@ void ConfigFile::processFileOptions(void)
                // Find the existing dataVersion parameter and append the common file version
                _dataVersion = _dataVersion + "." + _parseToken.substr(1, _parseToken.size()-1);
             }
-
+            
+            removeRevisionTags( _dataVersion );
             Parameter * param = new StringParameter("Version", "DataVersion", _dataVersion);
             addParameter(param);
 
@@ -2061,6 +2062,25 @@ void ConfigFile::generateDataFile(const char * dataFileDir)
             }
             fprintf(fp, "\n");
          }
+      }
+   }
+}
+void ConfigFile::removeRevisionTags(string& param)
+{
+   std::vector< string >keys;
+   keys.push_back("$Revision: #");
+   keys.push_back("$Revision$");
+   keys.push_back("$Revision$");
+   keys.push_back("$");
+   keys.push_back(" ");
+
+   std::vector< string >::iterator keyIter = keys.begin();
+   for ( ; keyIter != keys.end(); ++keyIter )
+   {
+      std::size_t pos = param.find(*keyIter);
+      if ( pos != string::npos )
+      {
+         param.erase(pos, (*keyIter).size());
       }
    }
 }

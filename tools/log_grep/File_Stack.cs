@@ -31,30 +31,70 @@ namespace DLGrep
 	class FileManager
 	{
 		public bool done = false;
-		Stack FileStack = new Stack();
+        public bool recurse = false;
+        public string dlogPattern = "*.dlog";
+		Queue myQueue = new Queue();
+            
+        // Adds a directory or file to the stack for consideration
+        public bool Add(string FileName)
+        {
+            bool okay = true;
+
+            if (Directory.Exists(FileName))
+            {
+                DirectoryInfo DirectoryArgument = new DirectoryInfo(FileName);
+                myQueue.Enqueue(DirectoryArgument);
+            }
+            else if (File.Exists(FileName))
+            {
+                FileInfo FileArgument = new FileInfo(FileName);
+                myQueue.Enqueue(FileArgument);
+            }
+            else
+            {
+                okay = false;
+            }
+            done = (myQueue.Count == 0);
+            return okay;
+        }
 
 		// this function returns the next file that is found
 		public FileInfo Next()
 		{
-            object Current = FileStack.Pop();
+            done = (myQueue.Count == 0);
+            if (done)
+            {
+                return new FileInfo("EOQ");
+            }
+
+            object Current = myQueue.Dequeue();
 			if (Current is FileInfo)
 			{
-				Debug.WriteLine("test: file FullName");
-				Debug.WriteLine(((FileInfo)Current).FullName);
-                return (FileInfo)Current;
+                FileInfo CurrFile = (FileInfo)Current;
+				Debug.WriteLine("NextFile: " + CurrFile.FullName);
+                done = (myQueue.Count == 0);
+                return CurrFile;
 			}
 			else if (Current is DirectoryInfo)
 			{
                 DirectoryInfo CurrentDir = (DirectoryInfo)Current;
-				Debug.WriteLine("test: directory name");
-				Debug.WriteLine(CurrentDir.Name);
+				Debug.WriteLine("NextDir+: " + CurrentDir.Name);
 				try
 				{
-                    FileSystemInfo[] Items = CurrentDir.GetFileSystemInfos();
-					foreach ( FileSystemInfo Item in Items)
+                    // If recursing, add the sub-directories first
+                    if (recurse)
+                    {
+                        DirectoryInfo[] SubDirs = CurrentDir.GetDirectories();
+                        foreach (DirectoryInfo dir in SubDirs)
+                        {
+                            myQueue.Enqueue(dir);
+                        }
+                    }
+                    // Get files in the current directory that match the pattern
+                    FileSystemInfo[] Items = CurrentDir.GetFileSystemInfos(dlogPattern);
+					foreach (FileSystemInfo Item in Items)
 					{
-						FileStack.Push(Item);
-						
+						myQueue.Enqueue(Item);					
 						#region debug
 						if (Item is FileInfo)
 							Debug.WriteLine(((FileInfo)Item).FullName);
@@ -64,6 +104,7 @@ namespace DLGrep
 							Debug.WriteLine("WTF");
                         #endregion
 					}
+                    // Return the next item from the queue
 					return Next();
 				}
 				catch
@@ -71,43 +112,16 @@ namespace DLGrep
 					return Next();
 				}
 			}
-			else if (Current is String)
-			{
-				done = true;
-				FileStack.Push(Current);
-                return new FileInfo("EOS");
-			}
 			else
 			{
-                return new FileInfo("EOS");
+                #region debug
+                Debug.WriteLine("Huh? This object is whacked!");
+                #endregion 
+                // skip whatever this is
+                return Next();
 			}
 		}
+    }
 		
-		// this function initiates the file stack, and puts the first few bits on it.
-		public bool Initialize(string FileName)
-		{
-            bool okay = true;
-			FileInfo FileArgument;
-			DirectoryInfo DirectoryArgument;
-
-            FileStack.Push( "EOS" );               // bottom of the stack
-
-            if (Directory.Exists(FileName))
-			{
-				DirectoryArgument = new DirectoryInfo(FileName);
-				FileStack.Push(DirectoryArgument);
-			}
-            else if (File.Exists(FileName))
-            {
-                FileArgument = new FileInfo(FileName);
-                FileStack.Push(FileArgument);
-            }
-            else
-            {
-                okay = false;
-            }
-            return okay;
-		}
-	}
 	#endregion
 }

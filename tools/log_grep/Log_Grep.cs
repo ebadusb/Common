@@ -52,11 +52,13 @@ namespace DLGrep
 		int NumThreads = 1;
 		Regex[] RegexPattern;			// this is a list of all the regular expresions
 		Regex FilePattern = new Regex(@"\.dlog$",RegexOptions.Compiled);// this is to ensure we only read dlog files.
-        string FileOrDir = ".";
+        int NumFileArgs = 0;
         FileManager LogFileManager = new FileManager();
         bool OptionH = false;
+        bool OptionHL = false;
 		bool Optioni = false;
         bool Optionc = false;
+        int OptioncThresh = 1;
         bool Optionl = false;
         int MinFileLen = 20*1024;      // mininum size for log files in bytes (100 KB)
         int MaxFileLen = 2*1024*1024;   // maximum size for log files (2 MB)
@@ -71,7 +73,7 @@ namespace DLGrep
         /// </summary>
         void help()
         {
-            Console.WriteLine(" dlgrep [OPTION] -e PATTERN [-e PATTERN2 ...] [FILE_OR_DIR]");
+            Console.WriteLine(" dlgrep [OPTION]... PATTERN [PATHNAME]...");
             Console.WriteLine(" ");
             Console.WriteLine(" Search for PATTERN in DLOG file(s). Only message records are searched.");
             Console.WriteLine(" However, message records are prepended with timestamp, node name, task name, ");
@@ -79,32 +81,40 @@ namespace DLGrep
             Console.WriteLine(" Returns with status: 0 if a pattern was matched, 1 if no matches, 2 on error.");
             Console.WriteLine(" ");
             Console.WriteLine(" Options:");
-            Console.WriteLine("  -e  PATTERN : Regular expression to search (grep) for");
+            Console.WriteLine("  -h          : Display this help message and exit");
+            Console.WriteLine("  -e  PATTERN : Regular expression to search (grep) for; supports multiple -e args");
             Console.WriteLine("  -ef PATTERN : Regular expression to match file names against. Default: \\.dlog$");
             Console.WriteLine("  -i          : Ignore case for regular expression(s) set by -e");
             Console.WriteLine("  -c          : Print *only* the count of matching lines per file");
+            Console.WriteLine("  -cn NUM     : Print *only* the count of matching lines if >= NUM");
             Console.WriteLine("  -l          : Print *only* names of files containing matches");
-            Console.WriteLine("  -H          : Print the filename for each match as a prefix");
+            Console.WriteLine("  -r          : Recursively search directories");
+            Console.WriteLine("  -H          : Prefix each match with the embedded DLOG filename.");
+            Console.WriteLine("  -HL         : Print filename head-line on 1st match. Default: on if PATHNAME is a list");
             Console.WriteLine("  -A   NUM    : Print NUM lines after a match");
             Console.WriteLine("  -B   NUM    : Print NUM lines before a match");
             Console.WriteLine("  -C   NUM    : Print NUM lines surounding a match");
             Console.WriteLine("  -t   NUM    : Set the number of search threads. Default: 1");
             Console.WriteLine("  -min NUM    : Minimum log file size, in kbytes. Default: 20");
             Console.WriteLine("  -max NUM    : Maximum log file size, in kbytes. Default: 2048 (2MB)");
-            Console.WriteLine("  -h          : Display this help message and exit");
-            Console.WriteLine("  FILE_OR_DIR : Either a file or directory path; a directory will be");
-            Console.WriteLine("                recursively searched. Default: . (current directory)");
+            Console.WriteLine("  PATHNAME    : A list of files and/or directories to search. Default: .");
             Console.WriteLine(" ");
             Console.WriteLine(" Examples:");
-            Console.WriteLine(" # Search for proc.cpp *or* 'Displayed Alarm' in current directory");
-            Console.WriteLine("   dlgrep -e proc.cpp -e 'Displayed Alarm'");
-            Console.WriteLine("   dlgrep -e 'proc.cpp|Displayed Alarm'");
-            Console.WriteLine(" # Count button pushes in all logs from 2012-2013");
-            Console.WriteLine("   dlgrep -c -e 'GUI button pushed' -ef '1T.*_201[23].*.dlog");
-            Console.WriteLine(" # Find logs in directory T5001 with BUILD versions 8.8 or 8.9");
-            Console.WriteLine("   dlgrep -l -e BUILD=8.[89] T5001");
+            Console.WriteLine(" # Search for Trima's build label in current directory's *.dlog files:");
+            Console.WriteLine("   dlgrep 'BUILD=8.[89]");
+            Console.WriteLine("   dlgrep ' BUILD=' *.dlog");
+            Console.WriteLine("   dlgrep -e 'BUILD=8.8|BUILD=12.0' .");
+            Console.WriteLine(" # Recursively search for proc.cpp *or* 'Displayed Alarm' in current directory and below:");
+            Console.WriteLine("   dlgrep -r -e proc.cpp -e 'Displayed Alarm'");
+            Console.WriteLine("   dlgrep -r -e 'proc.cpp|Displayed Alarm' .");
+            Console.WriteLine(" # Count button pushes in *all* logs from 2012-2013:");
+            Console.WriteLine("   dlgrep -r -c -e 'GUI button pushed' -ef '1T.*_201[23].*.dlog");
+            Console.WriteLine(" # For machines T5001 and T5002, show logs from Oct 2013 that have 9 or more alarms:");
+            Console.WriteLine("   dlgrep -r -cn 9 -ef '1T.*_201310.*.dlog 'Displayed Alarm' T5001 T5002");
+            Console.WriteLine(" # Find logs in directory T5001 with BUILD versions 8.8 or 8.9:");
+            Console.WriteLine("   dlgrep -l -e TRIMA_BUILD=8.[89] T5001");
             Console.WriteLine(" ");
-            Console.WriteLine(" dlgrep Version 1.5, Jul-2013 -- Copyright (C) 2013 Terumo BCT");
+            Console.WriteLine(" dlgrep Version 1.6, Oct-2013 -- Copyright (C) 2013 Terumo BCT");
         }
 
         /// <summary>
@@ -128,7 +138,7 @@ namespace DLGrep
 						i++;
 						Pattern[PatternCount]=args[i];
 						PatternCount++;
-						Debug.WriteLine("Option -e : pattern found = "+args[i]);
+						Debug.WriteLine("Option -e : pattern="+args[i]);
 						break;
 
                     case "-ef":
@@ -169,8 +179,16 @@ namespace DLGrep
                         break;
 
                     case "-H":
-						OptionH=true;
+						OptionH = true;
 						break;
+
+                    case "-HH":
+                        OptionHL = true;
+                        break;
+
+                    case "-r":
+                        LogFileManager.recurse = true;
+                        break;
 
                     case "-t":
 						i++;
@@ -197,6 +215,12 @@ namespace DLGrep
 						Optionc = true;
 						break;
 
+                    case "-cn":
+                        i++;
+                        Optionc = true;
+                        OptioncThresh = Convert.ToInt16(args[i]);
+                        break;
+
                     case "-l":
                         Optionl = true;
                         break;
@@ -212,7 +236,24 @@ namespace DLGrep
                         break;
 
                     default:
-                        FileOrDir = args[i];
+                        // If no -e options yet, treat this as a PATTERN
+                        if (PatternCount == 0)
+                        {
+                            Pattern[PatternCount] = args[i];
+                            PatternCount++;
+                            Debug.WriteLine("Implicit -e : pattern=" + args[i]);
+                        }
+                        else // otherwise, assume it's a PATHNAME
+                        {
+                            if (LogFileManager.Add(args[i]))
+                            {
+                                NumFileArgs++;
+                            }
+                            else
+                            {
+                                Console.WriteLine("dlgrep: Invalid PATHNAME argument: " + args[i]);
+                            }
+                        }
 						break;
 				}
 			}
@@ -228,16 +269,17 @@ namespace DLGrep
                 Console.WriteLine("dlgrep: No search PATTERN(s) were found!");
                 return 2;
             }
-            if (!LogFileManager.Initialize(FileOrDir))
-            {
-                Console.WriteLine("dlgrep: Invalid FILE_OR_DIR argument: " + FileOrDir);
-                return 1;
-            }
             if (Optionl && Optionc)
             {
                 Console.WriteLine("dlgrep: Option -l supercedes option -c");
                 Optionc = false;
             }
+            // If necessary, add the default file argument
+            if (NumFileArgs == 0) LogFileManager.Add(".");
+            
+            // If more than one file arg was passed or using multiple threads, turn on OptionH as a convenience:
+            if (NumFileArgs > 1 || NumThreads > 1) OptionH = true;
+            
             #endregion
 
 			#region initialize the buffers.
@@ -252,7 +294,8 @@ namespace DLGrep
 					RegexPattern[i]=new Regex(Pattern[i],RegexOptions.Compiled);
 			}
 			#endregion
-			// find a file name...
+
+            // find a file name...
 			Thread[] Searchers;
 			Searchers = new Thread[NumThreads];
 
@@ -291,6 +334,7 @@ namespace DLGrep
             string LogFileAbs  = "";	    // this is the full pathname of the log file that will be read
             string LogFileRel  = "";        // this is the relative filename
 			string LogFileName = "";		// this is the short filename (no path)
+            string DlogId      = "";        // DLOG file id extracted from the DLOG
             Uri LogFileUri;
 			string[] MessageBuffer;			// this is the buffer that the messages get stored in.
 			bool[] PrintFlag;
@@ -317,18 +361,20 @@ namespace DLGrep
 				#region Get the file name
 				lock (LogFileManager)
 				{
-					fileInfo = LogFileManager.Next();
+                    DoneRecursing = LogFileManager.done;
+                    fileInfo = LogFileManager.Next();
                     LogFileAbs = fileInfo.FullName;
                     LogFileName = fileInfo.Name;
                 }
 
                 // Check for the termination file
-                if (LogFileName == "EOS")
+                if (DoneRecursing)
                 {
                     Debug.WriteLine("Finished the stack");
-                    DoneRecursing = true;
                     break;
                 }
+
+                // Console.WriteLine("file: " + LogFileName);
 
                 // Check if the file name pattern matches
                 FileMatches = FilePattern.Matches(LogFileName);
@@ -367,6 +413,12 @@ namespace DLGrep
 						LogFileStream=File.OpenRead(LogFileAbs);
 			    		// initialize the file
 						LogFile.InitializeLog(LogFileStream);
+
+                        // if it's available, use the DLOG id instead of a path 
+                        if (LogFile.EmbeddedLogFileId.Length > 0)
+                            DlogId = LogFile.EmbeddedLogFileId;
+                        else
+                            DlogId = LogFileName;
 					}
 					#region Catches
 					catch (ApplicationException ApEx)
@@ -424,54 +476,66 @@ namespace DLGrep
 								MessageBuffer[MessageIndex%BackPrint]=MessageString;
 								PrintFlag[MessageIndex%BackPrint]=false;
 						
+								#region pattern matching
+                                // For each pattern defined ...
+								for(i = 0; i < PatternCount; i++)
 								{
-									#region pattern matching
-                                    // For each pattern defined ...
-									for(i = 0; i < PatternCount; i++)
+									Matches=RegexPattern[i].Matches(MessageString);
+									if(Matches.Count > 0) // we have a match
 									{
-										Matches=RegexPattern[i].Matches(MessageString);
-										if(Matches.Count > 0) // we have a match
+                                        PattMatchCount++;
+                                        if (Optionl)
+                                        {
+                                            // We're done with this file on the first match
+                                            done = true;
+                                            lock (WriteControl)
+                                            {
+                                                Console.WriteLine(LogFileRel);
+                                            }
+                                            break;
+                                        }
+                                        if (Optionc)
+                                        {
+                                            // Counting the lines that have a match; skip out on first match
+                                            // and proceed to the next line
+                                            break;
+                                        }
+                                        StillPrinting = ForwardPrint; // set the forward print variable
+										for(j=(BackPrint-1);j>=0;j--)
 										{
-                                            PattMatchCount++;
-                                            if (Optionl)
-                                            {
-                                                // We're done with this file on the first match
-                                                done = true;
-                                                lock (WriteControl)
-                                                {
-                                                    Console.WriteLine(LogFileRel);
-                                                }
-                                                break;
-                                            }
-                                            if (Optionc)
-                                            {
-                                                // Counting the lines that have a match; skip out on first match
-                                                // and proceed to the next line
-                                                break;
-                                            }
-                                            StillPrinting = ForwardPrint; // set the forward print variable
-											for(j=(BackPrint-1);j>=0;j--)
+                                            // print these messages in the backlog that 
+                                            // haven't been printed yet
+											tempInt1=(MessageIndex-j)%BackPrint;
+											if(!(PrintFlag[tempInt1]))
 											{
-                                                // print these messages in the backlog that 
-                                                // haven't been printed yet
-												tempInt1=(MessageIndex-j)%BackPrint;
-												if(!(PrintFlag[tempInt1]))
+												lock (WriteControl)
 												{
-													lock (WriteControl)
+                                                    // Print a Head-Line file banner with the relative pathname
+                                                    if (OptionHL && PattMatchCount == 1)
+                                                    {
+                                                        if (OptionH)
+                                                        {
+                                                            Console.Write(DlogId + "|");
+                                                        }
+                                                        else // use the time stamp of 1st record as a prefix for sortability
+                                                        {
+                                                            // 2013/10/29_10:00:08.566
+                                                            Console.Write(MessageBuffer[tempInt1].Substring(0,24));
+                                                        }
+                                                        Console.WriteLine("======================================== " + LogFileRel);
+                                                    }
+													if (OptionH)
 													{
-														if (OptionH)
-														{
-															Console.Write(LogFileRel + ":");
-														}
-														Console.WriteLine(MessageBuffer[tempInt1]);
+														Console.Write(DlogId + "|");
 													}
-													PrintFlag[tempInt1]=true;
-												}	
-											}
+													Console.WriteLine(MessageBuffer[tempInt1]);
+												}
+												PrintFlag[tempInt1]=true;
+											}	
 										}
 									}
-									#endregion
 								}
+								#endregion
 							
 								// print message if it is required.
 								#region printing
@@ -497,7 +561,7 @@ namespace DLGrep
                             // Count this file as having had a match
                             FileMatchCount++;
                         }
-                        if (Optionc)
+                        if (Optionc && PattMatchCount >= OptioncThresh)
                         {
                             lock (WriteControl)
                             {

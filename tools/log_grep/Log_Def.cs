@@ -49,7 +49,8 @@ namespace DLGrep
 	/// </summary>
 	class LogDefinition
 	{
-		#region Variables
+        public string EmbeddedLogFileId = "";
+        #region Variables
 		// Filestream to the log file
 
 		//GZipInputStream LogFile;
@@ -86,6 +87,7 @@ namespace DLGrep
         string NodeIDName = "";
 		byte MajorVersion;
 		byte MinorVersion;
+        string InfoHeader = "";
 
         Dictionary<long, string> TaskIdMap = new Dictionary<long, string>();
 
@@ -149,7 +151,7 @@ namespace DLGrep
 			bool ReRead=false;
 			long GzipPosition=0;
 			
-			int tempInt1; // this is a small vatiable to split up calculations;
+			int tempInt1; // this is a small variable to split up calculations;
 			#endregion
 			
 			#region Convert the file to a memory stream
@@ -196,7 +198,8 @@ namespace DLGrep
                 if (DecodedFileStream.Position > 0 && DecodedFileStream.Position % 100 == 0) 
                     Debug.WriteLine("[" + DecodedFileStream.Position + "]");
                 DecodedFileStream.Read(data, 0, 1);
-				Debug.Write(Convert.ToChar(data[0]));
+                char aChar = Convert.ToChar(data[0]);
+                Debug.Write(aChar);
                 // Debug.Write(DecodedFileStream.Position + ":" + Convert.ToChar(data[0]));
                 if (DecodedFileStream.Position >= Log.Position)
 				{
@@ -211,17 +214,30 @@ namespace DLGrep
 						if(data[0]==0x00)
 						{
 							done=true;
+                            break;
 						}
 					}
 				}
-			}
+                // Buffer the header in case we want to extract something from it
+                InfoHeader += aChar;
+            }
 			#endregion
-			
+            
+            tempInt = InfoHeader.IndexOf("/machine/log/");
+            tempInt1 = InfoHeader.IndexOf(".dlog");
+            if (tempInt > 0 && tempInt1 > tempInt+13)
+            {
+                tempInt += 13; // start of id
+                tempInt1 -= tempInt; // length of id string
+                EmbeddedLogFileId = InfoHeader.Substring(tempInt, tempInt1);
+            }
+            Debug.WriteLine("\n\nEmbeddedLogFileId: " + EmbeddedLogFileId);
+
 			#region Read the log settings
 			tempInt1=DecodedFileStream.Read(data,0,18);
 			#region DEBUG			 
 			{
-				Debug.WriteLine("\nfirst read successfull :");
+                Debug.WriteLine("\nfirst read successfull :");
 				Debug.WriteLine("  return Value of the read : "+tempInt1);
 				Debug.Write("  Data from the first read : ");
 				for (i=0;i<17;i++)
@@ -282,7 +298,7 @@ namespace DLGrep
 			#region DEBUG
 			{
 				Debug.IndentLevel = 1;
-				Debug.WriteLine("Log File Header Information :");
+				Debug.WriteLine("Log File InfoHeader Information :");
 				Debug.IndentLevel = 1;
 				Debug.WriteLine("Size of Char = " + SizeOfChar);
 				Debug.WriteLine("Size of Int = " + SizeOfInt);
@@ -308,7 +324,7 @@ namespace DLGrep
 				}
 				Debug.WriteLine("");
 				Debug.WriteLine("  Network Node ID = " + NodeIDName + " as Int32: " + NodeID);
-				Debug.WriteLine("End of Log File Header Information");
+				Debug.WriteLine("End of Log File InfoHeader Information");
 			}
 			
 			#endregion
@@ -990,11 +1006,11 @@ namespace DLGrep
 									tempBool=BitConverter.ToBoolean(data,ByteCount);
 									if (tempBool)
 									{
-										StreamString.Append("false");
+										StreamString.Append("true");
 									}
 									else 
 									{
-										StreamString.Append("true");
+										StreamString.Append("false");
 									}
 									ByteCount = 1+ByteCount;
 									break;
@@ -1134,11 +1150,11 @@ namespace DLGrep
 									tempBool=BitConverter.ToBoolean(data,ByteCount);
 									if (tempBool)
 									{
-										StreamString.Append("false");
+										StreamString.Append("true");
 									}
 									else 
 									{
-										StreamString.Append("true");
+										StreamString.Append("false");
 									}
 									ByteCount = 1+ByteCount;
 									break;
@@ -1224,7 +1240,7 @@ namespace DLGrep
 						#endregion
 
                     case 0x5509: // Network log header
-						#region Network Log Header
+						#region Network Log InfoHeader
                         Debug.WriteLine("Network Log Record");
 						LogFile.Read(data,0,SizeOfStartOfNetworkConnectionRecord);
 						tempInt1=BitConverter.ToUInt16(data,(SizeOfStartOfNetworkConnectionRecord-2));

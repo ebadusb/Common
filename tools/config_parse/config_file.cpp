@@ -2069,8 +2069,6 @@ void ConfigFile::removeRevisionTags(string& param)
 {
    std::vector< string >keys;
    keys.push_back("$Revision: #");
-   keys.push_back("$Revision$");
-   keys.push_back("$Revision$");
    keys.push_back("$");
    keys.push_back(" ");
 

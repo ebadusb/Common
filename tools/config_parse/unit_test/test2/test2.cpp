@@ -322,6 +322,17 @@ bool Test2::_C_Test2_A::_C_FileInfo::_C_FileName::set(const char * value)
 
 }
 
+bool Test2::_C_Test2_A::_C_Section1::_C_Param1::set(TParam1 value)
+{
+  bool setOK = true;
+  TParam1 * valuePtr = (TParam1 *)_dataMap[_mapIdx]._value;
+  if ( !validate((void *)&value) ) setOK = false;
+
+  if ( setOK ) *valuePtr = value;
+  return setOK;
+
+}
+
 bool Test2::_C_Test2_A::_C_Section1::_C_Param2::set(TParam2 value)
 {
   bool setOK = true;

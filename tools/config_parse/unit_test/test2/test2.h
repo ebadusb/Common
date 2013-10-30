@@ -520,6 +520,7 @@ private:
         const char * name(void) { return _name[_mapIdx]; }
         static bool validate(void * valuePtr);
         void initialize(const DataMap * dataMap, int mapIdx) { _dataMap = dataMap; _mapIdx = mapIdx; }
+        bool set(TParam1 value);
       private:
         const DataMap * _dataMap;
         int _mapIdx;

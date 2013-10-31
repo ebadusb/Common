@@ -49,16 +49,10 @@ namespace DLGrep
 	/// </summary>
 	class LogDefinition
 	{
-        public string EmbeddedLogFileId = "";
+        public string EmbeddedLogFileId;
         #region Variables
-		// Filestream to the log file
-
-		//GZipInputStream LogFile;
-		//Inflater InflaterNoHeader; 	
-		//InflaterInputStream LogFile; 
-		//ZlibDecompressionStream LogFile;
-		//DecypherStream DecyStream;
-		GZipInputStream GzipLogFile;
+        string InfoHeader;
+        GZipInputStream GzipLogFile;
 		byte MagicByte=0xa5;		
 		MemoryStream LogFile;
 
@@ -87,7 +81,6 @@ namespace DLGrep
         string NodeIDName = "";
 		byte MajorVersion;
 		byte MinorVersion;
-        string InfoHeader = "";
 
         Dictionary<long, string> TaskIdMap = new Dictionary<long, string>();
 
@@ -131,8 +124,6 @@ namespace DLGrep
 			SizeOfPeriodicLogItemRecord=8+2+SizeOfDataLogNodeID+2+2+2;
 
 			SizeOfBinaryRecord=4;
-
-			// testing
 		}
 	
 		// this function Creates the Gzip file stream from the base stream and sets up the
@@ -190,7 +181,10 @@ namespace DLGrep
 			#endregion
 
 			#region Plain Text Read
-			// first read the plain text w/ normal file I/O until we see: 0x1a 0x04 0x00
+            InfoHeader = "";
+            EmbeddedLogFileId = "";
+
+            // first read the plain text w/ normal file I/O until we see: 0x1a 0x04 0x00
             Debug.WriteLine("0---------1---------2---------3---------4---------5---------6---------7---------8---------9---------X");
             done = false;
 			while(!done)
@@ -223,7 +217,7 @@ namespace DLGrep
             }
 			#endregion
             
-            tempInt = InfoHeader.IndexOf("/machine/log/");
+            tempInt = InfoHeader.IndexOf("/machine/log/"); // len = 13
             tempInt1 = InfoHeader.IndexOf(".dlog");
             if (tempInt > 0 && tempInt1 > tempInt+13)
             {

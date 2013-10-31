@@ -182,7 +182,7 @@ namespace DLGrep
 						OptionH = true;
 						break;
 
-                    case "-HH":
+                    case "-HL":
                         OptionHL = true;
                         break;
 
@@ -406,6 +406,7 @@ namespace DLGrep
 					MessageIndex = BackPrint;
 					StillPrinting = 0;
                     PattMatchCount = 0;
+                    DlogId = LogFileName;
 
                     // Open the file
 					try
@@ -415,10 +416,7 @@ namespace DLGrep
 						LogFile.InitializeLog(LogFileStream);
 
                         // if it's available, use the DLOG id instead of a path 
-                        if (LogFile.EmbeddedLogFileId.Length > 0)
-                            DlogId = LogFile.EmbeddedLogFileId;
-                        else
-                            DlogId = LogFileName;
+                        if (LogFile.EmbeddedLogFileId.Length > 0) DlogId = LogFile.EmbeddedLogFileId;
 					}
 					#region Catches
 					catch (ApplicationException ApEx)

@@ -7,6 +7,8 @@
  */
 
 #include <vxWorks.h>
+#include "MutexLocker.h"
+
 #include "cgui_window_object.h"
 #include "cgui_button.h"
 #include "cgui_bitmap_info.h"
@@ -122,7 +124,8 @@ void CGUIButton::initializeButton( CGUIDisplay & display, CGUIWindow * parent, B
 		if (!_enabled)
 		{
 			addObjectToFront(_disabledBitmap);
-		}else
+      }
+      else
 		{
 			addObjectToBack(_disabledBitmap);
 		}
@@ -136,7 +139,8 @@ void CGUIButton::initializeButton( CGUIDisplay & display, CGUIWindow * parent, B
 		if (_pressed) 
 		{ 
 			addObjectToFront(_pressedBitmap);
-		}else
+      }
+      else
 		{
 			addObjectToBack(_pressedBitmap);
 		}
@@ -379,9 +383,9 @@ CGUIButton::~CGUIButton ()
    winCbRemove(_id, &CGUIWindow::uglPointerCallback);
    winCbRemove(_id, &CGUIWindow::uglPointerCallback);
 
-	if (_enabledStylingRecordSaved) {delete _enabledStylingRecordSaved;}
-	if (_disabledStylingRecordSaved) {delete _disabledStylingRecordSaved;}
-	if (_pressedStylingRecordSaved) {delete _pressedStylingRecordSaved;}
+   if ( _enabledStylingRecordSaved ) { delete _enabledStylingRecordSaved; }
+   if ( _disabledStylingRecordSaved ) { delete _disabledStylingRecordSaved; }
+   if ( _pressedStylingRecordSaved ) { delete _pressedStylingRecordSaved; }
 }
 
 void CGUIButton::enable(bool beEnabled)
@@ -751,6 +755,8 @@ void CGUIButton::disableReleasedCallback()
 // by the operator, i.e. press, release
 void CGUIButton::pointerEvent (const PointerEvent & event) // event structure received from UGL on button press/release
 {    
+
+   Bct::MutexLocker lock( _pointerEventMutex );
    if (_enabled)
    {
 		if (event.eventType == PointerEvent::ButtonPress)
@@ -1221,7 +1227,8 @@ void CGUIButton::setPressedText (const char * string = NULL)
 		{
 			_pressedText->setVisible(true);
 		}
-   }else
+   }
+   else
    {
       // NOT GOOD!!! Nothing to do.
    }
@@ -1250,7 +1257,8 @@ void CGUIButton::setPressedText (const StringChar * string = NULL)
 		{
 			_pressedText->setVisible(true);
 		}
-   }else
+   }
+   else
    {
       // NOT GOOD!!! Nothing to do.
    }

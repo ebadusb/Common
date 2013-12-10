@@ -173,28 +173,6 @@ public:
 				in >> temp; in >> temp;//BUILD USER:
 				in >> log.mBuildUser;
 			}
-			else { //Hopefully Optia, CES and Atreus behave similarly
-				//Read until '='. If you reach a space without and '=' at the end, discard it. 
-				Int8 tmpChar = 0;
-				std::string temp;
-				while ((tmpChar = in.get()) != '='); //revision=
-				in >> log.mBuildRevision;
-				while ((tmpChar = in.get()) != '='); //date=
-				in >> log.mBuildDate;/*day*/ in >> temp; log.mBuildDate.append(" " + temp); /*date*/
-				while ((tmpChar = in.get()) != '='); //time=
-				in >> temp; log.mBuildDate.append(" " + temp);/*time*/ in >> temp; log.mBuildDate.append(" " + temp); /*AM or PM*/
-				while ((tmpChar = in.get()) != '='); //directory=
-				in >> log.mBuildDir;
-				while ((tmpChar = in.get()) != '='); //computer=
-				in >> log.mBuildComputer;
-				while ((tmpChar = in.get()) != '='); //id=
-				in >> log.mBuildUser;
-				if(log.mDeviceType == DECODER::OPTIA)
-				{	
-						while ((tmpChar = in.get()) != '='); //version=
-						in >> log.mVersion;
-				}
-			}
 
 		this->LogRegistration<RecordLogInfo>::ProcessData(log); 
 	}

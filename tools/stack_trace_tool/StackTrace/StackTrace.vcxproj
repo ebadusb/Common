@@ -164,6 +164,7 @@
     <ClCompile Include="src\TraceConfig.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Util\src\dirent.h" />
     <ClInclude Include="..\Util\src\StackTraceUtil.h" />
     <ClInclude Include="src\StackTrace.h" />
     <ClInclude Include="src\TraceConfig.h" />

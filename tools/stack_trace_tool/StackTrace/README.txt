@@ -1,6 +1,9 @@
-StackTraceUI v1.2 (GUI version of StackTrace Tool)
+StackTraceUI v1.3 (GUI version of StackTrace Tool)
 
 $ Log: StackTraceUI $
+Revision 1.3  2013/12/09  chowusb
+- added support for recursive object file search in subdirectories of build path
+- fixed bug for when revision number is missing (seen in Optia local builds) 
 Revision 1.2  2012/12/03  chowusb
 - pre- and postfix quotes to dlog name whenever user opens dlog via menubar
 Revision 1.1  2012/10/11  chowusb

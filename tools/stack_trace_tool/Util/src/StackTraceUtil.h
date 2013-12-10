@@ -18,6 +18,7 @@
 #include <list>
 #include <algorithm>
 #include <cstdlib>
+#include "dirent.h"
 
 namespace DECODER {
 namespace UTIL {
@@ -711,6 +712,43 @@ public:
 		}
 	}
 
+private:
+   bool SearchForObjectInSubdirectories(const String &fileName, const String &directory, String &objectFile)
+   {
+      DIR *dir = NULL;
+      DIR *subdir = NULL;
+      dirent *ent = NULL;
+      bool retVal = false;
+
+      dir = opendir(directory.c_str());
+
+      if ((dir = opendir(directory.c_str())) != NULL)
+      {
+         while ((ent = readdir(dir)) != NULL) 
+         {
+            String entry = String(ent->d_name);
+            String fullPath = directory + "\\" + entry;
+
+            if ((subdir = opendir(fullPath.c_str())) != NULL && entry != "." && entry != "..") 
+            {
+               if (SearchForObjectInSubdirectories(fileName, fullPath, objectFile))
+               {
+                  retVal = true;
+                  break;
+               }
+            }
+            else if (entry == fileName) 
+            {
+               objectFile = fullPath;
+               retVal = true;
+               break;
+            }
+         }
+         closedir(dir);
+      }
+      return retVal;
+   } 
+
 protected:
 	void IncludeLoadedFunctions(Uint32 systemNode, Uint32 baseAddress, String objectFile)
 	{
@@ -725,24 +763,38 @@ protected:
 				}
 			}
 
-			std::ostringstream commandStream;
-			commandStream << mCommand << " " << objectFile << std::endl;
-			char buffer[128] = { 0 };
+         FILE *fp = NULL;
+ 			std::ostringstream commandStream;
+         commandStream << mCommand << " ";
+
+         if ((fp = fopen(objectFile.c_str(),"r")) != NULL) 
+         {
+            fclose(fp);
+         }
+         else 
+         {
+            String module;
+            if (objectFile.find_last_of("/") != String::npos)
+               module = objectFile.substr(objectFile.find_last_of("/") + 1);
+            SearchForObjectInSubdirectories(module, mPathname, objectFile);
+         }
+
+   		commandStream << objectFile << std::endl;
+		   char buffer[128] = { 0 };
 			unsigned int address = 0;
 			const char *function = buffer + 11;
-			std::string command(commandStream.str());
-			
-			FILE *pipe = _popen(command.c_str(), "rt");
 
-			while(fgets(buffer, 128, pipe)) {
-				buffer[std::strlen(buffer) - 1] = NULL;
-				buffer[8] = NULL;
-				sscanf(buffer, "%x", &address);
-				functions[address] = function;
+   		std::string command(commandStream.str());
+   		FILE *pipe = _popen(command.c_str(), "rt");
+
+	   	while(fgets(buffer, 128, pipe)) {
+		   	buffer[std::strlen(buffer) - 1] = NULL;
+			  	buffer[8] = NULL;
+			   sscanf(buffer, "%x", &address);
+			   functions[address] = function;
 			}
 
 			_pclose(pipe);
-			//delete []command;
 		}
 
 		mSymbols[systemNode].insert(std::make_pair(baseAddress, functions));	 
@@ -790,8 +842,6 @@ protected:
 
 			if (sym == mSymbols[node].end()) {
             String module = loc->second;
-            if (module.find(kTabMachine) == 0)
-               module.replace(0, std::strlen(kTabMachine), "");
             this->IncludeLoadedFunctions(node, loc->first, mPathname + module);
 				sym = mSymbols[node].find(loc->first);
 			}

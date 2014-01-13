@@ -1726,7 +1726,7 @@ bool CGUIButton::removeIcon(const int iconId )
 
    vector< ButtonIcon * >::iterator iconIter = _iconList.begin();
 
-   ButtonIcon * buttonIcon = NULL:
+   ButtonIcon * buttonIcon = NULL;
 
    while ( !_iconList.empty() && iconIter != _iconList.end() )
    {

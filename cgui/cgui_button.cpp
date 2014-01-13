@@ -650,12 +650,14 @@ void CGUIButton::enableIfReleased(void)
  */
 void CGUIButton::updateButtonIcon()
 {
+   ButtonIcon* iconPtr = NULL;
+
    // use a reverse iterator because in some cases there are multiple overlayed
    // icons used and they need to be displayed in the opposite order they are added to the list
    for ( vector< ButtonIcon *>::reverse_iterator riter = _iconList.rbegin();
        riter != _iconList.rend(); ++riter )
    {
-      ButtonIcon* iconPtr = *riter;
+      iconPtr = *riter;
       if ( iconPtr )
       {
          if ( iconPtr->enabled() == _enabled && iconPtr->pressed() == _pressed )
@@ -1724,14 +1726,15 @@ bool CGUIButton::removeIcon(const int iconId )
 
    vector< ButtonIcon * >::iterator iconIter = _iconList.begin();
 
+   ButtonIcon * buttonIcon = NULL:
+
    while ( !_iconList.empty() && iconIter != _iconList.end() )
    {
-      ButtonIcon * buttonIcon;
       buttonIcon = ( *iconIter );
 
       if ( buttonIcon && buttonIcon->getIconId() == iconId )
       {
-         delete iconIter;
+         delete buttonIcon;
 
          iconIter = _iconList.erase( iconIter );
 
@@ -1761,9 +1764,10 @@ bool CGUIButton::setIconState( int iconId, const bool pressed, const bool enable
 
    vector< ButtonIcon *>::iterator iconIter = _iconList.begin();
 
+   ButtonIcon * buttonIcon = NULL;
+
    while ( iconIter != _iconList.end( ) )
    {
-      ButtonIcon * buttonIcon;
       buttonIcon = ( *iconIter );
 
       if ( buttonIcon && buttonIcon->getIconId() == iconId )

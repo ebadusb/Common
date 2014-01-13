@@ -55,13 +55,14 @@ public:
    struct ButtonIcon
    {
       ButtonIcon( CGUIDisplay & display, CGUIBitmapInfo * iconBitmapInfo, const bool pressed, const bool enabled, const short x, const short y )
-      : _iconId( setIconId() ),
+      : _iconId( 0 ),
          _pressed( pressed ),
          _enabled( enabled ),
          _iconBitmapInfo( iconBitmapInfo ),
          _width( x ),
          _height( y )
       {
+         setIconId();
          _iconBitmap = new CGUIBitmap( display, CGUIRegion( x, y, 0, 0 ), *iconBitmapInfo);
       };
 
@@ -178,9 +179,11 @@ public:
          pressedDisabledBitmapId( NULL ),
          pressedDisabledTextItem( NULL ),
          pressedDisabledStylingRecord( NULL ),
-         pressedDisabledButtonIcon( NULL )
+         pressedDisabledButtonIcon( NULL ),
+         alternateButtonId(),
+         type( RaiseAfterRelease )
       {
-         type = RaiseAfterRelease;
+
       };
    };
 

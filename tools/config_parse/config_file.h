@@ -61,6 +61,7 @@ public:
 
    /// Error related functions
    void printError(bool fatal, const char * format, ...);
+   void printWarning(const char * format, ...);
 
    /// Code generation related functions
    void generateIncludeFileList(FILE * fp);

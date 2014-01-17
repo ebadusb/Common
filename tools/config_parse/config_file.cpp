@@ -70,7 +70,7 @@ vector<ConfigFile::EnumType *>  ConfigFile::_enumType;
 struct PrintParam
 {
    void operator()(Parameter* p)
-   { 
+   {
       PRINT_INF("Section: " << p->sectionName() << "\tParameter: " << p->parameterName() << "\tVariableName: " << p->variableName())
    }
 } printParam;
@@ -80,7 +80,7 @@ struct PrintParam
 ConfigFile::ConfigFile(const char * fileName)
 : _fileName(fileName),
   _readWrite(false),
-  _lineNumber(1),
+  _lineNumber(0),
   _parseError(false),
   _noOutputFile(false),
   _sectionArraySize(0)
@@ -123,7 +123,7 @@ bool ConfigFile::parseFile(FILE * fp)
       _section.push_back(versionSection);
    }
 
-   // Check if a  'FileInfo' section already exists in this file with the same name and size   
+   // Check if a  'FileInfo' section already exists in this file with the same name and size
    match = false;
    for (sIter = _section.begin(); !match && sIter != _section.end(); sIter++)
    {
@@ -132,7 +132,7 @@ bool ConfigFile::parseFile(FILE * fp)
          match = true;
       }
    }
-   
+
    // If no File Info section exists create one
    if (!match)
    {
@@ -148,7 +148,7 @@ bool ConfigFile::parseFile(FILE * fp)
    while ( !_parseError &&
          !_parseToken.empty() )
    {
-      
+
       // Check for the beginning of a new section [SectionX]
       if ( _parseToken[0] == '[' )
       {
@@ -158,7 +158,7 @@ bool ConfigFile::parseFile(FILE * fp)
             if ( newSection ) printError("empty section \"%s\"", _sectionName.c_str());
 
             _sectionName = _parseToken.substr(1, _parseToken.size()-1);
-                        
+
             // set flag to indicate we encountered the beginning of a section in the cfg file
             newSection = true;
             _sectionArraySize = 0;
@@ -214,7 +214,7 @@ bool ConfigFile::parseFile(FILE * fp)
             printError(true, "illegal section name");
          }
       }
-      
+
       // Begin processing Param entry
       else if ( isalpha(_parseToken[0]) )
       {
@@ -222,7 +222,7 @@ bool ConfigFile::parseFile(FILE * fp)
          newSection = false;
 
          _parameterName = _parseToken;
-         
+
          if ( _sectionName.empty() )
          {
             // Fatal Error will halt parsing
@@ -342,8 +342,8 @@ bool ConfigFile::setFileName(const char * name)
 
 void ConfigFile::addParameter(Parameter * parameter)
 {
-   // Check if the vector already contains this parameter 
-   // and if not insert a new element into the vector 
+   // Check if the vector already contains this parameter
+   // and if not insert a new element into the vector
    vector<Parameter *>::iterator pIter = findDuplicate(parameter);
 
    if (_parameter.end() == pIter)
@@ -353,14 +353,14 @@ void ConfigFile::addParameter(Parameter * parameter)
 
       // Add section name if necessary
       unsigned int s;
-      // iterate through the existing sections to 
+      // iterate through the existing sections to
       for ( s=0; s<_section.size(); s++ )
       {
          if ( _section[s]->name() == parameter->sectionName() ) break;
       }
 
       if ( s >= _section.size() )
-      {         
+      {
          Section * section = new Section(parameter->sectionName(), _sectionArraySize);
 
          _section.push_back(section);
@@ -373,7 +373,11 @@ void ConfigFile::addParameter(Parameter * parameter)
       if ((*pIter)->getType() != parameter->getType())
       {
          // Non-fatal error
-         printError(false, "duplicate parameter will be ignored because of incorrect type.");
+         printWarning("%s typed entry for %s:%s ignored, previously defined as type %s", 
+            parameter->getTypeName().c_str(), 
+            (*pIter)->sectionName().c_str(),
+            (*pIter)->parameterName().c_str(), 
+            (*pIter)->getTypeName().c_str() );
          delete parameter;
       }
       else
@@ -387,7 +391,7 @@ void ConfigFile::addParameter(Parameter * parameter)
 
 void ConfigFile::printError(bool fatal, const char * format, ...)
 {
-   fprintf(stderr, "%s:%d ", _fileName.c_str(), _lineNumber);
+   fprintf(stderr, "Error: %s:%d ", _fileName.c_str(), _lineNumber);
 
    va_list marker;
    va_start(marker, format);
@@ -398,6 +402,18 @@ void ConfigFile::printError(bool fatal, const char * format, ...)
 
    fprintf(stderr, "Current token = %s\n", _parseToken.c_str());
    _parseError = (_parseError || fatal);
+}
+
+void ConfigFile::printWarning(const char * format, ...)
+{
+   fprintf(stderr, "Warning: %s:%d ", _fileName.c_str(), _lineNumber);
+
+   va_list marker;
+   va_start(marker, format);
+   vfprintf(stderr, format, marker);
+   va_end(marker);
+
+   fprintf(stderr, "\n");
 }
 
 int ConfigFile::getChar(void)
@@ -415,7 +431,6 @@ bool ConfigFile::getNextToken(void)
 {
    TRACE_IN
    if ( _parseError ) return false;
-
    bool firstCharFound = false;
    bool skippingComment = false;
    int ch;
@@ -468,7 +483,10 @@ bool ConfigFile::getNextToken(void)
             else
             {
                _parseToken.insert(_parseToken.end(), '\\');
-               if ( ch != EOF ) ungetc(ch, _fp);
+               if ( ch != EOF )
+               {
+                  ungetc(ch, _fp);
+               }
             }
          }
          else
@@ -534,7 +552,16 @@ bool ConfigFile::getNextToken(void)
       _parseToken.insert(_parseToken.end(), ch);
    }
 
-   if ( ch != EOF ) ungetc(ch, _fp);
+   if ( ch != EOF )
+   {
+      ungetc(ch, _fp);
+      if ( ch == '\n' )
+      {
+         // If we just put a newline back in the file stream decrement 
+         // the line number so we don't double count the new line
+         _lineNumber--;
+      }
+   }
    TRACE_OUT
    return true;
 }
@@ -611,8 +638,8 @@ void ConfigFile::processParameter()
    if ( _parseToken[0] == '\"' )
    {
 
-      parameterObj = new StringParameter(_sectionName, 
-                                         _parameterName, 
+      parameterObj = new StringParameter(_sectionName,
+                                         _parameterName,
                                          _parseToken.substr(1, _parseToken.size()-1));
    }
    else if ( isdigit(_parseToken[0]) ||
@@ -681,7 +708,7 @@ void ConfigFile::processParameter()
 }
 
 
-void ConfigFile::processFileOptions(void) 
+void ConfigFile::processFileOptions(void)
 {
    TRACE_IN
    while ( getNextToken() &&
@@ -699,7 +726,7 @@ void ConfigFile::processFileOptions(void)
                _parseToken[0] == '"' )
          {
             _configFileName = _parseToken.substr(1, _parseToken.size()-1);
-            
+
             FILE * cfg_file = fopen(_configFileName.c_str(), "r");
             if ( !cfg_file )
             {
@@ -725,7 +752,7 @@ void ConfigFile::processFileOptions(void)
          {
             // Fatal Error will halt parsing
             printError(true, "bad data version");
-         }  
+         }
       }
       else if ( _parseToken == "class-name" )
       {
@@ -762,13 +789,13 @@ void ConfigFile::processFileOptions(void)
       }
       else if ( _parseToken == "file-name" )
       {
-         if ( _dataFileName.empty() && 
+         if ( _dataFileName.empty() &&
               getNextToken() &&
               _parseToken[0] == '"' )
          {
-				string dataFileName = _parseToken.substr(1, _parseToken.size()-1);
-				setFileName(dataFileName.c_str());
-            
+                          string dataFileName = _parseToken.substr(1, _parseToken.size()-1);
+                          setFileName(dataFileName.c_str());
+
          }
          else
          {
@@ -778,7 +805,7 @@ void ConfigFile::processFileOptions(void)
       }
       else if ( _parseToken == "default-file-name" )
       {
-         if ( _defaultFileName.empty() && 
+         if ( _defaultFileName.empty() &&
               getNextToken() &&
               _parseToken[0] == '"' )
          {
@@ -831,7 +858,7 @@ void ConfigFile::processFileOptions(void)
          }
          else
          {
-            int	elementCount = 0;
+            int   elementCount = 0;
 
             eType->_name = _parseToken;
             while ( getNextToken() &&
@@ -884,7 +911,7 @@ void ConfigFile::processFileOptions(void)
             }
             else
             {
-               
+
                // Find the existing formatVersion parameter and append the common file version
                _formatVersion = _formatVersion + "." + _parseToken.substr(1, _parseToken.size()-1);
             }
@@ -912,7 +939,7 @@ void ConfigFile::processFileOptions(void)
                // Find the existing dataVersion parameter and append the common file version
                _dataVersion = _dataVersion + "." + _parseToken.substr(1, _parseToken.size()-1);
             }
-            
+
             removeRevisionTags( _dataVersion );
             Parameter * param = new StringParameter("Version", "DataVersion", _dataVersion);
             addParameter(param);
@@ -943,7 +970,7 @@ void ConfigFile::processFileOptions(void)
 
    // This seems inconsistent that ReadOnly is handled here as a parameter.
    Parameter * readOnlyParam;
-   
+
    // Search for a read only parameter that already exists.
    bool match = false;
    vector<Parameter *>::iterator bIter = _parameter.begin();
@@ -1061,8 +1088,8 @@ void ConfigFile::processParameterOptions(Parameter * parameter)
       }
       else if ( _parseToken == "range-func" )
       {
-         if ( rangeSet ) 
-         { 
+         if ( rangeSet )
+         {
             // Fatal Error will halt parsing
             printError(true, "parameter can not specify both range and range-func options");
          }
@@ -1252,8 +1279,8 @@ string ConfigFile::formatFileName(const string & base)
    {
       int dirLen = projectRoot.size();
 
-      string	upCaseRoot = _projectName;
-      for ( unsigned int i=0; i<upCaseRoot.size(); i++ )	upCaseRoot[i] = toupper(upCaseRoot[i]);
+      string      upCaseRoot = _projectName;
+      for ( unsigned int i=0; i<upCaseRoot.size(); i++ )  upCaseRoot[i] = toupper(upCaseRoot[i]);
 
       result = upCaseRoot;
       result += "_PATH \"";
@@ -1280,8 +1307,8 @@ string ConfigFile::formatFileName(const string & base)
 
 void ConfigFile::createDirectoryChain(const string & fileName)
 {
-   string	pathName;
-   int		pathEndIdx = fileName.find_first_of('/');
+   string pathName;
+   int            pathEndIdx = fileName.find_first_of('/');
 
    while ( pathEndIdx != string::npos )
    {
@@ -1601,9 +1628,9 @@ void ConfigFile::generateHeaderAccessClass(FILE * fp)
 
 
    fprintf(fp,
-         "		void logData( DataLog_Level * level, ConfigFile::ReadStatus s );\n"
-         "		void logData( DataLog_Level * level, ConfigFile::WriteStatus s);\n\n");
- 
+         "                void logData( DataLog_Level * level, ConfigFile::ReadStatus s );\n"
+         "                void logData( DataLog_Level * level, ConfigFile::WriteStatus s);\n\n");
+
 
    fprintf(fp,
          "  public:\n"
@@ -1659,29 +1686,29 @@ void ConfigFile::generateHeaderAccessClass(FILE * fp)
          "    {\n"
          "      return ConfigFile::getSectionNameByRef(_dataMap, %d, value);\n"
          "    }\n\n"
-         "	ReadStatus readFile(DataLog_Level * logLevel, DataLog_Level * errorLevel)\n"
-         "	{\n"
-         "		ConfigFile::ReadStatus status;\n"
-         "		_logLevel = logLevel;\n"
-         "		_errorLevel = errorLevel;\n"
-         "		status = ConfigFile::readData(_dataMap, %d, fileName(), crcFileName(), backupFileName(), backupCRCFileName(), defaultFileName());\n"
-         "		logData(&log_level_config_data_info, status);\n"
-         "		return status;\n"
-         "	}\n\n",
+         "        ReadStatus readFile(DataLog_Level * logLevel, DataLog_Level * errorLevel)\n"
+         "        {\n"
+         "                ConfigFile::ReadStatus status;\n"
+         "                _logLevel = logLevel;\n"
+         "                _errorLevel = errorLevel;\n"
+         "                status = ConfigFile::readData(_dataMap, %d, fileName(), crcFileName(), backupFileName(), backupCRCFileName(), defaultFileName());\n"
+         "                logData(&log_level_config_data_info, status);\n"
+         "                return status;\n"
+         "        }\n\n",
          _parameter.size(), _parameter.size(), _parameter.size());
 
    if ( _hasBackup )
    {
       fprintf(fp,
-            "	WriteStatus writeFile(DataLog_Level * logLevel, DataLog_Level * errorLevel)\n"
-            "	{\n"
-            "		ConfigFile::WriteStatus status;\n"
-            "		_logLevel = logLevel;\n"
-            "		_errorLevel = errorLevel;\n"
-            "		status = ConfigFile::writeData(_dataMap, %d, fileName(), crcFileName(), backupFileName(), backupCRCFileName());\n"
-            "		logData(&log_level_config_data_info, status);\n"
-            "		return status;\n"
-            "	}\n\n",
+            "     WriteStatus writeFile(DataLog_Level * logLevel, DataLog_Level * errorLevel)\n"
+            "     {\n"
+            "             ConfigFile::WriteStatus status;\n"
+            "             _logLevel = logLevel;\n"
+            "             _errorLevel = errorLevel;\n"
+            "             status = ConfigFile::writeData(_dataMap, %d, fileName(), crcFileName(), backupFileName(), backupCRCFileName());\n"
+            "             logData(&log_level_config_data_info, status);\n"
+            "             return status;\n"
+            "     }\n\n",
             _parameter.size());
    }
 

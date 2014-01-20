@@ -142,37 +142,48 @@ public:
 		Trima Build  BUILD REVISION: 8.503  CRC: 0x36c5a5d9  BUILD DATE: Tue 06/17/2008  04:56 PM  BUILD DIR: D:\trima\5.r  BUILD COMPUTER:  usbll31e5y6.bct.gambro.net  BUILD USER:  ssunusb
 		*/
 		std::istringstream in(log.mMessage.substr(log.mMessage.find("Log file:")), std::istringstream::in);
-		
-			std::string temp;
-			in >> temp; in >> temp;//"Log file:"
-			in >> log.mLogFilename;
-			if(log.mLogFilename.find("1T") != log.mLogFilename.npos)
-				log.mDeviceType = DECODER::TRIMA;
-			else if( ( log.mLogFilename.find("1S") != log.mLogFilename.npos) || ( log.mLogFilename.find("1P") != log.mLogFilename.npos) )
-				log.mDeviceType = DECODER::OPTIA;
-			else if( log.mLogFilename.find("1C") != log.mLogFilename.npos)
-				log.mDeviceType = DECODER::CES;
-			else if( log.mLogFilename.find("1A") != log.mLogFilename.npos)
-				log.mDeviceType = DECODER::ATREUS;
-			else if( log.mLogFilename.find("1W") != log.mLogFilename.npos)
-				log.mDeviceType = DECODER::MASSIVE;
+		std::string temp;
 
-			
-			if(log.mDeviceType == DECODER::TRIMA) {
-				in >> temp; in >> temp; in >> temp; in >> temp; //\nTrima Build  BUILD REVISION:
-				in >> log.mBuildRevision;
-				in >> temp; //CRC:
-				in >> log.mCrc;
-				in >> temp; in >> temp;//BUILD DATE:
-				in >> log.mBuildDate;/*day*/ in >> temp; log.mBuildDate.append(" " + temp); /*date*/
-				in >> temp; log.mBuildDate.append(" " + temp);/*time*/ in >> temp; log.mBuildDate.append(" " + temp); /*AM or PM*/
-				in >> temp; in >> temp;//BUILD DIR:
-				in >> log.mBuildDir;
-				in >> temp; in >> temp;//BUILD COMPUTER:
-				in >> log.mBuildComputer;
-				in >> temp; in >> temp;//BUILD USER:
-				in >> log.mBuildUser;
-			}
+		in >> temp; in >> temp;//"Log file:"
+		in >> log.mLogFilename;
+		if(log.mLogFilename.find("1T") != log.mLogFilename.npos)
+			log.mDeviceType = DECODER::TRIMA;
+		else if( ( log.mLogFilename.find("1S") != log.mLogFilename.npos) || ( log.mLogFilename.find("1P") != log.mLogFilename.npos) )
+			log.mDeviceType = DECODER::OPTIA;
+		else if( log.mLogFilename.find("1C") != log.mLogFilename.npos)
+			log.mDeviceType = DECODER::CES;
+		else if( log.mLogFilename.find("1A") != log.mLogFilename.npos)
+			log.mDeviceType = DECODER::ATREUS;
+		else if( log.mLogFilename.find("1W") != log.mLogFilename.npos)
+			log.mDeviceType = DECODER::MASSIVE;
+
+		if(log.mDeviceType == DECODER::TRIMA) 
+      {
+			in >> temp; in >> temp; in >> temp; in >> temp; //\nTrima Build  BUILD REVISION:
+			in >> log.mBuildRevision;
+			in >> temp; //CRC:
+			in >> log.mCrc;
+			in >> temp; in >> temp;//BUILD DATE:
+			in >> log.mBuildDate;/*day*/ in >> temp; log.mBuildDate.append(" " + temp); /*date*/
+			in >> temp; log.mBuildDate.append(" " + temp);/*time*/ in >> temp; log.mBuildDate.append(" " + temp); /*AM or PM*/
+			in >> temp; in >> temp;//BUILD DIR:
+			in >> log.mBuildDir;
+			in >> temp; in >> temp;//BUILD COMPUTER:
+			in >> log.mBuildComputer;
+			in >> temp; in >> temp;//BUILD USER:
+			in >> log.mBuildUser;
+		}
+      else if (log.mDeviceType == DECODER::OPTIA)
+      {
+         std::string::size_type buildDirBegin = log.mMessage.find("directory=");
+         if (buildDirBegin != std::string::npos)
+         {
+            buildDirBegin += std::strlen("directory=");
+            std::string::size_type buildDirEnd = log.mMessage.find(" ", buildDirBegin);
+            if (buildDirEnd != std::string::npos)
+               log.mBuildDir = log.mMessage.substr(buildDirBegin, buildDirEnd - buildDirBegin);
+         }
+      }
 
 		this->LogRegistration<RecordLogInfo>::ProcessData(log); 
 	}

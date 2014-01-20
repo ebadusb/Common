@@ -1,6 +1,8 @@
-StackTraceUI v1.3 (GUI version of StackTrace Tool)
+StackTraceUI v1.4 (GUI version of StackTrace Tool)
 
 $ Log: StackTraceUI $
+Revision 1.4  2014/01/20  chowusb
+- fixed bug to use build path in Optia dlog as default search path
 Revision 1.3  2013/12/09  chowusb
 - added support for recursive object file search in subdirectories of build path
 - fixed bug for when revision number is missing (seen in Optia local builds) 

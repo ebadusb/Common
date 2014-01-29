@@ -53,7 +53,7 @@ double FPMath::fpStdDev(std::list<double> &list)
 {
 	double stddev = 0.0;
 
-	if ( list.size() > 0 )
+	if ( list.size() > 1 )
 	{
 		double avgOfList = fpAvg(list);
 		double denominator = list.size();
@@ -158,7 +158,7 @@ double FPMath::fpFloor(double value)
 		return static_cast<double>(static_cast<int>(value + 0.5));
 	else
 	{
-		double temp = ceil(value);
+		double temp = fpCeiling(value);
 		if ( FPMath::compareEqual(temp - value, 0.0) )
 			return value;
 		else
@@ -170,7 +170,7 @@ double FPMath::fpCeiling(double value)
 {
 	if ( compareGreater(value, 0.0) )
 	{
-		double temp = floor(value);
+		double temp = fpFloor(value);
 		if ( FPMath::compareEqual(temp - value, 0.0) )
 			return value;
 		else

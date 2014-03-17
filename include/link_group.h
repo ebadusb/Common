@@ -7,7 +7,8 @@
 #ifndef _LINK_GROUP_INCLUDE
 #define _LINK_GROUP_INCLUDE
 
-#include <semLib.h>
+#include "Mutex.h"
+using namespace Bct;
 
 class LinkGroup
 {
@@ -18,11 +19,11 @@ public:
 	//
 	LinkGroup(void);
 	virtual ~LinkGroup();
-	void lock(void) { semTake(_lock, WAIT_FOREVER); }
-	void unlock(void) { semGive(_lock); }
+	void lock(void) { _mutex.lock(); }
+	void unlock(void) { _mutex.unlock(); }
 
 private:
-	SEM_ID _lock;
+   Mutex _mutex;
 };
 
 #endif /* ifndef _LINK_GROUP_INCLUDE */

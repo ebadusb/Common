@@ -56,5 +56,5 @@ namespace Bct
     Mutex& operator = (const Mutex&);
   };
 
-} // End namespace CES
+} // End namespace Bct
 #endif //Mutex_Included

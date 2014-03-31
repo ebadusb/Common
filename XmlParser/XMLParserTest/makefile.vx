@@ -1,0 +1,79 @@
+#
+# $Header: K:/CES/test/rcs/makefile.vx 1.2 2007/12/13 17:34:47Z estausb Exp estausb $
+#
+# $Log: makefile.vx $
+#
+
+ifeq ($(BUILD_TYPE),CLEAN)
+.PHONY: all
+all: clean
+else
+.PHONY: all
+all: check_opt_change libs app
+endif
+
+#
+# MAINDIR should be set to the relative path from this makefile directory
+# to the ces project directory.  MAINDIR must use \ (DOS/Windows
+# style) directory separators if they are needed.
+#
+MAINDIR = ../..
+ADDN_INCDIR = -I$(MAINDIR) \
+	-I..\..\CLInterface \
+	-I..\..\Expat\lib \
+	-I..\..\XmlParser \
+	-I..\..\Util \
+	-I..\..\Status \
+	-I..\..\Motion \
+	-I..\..\FluidicsSystem \
+	-I..\..\EnvironmentControl \
+	-I..\..\datalog \
+	-I..\..\ControlBoard \
+	-I..\..\Config \
+	-I..\..\Comm \
+	-I..\..\CesOperator \
+	-I$(BCT_TOOLS)\
+
+
+	
+include $(MAINDIR)/makefile.vxc
+
+.PHONY: libs
+libs:
+	@cd $(MAINDIR)\datalog && $(MAKE) -f makefile.vx CPU=$(CPU) BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR) RMSGDIR=$(RMSGDIR)
+
+#
+# The following should define all of the source files of each type
+# to be compiled for the executable
+#
+APP_NAME := XmlParserTest
+XmlParserTest_dir = $(MAINDIR)\out
+XmlParserTest_map = txml_control.map
+XmlParserTest_c_files = 
+XmlParserTest_cxx_files = XmlParserTest.cpp
+XmlParserTest_whole_libs = $(COMDIR)\datalog\lib\libdatalog.a \
+	..\..\lib\libces_datalog.a \
+	..\..\lib\libXmlParser.a \
+	..\..\lib\libUtil.a \
+	..\..\lib\libStatus.a \
+	..\..\lib\libMotion.a \
+	..\..\lib\libFluidics.a \
+	..\..\lib\libExpat.a \
+	..\..\lib\libEnvironControl.a \
+	..\..\lib\libControlDriver.a \
+	..\..\lib\libControlBoard.a \
+	..\..\lib\libConfig.a \
+	..\..\lib\libComm.a \
+	$(COMDIR)\zlib\lib\libzlib.a \
+	$(COMDIR)\config_file_support\lib\libconfigfilesupport.a \
+	$(COMDIR)\softcrc\lib\libsoftcrc.a \
+	$(COMDIR)\debug\lib\libdebug.a 
+	
+include $(MAINDIR)/makefile.process_app
+
+#
+# This is the standard makefile for Ces applications
+#
+include $(MAINDIR)/makefile.build_apps
+app : $(APP_LIST)
+

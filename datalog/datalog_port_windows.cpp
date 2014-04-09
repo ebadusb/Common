@@ -778,11 +778,8 @@ void inet_ntoa_b (struct in_addr inetAddress, char *pString)
 
 void _FATAL_ERROR(const char * file, int line, const char * eString)
 {
-    fprintf(stderr, "%s(%d): %s\n", file, line, eString);
-	exit(-1);
+   DataLog(log_level_critical) << "FATAL:[" << file << ":" << line << "] " << eString << endmsg;
 }
-
-
 
 int taskLock (void) { return 0; };
 int taskIdListGet (int idList [ ], int maxTasks) { return 0; };

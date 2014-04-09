@@ -20,7 +20,7 @@ endif
 # style) directory separators if they are needed.
 #
 MAINDIR = ..
-ADDN_INCDIR = -I $(MAINDIR) -I ..\Expat\lib -I ..\Utility
+ADDN_INCDIR = -I $(MAINDIR) -I ../Expat/lib -I ../include
 include $(MAINDIR)/makefile.vxc
 
 #
@@ -30,7 +30,7 @@ include $(MAINDIR)/makefile.vxc
 LIB_C_FILES   = 
 LIB_CXX_FILES = Attribute.cpp  \
 	Document.cpp \
-  ProtectedDocument.cpp \
+   ProtectedDocument.cpp \
 	FileParser.cpp \
 	Element.cpp \
 	XMLMemberType.cpp \

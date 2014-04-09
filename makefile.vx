@@ -21,7 +21,7 @@ ifeq ($(VXWORKS_VERSION),5.4)
     DIR_LIST += drivers
   endif
 else
-  DIR_LIST += cgui firewire
+  DIR_LIST += cgui firewire Expat XmlParser
 endif
 
 .PHONY: libs

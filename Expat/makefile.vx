@@ -1,0 +1,31 @@
+# $Header$
+#
+#  Make file for the Expat XML library
+#
+
+ifeq ($(BUILD_TYPE),CLEAN)
+.PHONY: all
+all: dirs
+else
+.PHONY: all
+all: check_opt_change dirs
+endif
+
+MAINDIR = ..\..
+include $(MAINDIR)/makefile.vxc
+
+#
+# List of sub-directories to be built
+#
+DIR_LIST := lib
+
+.PHONY: dirs
+dirs : $(DIR_LIST)
+
+.PHONY: force
+force: ;
+
+$(DIR_LIST) : force
+	@cd $@ && $(MAKE) -f makefile.vx BUILD_TYPE=$(BUILD_TYPE) COMDIR=$(COMDIR)
+
+

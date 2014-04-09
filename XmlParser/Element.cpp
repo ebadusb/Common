@@ -19,15 +19,14 @@ static const std::string sAttrValueTrue = "true";
 static const std::string sAttrValueFalse = "false";
 
 using namespace BctXml;
-Element::Element(void):_dirty(false),_pParent(NULL),_sName("")
+Element::Element(void) : _dirty(false), _pParent(NULL), _sName("")
 {
-   _dataType=ELEMENT;
+   _dataType = ELEMENT;
 }
-Element::Element(const std::string& sName, Element* pParent) : _sName(sName), _pParent(pParent),_dirty(false)
+Element::Element(const std::string& sName, Element *pParent) : _sName(sName), _pParent(pParent), _dirty(false)
 {
-   _dataType=ELEMENT;
-   if (_pParent)
-      _pParent->addChildElement(this);
+   _dataType = ELEMENT;
+   if (_pParent) _pParent->addChildElement(this);
 }
 
 Element::~Element()
@@ -39,83 +38,80 @@ void Element::addAttribute(const std::string& sAttName, const std::string& sAttV
 {
    bool bExists = hasAttribute(sAttName);
 
-   if (bExists == true)
-      updateAttribute(sAttName, sAttVal);
+   if (bExists == true) updateAttribute(sAttName, sAttVal);
    else
    {
-    //Make thread safe
+      //Make thread safe
       _mutexAttribute.lock();
       BctXml::Attribute attr(sAttName, sAttVal);
       _attributes.push_back(attr);
-    //Make thread safe
+      //Make thread safe
       _mutexAttribute.unlock();
    }
 }
 
 int Element::setDataString(const std::string& inValue)
-{  
-  //Make Thread Safe
-   _mutexMember.lock();  
-   int output =0;
-   CharData* newCharData;
+{
+   //Make Thread Safe
+   _mutexMember.lock();
+   int output = 0;
+   CharData *newCharData;
 
-   XMLMemberTypeSet::const_iterator itMem=_vMembers.begin();
-   for (itMem; itMem != _vMembers.end() ;itMem++)
+   XMLMemberTypeSet::const_iterator itMem = _vMembers.begin();
+   for (itMem; itMem != _vMembers.end(); itMem++)
    {
       if ((*itMem)->isData())
       {
-         if (output==0)
+         if (output == 0)
          {
             (*itMem)->setDataString(inValue);
-            output=1;
+            output = 1;
          }
          else
          {
             (*itMem)->setDataString("");
          }
-
-
       }
-
    }
-   if (output==0)
+   if (output == 0)
    {
       newCharData = new CharData(inValue);
       _vMembers.push_back(newCharData);
-      output=1;
+      output = 1;
    }
    _mutexMember.unlock();
    return output;
 }
 
-void Element::addChildElement(Element* child)
+void Element::addChildElement(Element *child)
 {
    if (child)
    {
-    //Make Thread Safe
+      //Make Thread Safe
       _mutexMember.lock();
 
-
-    //Don't add it twice...this would make deleting a problem.
+      //Don't add it twice...this would make deleting a problem.
       if (!isChildElement(child))
       {
          _vMembers.push_back(child);
          child->_pParent = this;
       }
+
       _mutexMember.unlock();
    }
 }
 
-bool Element::isChildElement(const Element* child) const
+bool Element::isChildElement(const Element *child) const
 {
-  // Search to see if we already have this child;
+   // Search to see if we already have this child;
    XMLMemberTypeSet::const_iterator it = _vMembers.begin();
    bool alreadyAChild = false;
+
    for (it; it != _vMembers.end() && !alreadyAChild; it++)
    {
-      if (*it == (XMLMemberType*)(child))
-         alreadyAChild = true;
-   }  
+      if (*it == (XMLMemberType *)(child)) alreadyAChild = true;
+   }
+
    return alreadyAChild;
 }
 
@@ -129,17 +125,15 @@ std::string Element::getName() const
    return _sName;
 }
 
-
 std::string Element::getDataString() const
 {
-
    std::string output;
-   XMLMemberTypeSet::const_iterator itMem=_vMembers.begin();
-   for (itMem; itMem != _vMembers.end() ;itMem++)
+   XMLMemberTypeSet::const_iterator itMem = _vMembers.begin();
+   for (itMem; itMem != _vMembers.end(); itMem++)
    {
       if ((*itMem)->isData())
       {
-         output+=(*itMem)->getDataString();
+         output += (*itMem)->getDataString();
       }
    }
    return output;
@@ -147,8 +141,8 @@ std::string Element::getDataString() const
 
 void Element::addData(const std::string& sValue)
 {
-   CharData* newCharData = new CharData(sValue);
-  //Make Thread Safe
+   CharData *newCharData = new CharData(sValue);
+   //Make Thread Safe
    _mutexMember.lock();
    _vMembers.push_back(newCharData);
    _mutexMember.unlock();
@@ -156,10 +150,10 @@ void Element::addData(const std::string& sValue)
 
 void Element::deleteChildren()
 {
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.lock();
-   XMLMemberTypeSet::iterator itMem=_vMembers.begin();
-   XMLMemberType* child;
+   XMLMemberTypeSet::iterator itMem = _vMembers.begin();
+   XMLMemberType *child;
    while (itMem != _vMembers.end())
    {
       child = *itMem;
@@ -172,17 +166,17 @@ void Element::deleteChildren()
 }
 
 
-bool Element::hasChildren()const
+bool Element::hasChildren() const
 {
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.lock();
-   bool output=false;
-   XMLMemberTypeSet::const_iterator itMem=_vMembers.begin();
-   for (itMem; itMem != _vMembers.end() ;itMem++)
+   bool output = false;
+   XMLMemberTypeSet::const_iterator itMem = _vMembers.begin();
+   for (itMem; itMem != _vMembers.end(); itMem++)
    {
       if ((*itMem)->isElement())
       {
-         output=true;
+         output = true;
          break;
       }
    }
@@ -191,7 +185,8 @@ bool Element::hasChildren()const
    return output;
 }
 
-ElementSet Element::getAllChildren(){
+ElementSet Element::getAllChildren()
+{
    ElementSet myElemSet = getImmediateChildren();
    return getAllChildren(&myElemSet);
 }
@@ -199,40 +194,37 @@ ElementSet Element::getAllChildren(){
 ElementSet Element::getAllChildren(ElementSet *input)
 {
    ElementSet output;
-   std::vector<Element*>::iterator it = input->begin();
+   std::vector<Element *>::iterator it = input->begin();
 
    for (it; it != input->end(); it++)
    {
-
       output.push_back(*it);
       if ((*it)->hasChildren())
       {
          ElementSet subChildren = (*it)->getAllChildren();
-         std::vector<Element*>::iterator itsub = subChildren.begin();
+         std::vector<Element *>::iterator itsub = subChildren.begin();
          for (itsub; itsub != subChildren.end(); itsub++)
          {
             output.push_back(*itsub);
          }
       }
-
    }
    return output;
 }
 ElementSet Element::getImmediateChildren()
 {
    ElementSet output;
-   XMLMemberTypeSet::const_iterator itMem=_vMembers.begin();
-  //Make Thread Safe
+   XMLMemberTypeSet::const_iterator itMem = _vMembers.begin();
+   //Make Thread Safe
    _mutexMember.lock();
-   for (itMem; itMem != _vMembers.end() ;itMem++)
+   for (itMem; itMem != _vMembers.end(); itMem++)
    {
       if ((*itMem)->isElement())
       {
-         output.push_back(static_cast<Element*>(*itMem));            
+         output.push_back(static_cast<Element *>(*itMem));
       }
-
    }
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.unlock();
    return output;
 }
@@ -245,163 +237,157 @@ Element* Element::findFirstChild(const std::string& sName)
    XMLMemberTypeSet::iterator it = _vMembers.begin();
    for (it; it != _vMembers.end(); ++it)
    {
-      if ((*it) != NULL && (*it)->isElement() && (*it)->getName() == sName)
-         return static_cast<Element*>(*it);
+      if ((*it) != NULL && (*it)->isElement() && (*it)->getName() == sName) return static_cast<Element *>(*it);
    }
    return NULL;
 }
 
-Element* Element::findFirstChild(const std::string& sName, const Attribute &inAttribute)
+Element* Element::findFirstChild(const std::string& sName, const Attribute& inAttribute)
 {
    AttributeSet tempSet;
    tempSet.push_back((inAttribute));
-   return(findFirstChild(sName,tempSet));
+   return (findFirstChild(sName, tempSet));
 }
-Element* Element::findFirstChild(const std::string& sName, const AttributeSet &inAttributeSet)
+Element* Element::findFirstChild(const std::string& sName, const AttributeSet& inAttributeSet)
 {
-   Element* output=NULL;
+   Element *output = NULL;
 
-   ElementSet TempSet= processMatchingChildren(sName,inAttributeSet,FindFirst);
-   if (TempSet.size()>0)
-      output=TempSet.front();
+   ElementSet TempSet = processMatchingChildren(sName, inAttributeSet, FindFirst);
+   if (TempSet.size() > 0) output = TempSet.front();
    return output;
 }
-void Element::deleteFirstChild(const std::string& sName,const AttributeSet &inAttributeSet)
+void Element::deleteFirstChild(const std::string& sName, const AttributeSet& inAttributeSet)
 {
-   processMatchingChildren(sName,inAttributeSet,DeleteFirst);
+   processMatchingChildren(sName, inAttributeSet, DeleteFirst);
 }
 
-void Element::deleteFirstChild(const std::string& sName,const Attribute &inAttribute)
+void Element::deleteFirstChild(const std::string& sName, const Attribute& inAttribute)
 {
    AttributeSet tempSet;
    tempSet.push_back((inAttribute));
-   deleteFirstChild(sName,tempSet);
+   deleteFirstChild(sName, tempSet);
 }
 
 void Element::deleteFirstChild(const std::string& sName)
 {
    AttributeSet tempSet;
-   deleteFirstChild(sName,tempSet);
+   deleteFirstChild(sName, tempSet);
 }
 
-ElementSet Element::processMatchingChildren(const std::string& sName,const AttributeSet &inAttributeSet,ProcessingType type)
+ElementSet Element::processMatchingChildren(const std::string& sName, const AttributeSet& inAttributeSet, ProcessingType type)
 {
-  //Make Thread Safe
-   _mutexMember.lock(); 
+   //Make Thread Safe
+   _mutexMember.lock();
    ElementSet output;
    bool allAttributesMatch;
    bool restartSearch = false;
    AttributeSet::const_iterator itAtt;
-   XMLMemberTypeSet::iterator itMem=_vMembers.begin();
+   XMLMemberTypeSet::iterator itMem = _vMembers.begin();
 
-   while ( itMem != _vMembers.end() )
+   while (itMem != _vMembers.end())
    {
-
       if ((*itMem) != NULL && (*itMem)->isElement())
       {
          if ((*itMem)->getName() == sName)
          {
-            Element* TempElement = static_cast<Element*>(*itMem);
+            Element *TempElement = static_cast<Element *>(*itMem);
             allAttributesMatch = true;
-            itAtt= inAttributeSet.begin();
-            for (itAtt; itAtt != inAttributeSet.end() ;itAtt++)
+            itAtt = inAttributeSet.begin();
+            for (itAtt; itAtt != inAttributeSet.end(); itAtt++)
             {
                if (!TempElement->hasAttribute((*itAtt)))
                {
-                  allAttributesMatch=false;
+                  allAttributesMatch = false;
                   break;
                }
-
             }
             if (allAttributesMatch)
             {
-               if ((type==DeleteFirst)||(type==DeleteAll))
+               if ((type == DeleteFirst) || (type == DeleteAll))
                {
                   _vMembers.erase(itMem);
                   delete TempElement;
-            //Start over
-                  itMem=_vMembers.begin();
-                  restartSearch=true;
+                  //Start over
+                  itMem = _vMembers.begin();
+                  restartSearch = true;
                }
                else
                {
                   output.push_back(TempElement);
                }
-               if ((type==DeleteFirst)||(type==FindFirst))break;
+               if ((type == DeleteFirst) || (type == FindFirst)) break;
             }
 
          }
       }
-      if (restartSearch)
-         restartSearch=false;
-      else
-         itMem++;
+      if (restartSearch) restartSearch = false;
+      else itMem++;
    }
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.unlock();
    return output;
 }
 
-ElementSet Element::findChildren(const std::string& sName,const AttributeSet &inAttributeSet)
+ElementSet Element::findChildren(const std::string& sName, const AttributeSet& inAttributeSet)
 {
-   return processMatchingChildren(sName,inAttributeSet,FindAll);
+   return processMatchingChildren(sName, inAttributeSet, FindAll);
 }
 
-ElementSet Element::findChildren(const std::string& sName,const Attribute &inAttribute)
+ElementSet Element::findChildren(const std::string& sName, const Attribute& inAttribute)
 {
    AttributeSet tempSet;
    tempSet.push_back((inAttribute));
-   return(findChildren(sName,tempSet));
+   return (findChildren(sName, tempSet));
 }
 
 ElementSet Element::findChildren(const std::string& sName)
 {
    AttributeSet tempSet;
-   return(findChildren(sName,tempSet));
+   return (findChildren(sName, tempSet));
 }
 
-void Element::deleteChildren(const std::string& sName,const AttributeSet &inAttributeSet)
+void Element::deleteChildren(const std::string& sName, const AttributeSet& inAttributeSet)
 {
-   processMatchingChildren(sName,inAttributeSet,DeleteAll);
+   processMatchingChildren(sName, inAttributeSet, DeleteAll);
 
 }
-void Element::deleteChildren(const std::string& sName,const Attribute &inAttribute)
+void Element::deleteChildren(const std::string& sName, const Attribute& inAttribute)
 {
    AttributeSet tempSet;
    tempSet.push_back((inAttribute));
-   deleteChildren(sName,tempSet);
+   deleteChildren(sName, tempSet);
 }
 
 void Element::deleteChildren(const std::string& sName)
 {
    AttributeSet tempSet;
-   deleteChildren(sName,tempSet);
+   deleteChildren(sName, tempSet);
 }
 
-bool Element::hasAttribute(const Attribute &inAttribute)
+bool Element::hasAttribute(const Attribute& inAttribute)
 {
-   bool output=false;
-  //Make thread safe
+   bool output = false;
+   //Make thread safe
    _mutexAttribute.lock();
    AttributeSet::const_iterator it = _attributes.begin();
    for (it; it != _attributes.end(); it++)
    {
-      if ((*it)==inAttribute)
+      if ((*it) == inAttribute)
       {
-         output=true;
+         output = true;
          break;
       }
    }
-  //Make thread safe
+   //Make thread safe
    _mutexAttribute.unlock();
    return output;
 }
 
-std::string Element::getAttributeValue(const std::string& sAttName) 
+std::string Element::getAttributeValue(const std::string& sAttName)
 {
    AttributeSet::const_iterator it = _attributes.begin();
    std::string sValue = "";
-  //Make thread safe
+   //Make thread safe
    _mutexAttribute.lock();
    for (it; it != _attributes.end(); it++)
    {
@@ -410,23 +396,22 @@ std::string Element::getAttributeValue(const std::string& sAttName)
          sValue = it->getValue();
       }
    }
-  //Make thread safe
+   //Make thread safe
    _mutexAttribute.unlock();
    return sValue;
 }
 
-bool Element::hasAttribute(const std::string& sAttName) 
+bool Element::hasAttribute(const std::string& sAttName)
 {
    bool bFound = false;
-  //Make thread safe
+   //Make thread safe
    _mutexAttribute.lock();
    AttributeSet::const_iterator it = _attributes.begin();
    for (it; it != _attributes.end() && bFound == false; it++)
    {
-      if (it->getName() == sAttName)
-         bFound = true;
+      if (it->getName() == sAttName) bFound = true;
    }
-  //Make thread safe
+   //Make thread safe
    _mutexAttribute.unlock();
    return bFound;
 }
@@ -434,9 +419,9 @@ bool Element::hasAttribute(const std::string& sAttName)
 bool Element::updateAttribute(const std::string& sAttName, const std::string& sAttVal)
 {
    bool bUpdate = false;
-  // We could check for hasAttribute() here, but we are already effectively doing 
-  // that in the loop so we have removed it.
-  //Make thread safe
+   // We could check for hasAttribute() here, but we are already effectively doing
+   // that in the loop so we have removed it.
+   //Make thread safe
    _mutexAttribute.lock();
    AttributeSet::iterator it = _attributes.begin();
    for (it; it != _attributes.end(); it++)
@@ -447,159 +432,188 @@ bool Element::updateAttribute(const std::string& sAttName, const std::string& sA
          it->changeValue(sAttVal);
       }
    }
-  //Make thread safe
+   //Make thread safe
    _mutexAttribute.unlock();
    return bUpdate;
 }
-void Element::addComment( Comment* inComment)
+
+void Element::addComment(Comment *inComment)
 {
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.lock();
    _vMembers.push_back(inComment);
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.unlock();
 }
-CommentSet Element::getComments() 
+
+CommentSet Element::getComments()
 {
    CommentSet output;
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.lock();
-   XMLMemberTypeSet::const_iterator itMem=_vMembers.begin();
-   for (itMem; itMem != _vMembers.end() ;itMem++)
+   XMLMemberTypeSet::const_iterator itMem = _vMembers.begin();
+   for (itMem; itMem != _vMembers.end(); itMem++)
    {
       if ((*itMem)->isComment())
       {
-         output.push_back(static_cast<Comment*>(*itMem));
+         output.push_back(static_cast<Comment *>(*itMem));
       }
    }
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.unlock();
    return output;
 }
-AttributeSet Element::getAllAttributes() const{
+
+AttributeSet Element::getAllAttributes() const
+{
    return _attributes;
 }
-void Element::toStream(std::ostream &output) const
+
+void Element::toStream(std::ostream& output) const
 {
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.lock();
-  // starting block
+   // starting block
    static int tabCount;
    tabCount++;
 
-   output<<std::endl;
-   for (int k=1;k<tabCount;k++)
+   output << std::endl;
+   for (int k = 1; k < tabCount; k++)
    {
-      output<<TAB;
+      output << TAB;
    }
-   output<<"<"+_sName;
+   output << "<" + _sName;
    AttributeSet::const_iterator itAtt = _attributes.begin();
-   for (itAtt; itAtt != _attributes.end() ;itAtt++)
+   for (itAtt; itAtt != _attributes.end(); itAtt++)
    {
-      output<<" "<<(*itAtt).getName()<<"=\""<<(*itAtt).getValue()<<"\"";
+      output << " " << (*itAtt).getName() << "=\"" << (*itAtt).getValue() << "\"";
    }
-   output<<">";
-   bool itMemberIsElement=false;
-   XMLMemberTypeSet::const_iterator itMem=_vMembers.begin();
-   for (itMem; itMem != _vMembers.end() ;itMem++)
+   output << ">";
+   bool itMemberIsElement = false;
+   XMLMemberTypeSet::const_iterator itMem = _vMembers.begin();
+   for (itMem; itMem != _vMembers.end(); itMem++)
    {
-    // output<<(*itMem)->print(tabCount);
-      (*itMem)->toStream(tabCount,output);
-      if ((*itMem)->isElement())itMemberIsElement=true;
+      // output<<(*itMem)->print(tabCount);
+      (*itMem)->toStream(tabCount, output);
+      if ((*itMem)->isElement()) itMemberIsElement = true;
    }
 
-   if ((itMemberIsElement)||(_vMembers.size()>1))
+   if ((itMemberIsElement) || (_vMembers.size() > 1))
    {
 
-      output<<std::endl;
-      for (int k=1;k<tabCount;k++)
+      output << std::endl;
+      for (int k = 1; k < tabCount; k++)
       {
-         output<<TAB;
+         output << TAB;
       }
    }
-  //ending block
+   //ending block
 
-   output<<"</"+_sName+">";
+   output << "</" + _sName + ">";
    tabCount--;
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.unlock();
 }
 
 void Element::setDirty()
 {
    _mutexMember.lock();
-   _dirty=true;
+   _dirty = true;
    _mutexMember.unlock();
 }
 
-Element* Element::getRootElement() 
+Element* Element::getRootElement()
 {
-   if (getParent() == NULL)
-      return this;
-   else
-      return getParent()->getRootElement();
+   if (getParent() == NULL) return this;
+   else return getParent()->getRootElement();
+}
+
+bool Element::getValue(std::string& str) const
+{
+   str = getDataString();
+   return true;
+}
+
+bool Element::getBooleanValue(bool& value) const
+{
+   bool retVal = false;
+   std::string str = getDataString();
+   value = false;
+
+   if( str == "true" )
+   {
+      value = retVal = true;
+   }
+   else if( str == "false" )
+   {
+      value = false;
+      retVal = true;
+   }
+
+   return retVal;
 }
 
 bool Element::isDirty()
 {
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.lock();
    bool output =  _dirty;
    if (!_dirty)
    {
-      XMLMemberTypeSet::iterator itMem=_vMembers.begin();
+      XMLMemberTypeSet::iterator itMem = _vMembers.begin();
 
-      for (itMem; itMem != _vMembers.end() ;itMem++)
+      for (itMem; itMem != _vMembers.end(); itMem++)
       {
          if ((*itMem)->isElement())
          {
 
-            Element* TempElement = static_cast<Element*>(*itMem);
+            Element *TempElement = static_cast<Element *>(*itMem);
             if (TempElement->isDirty())
             {
-               output=true;
+               output = true;
                break;
             }
          }
       }
    }
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.unlock();
    return output;
 }
+
 void Element::setClean()
 {
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.lock();
-   _dirty=false;
-   XMLMemberTypeSet::iterator itMem=_vMembers.begin();
+   _dirty = false;
+   XMLMemberTypeSet::iterator itMem = _vMembers.begin();
 
-   for (itMem; itMem != _vMembers.end() ;itMem++)
+   for (itMem; itMem != _vMembers.end(); itMem++)
    {
       if ((*itMem)->isElement())
       {
-         Element* TempElement = static_cast<Element*>(*itMem);
+         Element *TempElement = static_cast<Element *>(*itMem);
          TempElement->setClean();
       }
    }
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.unlock();
 }
 
 void Element::deleteAllAttributes()
 {
-    //Make it thread safe
+   //Make it thread safe
    _mutexAttribute.lock();
    _attributes.clear();
 
-    //Make it thread safe
+   //Make it thread safe
    _mutexAttribute.unlock();
 
 }
 
-void Element::deleteAttribute(const std::string &sAttributeName)
+void Element::deleteAttribute(const std::string& sAttributeName)
 {
-    //Make it thread safe
+   //Make it thread safe
    _mutexAttribute.lock();
 
    AttributeSet::iterator attrIter = _attributes.begin();
@@ -612,13 +626,13 @@ void Element::deleteAttribute(const std::string &sAttributeName)
       }
    }
 
-    //Make it thread safe
+   //Make it thread safe
    _mutexAttribute.unlock();
 }
 
-void Element::addChildren(Element* curElement, Element* inElement)
+void Element::addChildren(Element *curElement, Element *inElement)
 {
-  //Make Thread Safe
+   //Make Thread Safe
    _mutexMember.lock();
 
    if (inElement && curElement)
@@ -626,8 +640,7 @@ void Element::addChildren(Element* curElement, Element* inElement)
       if (!inElement->hasChildren())
       {
          XMLMemberTypeSet::iterator itMem = inElement->_vMembers.begin();
-         if ((*itMem)->isData())
-            curElement->addData((static_cast<CharData*>(*itMem))->getDataString());
+         if ((*itMem)->isData()) curElement->addData((static_cast<CharData *>(*itMem))->getDataString());
       }
       else
       {
@@ -635,8 +648,8 @@ void Element::addChildren(Element* curElement, Element* inElement)
          ElementSet::iterator itInChildren = inChildren.begin();
          if (itInChildren != inChildren.end())
          {
-            Element * childElement = *(itInChildren);
-            Element * newChildElement = (childElement)->createCopy(curElement);
+            Element *childElement = *(itInChildren);
+            Element *newChildElement = (childElement)->createCopy(curElement);
             curElement->addChildElement(newChildElement);
          }
       }
@@ -645,7 +658,7 @@ void Element::addChildren(Element* curElement, Element* inElement)
    _mutexMember.unlock();
 }
 
-bool Element::checkForReplaceAttribute(Element* inElement, bool nameCheckOnly)
+bool Element::checkForReplaceAttribute(Element *inElement, bool nameCheckOnly)
 {
    // If the input element has the replace=true attribute
    bool retValue = false;
@@ -670,7 +683,7 @@ bool Element::checkForReplaceAttribute(Element* inElement, bool nameCheckOnly)
       }
 
       if ((bVersionWillBeUpdated || nameCheckOnly) &&
-          inElement->hasAttribute(sAttrReplace) && 
+          inElement->hasAttribute(sAttrReplace) &&
           inElement->getName().compare(this->getName()) == 0 &&
           inElement->getAttributeValue(sAttrReplace).compare(sAttrValueTrue.c_str()) == 0)
       {
@@ -681,7 +694,7 @@ bool Element::checkForReplaceAttribute(Element* inElement, bool nameCheckOnly)
    return retValue;
 }
 
-void Element::merge(Element* inElement, bool ignoreAttrForNameCompare /*=false*/)
+void Element::merge(Element *inElement, bool ignoreAttrForNameCompare /*=false*/)
 {
    if (inElement)
    {
@@ -691,19 +704,19 @@ void Element::merge(Element* inElement, bool ignoreAttrForNameCompare /*=false*/
          // First we remove all attributes from the current element
          deleteAllAttributes();
 
-         // we add all the attributes on the current element with those from inElement 
+         // we add all the attributes on the current element with those from inElement
          AttributeSet inAttributes = inElement->getAllAttributes();
          for (AttributeSet::iterator inAttribIter = inAttributes.begin(); inAttribIter != inAttributes.end(); ++inAttribIter)
          {
             // do not add the "replace" attribute
-            if (inAttribIter->getName().compare(sAttrReplace) != 0 )
+            if (inAttribIter->getName().compare(sAttrReplace) != 0)
             {
                addAttribute(inAttribIter->getName(), inAttribIter->getValue());
             }
          }
          setDirty();
 
-         // and remove all children from current element 
+         // and remove all children from current element
          deleteChildren();
 
          // add children from inElement to the current element
@@ -716,18 +729,18 @@ void Element::merge(Element* inElement, bool ignoreAttrForNameCompare /*=false*/
             if (isNameMatch(inElement, ignoreAttrForNameCompare))
             {
                // get all children for the default inElement
-               ElementSet inChildren=inElement->getImmediateChildren();
-               ElementSet::iterator itInChildren=inChildren.begin();
+               ElementSet inChildren = inElement->getImmediateChildren();
+               ElementSet::iterator itInChildren = inChildren.begin();
 
-               ElementSet myChildren=getImmediateChildren();
+               ElementSet myChildren = getImmediateChildren();
                ElementSet::iterator itMyChildren;
 
                // for each one check all of this elements children to see if there
                // is a match...make sure to look for "replace = true" attributes (so we can call merge)
                for (itInChildren; itInChildren != inChildren.end(); ++itInChildren)
                {
-                  bool ChildMatches=false;
-                  itMyChildren=myChildren.begin();
+                  bool childMatches = false;
+                  itMyChildren = myChildren.begin();
 
                   for (itMyChildren; itMyChildren != myChildren.end(); ++itMyChildren)
                   {
@@ -736,7 +749,7 @@ void Element::merge(Element* inElement, bool ignoreAttrForNameCompare /*=false*/
                      if (pCurrent->isNameMatch(pIn, false) || pCurrent->checkForReplaceAttribute(pIn, false))
                      {
                         // if so recursively merge that child with the matching child
-                        ChildMatches=true;
+                        childMatches = true;
                         (*(itMyChildren))->merge(*(itInChildren));
                         break;
                      }
@@ -744,19 +757,19 @@ void Element::merge(Element* inElement, bool ignoreAttrForNameCompare /*=false*/
                      {
                         // we don't merge "replace" children, those are handled above in the "if" statement
                         // and only when the version of the documents are being updated
-                        ChildMatches=true;
+                        childMatches = true;
                         break;
                      }
-                  }// for all my children
+                  } // for all my children
 
-                  // if at the end none matched create a copy of the inElements data 
+                  // if at the end none matched create a copy of the inElements data
                   // and add it to this element
-                  if (!ChildMatches)
+                  if (!childMatches)
                   {
                      addChildElement((*(itInChildren))->createCopy(this));
                      setDirty();
-                  }// if no matching child
-               }// for all incoming children
+                  } // if no matching child
+               } // for all incoming children
             }
 
             // if the name didn't match, was it because it has new attributes to merge?
@@ -773,10 +786,8 @@ void Element::merge(Element* inElement, bool ignoreAttrForNameCompare /*=false*/
                   // Don't merge replace attributes or Version attributes (Version gets added after the document has been merged)
                   if ((attribName.compare(sAttrReplace) != 0) && !hasAttribute(attribName))
                   {
-                     if (attribName.compare("Version") == 0)
-                        addAttribute(inAttribIter->getName(), "0.0");
-                     else
-                        addAttribute(inAttribIter->getName(), inAttribIter->getValue());
+                     if (attribName.compare("Version") == 0) addAttribute(inAttribIter->getName(), "0.0");
+                     else addAttribute(inAttribIter->getName(), inAttribIter->getValue());
                      setDirty();
                      doneMerging = false;
                   }
@@ -816,31 +827,31 @@ void Element::mergeAttributes(Element *inElement)
    }
 }
 
-Element* Element::createCopy(Element* inParent)
+Element* Element::createCopy(Element *inParent)
 {
-   Element *output= new Element(getName(),inParent);
-   XMLMemberTypeSet::iterator itMem=_vMembers.begin();
+   Element *output = new Element(getName(), inParent);
+   XMLMemberTypeSet::iterator itMem = _vMembers.begin();
    AttributeSet::const_iterator itAtt = _attributes.begin();
-   for (itAtt; itAtt != _attributes.end() ;itAtt++)
+   for (itAtt; itAtt != _attributes.end(); itAtt++)
    {
       std::string attName = (*itAtt).getName();
       if (attName.compare(sAttrReplace) != 0)   // don't copy replace attributes
          output->addAttribute(attName, (*itAtt).getValue());
    }
-   for (itMem; itMem != _vMembers.end() ;itMem++)
+   for (itMem; itMem != _vMembers.end(); itMem++)
    {
       if ((*itMem)->isElement())
       {
-         Element* TempElement = (static_cast<Element*>(*itMem));
+         Element *TempElement = (static_cast<Element *>(*itMem));
          output->addChildElement(TempElement->createCopy(output));
       }
       if ((*itMem)->isData())
       {
-         output->addData((static_cast<CharData*>(*itMem))->getDataString());
+         output->addData((static_cast<CharData *>(*itMem))->getDataString());
       }
       if ((*itMem)->isComment())
       {
-         output->addComment(new Comment((static_cast<Comment*>(*itMem))->getDataString()));
+         output->addComment(new Comment((static_cast<Comment *>(*itMem))->getDataString()));
       }
    }
    return output;
@@ -874,29 +885,27 @@ void Element::deleteOverrideAttributeFlag(Element *inElement)
    }
 }
 
-bool Element::isNameMatch(const Element* inElement, bool ignoreAttrInNameCompare)
+bool Element::isNameMatch(const Element *inElement, bool ignoreAttrInNameCompare)
 {
    // see if names match
    _attributeMisMatch = false;
-   bool output = (getName()==inElement->getName());
+   bool output = (getName() == inElement->getName());
    if (output)
    {
       // are the attributes the same?
       AttributeSet incomingAtts = inElement->getAllAttributes();
-      if (incomingAtts.size()>0)
+      if (incomingAtts.size() > 0)
       {
          AttributeSet::const_iterator itAtt = incomingAtts.begin();
-         for (itAtt; itAtt != incomingAtts.end() ;itAtt++)
+         for (itAtt; itAtt != incomingAtts.end(); itAtt++)
          {
             bool bHasAttr = false;
-            if (ignoreAttrInNameCompare)
-               bHasAttr = hasAttribute((*itAtt).getName());
-            else
-               bHasAttr = hasAttribute(*itAtt);
+            if (ignoreAttrInNameCompare) bHasAttr = hasAttribute((*itAtt).getName());
+            else bHasAttr = hasAttribute(*itAtt);
 
             if (!bHasAttr)
             {
-               output=false;
+               output = false;
                _attributeMisMatch = true;
                break;
             } // if has attribute
@@ -906,7 +915,7 @@ bool Element::isNameMatch(const Element* inElement, bool ignoreAttrInNameCompare
    return output;
 }
 
-bool Element::operator ==(Element &other)
+bool Element::operator ==(Element& other)
 {
    bool output;
    // see if name and string data are the same
@@ -914,7 +923,7 @@ bool Element::operator ==(Element &other)
    {
       std::string theLocalValue = trim(this->getDataString());
       std::string theOtherValue = trim(other.getDataString());
-      output=(theLocalValue == theOtherValue);// = XMLMemberType::operator ==(other);
+      output = (theLocalValue == theOtherValue); // = XMLMemberType::operator ==(other);
       if (output)
       {
          // see if all attributes match
@@ -923,45 +932,46 @@ bool Element::operator ==(Element &other)
          {
             ElementSet thisChildren = getImmediateChildren();
             ElementSet otherChildren = other.getImmediateChildren();
-            ElementSet::iterator itThisChildren=thisChildren.begin();
-            ElementSet::iterator itOtherChildren=otherChildren.begin();
+            ElementSet::iterator itThisChildren = thisChildren.begin();
+            ElementSet::iterator itOtherChildren = otherChildren.begin();
 
             //See if it has the same number of children
-            output = (thisChildren.size()==otherChildren.size());
+            output = (thisChildren.size() == otherChildren.size());
             if (output)
             {
                // for each one check all of this elements children to see if there
                // is a match with any of the others children
-               for (itOtherChildren; itOtherChildren != otherChildren.end() ;itOtherChildren++)
+               for (itOtherChildren; itOtherChildren != otherChildren.end(); itOtherChildren++)
                {
-                  bool ChildMatches=false;
-                  itThisChildren=thisChildren.begin();
-                  for (itThisChildren; itThisChildren != thisChildren.end() ;itThisChildren++)
+                  bool childMatches = false;
+                  itThisChildren = thisChildren.begin();
+                  for (itThisChildren; itThisChildren != thisChildren.end(); itThisChildren++)
                   {
-                     if (*(*(itThisChildren))==*(*(itOtherChildren)))
+                     if (*(*(itThisChildren)) == *(*(itOtherChildren)))
                      {
-                        ChildMatches=true;
+                        childMatches = true;
 
                         break;
-                     }// if name match
-                  }// for all my children
+                     } // if name match
+                  } // for all my children
 
-                  // if at the end none matched create a copy of the inElements data 
+                  // if at the end none matched create a copy of the inElements data
                   // and add it to this element
-                  if (!ChildMatches)
+                  if (!childMatches)
                   {
-                     output =false;
+                     output = false;
                      break;
 
-                  }// if no matching child
-               }// for all incoming children
+                  } // if no matching child
+               } // for all incoming children
             }
          }
       }
    }
    catch (std::string err)
    {
-      output =false;
+      output = false;
    }
    return output;
 }
+

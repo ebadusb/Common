@@ -11,7 +11,7 @@ else
 all: check_opt_change dirs
 endif
 
-MAINDIR = ..\..
+MAINDIR = ..
 include $(MAINDIR)/makefile.vxc
 
 #

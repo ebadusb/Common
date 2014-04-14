@@ -1,10 +1,8 @@
 /*
 * Copyright (c) 2007 by Gambro BCT, Inc.  All rights reserved.
-* $Log: Element.cpp $ 
-* Revision 1.2  2007/12/07 18:31:07Z  estausb
-* Modifications for Prototype 1
-* Revision 1.1  2007/11/15 20:42:44Z  estausb
-* Initial revision
+* $Header$
+*
+* The Element class implement a XML data element
 *
 */
 
@@ -19,11 +17,19 @@ static const std::string sAttrValueTrue = "true";
 static const std::string sAttrValueFalse = "false";
 
 using namespace BctXml;
-Element::Element(void) : _dirty(false), _pParent(NULL), _sName("")
+Element::Element(void) :
+   _dirty(false),
+   _attributeMisMatch(false),
+   _pParent(NULL),
+   _sName("")
 {
    _dataType = ELEMENT;
 }
-Element::Element(const std::string& sName, Element *pParent) : _sName(sName), _pParent(pParent), _dirty(false)
+Element::Element(const std::string& sName, Element *pParent) :
+   _sName(sName),
+   _pParent(pParent),
+   _dirty(false),
+   _attributeMisMatch(false)
 {
    _dataType = ELEMENT;
    if (_pParent) _pParent->addChildElement(this);
@@ -55,7 +61,7 @@ int Element::setDataString(const std::string& inValue)
    //Make Thread Safe
    _mutexMember.lock();
    int output = 0;
-   CharData *newCharData;
+   CharData *newCharData = NULL;
 
    XMLMemberTypeSet::const_iterator itMem = _vMembers.begin();
    for (itMem; itMem != _vMembers.end(); itMem++)
@@ -153,7 +159,7 @@ void Element::deleteChildren()
    //Make Thread Safe
    _mutexMember.lock();
    XMLMemberTypeSet::iterator itMem = _vMembers.begin();
-   XMLMemberType *child;
+   XMLMemberType *child = NULL;
    while (itMem != _vMembers.end())
    {
       child = *itMem;
@@ -532,25 +538,6 @@ bool Element::getValue(std::string& str) const
 {
    str = getDataString();
    return true;
-}
-
-bool Element::getBooleanValue(bool& value) const
-{
-   bool retVal = false;
-   std::string str = getDataString();
-   value = false;
-
-   if( str == "true" )
-   {
-      value = retVal = true;
-   }
-   else if( str == "false" )
-   {
-      value = false;
-      retVal = true;
-   }
-
-   return retVal;
 }
 
 bool Element::isDirty()

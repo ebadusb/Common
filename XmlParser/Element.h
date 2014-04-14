@@ -2,6 +2,8 @@
 * Copyright (C) 2007 Gambro BCT, Inc.  All rights reserved.
 * $Header$ 
 * 
+* The Element class implements a data element within an XML document. 
+*  
 */
 
 /*! \file Element.h
@@ -29,15 +31,16 @@ typedef std::vector<Element *> ElementSet;
 
 /// \brief An element within an XML document.
 
-///
-/// This represents an element within an XML document.  An Element
-/// can currently have attributes, child elements, comments, and data.  The data
-/// is represented as a collection of CharData objects.   If a document is created
-/// in this format, the element will have string data that is the concatanation of all character data
-/// found in the document, and the children elements added to the list.
-///
-/// NOTE: Objects of Element type OWN their children and must free memory for them.
-///
+/** 
+ * \class Element
+ * This represents an element within an XML document. An Element can
+ * currently have attributes, child elements, comments, and data. The data
+ * is represented as a collection of CharData objects. If a document is created
+ * in this format, the element will have string data that is the concatanation of all character data
+ * found in the document, and the children elements added to the list.
+ *
+ * NOTE: Objects of Element type OWN their children and must free memory for them.
+ */
 class Element : public XMLMemberType
 {
 public:
@@ -140,7 +143,7 @@ public:
    std::string getAttributeValue(const std::string& sAttName);
 
    /// Returns the name of the element.
-   std::string getName() const;
+   virtual std::string getName() const;
 
    /// returns a refernce to all the attributes
    AttributeSet getAllAttributes() const;
@@ -167,17 +170,6 @@ public:
    /// \return true If the data was successfully converted from the string.
    /// \return false If there was no conversion possible.
    bool getValue(std::string& str) const;
-
-   /**
-    * Attempt to convert the element to a bool value. If the string 
-    * value in the XML file is equal to "true" or "false", the 
-    * method returns true and value will be set to true or false. 
-    * Otherwise the value is set to false. 
-    * @param value 
-    * @return bool returns true is the XML string is "true" or 
-    *         "false"
-    */
-   bool getBooleanValue(bool& value) const;
 
    template<class TYPE>
    bool getValue(TYPE& t, const std::ios::fmtflags& flags)
@@ -269,7 +261,7 @@ private:
    Element& operator = (const Element&);
 
    enum ProcessingType
-   {FindFirst, FindAll, DeleteFirst, DeleteAll };
+   { FindFirst, FindAll, DeleteFirst, DeleteAll };
 
    /// search our immediate or all children. Destroy if desired
    ElementSet processMatchingChildren(const std::string& sName, const AttributeSet& inAttributeSet, ProcessingType type);
@@ -278,7 +270,7 @@ private:
    Element(const Element&);
 
    /// Method for setting the string data for a data type
-   int setDataString(const std::string& inValue);
+   virtual int setDataString(const std::string& inValue);
    mutable Bct::Mutex _mutexMember;
    mutable Bct::Mutex _mutexAttribute;
 
@@ -299,7 +291,6 @@ private:
    XMLMemberTypeSet _vMembers;
 
    AttributeSet _attributes;
-
 };
 } // End namespace CES
 

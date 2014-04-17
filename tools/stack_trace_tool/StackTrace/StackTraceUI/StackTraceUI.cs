@@ -13,14 +13,11 @@ using System.Text.RegularExpressions;
 using AddinUtility;
 
 
-//string cwd = Directory.GetCurrentDirectory();
-
 
 namespace StackTraceUI
 {
     public partial class StackTraceUI : Form
     {
-        //public static AppSettings appSettings = new AppSettings();
         public static readonly String kPrevConfig = "PrevConfig.config";
         private Dictionary<string, TextBox> tbDict = new Dictionary<string, TextBox>();
 
@@ -40,7 +37,7 @@ namespace StackTraceUI
             tbDict.Add("ospath", textBox2);
             tbDict.Add("version", textBox3);
             tbDict.Add("osfile", textBox4);
-            tbDict.Add("alias", textBox5);
+            tbDict.Add("pathalias", textBox5);
             tbDict.Add("address", textBox6);
 
             LoadOptionsConfig(Path.Combine(Program.exeDir, kPrevConfig));
@@ -110,7 +107,6 @@ namespace StackTraceUI
             startInfo.WorkingDirectory = Program.exeDir;
             startInfo.FileName = Path.Combine(Program.exeDir, "StackTrace.exe");
             startInfo.Arguments = args;
-            //Process.Start(Path.Combine(Program.exeDir, "StackTrace.exe"), args);
             Process.Start(startInfo);
             Application.Exit();
         }

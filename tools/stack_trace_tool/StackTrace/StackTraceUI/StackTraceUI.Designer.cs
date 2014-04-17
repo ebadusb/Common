@@ -263,11 +263,11 @@
            // label5
            // 
            this.label5.AutoSize = true;
-           this.label5.Location = new System.Drawing.Point(148, 204);
+           this.label5.Location = new System.Drawing.Point(127, 204);
            this.label5.Name = "label5";
-           this.label5.Size = new System.Drawing.Size(28, 13);
+           this.label5.Size = new System.Drawing.Size(49, 13);
            this.label5.TabIndex = 17;
-           this.label5.Text = "alias";
+           this.label5.Text = "pathalias";
            // 
            // label6
            // 
@@ -293,9 +293,9 @@
            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
            this.label8.Location = new System.Drawing.Point(183, 73);
            this.label8.Name = "label8";
-           this.label8.Size = new System.Drawing.Size(168, 15);
+           this.label8.Size = new System.Drawing.Size(182, 15);
            this.label8.TabIndex = 20;
-           this.label8.Text = "StackTrace Configuration";
+           this.label8.Text = "StackTraceUI Configuration";
            // 
            // button1
            // 
@@ -357,7 +357,7 @@
            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
            this.MainMenuStrip = this.menuStrip1;
            this.Name = "StackTraceUI";
-           this.Text = "Stack Trace Tool";
+           this.Text = "StackTraceUI";
            this.menuStrip1.ResumeLayout(false);
            this.menuStrip1.PerformLayout();
            this.ResumeLayout(false);

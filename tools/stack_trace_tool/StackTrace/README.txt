@@ -1,6 +1,8 @@
-StackTraceUI v1.4 (GUI version of StackTrace Tool)
+StackTraceUI v1.5 (GUI version of Stack Trace Tool)
 
 $ Log: StackTraceUI $
+Revision 1.5  2014/04/17 chowusb
+- fixed problems with page fault information from Tornado 2.02 builds
 Revision 1.4  2014/01/20  chowusb
 - fixed bug to use build path in Optia dlog as default search path
 Revision 1.3  2013/12/09  chowusb
@@ -17,9 +19,9 @@ Revision 1.0  2012/09/26  chowusb
 
 Description:
 
-The StackTraceUI wraps the command line-driven StackTrace Tool so that commonly used options need not be specified every
-time, but can be saved and used at a later time.  This README file documents the behavior of each of these options, how
-they should be supplied by the user, and how the user can save and reload specific configurations for later use. 
+The StackTraceUI wraps the command line-driven Stack Trace Tool so that commonly used parameters need not be rewritten every
+time, but can be saved and used at a later time.  This README file documents the behavior of all configuration parameters, how
+they should be supplied, and how they can be saved and reloaded for later use. 
 
 
 Command Line Usage: 
@@ -27,80 +29,80 @@ Command Line Usage:
  [-location buildpath] [-version (2.02 | 2.2)] [-osfile filename] [-ospath pathnames] [-pathalias old:new] ...
  ... [-address values] dlogFileName
 
- The command-line usage is still available and can be entered in the data log file name textbox.  Note that any
- configuration parameters supplied under StackTrace configuration will override the parameters in the data log
- file name textbox.
+The command-line version of the Stack Trace Tool is still available and can be entered in the data log file textbox. Note that 
+any configuration parameters supplied under "StackTraceUI Configuration" will override their respective parameter in the data 
+log textbox.
 
 
-Data Log File:
+Data Log Textbox:
 
-*** Data Log File - 
+*** Data Log File Name *** 
 
-	Enter name (can optionally include the full path) of data log file or select file in File -> Open ... to browse for file.
-	Note that a right-click setup (described below) will automatically fill in this textbox with the data log file name.
-	Alternatively, a copy-to-clipboard can be used to automatically fill in this textbox if StackTraceUI is initiated with
-	no input.
+Enter the file name of (optionally, the full path to) the data log, or use "File" -> "Open" menu to browse for data logs. Setting
+up a right-click shortcut (described below), however, can be used to automatically fill in the data log textbox. Otherwise, a 
+copy-to-clipboard can be used to pre-fill the textbox.
 
 
 Configuration TextBoxes:
 
-*** Location - 
+*** Location *** 
 
-	Enter an optional build location (requires full path). Usually, this is a path to a "current_build" or similarly named 
-	directory. Be sure to include the name of this directory in the path. If a location is not supplied, the directory in the
-	data log file is used upon appending "current_build". In this case, if such a directory is inaccessible,
-	then as a last attempt, "\\bctquad3\home" is substituted for the drive and that is used for the build directory.  
+Enter an optional build location (must be full path). Usually, this is a path to a "current_build" or similarly named directory. 
+Be sure to include "current_build" or the similarly named directory in the path. If a location is left unsupplied, the build 
+directory in the data log file is used by appending "current_build" to it. If unsuccessful, "\\bctquad3\home" is substituted for
+the drive as a last ditch effort.  
 
-*** OSPath - 
+*** OSPath *** 
 
-	Paths to Safety, APC (if applicable), and Control OS images can be optionally included in "OSPaths" field. If used, 
-	supply relative paths from the build path as supplied by the user or determined automatically from StackTrace.  Be
-	sure to include all nodes, delimit with	commas (use quotes if there are any spaces), and order as Control, APC (if applicable),
-	and then Safety. The defaults for Trima, Optia, and CES are "/vxboot,/trima/safety/boot", 
-	"/../base/vxworks_target/control,/../base/vxworks_target/apc,/../base/vxworks_target/safety",
-	and "/vxboot,/ces", respectively. For other systems, you must explicitly specify these strings.
+Paths to Safety, APC (if applicable), and Control OS images can be optionally included in "ospath" field. Supply relative paths
+from the build directory, which is determined by the "location" field or what the StackTraceUI has determined automatically by 
+default. In addition, delimit the paths with commas (include quotes if there are any spaces), and put in the order: Control, APC
+(if applicable), and Safety. Defaults used for Trima, Optia, and CES are:
 
-*** Version - 
+	Trima:   "/vxboot,/trima/safety/boot" 
+	Optia:   "/../base/vxworks_target/control,/../base/vxworks_target/apc,/../base/vxworks_target/safety"
+	CES:     "/vxboot,/ces" 
 
-	Enter toolchain version.  In most cases, StackTrace can determine the device type and version, and a version need not
-	be entered.  If not, select 2.02 to make use of "nm386.exe" and 2.2 for "nmpentium.exe", respectively, to extract
-	symbols from object files. NOTE: You must have the location of these executables set in your system path (they are
-	in the StackTrace installation directory).
+respectively. For other systems, you must explicitly specify these strings.
 
-*** OSFile -
+*** Version *** 
 
-	Enter name of OS images.  Examples include "vxWorks", "vxWorks_ampro", and "vxWorks_versalogic".  If not supplied, a name
-	is attempted via the data log file.  Note that if neither "vxWorks_ampro" or "vxWorks_versalogic" was deduced in this
-	manner, a default of "vxWorks" will be utilized. Currently, StackTrace cannot handle mixtures of these names.
+Enter toolchain version.  In most cases, StackTraceUI can determine the device type and version, and a version need not	be 
+entered. Otherwise, enter 2.02 to use "nm386.exe" and 2.2 to use "nmpentium.exe", respectively, for symbol lookup. 
 
-*** Alias -
+*** OSFile ***
 
-	This option allows you to change all or portions of folders or filename strings to something else. This is done prior to
-	looking up any symbols, so this could be used, e.g., if your module names change or portions of your build tree hierarchy
-	are located at separate locale.  Use the format "old:new" where "old" represents the old string and "new" represents
-	the new string. NOTE: Be careful since string replacement occurs wherever it can.
+Enter the OS image name.  Examples include "vxWorks", "vxWorks_ampro", and "vxWorks_versalogic".  If left unsupplied, a name
+is extracted from the data log.  Note that if neither "vxWorks_ampro" nor "vxWorks_versalogic" can be deduced, "vxWorks" is used
+as the default. Currently, StackTraceUI cannot handle multiple OS image names.
 
-*** Address -
+*** Pathalias ***
 
-	To print out symbols in the StackTrace trace at specific machine addresses for all nodes, enter a comma-delimited list of
-	addresses here.
+This option allows you to alias folder and/or file names. Aliasing is done before symbol lookup, so this could be used, e.g., to
+redistribute module locations if your build tree hierarchy differs from the machine directory hierarchy. Use the format "old:new"
+where "new" is an alias for "old". NOTE: This is a deprecated feature and much of what this configuration parameter can provide
+is handled automatically by the StackTraceUI.
+
+*** Address ***
+
+Enter a comma-delimited list of hex addresses for symbol lookup (done for each node).
 
 
 Saving and Loading Configurations:
 
-Once values have been placed in the configuration textboxes, they can be saved in a xml-formatted file (with extension
-.config) by clicking the "Save Config" button.  Multiple configuration files can be saved wherever you like. Similarly, 
-previously saved configuration files can be loaded by clicking the "Load Config" button.  Note that your previous configuration
-prior to hitting "Stack Trace" the last time you used will already be loaded. 
+Once configuration values have been placed in their textboxes, they can be saved to a XML file (with extension .config) by 
+clicking the "Save Config" button.  Multiple configuration files can be saved. Likewise, previously saved configuration files can
+be loaded by clicking the "Load Config" button. Note that the StackTraceUI will remember the last-used configurations from your
+last session upon boot up. 
 
 
-Right-click Startup:
+Right-click Startup for Windows XP:
  
-StackTraceUI can be launched from any data log file by making use of the right-click menu. To enable this, go into "Tools" -> "Folder Options"
-under any Windows Explorer and click on the "File Types" tab and select "DLOG". Then under the "Advanced" button, add a New action
-using "<StackTrace installation directory>\StackTraceUI.exe" "%L" as the "Application" and your choice of "Action" (e.g., "Open
-with StackTraceUI").  Alternatively, copy a shortcut icon to this "StackTraceUI.exe" into your "SendTo" folder located in your
-"Documents and Settings". The latter enables you to right click a data log file and send it to a shortcut to "StackTraceUI.exe" 
-(which can be renamed as "Open with StackTraceUI" or whatever you want).
+StackTraceUI can be launched directly from any data log file with a right-click shortcut. To enable this feature, go into "Tools"
+-> "Folder Options" under any Windows Explorer and click on the "File Types" tab and select "DLOG". Then, under the "Advanced" 
+button, add a New action with "<StackTrace installation directory>\StackTraceUI.exe" "%L" as the "Application" and your choice 
+of "Action" (e.g., "Open with StackTraceUI"). Alternatively, copy a shortcut icon to this "StackTraceUI.exe" into your "SendTo"
+folder located in your "Documents and Settings". This enables you to right click a data log file and send it to a shortcut to 
+"StackTraceUI.exe" (which, again, can be named to something like "Open with StackTraceUI").
 
   

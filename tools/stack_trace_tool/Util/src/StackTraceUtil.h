@@ -44,10 +44,11 @@ static const char *kTabModule = ".out";
 static const char *kTabModule1 = ".o";
 static const char *kTabAddress1 = "textAddr=";
 static const char *kTabAddress2 = "D=";
+
 static const char *kTabDelim = ":";
 static const char *kTabSpace = " ";
 static const char *kTabSlash = "\\";
-static const char *kTabFault = "Page Fault";
+
 static const char *kTabFile = "Log file";
 static const char *kTabBuild = "BUILD";
 static const char *kTabBuildDir1 = "BUILD DIR: ";
@@ -55,8 +56,18 @@ static const char *kTabBuildDir2 = "directory=";
 static const char *kTabTasks = "Tasks: ";
 static const char *kTabTaskState = "Task state:";
 static const char *kTabMsgID = "Mid ";
-static const char *kTabPC = "Program Counter : ";
-static const char *kTabTask = "Task: ";
+
+static const char *kTabFault = "Page Fault";
+static const char *kTabPageDirBase = "Page Dir Base";
+static const char *kTabEsp0 = "Esp0";
+static const char *kTabSR = "Status Register";
+static const char *kTabPC = "Program Counter";
+static const char *kTabCS = "Code Selector";
+static const char *kTabER = "Eflags Register";
+static const char *kTabErrorCode = "Error Code";
+static const char *kTabPageFaultAddr = "Page Fault Addr";
+static const char *kTabTask = "Task";
+
 static const char *kTabMachine = "/machine";
 
 // Commands for extracting debug sysbols
@@ -486,14 +497,6 @@ private:
 class ProcessPageFault {
 public:
 	enum {
-		kPageFaultPageDirBase = 1,
-		kPageFaultEsp0First,
-		kPageFaultEsp0Second,
-		kPageFaultProgramCounter,
-		kPageFaultCodeSelector,
-		kPageFaultEFlagsReg,
-		kPageFaultErrorCode,
-		kPageFaultTaskID, 
 		kPageFaultSize = 9
 	};
 
@@ -501,7 +504,8 @@ public:
 
 	void operator()(const RecordStreamOutput &record)
 	{
-		if (record.mMessage == kTabFault) {
+		if (record.mMessage == kTabFault) 
+      {
 			mTaskID = record.mTaskID;
 			mNodeID = record.mNodeID;
 			mFile = record.mFile;
@@ -509,15 +513,25 @@ public:
 			mFaultVector.push_back(PageFaultInfo());
 		}
 		else if (!mFaultVector.empty() 
-				&& (mFaultVector.back().size() < kPageFaultSize)
-				&& (record.mTaskID == mTaskID) 
-				&& (record.mNodeID == mNodeID) 
-				&& (record.mFile == mFile) 
-				&& (record.mLine == mLine)) {
-			if (mFaultVector.back().size() == kPageFaultTaskID) {
+				    && (mFaultVector.back().size() < kPageFaultSize)
+				    && (record.mTaskID == mTaskID) 
+				    && (record.mNodeID == mNodeID) 
+				    && (record.mFile == mFile) 
+				    && (record.mLine == mLine)) 
+      {
+			if (record.mMessage.find(kTabTask) != std::string::npos) 
+         {
 				mFaultVector.back().push_back(record.mMessage.substr(0, record.mMessage.length() - 1));
 			}
-			else {
+			else if ( record.mMessage.find(kTabPageDirBase) != std::string::npos 
+                     || record.mMessage.find(kTabEsp0) != std::string::npos
+                     || record.mMessage.find(kTabSR) != std::string::npos
+                     || record.mMessage.find(kTabPC) != std::string::npos
+                     || record.mMessage.find(kTabCS) != std::string::npos
+                     || record.mMessage.find(kTabER) != std::string::npos
+                     || record.mMessage.find(kTabErrorCode) != std::string::npos
+                     || record.mMessage.find(kTabPageFaultAddr) != std::string::npos )
+         {
 				mFaultVector.back().push_back(record.mMessage);
 			}
 		}
@@ -921,14 +935,19 @@ public:
 		Uint32 address = 0;
 
 		mStream <<  "Page Fault:" << std::endl;
-		for (; iter != end; ++iter) {
+		for (; iter != end; ++iter) 
+      {
 			mStream << "\t" << *iter << std::endl;
 
-			if ((*iter).find(kTabPC) != std::string::npos) {
-				sscanf((*iter).c_str() + std::strlen(kTabPC), "%x", &address);
+			if ( (*iter).find(kTabPC) != std::string::npos && 
+               (*iter).find(kTabDelim) != std::string::npos ) 
+         {
+				sscanf((*iter).c_str() + (*iter).find(kTabDelim) + 1, "%x", &address);
 			}
-			else if ((*iter).find(kTabTask) != std::string::npos) {
-				sscanf((*iter).c_str() + std::strlen(kTabTask), "%x", &task);
+			else if ( (*iter).find(kTabTask) != std::string::npos &&
+               (*iter).find(kTabDelim) != std::string::npos ) 
+         {
+				sscanf((*iter).c_str() + (*iter).find(kTabDelim) + 1, "%x", &task);
 			}
 		}
 

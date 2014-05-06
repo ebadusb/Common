@@ -75,7 +75,7 @@ CGUIWindow::CGUIWindow(CGUIDisplay & display, const CGUIRegion & region)
 void CGUIWindow::initializeData(void)
 {
    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+      DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
    _id = UGL_NULL_ID;
    _parent = NULL;
    _disabled = false;
@@ -94,7 +94,7 @@ void CGUIWindow::initializeData(void)
 CGUIWindow::~CGUIWindow()
 {
 	if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+      DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
 
 	winCbRemove(_id, CGUIWindow::uglDrawCallback);
 
@@ -132,7 +132,7 @@ CGUIWindow::~CGUIWindow()
 void CGUIWindow::setPosition(short x, short y)
 {
    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
    if (x != _region.x ||
        y != _region.y)
    {
@@ -144,7 +144,7 @@ void CGUIWindow::setPosition(short x, short y)
 void CGUIWindow::setRegion(const CGUIRegion & newRegion)
 {
     if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
    _region = newRegion;
    if (_id != UGL_NULL_ID)
    {
@@ -158,7 +158,7 @@ void CGUIWindow::setRegion(const CGUIRegion & newRegion)
 void CGUIWindow::attach(CGUIWindow * window, WIN_ATTRIB winAttrib /* = WIN_ATTRIB_VISIBLE*/)
 {
     if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
    if (_parent != window ||
        _id == UGL_NULL_ID)
    {
@@ -225,7 +225,7 @@ void CGUIWindow::attach(CGUIWindow * window, WIN_ATTRIB winAttrib /* = WIN_ATTRI
 void CGUIWindow::detach(void)
 {
     if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
    if (_id != UGL_NULL_ID)
    {
       //
@@ -273,7 +273,7 @@ void CGUIWindow::detach(void)
 void CGUIWindow::addObject(CGUIWindowObject * obj)
 {
    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+      DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
 	
 	if(obj)
 	{
@@ -286,7 +286,7 @@ void CGUIWindow::addObject(CGUIWindowObject * obj)
 void CGUIWindow::addObjectToFront(CGUIWindowObject * obj)
 {
    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+      DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
 	
 	if(obj)
 	{
@@ -312,7 +312,7 @@ void CGUIWindow::addObjectToFront(CGUIWindowObject * obj)
 void CGUIWindow::addObjectToBack(CGUIWindowObject * obj)
 {
    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+      DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
 	
 	if(obj)
 	{
@@ -337,7 +337,7 @@ void CGUIWindow::addObjectToBack(CGUIWindowObject * obj)
 void CGUIWindow::deleteObject(CGUIWindowObject * obj)
 {
    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+      DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
 
 	if ( obj &&
 		  obj->_owner == this )
@@ -360,7 +360,7 @@ void CGUIWindow::deleteObject(CGUIWindowObject * obj)
 void CGUIWindow::moveObjectToFront(CGUIWindowObject * obj)
 {
    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+      DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
 
    // Order is important only for clipped and transparency objects
    //
@@ -388,7 +388,7 @@ void CGUIWindow::moveObjectToFront(CGUIWindowObject * obj)
 void CGUIWindow::moveObjectToBack(CGUIWindowObject * obj)
 {
    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+      DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
 
    // Order is important only for clipped and transparency objects
    //
@@ -418,7 +418,7 @@ void CGUIWindow::moveObjectToBack(CGUIWindowObject * obj)
 void CGUIWindow::setObjectRegion(CGUIWindowObject * obj, const CGUIRegion & newRegion)
 {
    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+      DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
 
    // Since we may be resizing/moving the object, we need to invalidate
    // both the old object position and the new position.
@@ -435,7 +435,7 @@ void CGUIWindow::setObjectRegion(CGUIWindowObject * obj, const CGUIRegion & newR
 void CGUIWindow::setObjectVisible(CGUIWindowObject * obj, bool newVisible)
 {
    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+      DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
 
    if (obj && (obj->_visible != newVisible) )
    {
@@ -453,7 +453,7 @@ void CGUIWindow::setObjectVisible(CGUIWindowObject * obj, bool newVisible)
 void CGUIWindow::invalidateObjectRegion(CGUIWindowObject * obj)
 {
    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+      DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
 
    if (_id != UGL_NULL_ID && obj &&
        obj->isVisible())
@@ -489,7 +489,7 @@ void CGUIWindow::invalidateObjectRegion(CGUIWindowObject * obj)
 void CGUIWindow::setWindowVisibility (bool newVisible)
 {
     if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
    if (newVisible != winVisibleGet(_id))
    {
       UGL_RECT rect;
@@ -503,7 +503,7 @@ void CGUIWindow::setWindowVisibility (bool newVisible)
 void CGUIWindow::invalidateWindow(void)
 {
 	if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-		DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+		DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
 
 	winRectInvalidate( _id, NULL );
 }
@@ -511,7 +511,7 @@ void CGUIWindow::invalidateWindow(void)
 bool CGUIWindow::disabled(void)
 {
     if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
    //
    // The window is considered disabled if the window itself
    // or any of its parents are disabled.
@@ -533,7 +533,7 @@ bool CGUIWindow::disabled(void)
 void CGUIWindow::addChildWindow(CGUIWindow * child)
 {
     if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
    _childWindows.push_front(child);
 }
 
@@ -541,15 +541,22 @@ void CGUIWindow::addChildWindow(CGUIWindow * child)
 void CGUIWindow::deleteChildWindow(CGUIWindow * child)
 {
     if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
-   _childWindows.remove(child);
+       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
+   if ( !_childWindows.empty() )
+   {
+      _childWindows.remove(child);
+   }
+   else
+   {
+      DataLog( log_level_cgui_info) << " Child Window list was empty. Skipping remove " << endmsg;
+   }
 }
 
 
 UGL_STATUS CGUIWindow::uglDrawCallback (WIN_ID id, WIN_MSG * pMsg, void * pData, void * pParam)
 {
 //    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-//       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+//       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
    CGUIWindow * window = *(CGUIWindow **)pData;
 	if(window && pMsg)
 		window->draw(pMsg->data.draw.gcId);
@@ -561,7 +568,7 @@ UGL_STATUS CGUIWindow::uglDrawCallback (WIN_ID id, WIN_MSG * pMsg, void * pData,
 UGL_STATUS CGUIWindow::uglPointerCallback (WIN_ID id, WIN_MSG * pMsg, void * pData, void * pParam)
 {
 //    if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-//       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+//       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
    UGL_WINDOW_ID  windowId = id;
    CGUIWindow * window = *(CGUIWindow **)pData;
 
@@ -614,7 +621,7 @@ UGL_STATUS CGUIWindow::uglPointerCallback (WIN_ID id, WIN_MSG * pMsg, void * pDa
 void CGUIWindow::draw(void)
 {
     if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
    draw(_display.gc());
 }
 
@@ -623,7 +630,7 @@ void CGUIWindow::draw(UGL_GC_ID gc)
 {
 
     if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
    if (_id != UGL_NULL_ID)
    {
       _activeDrawRegion = uglRegionCreate();
@@ -652,7 +659,7 @@ void CGUIWindow::draw(UGL_GC_ID gc)
 void CGUIWindow::preDrawObjects(void)
 {
     if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
    list<CGUIWindowObject *>::iterator objIter;
    for (objIter = _clippedObjects.begin(); objIter != _clippedObjects.end(); ++objIter)
    {
@@ -686,7 +693,7 @@ void CGUIWindow::preDrawObjects(void)
 void CGUIWindow::drawObjects(UGL_GC_ID gc)
 {
 	if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-      DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+      DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
 	
    UGL_REGION_ID  clippedDrawRegion = uglRegionCreate();
    uglRegionCopy(_activeDrawRegion, clippedDrawRegion);
@@ -771,5 +778,5 @@ void CGUIWindow::drawObjects(UGL_GC_ID gc)
 void CGUIWindow::pointerEvent(const PointerEvent & event)
 {
     if(_guardTop != 0xcafef00d || _guardBottom != 0xcafef00d)
-       DataLog( log_level_cgui_info ) << "Guard variable overwrite detected in " << __FILE__ << "  at" << __LINE__ << endmsg;
+       DataLog( log_level_cgui_error ) << "Guard variable overwrite detected in " << __FILE__ << "  at " << __LINE__ << endmsg;
 }

@@ -463,27 +463,31 @@ public:
 		std::string::size_type tabModuleLoc = record.mMessage.find(kTabModule);
 		if(tabModuleLoc == std::string::npos)
 			tabModuleLoc = record.mMessage.find(kTabModule1);
+
 		std::string::size_type tabModuleEnd = std::string::npos;
 		std::string::size_type tabAddress1Loc = record.mMessage.find(kTabAddress1);
 		std::string::size_type tabAddress2Loc = record.mMessage.find(kTabAddress2);
 		std::string::size_type tabAddressBegin = std::string::npos;
 		std::string::size_type tabAddressLen = std::string::npos;
 
-		if (tabAddress1Loc != std::string::npos) {
+		if (tabAddress1Loc != std::string::npos) 
+      {
 			tabModuleEnd = record.mMessage.find(kTabDelim, 0);
 			tabAddressBegin = tabAddress1Loc;
 			tabAddressLen = std::strlen(kTabAddress1);
 		}
-		else if (tabAddress2Loc != std::string::npos) {
+		else if (tabAddress2Loc != std::string::npos) 
+      {
 			tabModuleEnd = record.mMessage.find(kTabSpace, 0);
 			tabAddressBegin = tabAddress2Loc;
 			tabAddressLen = std::strlen(kTabAddress2);
 		}
 
-		if ((tabModuleLoc != std::string::npos) && (tabAddressBegin != std::string::npos)) {
+		if ((tabModuleLoc != std::string::npos) && (tabAddressBegin != std::string::npos)) 
+      {
 			std::string::size_type tabAddressEnd = record.mMessage.find(kTabSpace, tabAddressBegin);
 			std::string pathname = record.mMessage.substr(0, tabModuleEnd);
-			std::string address = record.mMessage.substr(tabAddressBegin + tabAddressLen, tabAddressEnd - tabAddressBegin);
+			std::string address = record.mMessage.substr(tabAddressBegin + tabAddressLen, tabAddressEnd - tabAddressBegin - tabAddressLen);
 			unsigned int value = 0;
 			sscanf(address.c_str(), "%x", &value);
 			mAddressMap[record.mNodeID][value] = pathname;
@@ -727,7 +731,7 @@ public:
 	}
 
 private:
-   bool SearchForObjectInSubdirectories(const String &fileName, const String &directory, String &objectFile)
+   bool SearchForObjectFileInSubdirectories(const String &fileName, const String &directory, String &objectFile)
    {
       DIR *dir = NULL;
       DIR *subdir = NULL;
@@ -745,7 +749,7 @@ private:
 
             if ((subdir = opendir(fullPath.c_str())) != NULL && entry != "." && entry != "..") 
             {
-               if (SearchForObjectInSubdirectories(fileName, fullPath, objectFile))
+               if (SearchForObjectFileInSubdirectories(fileName, fullPath, objectFile))
                {
                   retVal = true;
                   break;
@@ -790,7 +794,7 @@ protected:
             String module;
             if (objectFile.find_last_of("/") != String::npos)
                module = objectFile.substr(objectFile.find_last_of("/") + 1);
-            SearchForObjectInSubdirectories(module, mPathname, objectFile);
+            SearchForObjectFileInSubdirectories(module, mPathname, objectFile);
          }
 
    		commandStream << objectFile << std::endl;
@@ -1367,34 +1371,35 @@ private:
 	String mName;
 };
 
-class IncludeSystem {
+class IncludeSystem 
+{
 public:
-	IncludeSystem(Uint32 address, String name, String paths) : 
-			mAddress(address), 
-			mName(name),
-			mPaths(paths),
-			mIndex(0),
-			mPathnames(ParseValuesFromText(paths, ','))
+	IncludeSystem(Uint32 address, String systems, String paths) : 
+      mAddress(address), 
+		mSystemNames(ParseValuesFromText(systems, ',')),
+		mPathNames(ParseValuesFromText(paths, ',')),
+      mIndex(0)
 	{
 	}
 
 	void operator()(NodeAddressMap::value_type &data)
 	{
-		if (mIndex < mPathnames.size()) {
-			data.second[mAddress] = mPathnames[mIndex++] + "/" + mName;
-		}
-		else {
-			data.second[mAddress] = "/" + mName;
-		}
+      String systemName = ( mSystemNames.empty() ) ? "" : mSystemNames.back();
+      if ( mIndex < mSystemNames.size() )
+         systemName = mSystemNames[mIndex];
+      
+		if ( mIndex < mPathNames.size() ) 
+			data.second[mAddress] = mPathNames[mIndex] + "/" + systemName;
+		else 
+			data.second[mAddress] = "/" + systemName;
+      
+      mIndex++;
 	}
 
 private:
 	Uint32 mAddress;
-	String mName;
-	String mPaths;
-
-	ValueList mPathnames;
-
+	ValueList mSystemNames;
+	ValueList mPathNames;
 	Uint32 mIndex;
 };
 

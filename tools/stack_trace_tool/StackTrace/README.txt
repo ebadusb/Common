@@ -1,7 +1,9 @@
-StackTraceUI v1.5 (GUI version of Stack Trace Tool)
+StackTraceUI v1.6 (GUI version of Stack Trace Tool)
 
 $ Log: StackTraceUI $
-Revision 1.5  2014/04/17 chowusb
+Revision 1.6  2014/05/07  chowusb
+- added support for multiple OS image names
+Revision 1.5  2014/04/17  chowusb
 - fixed problems with page fault information from Tornado 2.02 builds
 Revision 1.4  2014/01/20  chowusb
 - fixed bug to use build path in Optia dlog as default search path
@@ -67,21 +69,24 @@ respectively. For other systems, you must explicitly specify these strings.
 
 *** Version *** 
 
-Enter toolchain version.  In most cases, StackTraceUI can determine the device type and version, and a version need not	be 
-entered. Otherwise, enter 2.02 to use "nm386.exe" and 2.2 to use "nmpentium.exe", respectively, for symbol lookup. 
+Enter toolchain version.  In most cases, StackTraceUI can determine the device type and version, and a version need not be 
+entered. Otherwise, enter 2.02 to use "objdump386.exe" or 2.2 to use "nmpentium.exe", respectively, for symbol lookup. 
 
 *** OSFile ***
 
-Enter the OS image name.  Examples include "vxWorks", "vxWorks_ampro", and "vxWorks_versalogic".  If left unsupplied, a name
-is extracted from the data log.  Note that if neither "vxWorks_ampro" nor "vxWorks_versalogic" can be deduced, "vxWorks" is used
-as the default. Currently, StackTraceUI cannot handle multiple OS image names.
+Enter the OS image name. Examples include "vxWorks", "vxWorks_ampro", "vxWorks_versalogic", etc. If left unspecified, a name
+is attempted from the data log. Note that if neither "vxWorks_ampro" nor "vxWorks_versalogic" can be deduced, "vxWorks" is used
+as a default name. StackTraceUI can now handle multiple OS image names. To use this feature, pass in a comma-delimited list of OS
+image names with the same ordering as is intended for the OS paths. One example may be "vxWorks_versalogic,vxWorks_versalogic_pxe",
+which references an OS image named "vxWorks_versalogic" in /vxboot and "vxWorks_versalogic_pxe" in /trima/safety/boot in the case
+of a Trima data log.
 
 *** Pathalias ***
 
 This option allows you to alias folder and/or file names. Aliasing is done before symbol lookup, so this could be used, e.g., to
 redistribute module locations if your build tree hierarchy differs from the machine directory hierarchy. Use the format "old:new"
-where "new" is an alias for "old". NOTE: This is a deprecated feature and much of what this configuration parameter can provide
-is handled automatically by the StackTraceUI.
+where "new" is an alias for "old". NOTE: This is a deprecated feature and much of what this configuration parameter provides
+is already handled by the StackTraceUI.
 
 *** Address ***
 

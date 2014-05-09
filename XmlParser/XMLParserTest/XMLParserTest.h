@@ -1356,7 +1356,7 @@ public:
     myElement.addComment(new Comment("Test Comment"));
     std::string sValOut2;
     myElement.getValue(sValOut2);
-    TS_ASSERT_EQUALS(sValIn2,sValOut2);
+    TS_ASSERT_EQUALS(sValIn,sValOut2);
   }
 
   /// UNIT_TEST:  Tests the hasAttribute().

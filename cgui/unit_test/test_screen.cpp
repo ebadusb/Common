@@ -24,7 +24,7 @@ void setTestText(char* str)
 
 TestScreen::TestScreen( CGUIDisplay & display,
                         const CallbackBase goBackCallback):
-BaseScreen(display),
+BaseScreen(),
    _goBackCallback(goBackCallback)
 {
    _backgroundBmp = NULL;

@@ -103,6 +103,8 @@
  */
 
 #include <vxWorks.h>
+#include <sstream>
+#include <math.h>
 
 #include "cgui_text.h"
 #include "cgui_window.h"
@@ -464,6 +466,52 @@ void CGUIText::setStylingRecord (StylingRecord * stylingRecord)
 	_requestedRegion = stylingRecord->region;
 	_forceCompute = true;
 	computeTextRegion();
+}
+
+
+void CGUIText::setNumericText(const double& value, int precision, bool commaDelim, const char* suffix )
+{
+   std::string displayText;
+   ostringstream  textStream;
+   textStream.setf( ios::fixed );
+   textStream.precision( precision );
+   double resultValue = value;
+
+   if ( precision == 0 )
+   {
+      int displayValue = (int) (resultValue >= 0 ? resultValue + 0.5 : resultValue - 0.5);
+      textStream << displayValue << ends;
+   }
+   else
+   {
+      double cutOff = (double)((5*pow(10, precision * -1))/10);
+      if ( fabs(resultValue) < cutOff ) resultValue = 0.0;
+
+      textStream << resultValue << ends;
+   }
+
+   if ( suffix )
+   {
+      textStream << suffix;
+      textStream << ends;
+   }
+   displayText = textStream.str();
+
+   if ( commaDelim )
+   {
+      // Changed to exactly mimic the previous implementation using c-strings
+      //
+      size_t found_pos = displayText.find_first_not_of("0123456789");
+
+      if ( found_pos != string::npos &&
+           found_pos >= 0 &&
+           found_pos < displayText.length() &&
+           displayText[found_pos] == '.' )
+      {
+         displayText[found_pos] = ',';
+      }
+   }
+   setText( displayText.c_str() );
 }
 
 void CGUIText::setText(CGUITextItem * textItem)

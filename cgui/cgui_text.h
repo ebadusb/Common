@@ -246,6 +246,8 @@ public:
 	virtual void setText(const StringChar * text);
 	virtual void setText(const UnicodeString & text);
 	virtual void setText(void);  // Sets _textString to the string in the _textItem memeber.
+	///Converts the numeric value to a appropriate text string
+	virtual void setNumericText(const double& value, int precision,  bool commaDelim = false, const char* suffix = NULL );
 
 	const StringChar * getText(void);
 	const UnicodeString& getTextObj(void);

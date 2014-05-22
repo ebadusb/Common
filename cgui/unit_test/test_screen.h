@@ -15,6 +15,7 @@
 #include "base/gui/base_string_data.h"
 #include "base/gui/base_bitmaps.h"
 #include "base/module_entry/control/base_config.h"
+#include "base/data_layer/control/base_data_interface.h"
 #include "cgui/cgui_bitmap.h"
 #include "cgui/cgui_bitmap_info.h"
 #include "cgui/cgui_button.h"

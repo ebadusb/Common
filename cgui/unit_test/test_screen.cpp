@@ -108,14 +108,13 @@ void TestScreen::setModeTabState(bool state)
    if ( state )
    {
       TabManager::instance().showMenuButtons( this );
-      makeTabsAvailable();
+      TabManager::instance().setTabsAvailable( true );
    }
    else
    {
       TabManager::instance().hideMenuButtons();
-      makeTabsUnavailable();
+      TabManager::instance().setTabsAvailable( false );
    }
-   refreshModeButtons();
 }
 
 void TestScreen::disableAlarmActiveButton()
@@ -158,7 +157,7 @@ void TestScreen::initializeTestScreen()
       _screenshotButton->detach();
    }
 
-   makeTabsUnavailable();
+   TabManager::instance().setTabsAvailable( false );
    TabManager::instance().hideMenuButtons();
 
    _goBackButtonData.left = 270;
@@ -180,7 +179,7 @@ void TestScreen::initializeTestScreen()
 
    bool ifScreenDefault = false;
 
-   switch ( getScreenState() )
+   switch ( _baseDataInterface.getProcedureState() )
    {
       case GuiCommonDef::ScreenDefault:
          DataLog(log_level_gui_info) << " ERROR : GUI Commondef state is ScreenDefault  " << endmsg;

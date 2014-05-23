@@ -1,0 +1,50 @@
+#
+# $Header: //depot/main/Embedded/Taos/Taos/Common/libjpeg/makefile.vx#1 $
+#
+# Makefile - makefile for JPEG library
+#
+
+ifeq ($(BUILD_TYPE),CLEAN)
+.PHONY: all
+all: clean
+else
+.PHONY: all
+all: check_opt_change lib
+endif
+
+#
+# MAINDIR should be set to the relative path from this makefile directory
+# to the base common project directory.  MAINDIR must use \ (DOS/Windows
+# style) directory separators if they are needed.
+#
+MAINDIR = ..
+include $(MAINDIR)/makefile.vxc
+
+#
+# The following should define all of the source files of each type
+# to be compiled for the library
+#
+LIB_C_FILES = jaricom.c jcapimin.c jcapistd.c jcarith.c jccoefct.c jccolor.c jcdctmgr.c \
+               jchuff.c jcinit.c jcmainct.c jcmarker.c jcmaster.c jcomapi.c jcparam.c \
+               jcprepct.c jcsample.c jctrans.c jdapimin.c jdapistd.c jdarith.c jdatadst.c \
+               jdatasrc.c jdcoefct.c jdcolor.c jddctmgr.c jdhuff.c jdinput.c jdmainct.c \
+               jdmarker.c jdmaster.c jdmerge.c jdpostct.c jdsample.c jdtrans.c jerror.c \
+               jfdctflt.c jfdctfst.c jfdctint.c jidctflt.c jidctfst.c jidctint.c jmemmgr.c \
+               jmemnobs.c jquant1.c jquant2.c jutils.c
+
+LIB_CXX_FILES =
+LIB_S_FILES =
+
+#
+# The following should define the location of the resulting library.  Note
+# that ARCHIVE_DIR is used in DOS shell commands, and must use \ directory
+# separators.
+#
+ARCHIVE_NAME = lib_jpeg.a
+ARCHIVE_DIR = lib
+
+#
+# This is the standard makefile for vxWorks libraries
+#
+include $(MAINDIR)/makefile.lib
+

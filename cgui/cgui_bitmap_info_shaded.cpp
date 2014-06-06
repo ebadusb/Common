@@ -145,9 +145,10 @@ bool CGUIBitmapInfoShaded::createShade( BitmapMetrics &bitmapMetrics )
 	// fill
 	unsigned short * bitmapData = NULL;
 
-	if(( bitmapMetrics.shadeType == TopBottom )
-		|| ( bitmapMetrics.shadeType == BottomTop )
-		|| ( bitmapMetrics.shadeType == Solid ))
+	if (( bitmapMetrics.shadeType == TopBottom )
+	   || ( bitmapMetrics.shadeType == BottomTop )
+		|| ( bitmapMetrics.shadeType == Solid )
+		|| ( bitmapMetrics.shadeType == NoShade))
 	{
 		dimension = (int)bitmapMetrics.bitmapHeight;
 		rowSize  = (int)bitmapMetrics.bitmapWidth;

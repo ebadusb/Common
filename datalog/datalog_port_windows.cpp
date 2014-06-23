@@ -784,7 +784,21 @@ void _FATAL_ERROR(const char * file, int line, const char * eString)
 int taskLock (void) { return 0; };
 int taskIdListGet (int idList [ ], int maxTasks) { return 0; };
 int taskUnlock (void) { return 0; };
-int intLock(void) { return 0; };
-int intUnlock(int level) { return 0; };
 
+//
+// Interrupt locking mechanism is simulated with a mutex. 
+//
+static DataLog_Lock pseudoIntLock = datalog_CreateMLock(); /* semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE); */
+
+int intLock(void) 
+{
+   datalog_LockAccess(pseudoIntLock, WAIT_FOREVER);
+   return 0;
+}
+
+int intUnlock(int) 
+{
+   datalog_ReleaseAccess(pseudoIntLock);
+   return 0;
+}
 

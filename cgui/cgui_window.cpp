@@ -238,6 +238,7 @@ void CGUIWindow::detach(void)
          if (child && (child->_id != UGL_NULL_ID) )
          {
             winDetach(child->_id);
+            child->_parent = NULL;
          }
       }
 

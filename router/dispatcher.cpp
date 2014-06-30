@@ -387,9 +387,11 @@ void Dispatcher :: deregisterMessage( const unsigned long mId, const MessageBase
    }
 }
 
-void Dispatcher :: dump( DataLog_Stream &outs )
+void Dispatcher :: dump( DataLog_Stream &outs, bool fullDump )
 {                  
-   outs << "************************* Dispatcher DUMP *************************" << endmsg;
+   const char* myTaskName = taskName(taskIdSelf());
+
+   outs << "************************* Dispatcher DUMP for task " << myTaskName << " *************************" << endmsg;
    set< MessageBase* >::iterator siter;
    map< unsigned long, set< MessageBase* > >::iterator miter;
 
@@ -413,26 +415,38 @@ void Dispatcher :: dump( DataLog_Stream &outs )
         // << "  maxsize " << qattributes.mq_maxmsg 
         << endmsg;
    outs << "Map size = " << dec << _MessageMap.size() << " " << (int)(_MessageMap.begin() == _MessageMap.end()) << endmsg;
-   for ( miter = _MessageMap.begin() ; 
-         miter != _MessageMap.end() ;
-         ++miter )
+
+   if (fullDump)
    {
-      for ( siter = (*miter).second.begin() ;
-            siter != (*miter).second.end() ;
-            ++siter )
+      for ( miter = _MessageMap.begin() ; 
+            miter != _MessageMap.end() ;
+            ++miter )
       {
-         ( (MessageBase*)(*siter) )->dump( outs );
+         for ( siter = (*miter).second.begin() ;
+               siter != (*miter).second.end() ;
+               ++siter )
+         {
+            ( (MessageBase*)(*siter) )->dump( outs );
+         }
       }
    }
+
    outs << "Dereg Map size = " << dec << _MessagesToDeregister.size() << " " << (int)(_MessagesToDeregister.begin() == _MessagesToDeregister.end()) << endmsg;
    map< MessageBase*, unsigned long >::iterator diter;
-   for ( diter = _MessagesToDeregister.begin() ;
-         diter != _MessagesToDeregister.end() ;
-         ++diter )
+
+
+   if (fullDump)
    {
-      outs << " Message: " << hex << (int)(MessageBase*)((*diter).first) << " id: " << (*diter).second;
+      for ( diter = _MessagesToDeregister.begin() ;
+            diter != _MessagesToDeregister.end() ;
+            ++diter )
+      {
+         outs << " Message: " << hex << (int)(MessageBase*)((*diter).first) << " id: " << (*diter).second;
+      }
+
+      outs << endmsg;
    }
-   outs << endmsg;
+
    outs << "************************** DUMP finished **************************" << endmsg;
 }
 

@@ -22,6 +22,7 @@
 
 #include "datalog.h"
 #include "messagepacket.h"
+#include "messagesystemconstant.h"
 
 
 class Router
@@ -31,7 +32,7 @@ public:
    // This function will act as the main entry point for the router task.  This
    //  function will create the Router object.  When this function exits, the router
    //  task will also be considered as exitted.
-   static int Router_main ();
+   static int Router_main (unsigned int qSize = MessageSystemConstant::DEFAULT_ROUTER_Q_SIZE);
 
    //
    // Function to get the global router ...
@@ -61,7 +62,7 @@ public:
    //
    // Function which will create the router's message queue, and set up all the
    //  necessary structures to start the processing.
-   bool init ();
+   bool init (unsigned int qSize);
 
    //
    // This function will continue processing indefinitely while it is blocked on the
@@ -265,6 +266,7 @@ protected:
 
 #ifdef __cplusplus
 extern "C" void routerInit ();
+extern "C" void routerInitQ (const char *commandLine);
 extern "C" void routerDump ();
 extern "C" void msgDump ();
 extern "C" void msgTaskDump ();
@@ -272,6 +274,7 @@ extern "C" void gatewayDump ();
 extern "C" void remoteMsgDump ();
 #else
 void routerInit ();
+void routerInitQ (const char *commandLine);
 void routerDump ();
 void msgDump ();
 void msgTaskDump ();

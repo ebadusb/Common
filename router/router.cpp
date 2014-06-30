@@ -17,7 +17,6 @@
 #include "failure_debug.h"
 #include "gateway.h"
 #include "messagesystem.h"
-#include "messagesystemconstant.h"
 #include "router.h"
 #include "systemoverrides.h"
 
@@ -25,13 +24,25 @@
 WIND_TCB *Router::_TheRouterTid=0;
 Router *Router::_TheRouter=0;
 
-int Router::Router_main()
+int Router::Router_main(unsigned int qSize)
 {
    if ( _TheRouter )
+   {
+      DataLog(log_level_router_error) << "Router already exists!" << endmsg;
+
       return !OK;
+   }
+
+   if (qSize > MessageSystemConstant::MAX_MESSAGE_QUEUE_SIZE)
+   {
+      DataLog(log_level_router_error) << "Queue size of " << qSize 
+         << " is greater than max queue size of " << MessageSystemConstant::MAX_MESSAGE_QUEUE_SIZE << endmsg;
+
+      return !OK;
+   }
 
    Router msgRouter;
-   msgRouter.init();
+   msgRouter.init(qSize);
 
    msgRouter.dispatchMessages();
 
@@ -103,7 +114,7 @@ Router::~Router()
    cleanup();
 }
 
-bool Router::init()
+bool Router::init(unsigned int qSize)
 {
    if ( _TheRouter )
       return false;
@@ -117,8 +128,10 @@ bool Router::init()
    // Install the datalog error handler ...
    datalog_SetTaskErrorHandler( taskIdSelf(), &Router::datalogErrorHandler );
 
+   DataLog(log_level_router_info) << "Router Q size is " << qSize << endmsg;
+
    struct mq_attr attr;                                    // message queue attributes 
-   attr.mq_maxmsg =  MessageSystemConstant::DEFAULT_ROUTER_Q_SIZE; // set max number of messages 
+   attr.mq_maxmsg = qSize;                                 // set max number of messages 
    attr.mq_msgsize = sizeof( MessagePacket );              // set message size 
    attr.mq_flags = 0;
 
@@ -1661,9 +1674,41 @@ void Router::cleanup()
    _TheRouterTid = 0;
 }
 
+void routerInitQ(const char *commandLine)
+{
+   const char *separators = " \t";
+         char *p;
+         char *parameter;
+
+   parameter = strtok_r((char *)commandLine, separators, &p);  // Get first parameter, which is the function name
+   parameter = strtok_r(NULL, separators, &p);                 // Get second parameter, which is the first argument
+
+   if (parameter == NULL)
+   {
+      DataLog(log_level_router_error) << "Router queue size is null.  Using default queue size" << endmsg;
+
+      if (Router::Router_main() != OK)
+      {
+         DataLog( log_level_critical ) << "Router startup failed!" << endmsg;
+      }
+   }
+   else
+   {
+      const int qSize = atoi(parameter);
+
+      if (Router::Router_main(qSize) != OK)
+      {
+         DataLog( log_level_critical ) << "Router startup failed!" << endmsg;
+      }
+   }
+}
+
 void routerInit()
 {
-   Router::Router_main();
+   if (Router::Router_main() != OK)
+   {
+      DataLog( log_level_critical ) << "Router startup failed!" << endmsg;
+   }
 }
 
 void routerDump()

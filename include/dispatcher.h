@@ -65,7 +65,9 @@ public:
    void receivedSignal( int sig ) { _ReceivedSignal = sig; }
    int receivedSignal() { return _ReceivedSignal; }
 
-   void dump( DataLog_Stream &outs );
+   void dump( DataLog_Stream &outs, bool fullDump = true );
+
+   int mapSize() const { return (int)_MessageMap.size(); }
 
    unsigned int messageRemaining (void) const { mq_attr qattributes; mq_getattr(_MyQueue, &qattributes); return (unsigned int)qattributes.mq_curmsgs; };
 

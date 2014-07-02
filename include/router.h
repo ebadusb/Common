@@ -32,7 +32,8 @@ public:
    // This function will act as the main entry point for the router task.  This
    //  function will create the Router object.  When this function exits, the router
    //  task will also be considered as exitted.
-   static int Router_main (unsigned int qSize = MessageSystemConstant::DEFAULT_ROUTER_Q_SIZE);
+   static int Router_main ();
+   static int Router_main (unsigned int qSize);
 
    //
    // Function to get the global router ...

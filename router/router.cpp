@@ -24,6 +24,14 @@
 WIND_TCB *Router::_TheRouterTid=0;
 Router *Router::_TheRouter=0;
 
+int Router::Router_main()
+{
+   Router_main(MessageSystemConstant::DEFAULT_ROUTER_Q_SIZE);
+
+   return OK;
+}
+
+
 int Router::Router_main(unsigned int qSize)
 {
    if ( _TheRouter )

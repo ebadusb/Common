@@ -7,6 +7,7 @@
 
 #include <vxWorks.h>
 #include "test_screen.h"
+#include "base/gui/base_screen_manager.h"
 
 UnicodeString testUstr;
 bool useDefault=true;
@@ -179,7 +180,7 @@ void TestScreen::initializeTestScreen()
 
    bool ifScreenDefault = false;
 
-   switch ( _baseDataInterface.getProcedureState() )
+   switch ( BaseScreenManager::instance().getDataInterface().getProcedureState() )
    {
       case GuiCommonDef::ScreenDefault:
          DataLog(log_level_gui_info) << " ERROR : GUI Commondef state is ScreenDefault  " << endmsg;

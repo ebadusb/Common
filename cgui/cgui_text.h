@@ -237,6 +237,10 @@ public:
 	void setStylingRecord(StylingRecord * stylingRecord);
 	StylingRecord * getStylingRecord(void) { return &_stylingRecord; }
 
+	/// This operation will set the displayed text as well as use the CGUITextItem parameter's
+	/// style and position. The previously existing setText operation didn't update the style or position
+	void setTextItem( CGUITextItem* textItem );
+
 	// SET_TEXT
 	// This methods sets the text string.  When using these method
 	// only use strings from the text database.

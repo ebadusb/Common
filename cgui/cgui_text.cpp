@@ -514,6 +514,18 @@ void CGUIText::setNumericText(const double& value, int precision, bool commaDeli
    setText( displayText.c_str() );
 }
 
+
+void CGUIText::setTextItem( CGUITextItem * textItem )
+{
+   setText( textItem );
+   StylingRecord newStyle = textItem->getStylingRecord();
+
+   setRegion( newStyle.region );
+
+   setStylingRecord( &newStyle );
+
+}
+
 void CGUIText::setText(CGUITextItem * textItem)
 {
 	if (textItem)

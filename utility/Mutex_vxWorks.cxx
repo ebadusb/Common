@@ -48,6 +48,8 @@ void Mutex::unlock()
   }
 }
 
+extern "C"
+{
 STATUS bctSemGive(SEM_ID semId)
 {
    STATUS retVal = semGive(semId);
@@ -62,3 +64,5 @@ STATUS bctSemGive(SEM_ID semId)
 
    return retVal;
 }
+}
+

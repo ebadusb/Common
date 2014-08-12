@@ -42,6 +42,7 @@
 #include <timers.h>
 #include "datalog_internal.h"
 #include "error.h"
+#include "bct_semgive.h"
 
 #ifdef DATALOG_LEVELS_INIT_SUPPORT
 # include "datalog_levels.h"
@@ -402,7 +403,7 @@ int datalog_LockAccess(DataLog_Lock lock, int delay)
 
 void datalog_ReleaseAccess(DataLog_Lock lock)
 {
-	semGive(lock);
+	bctSemGive(lock);
 }
 
 //

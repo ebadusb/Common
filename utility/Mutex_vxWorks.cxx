@@ -12,6 +12,7 @@
 
 #include <semLib.h>
 #include <iostream>
+#include <taskLib.h>
 using namespace Bct;
 Mutex::Mutex(int options)
 {
@@ -47,3 +48,17 @@ void Mutex::unlock()
   }
 }
 
+STATUS bctSemGive(SEM_ID semId)
+{
+   STATUS retVal = semGive(semId);
+
+   int tid = taskIdSelf();
+   WIND_TCB *pTcb = taskTcb( tid );
+
+   if( pTcb->priority < pTcb->priNormal )
+   {
+      taskDelay(0);
+   }
+
+   return retVal;
+}

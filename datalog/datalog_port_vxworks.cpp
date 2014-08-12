@@ -72,7 +72,7 @@ bool DataLog_CommonData::startInitialization(void)
 		result = true;
 	}
 
-	semGive(initializationDataLock);
+	bctSemGive(initializationDataLock);
 	return result;
 }
 
@@ -80,7 +80,7 @@ bool DataLog_CommonData::isInitialized(void)
 {
 	semTake(initializationDataLock, WAIT_FOREVER);
 	bool result = initializationStarted;
-	semGive(initializationDataLock);
+	bctSemGive(initializationDataLock);
 
 	return result;
 }
@@ -98,7 +98,7 @@ DataLog_InternalID DataLog_CommonData::getNextInternalID(void)
 
 	id += 1;
 	DataLog_InternalID	result = id;
-	semGive(internalIDLock);
+	bctSemGive(internalIDLock);
 
 	return result;	
 }
@@ -119,7 +119,7 @@ DataLog_Handle DataLog_CommonData::findHandle(const char * handleName)
 		result = handleMap[handleName];
 	}
 
-	semGive(handleLock);
+	bctSemGive(handleLock);
 	return result;
 }
 
@@ -140,7 +140,7 @@ void DataLog_CommonData::addHandle(const char * handleName, DataLog_Handle handl
 		handleMap[handleName] = handle;
 	}
 
-	semGive(handleLock);
+	bctSemGive(handleLock);
 }
 
 //
@@ -169,7 +169,7 @@ void DataLog_CommonData::setCommonDataPtr(void)
 			taskDeleteHookAdd((FUNCPTR)datalog_TaskDeleted);
 	   }
 
-		semGive(commonDataLock);
+		bctSemGive(commonDataLock);
 	}
 
 	_commonData = commonData;
@@ -191,7 +191,7 @@ static map<string, DataLog_SignalInfo *>	signalMap;
 
 static void timerNotify(timer_t timerID, DataLog_SignalInfo * signalInfo)
 {
-	semGive(signalInfo->_semID);
+	bctSemGive(signalInfo->_semID);
 }
 
 DataLog_SignalInfo * datalog_CreateSignal(const char * signalName)
@@ -211,7 +211,7 @@ DataLog_SignalInfo * datalog_CreateSignal(const char * signalName)
 	}
 
 	result = signalMap[signalName];
-	semGive(signalDataLock);
+	bctSemGive(signalDataLock);
 	return result;
 }
 
@@ -229,7 +229,7 @@ bool datalog_WaitSignal(DataLog_SignalInfo * signalInfo, long milliSeconds)
 
 void datalog_SendSignal(DataLog_SignalInfo * signalInfo)
 {
-	semGive(signalInfo->_semID);
+	bctSemGive(signalInfo->_semID);
 }
 
 void datalog_SetupPeriodicSignal(DataLog_SignalInfo * signalInfo, long milliSeconds)
@@ -295,7 +295,7 @@ static time_t markTimeStampStart(void)
 	nanoSecPerTimestampTick = 1000000000/sysTimestampFreq();
 #endif /* if (CPU != SIMNT) */
 
-	semGive(timeDataLock);
+	bctSemGive(timeDataLock);
 
 	return time(NULL);
 }

@@ -10,6 +10,7 @@
 #define _BCT_SEMGIVE_INCLUDE
 
 #include <vxWorks.h>
+#include <semLib.h>
 
 #ifdef __cplusplus
 extern "C" {

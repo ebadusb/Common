@@ -33,7 +33,8 @@ _MainState( 0 ),
 _StateList(0),
 _AllStatesList(0),
 _CurrentState(0),
-_LineCount( 0 )
+_LineCount( 0 ),
+_TaskDelay (false)
 {
 }
 
@@ -42,8 +43,10 @@ FileReader :: ~FileReader()
    cleanup();
 }
 
-int FileReader :: init( const char *file, StateAbs *state )
+int FileReader :: init( const char *file, StateAbs *state, bool taskDelay )
 {
+   _TaskDelay = taskDelay;
+
    //
    // Save the file name for logging ...
    //
@@ -135,7 +138,7 @@ int FileReader :: readFile()
    // Close the file ...
    //
    fclose( _FilePtr );
-   _FilePtr = 0;
+   _FilePtr = NULL;
 
    return status;
 }
@@ -166,7 +169,7 @@ int FileReader :: readNewFile( char *buffer )
       //
       // Add to the current state's list ...
       //
-      if ( _CurrentState != 0 )
+      if ( _CurrentState != NULL )
       {
          curState = _CurrentState;
       }
@@ -296,8 +299,11 @@ int FileReader :: readState( char *buffer )
          return PROCESSING_ERROR;
       }
 
+      if (_TaskDelay)
+      {
       // Give the system time to digest that.  States can do lots of message registration
       taskDelay(1);
+   }
    }
 
    return NORMAL;
@@ -394,8 +400,11 @@ int FileReader :: readMonitor( char *buffer, StateAbs *state )
 
       state->addMonitor( newMonitor );
 
+      if (_TaskDelay)
+      {
       // Give the system time to digest that.  States can do lots of message registration
       taskDelay(1);
+   }
    }
    else
    {
@@ -465,8 +474,11 @@ int FileReader :: readTransitions( TransComplex *trans, int numTrans )
          break;
       }
 
+      if (_TaskDelay)
+      {
       // Give the system time to digest that.  States can do lots of message registration
       taskDelay(1);
+   }
    }
 
    return NORMAL;
@@ -567,8 +579,11 @@ int FileReader :: readComplexTrans( char *constBuffer, TransComplex *trans )
          return PROCESSING_ERROR;
       }
 
+      if (_TaskDelay)
+      {
       // Give the system time to digest that.  States can do lots of message registration
       taskDelay(1);
+   }
    }
    else
    {
@@ -634,8 +649,11 @@ int FileReader :: readCondTrans( char *constBuffer, TransComplex *trans )
          newTrans->transitionState( p );
       }
 
+      if (_TaskDelay)
+      {
       // Give the system time to digest that.  States can do lots of message registration
       taskDelay(1);
+   }
    }
    else
    {
@@ -685,8 +703,11 @@ int FileReader :: readUncondTrans( char *constBuffer, TransComplex *trans )
          newTrans->transitionState( p );
       }
 
+      if (_TaskDelay)
+      {
       // Give the system time to digest that.  States can do lots of message registration
       taskDelay(1);
+   }
    }
    else
    {
@@ -753,9 +774,11 @@ int FileReader :: readTimerTrans( char *constBuffer, TransComplex *trans )
          newTrans->transitionState( p );
       }
 
-
+      if (_TaskDelay)
+      {
       // Give the system time to digest that.  States can do lots of message registration
       taskDelay(1);
+   }
    }
    else
    {
@@ -829,8 +852,11 @@ int FileReader :: readMessageTrans( char *constBuffer, TransComplex *trans )
          newTrans->transitionState( p );
       }
 
+      if (_TaskDelay)
+      {
       // Give the system time to digest that.  States can do lots of message registration
       taskDelay(1);
+   }
    }
    else
    {
@@ -967,7 +993,7 @@ StateAbs *FileReader :: findParentState( const char *parent )
    // 
    // Find the parent state ...
    //
-   list< StateAbs* >::iterator state;
+   std::list< StateAbs* >::iterator state;
    for ( state = _AllStatesList.begin() ;
          state != _AllStatesList.end()  ;
          state++ )

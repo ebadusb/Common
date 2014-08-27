@@ -37,7 +37,7 @@ public:
    //   returns NORMAL - file opened OK
    //
    //int init( const char *file, list< StateAbs* > &slist );
-   int init( const char *file, StateAbs *state );
+   int init( const char *file, StateAbs *state, bool taskDelay = true);
 
    //
    // This function reads the given file to completion. 
@@ -88,7 +88,7 @@ protected:
    //
    // File name
    //
-   string _FileName;
+   std::string _FileName;
 
    //
    // File ptr of the opened file
@@ -107,8 +107,8 @@ protected:
    //
    // List of read in states
    //
-   list< StateAbs* > *_StateList;
-   list< StateAbs* > _AllStatesList;
+   std::list< StateAbs* > *_StateList;
+   std::list< StateAbs* > _AllStatesList;
 
    //
    // Current state which we are reading from this file
@@ -119,6 +119,11 @@ protected:
    // Line count of the file ...
    //
    int _LineCount;
+
+   //
+   // Flag to delay or not delay task while reading the states file
+   //
+   bool _TaskDelay;
 };
 
 #endif

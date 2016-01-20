@@ -1,0 +1,48 @@
+################################################################################
+#
+# Makefile for E-Box bootrom for Control's Pentium Fox board (EBox 2016)
+#
+################################################################################
+
+# ROM_FILE is the final output copied from MY_BSP_DIR
+BIN_DIR    := ../bin
+ROM_FILES  := $(BIN_DIR)/bootrom_fox.sys
+MY_BSP_DIR := pcpentium_fox
+THIS_DIR   := $(notdir $(shell pwd))
+
+.PHONY: all clean
+
+ifeq ($(BUILD_TYPE),CLEAN)
+all: clean
+else
+all: $(ROM_FILES)
+endif
+
+ifeq ($(TERSE),true)
+ Q=@
+ CP=cp
+ SUBMAKE_ARGS += --silent
+else
+ Q=
+ CP=cp -v
+endif
+
+# Not a true list of dependencies, but sufficient to trigger developer rebuilds
+#
+ROM_DEPS := $(wildcard $(MY_BSP_DIR)/*.h) \
+            $(wildcard $(MY_BSP_DIR)/*.c) \
+            $(wildcard $(MY_BSP_DIR)/*.s) \
+            $(wildcard $(MY_BSP_DIR)/*.cdf)
+
+$(ROM_FILES): $(ROM_DEPS) | $(BIN_DIR)
+	@echo x Building: $(THIS_DIR)/$@
+	$(Q)$(MAKE) -C $(MY_BSP_DIR) $(SUBMAKE_ARGS) bootrom.bin
+	$(Q)$(CP) -f $(MY_BSP_DIR)/bootrom.bin $@
+	@echo Done: $@
+
+$(BIN_DIR):
+	md $(subst /,\,$@)
+
+clean:
+	$(Q)$(MAKE) -C $(MY_BSP_DIR) clean
+	$(Q)rm -f $(ROM_FILES)

@@ -130,8 +130,9 @@ STATUS sysNetPciInit
     )
     {
     UINT32              classCodeReg;  /* store a 24-bit PCI class code */
+#ifdef FOX_DEBUG
     logMsg ("vxTick netpci = %ul\n", tickGet(),0,0,0,0,0);
-
+#endif
     pciConfigInLong (pciBus, pciDevice, pciFunc, PCI_CFG_REVISION,
                      &classCodeReg);
 
@@ -173,7 +174,9 @@ STATUS sysNetPciInit
                 }
             }
         }
+#ifdef FOX_DEBUG
     logMsg ("vxTick netpci= %ul\n", tickGet(),0,0,0,0,0);
+#endif
     return (OK);
     }
 

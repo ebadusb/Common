@@ -129,7 +129,7 @@ STATUS sysNvRamGet
 
     sysNvRam_mount();
     
-    fd = open(NVRAMPATH, O_RDWR, 0);
+    fd = open(NVRAMPATH, O_RDWR | O_CREAT, 0);
     if(fd == ERROR)
         {
         logMsg("%s: open failed\n", (int)__FUNCTION__, 2, 3, 4, 5, 6);

@@ -174,7 +174,7 @@ extern "C" {
 #define BSP_REV		"/3"	/* increment by whole numbers */
 
 #define BENGAL_BSP
-#undef  BENGAL_DEBUG
+#define BENGAL_DEBUG  (2)
 
 #include "configAll.h"
 #include "pc.h"
@@ -201,11 +201,16 @@ extern "C" {
 #endif	/* INCLUDE_CPU_PROBE */
 #define X86CPU_DEFAULT	X86CPU_PENTIUM	/* for sysProcessor set in BSP */
 
-/* Default product-specific boot line */
-#include "../bootline.h"
+#if (BENGAL_DEBUG >= 1)
+  /* Boot from ATA drive */
+  #define DEFAULT_BOOT_LINE "ata=0,0(0,0)host:/ata0:1/vxWorks h=90.0.0.3 e=90.0.0.50 u=target"
+#else
+  /* Default product-specific boot line */
+  #include "../bootline.h"
+#endif /* BENGAL_DEBUG */
 
 #ifndef DEFAULT_BOOT_LINE
-#error "No bootline info"
+  #error "No bootline info"
 #endif /* DEFAULT_BOOT_LINE */
 
 /* Warm boot (reboot) devices and parameters */
@@ -672,9 +677,10 @@ extern "C" {
 /*
  * Force system to use only 64 MB RAM
  */
-#undef SYSTEM_RAM_SIZE
+#undef  SYSTEM_RAM_SIZE
 #define SYSTEM_RAM_SIZE         (0x04000000)    /* 64MB system RAM */
 #define LOCAL_MEM_SIZE          (SYSTEM_RAM_SIZE - LOCAL_MEM_LOCAL_ADRS)
+
 #undef  LOCAL_MEM_AUTOSIZE
 
 /*
@@ -782,10 +788,13 @@ extern "C" {
 
 #endif /* _WRS_BSP_DEBUG_NULL_ACCESS */
 
-#ifdef BENGAL_DEBUG
+#if (BENGAL_DEBUG >= 1)
 
-#define	INCLUDE_DOSFS		/* include dosFs file system */
+#define	INCLUDE_DOSFS	/* include dosFs file system */
 #define	INCLUDE_ATA		/* include IDE/EIDE(ATA) hard disk driver */
+
+#endif
+#if (BENGAL_DEBUG >= 2)
 
 #define INCLUDE_DISK_UTIL
 #define INCLUDE_DOSFS_CHKDSK
@@ -811,7 +820,7 @@ extern "C" {
 #define INCLUDE_SYM_TBL_SHOW
 
 #undef  DOSFS_NAMES_ATA_PRIMARY_MASTER
-#define DOSFS_NAMES_ATA_PRIMARY_MASTER   "/vxboot,/taos,/config,/machine"
+#define DOSFS_NAMES_ATA_PRIMARY_MASTER   "/vxboot,/trima,/config,/machine"
 #undef  DOSFS_NAMES_ATA_PRIMARY_SLAVE
 #define DOSFS_NAMES_ATA_PRIMARY_SLAVE    ""
 #undef  DOSFS_NAMES_ATA_SECONDARY_MASTER

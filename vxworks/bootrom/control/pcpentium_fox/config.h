@@ -693,7 +693,7 @@ extern "C" {
 #if 1 /* From WiPro: */
 #define RAM_LOW_ADRS            (0x00308000)	/* VxWorks image entry point */
 #define RAM_HIGH_ADRS           (0x00108000)	/* Boot image entry point */
-#else /* From control_versalogic */
+#else /* Previous Trima/Optia kernels: */
 #define RAM_LOW_ADRS            (0x00108000)    /* VxWorks image entry point */
 #define RAM_HIGH_ADRS           (0x00008000)    /* Boot image entry point */
 #endif

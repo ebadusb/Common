@@ -32,8 +32,8 @@
 #     makeTarget
 #*/
 
-CPU		= PENTIUM
-TOOL		= gnu
+CPU  = PENTIUM
+TOOL = gnu
 
 TGT_DIR = $(WIND_BASE)/target
 
@@ -67,7 +67,7 @@ ROM_SIZE           = 00090000	# number of bytes of ROM space
 # From WiPro:
 RAM_LOW_ADRS      = 00308000	# VxWorks image entry point
 RAM_HIGH_ADRS     = 00108000	# Boot image entry point
-# From control_versalogic:
+# Previous Trima/Optia kernels:
 #RAM_LOW_ADRS      = 00108000	# VxWorks image entry point
 #RAM_HIGH_ADRS     = 00008000	# Boot image entry point
 

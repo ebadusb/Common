@@ -242,6 +242,7 @@ SEE ALSO:
 #include "arch/i86/pentiumLib.h"
 #include "ccaPciSupport.h"  /* TerumoBCT CCA Support */
 
+
 #ifdef	INCLUDE_TFFS
 #   include "tffs/tffsDrv.h"
 #endif	/* INCLUDE_TFFS */
@@ -907,7 +908,7 @@ LOCAL void sysIntEoiGet  (VOIDFUNCPTR * vector,
 #   ifdef INCLUDE_APIC_TIMER
 #      include "timer/loApicTimer.c"	/* includes timestamp driver */
 #   else
-#      include "timer/i8253Timer.c"	/* includes timestamp driver */
+#      include "os/i8253Timer.c"	/* includes timestamp driver (with TBCT mods) */
 #   endif /* INCLUDE_APIC_TIMER */
 #   ifdef INCLUDE_SHOW_ROUTINES
 #      include "intrCtl/loApicIntrShow.c"
@@ -919,7 +920,7 @@ LOCAL void sysIntEoiGet  (VOIDFUNCPTR * vector,
 #   ifdef INCLUDE_APIC_TIMER
 #      include "timer/loApicTimer.c"	/* includes timestamp driver */
 #   else
-#      include "timer/i8253Timer.c"	/* includes timestamp driver */
+#      include "os/i8253Timer.c"	/* includes timestamp driver (with TBCT mods)*/
 #   endif /* INCLUDE_APIC_TIMER */
 #   ifdef INCLUDE_SHOW_ROUTINES
 #      include "intrCtl/loApicIntrShow.c"
@@ -927,7 +928,7 @@ LOCAL void sysIntEoiGet  (VOIDFUNCPTR * vector,
 #   endif /* INCLUDE_SHOW_ROUTINES */
 #else
 #   include "intrCtl/i8259Intr.c"
-#   include "timer/i8253Timer.c"	/* includes timestamp driver */
+#   include "os/i8253Timer.c"	/* includes timestamp driver (with TBCT mods) */
 #endif	/* defined(VIRTUAL_WIRE_MODE) */
 
 #ifdef	INCLUDE_PCI                     /* BSP PCI bus & config support */
@@ -936,6 +937,7 @@ LOCAL void sysIntEoiGet  (VOIDFUNCPTR * vector,
 #   include "pciCfgIntStub.c"           /* customize pciIntLib for BSP */
 #   include "pci/pciIntLib.c"
 #   if (defined(INCLUDE_PCI_CFGSHOW) && !defined(PRJ_BUILD))
+#      include <drv/pci/pciConfigShow.h>
 #      include "pci/pciConfigShow.c"
 #   endif /* (defined(INCLUDE_PCI_CFGSHOW) && !defined(PRJ_BUILD)) */
 #if (PCI_CFG_TYPE == PCI_CFG_AUTO)

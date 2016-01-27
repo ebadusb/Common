@@ -1431,7 +1431,7 @@ LOCAL void bootCmdLoop (void)
     * as a response.
    */
    enum { EchoCommand = 0xee };
-   int   kbdFound = 0;
+   int   kbdFound = 1; /* XXX temporary */
 
 	/* flush standard input to get rid of any garbage;
 	 * E.g. the Heurikon HKV2F gets junk in USART if no terminal connected.

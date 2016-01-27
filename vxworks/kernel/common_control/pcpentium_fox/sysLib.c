@@ -502,6 +502,13 @@ PHYS_MEM_DESC sysPhysMemDesc [] =
     DUMMY_MMU_ENTRY,
     DUMMY_MMU_ENTRY,
     DUMMY_MMU_ENTRY,
+    DUMMY_MMU_ENTRY,
+    DUMMY_MMU_ENTRY,
+    DUMMY_MMU_ENTRY,
+    DUMMY_MMU_ENTRY,
+    DUMMY_MMU_ENTRY,
+    DUMMY_MMU_ENTRY,
+    DUMMY_MMU_ENTRY,
 
     };
 
@@ -1260,7 +1267,7 @@ void sysHwInit (void)
 #endif /* VX_POWER_MANAGEMENT */
 
     /* Terumo CCA initialization */
-    sysCCAHwInit();
+    /* sysCCAHwInit(); */
 
     }
 

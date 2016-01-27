@@ -20,11 +20,11 @@ endif
 
 ifeq ($(TERSE),true)
  Q=@
- CP=cp
+ MV=mv
  SUBMAKE_ARGS += --silent
 else
  Q=
- CP=cp -v
+ MV=mv -v
 endif
 
 # Target-specific flags
@@ -38,14 +38,13 @@ SUBMAKE_ARGS += EXTRA_DEFINE=$(MY_DFLAGS)
 #
 ROM_DEPS := $(wildcard $(MY_BSP_DIR)/*.h) \
             $(wildcard $(MY_BSP_DIR)/*.c) \
-            $(wildcard $(MY_BSP_DIR)/*.s) \
-            $(wildcard $(MY_BSP_DIR)/*.cdf)
+            $(wildcard $(MY_BSP_DIR)/sys*.s)
 
 $(ROM_FILES): $(ROM_DEPS) | $(BIN_DIR)
 	@echo x Building: $(THIS_DIR)/$@
 	$(Q)rm -f $(MY_BSP_DIR)/*.o
 	$(Q)$(MAKE) -C $(MY_BSP_DIR) $(SUBMAKE_ARGS) bootrom.bin
-	$(Q)$(CP) -f $(MY_BSP_DIR)/bootrom.bin $@
+	$(Q)$(MV) -f $(MY_BSP_DIR)/bootrom.bin $@
 	@echo Done: $@
 
 $(BIN_DIR):

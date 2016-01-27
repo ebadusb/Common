@@ -1221,10 +1221,11 @@ void sysHwInit (void)
     
     }
 #endif /* INCLUDE_IACSFL */
-/*
+
 #ifdef INCLUDE_PC_CONSOLE
+    /* FOX/BENGAL workaround for 8042 keyboard */
     kbdHrdInit();
-#endif *//* INCLUDE_PC_CONSOLE */
+#endif /* INCLUDE_PC_CONSOLE */
 
 #ifdef INCLUDE_USB
     /*

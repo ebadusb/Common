@@ -21,8 +21,15 @@
 #include "config.h"
 
 
-#include "ccaPciSupport.h"
+#include "cca_pci_support.h"
 
+/* Local prototypes */
+LOCAL void   ccaResourceArrayInit(ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
+LOCAL void   ccaResourceArraySave(ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
+LOCAL STATUS ccaPciDetect(int index, ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
+LOCAL STATUS ccaPciInstall(ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
+LOCAL STATUS installOneBarDevice(UINT index, ccaPciResources ccaData[CCA_MAX_PCI_RESOURCES], UINT32 mapSize);
+LOCAL STATUS installTwoBarDevice(UINT index, ccaPciResources ccaData[CCA_MAX_PCI_RESOURCES], UINT32 mapSize1, UINT32 mapSize2);
 
 /* Prototypes (vxWorks prototypes included here because they are not in the vxWorks headers!) */
 IMPORT STATUS sysMmuMapAdd (void* address,
@@ -30,6 +37,7 @@ IMPORT STATUS sysMmuMapAdd (void* address,
                             UINT initialStateMask,
                             UINT initialState);
 
+/* holds the PCI information CCA resources for ccaPciShow */
 ccaPciResources ccaPciData[CCA_MAX_PCI_RESOURCES];
 
 /*
@@ -104,6 +112,17 @@ STATUS sysCCAHwInit (void)
    if ( count > 0 ) retVal = OK;
    return retVal;
 }
+
+
+STATUS ccaPciGetResource (int index, ccaPciResources* pResource)
+{
+   if (index < 0 || index >= CCA_MAX_PCI_RESOURCES || NULL == pResource)
+      return ERROR;
+
+   *pResource = ccaPciData[index];
+   return OK;
+}
+
 
 LOCAL void ccaResourceArrayInit (ccaPciResources data[CCA_MAX_PCI_RESOURCES])
 {

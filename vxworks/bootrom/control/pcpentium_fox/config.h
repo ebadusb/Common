@@ -653,12 +653,7 @@ extern "C" {
 #endif
 
 #define USER_RESERVED_MEM       (0)             /* user reserved memory */
-
-#if 0 /* From WiPro: */
-#define LOCAL_MEM_LOCAL_ADRS    (0x00100000)    /* on-board memory base */
-#else /* Previous Trima/Optia kernels: */
 #define LOCAL_MEM_LOCAL_ADRS    (0x00000000)    /* on-board memory base */
-#endif
 
 /*
  * LOCAL_MEM_SIZE is the offset from the start of on-board memory to the

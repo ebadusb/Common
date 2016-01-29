@@ -1341,22 +1341,27 @@ void usrRoot
 
 	/* Initialize all the available devices. */
 	for ( count = 0, pDevTbl = endDevTbl; pDevTbl->endLoadFunc != END_TBL_END;
-		 pDevTbl++, count++ )
+		  pDevTbl++, count++ )
 	{
 		cookieTbl[count].pCookie = muxDevLoad (pDevTbl->unit, pDevTbl->endLoadFunc,
 															pDevTbl->endLoadString,
 															pDevTbl->endLoan, pDevTbl->pBSP);
 
-      if ( cookieTbl[count].pCookie == NULL )
-      {
-         printf ("muxLoad failed!\n");
-      }
+		if ( cookieTbl[count].pCookie == NULL )
+		{
+		   printf ("muxLoad failed!\n");
+		}
+		else
+		{
+		   cookieTbl[count].unitNo = pDevTbl->unit;
+		   bzero((void *)cookieTbl[count].devName, END_NAME_MAX);
+		   pDevTbl->endLoadFunc((char*)cookieTbl[count].devName, NULL);
 
-		cookieTbl[count].unitNo=pDevTbl->unit;
-		bzero((void *)cookieTbl[count].devName,END_NAME_MAX);
-		pDevTbl->endLoadFunc((char*)cookieTbl[count].devName, NULL);
-
+		   /* Use first network device found as boot device */
+		   if ( endBootDevIndex < 0) endBootDevIndex = count;
+		}
    }
+
 #endif /* INCLUDE_END */
 
 #if defined(INCLUDE_PC_CONSOLE)
@@ -1778,7 +1783,7 @@ LOCAL char autoboot
 
     /* auto-boot */
 
-	printf ("Booting Trima Software (kbdFound=%d altboot=%d numKeysPressed=%d) ...\n", kbdFound, altboot, keypressedno);
+	printf ("Booting " BOOTLOAD_TAG " Software (kbdFound=%d altboot=%d numKeysPressed=%d) ...\n", kbdFound, altboot, keypressedno);
    
 	if ( bootLoad (BOOT_LINE_ADRS, &entry, kbdFound, altboot) == OK )
 	{
@@ -4139,6 +4144,14 @@ LOCAL void usrBootLineInit
 			/* either no non-volatile RAM or empty boot line */
 
 			strcpy (BOOT_LINE_ADRS, DEFAULT_BOOT_LINE);
+#if 0
+			/* TODO: Is this still relevant for EBOX? Optia only? */
+			if ( endBootDevIndex >= 0 )
+			{
+			   strcpy(BOOT_LINE_ADRS, (char*)cookieTbl[endBootDevIndex].devName);
+			}
+#endif
+			printf("%d %s\n", endBootDevIndex, BOOT_LINE_ADRS);
       }
    }
 }

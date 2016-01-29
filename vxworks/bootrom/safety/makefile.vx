@@ -6,7 +6,7 @@
 
 # ROM_FILE is the final output copied from MY_BSP_DIR
 BIN_DIR    := ../bin
-ROM_FILES  := $(BIN_DIR)/bootrom_atom_optia.sys $(BIN_DIR)/bootrom_atom_trima.sys
+ROM_FILES  := $(BIN_DIR)/bootrom_bengal_optia.sys $(BIN_DIR)/bootrom_bengal_trima.sys
 MY_BSP_DIR := atom_bengal
 THIS_DIR   := $(notdir $(shell pwd))
 
@@ -29,8 +29,8 @@ endif
 
 # Target-specific flags
 #
-$(BIN_DIR)/bootrom_atom_optia.sys: MY_DFLAGS := -DOPTIA_BOOTROM
-$(BIN_DIR)/bootrom_atom_trima.sys: MY_DFLAGS := -DTRIMA_BOOTROM
+$(BIN_DIR)/bootrom_bengal_optia.sys: MY_DFLAGS := -DOPTIA_BOOTROM
+$(BIN_DIR)/bootrom_bengal_trima.sys: MY_DFLAGS := -DTRIMA_BOOTROM
 
 SUBMAKE_ARGS += EXTRA_DEFINE=$(MY_DFLAGS)
 

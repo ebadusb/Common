@@ -201,12 +201,13 @@ extern "C" {
 #endif	/* INCLUDE_CPU_PROBE */
 #define X86CPU_DEFAULT	X86CPU_PENTIUM	/* for sysProcessor set in BSP */
 
+/* Default product-specific boot line */
+#include "../bootline.h"
+
 #if (BENGAL_DEBUG >= 1)
   /* Boot from ATA drive */
+  #undef  DEFAULT_BOOT_LINE
   #define DEFAULT_BOOT_LINE "ata=0,0(0,0)host:/ata0:1/vxWorks h=90.0.0.3 e=90.0.0.50 u=target"
-#else
-  /* Default product-specific boot line */
-  #include "../bootline.h"
 #endif /* BENGAL_DEBUG */
 
 #ifndef DEFAULT_BOOT_LINE
@@ -658,7 +659,7 @@ extern "C" {
 #endif
 
 #define USER_RESERVED_MEM       (0)             /* user reserved memory */
-#define LOCAL_MEM_LOCAL_ADRS    (0x00100000)    /* on-board memory base */
+#define LOCAL_MEM_LOCAL_ADRS    (0x00000000)    /* on-board memory base */
 
 /*
  * LOCAL_MEM_SIZE is the offset from the start of on-board memory to the

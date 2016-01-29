@@ -15,6 +15,8 @@
   " u=" INTFTPUSER " pw=" INTFTPPASS \
   " f=0"
 
+#define BOOTLOAD_TAG   "TAOS"
+
 #endif /* OPTIA_BOOTROM */
 
 /* ================================================================================ */
@@ -29,6 +31,8 @@
   " e=10.0.0.1:ffffff00 h=10.0.0.2 tn=safety" \
   " u=" INTFTPUSER " pw=" INTFTPPASS \
   " f=0"
+
+#define BOOTLOAD_TAG   "Trima"
 
 #endif /* TRIMA_BOOTROM */
 

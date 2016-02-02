@@ -93,10 +93,12 @@ endif
 ifneq ($(CPU),PENTIUM)
   ifneq ($(CPU),SIMNT)
     ifneq ($(CPU),PENTIUM2)
+     ifneq ($(CPU),PENTIUM4)
       ifneq ($(CPU),I80486)
-        OPT_ERROR := Invalid CPU type: $(CPU).  Valid types are PENTIUM, I80486 or SIMNT.
+        OPT_ERROR := Invalid CPU type: $(CPU).  Valid types are PENTIUM[24], I80486 or SIMNT.
         FORCE_REBUILD := 1
       endif
+     endif
     endif
   endif
 endif
@@ -197,6 +199,50 @@ LD_ARCH_RELOC :=
 endif
 
 endif
+
+#
+# Build flags for PENTIUM4
+#
+ifeq ($(CPU),PENTIUM4)
+AS  = ccpentium -c
+CPP = ccpentium -E
+CC  = ccpentium -c
+CXX = ccpentium -c
+AR  = arpentium
+LD  = ldpentium
+NM  = nmpentium -g
+GREP = grep -h
+MUNCH = wtxtcl $(WIND_BASE)/host/src/hutils/munch.tcl -asm pentium
+
+ifndef ARCH_FLAGS
+ARCH_FLAGS := -DCPU=PENTIUM4 -mcpu=pentiumiii -march=p3 -DVXWORKS
+endif
+
+ifndef AS_ARCH_FLAGS
+AS_ARCH_FLAGS := $(ARCH_FLAGS) -xassembler-with-cpp
+endif
+
+ifndef CPP_ARCH_FLAGS
+CPP_ARCH_FLAGS := $(ARCH_FLAGS)
+endif
+
+ifndef CC_ARCH_FLAGS
+CC_ARCH_FLAGS := $(ARCH_FLAGS) -fno-builtin -fno-defer-pop -ffloat-store
+endif
+
+ifndef CXX_ARCH_FLAGS
+CXX_ARCH_FLAGS := $(ARCH_FLAGS) -Wstrict-prototypes -fno-builtin -fno-defer-pop -ffloat-store
+endif
+
+ifndef LD_ARCH_FLAGS
+LD_ARCH_FLAGS := -r -X
+endif
+
+ifndef LD_ARCH_RELOC
+LD_ARCH_RELOC :=
+endif
+
+endif  # PENTIUM4
 
 #
 # Build flags for I80486

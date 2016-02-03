@@ -174,7 +174,7 @@ extern "C" {
 #define BSP_REV		"/3"	/* increment by whole numbers */
 
 #define BENGAL_BSP
-#define BENGAL_DEBUG  (2)
+#define BENGAL_DEBUG  (0)
 
 #include "configAll.h"
 #include "pc.h"

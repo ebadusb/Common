@@ -240,6 +240,7 @@ SEE ALSO:
 #include "cacheLib.h"
 #include "private/vmLibP.h"
 #include "arch/i86/pentiumLib.h"
+#include "cca_pci_support.h"     /* TerumoBCT CCA Support */
 
 #ifdef	INCLUDE_TFFS
 #   include "tffs/tffsDrv.h"
@@ -1256,6 +1257,9 @@ void sysHwInit (void)
      */
     vxPowerModeSet(VX_POWER_MODE_DEFAULT);
 #endif /* VX_POWER_MANAGEMENT */
+
+     /* Terumo CCA initialization */
+     sysCCAHwInit();
 
     }
 

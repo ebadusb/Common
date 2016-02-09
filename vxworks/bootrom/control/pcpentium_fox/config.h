@@ -174,6 +174,8 @@ extern "C" {
 
 #define FOX_BSP
 #undef  FOX_DEBUG
+#define FOX_64MB
+#define FOX_CHKSUM_SKIP
 
 #include "configAll.h"
 #include "pc.h"

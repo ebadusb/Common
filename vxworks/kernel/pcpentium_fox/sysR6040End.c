@@ -5,7 +5,7 @@
 /*
 modification history
 --------------------
-based on sysDec21x40End.c
+                sysR6040End.c based on sysDec21x40End.c
 01h,23apr02,pai  Made DEC and GEI END driver config names consistent with
                  other END driver config names.
 01g,22oct01,pai  Updated documentation and routines for new device discovery
@@ -24,31 +24,14 @@ based on sysDec21x40End.c
 
 /*
 DESCRIPTION
-This is the WRS-supplied configuration module for the VxWorks dec21x40End (dc)
+This is the configuration module for the VxWorks rdc6040End (rdc)
 END driver.  It has routines for initializing device resources and provides
-BSP-specific routines for Intel (formerly DEC) 21040, 21140, and 21143
-Ethernet PCI bus controllers found on the system.
-
-The number of supported devices that can be configured for a particular system
-is finite and is specified by the DEC21X40_MAX_DEV configuration constant.
-This value, and the internal data structures using it, can be modified in this
-file for specific implementations.
+BSP-specific routines for RDC 6040 Ethernet PCI bus controllers 
+found on the system.
 
 NOTE
-This module has only been tested with the following Ethernet cards:
+This module has only been tested with RDC 6040 PCI Ethernet controller.
 
-.IP "21040 controller"
-Digital DE435.
-.IP "21140 controller"
-D-Link DFE-500TX and Kingston KNE-100TX.
-.IP "21143 controller"
-Intel (formerly DEC) EB143 evaluation card, Kingston KNE-100TX, and
-Longshine 8038 TXD.
-.LP
-
-SEE ALSO:
-.I "Digital Semiconductor 21143 PCI/CardBus Fast Ethernet LAN Controller,"
-.I "Digital Semiconductor 21143 10/100Base-TX Evaluation Board User's Guide."
 */
 
 
@@ -59,110 +42,21 @@ SEE ALSO:
 #include "end.h"
 #include <drv/end/rdc6040End.h>
 
+
 /* defines */
 
 /* specify the maximum number of physical devices to configure */
 
 #define R6040_MAX_DEV       (4)
 
-/* BSP specific DEC 21x4x ethernet device type constants */
+/* BSP specific RDC 6040 ethernet device type constants */
 
-#define RDC_TYPE_6040			(1)  /* RDC R6040 10/100Base-TX */
-
-#if 0
-#define DEC_TYPE_EB143         (1)   /* DEC 21143 10/100Base-TX */
-#define DEC_TYPE_DC140         (2)   /* DEC 21140 10/100Base-TX */
-#define DEC_TYPE_DC040         (3)   /* DEC 21040 10/100Base-TX */
-
-
-/* untested board types */
-
-#define DEC_TYPE_LC82C168      (4)   /* Lite-On PNIC */
-#define DEC_TYPE_MX98713       (5)   /* Macronix 98713 PMAC */
-#define DEC_TYPE_MX98715       (6)   /* Macronix 98715 PMAC */
-#define DEC_TYPE_AX88140       (7)   /* ASIX AX88140 */
-#define DEC_TYPE_PNIC2         (8)   /* Lite-On PNIC-II */
-#define DEC_TYPE_COMET         (9)   /* Comet family */
-#define DEC_TYPE_COMPEX9881   (10)   /* Compex 9881 */
-#define DEC_TYPE_I21145       (11)   /* Intel 21145 */
-
-
-/* DEC 21040/21140/21143 driver user flags */
-
-#define DEC_USR_FLAGS_143     (DEC_USR_21143)
-
-#define DEC_USR_FLAGS_140     (DEC_USR_BAR_RX | DEC_USR_RML    | \
-                               DEC_USR_CAL_08 | DEC_USR_PBL_04 | \
-                               DEC_USR_21140  | DEC_USR_SF)
-
-#define DEC_USR_FLAGS_040     (DEC_USR_BAR_RX | DEC_USR_CAL_08 | DEC_USR_PBL_04)
-
-/* untested board flags */
-
-#define PNIC_USR_FLAGS        (DEC_USR_21143)
-#define MX98713_USR_FLAGS     (0)
-#define MX98715_USR_FLAGS     (0)
-#define AX88140_USR_FLAGS     (0)
-#define PNIC2_USR_FLAGS       (0)
-#define COMET_USR_FLAGS       (0)
-#define COMPEX9881_USR_FLAGS  (0)
-#define I21145_USR_FLAGS      (0)
-
-
-/* DEC 21x4x PCI Vendor and Device IDs */
-
-#define DEC21X4X_PCI_VENDOR_ID     (0x1011)  /* DEC PCI vendor ID */
-#define DEC_PCI_VENDOR_ID          (0x1011)  /* DEC PCI vendor ID      */
-#define DEC21143_PCI_DEVICE_ID     (0x0019)  /* 21143 PCI device ID */
-#define DEC21140_PCI_DEVICE_ID     (0x0009)  /* 21140 PCI device ID */
-#define DEC21040_PCI_DEVICE_ID     (0x0002)  /* 21040 PCI device ID */
-
-/* untested board PCI Vendor and Device IDs */
-
-#define PNIC_PCI_VENDOR_ID         (0x11AD)  /* Lite-On Communications */
-#define PNIC_PCI_DEVICE_ID         (0x0002)
-#define PNIC2_PCI_DEVICE_ID        (0xc115)
-
-#define MACRONIX_PCI_VENDOR_ID     (0x10d9)  /* Macronix */
-#define MX98713_PCI_DEVICE_ID      (0x0512)
-#define MX98715_PCI_DEVICE_ID      (0x0531)
-
-#define ASIX_PCI_VENDOR_ID         (0x125B)  /* Asix Electronics Corp. */
-#define AX88140_PCI_DEVICE_ID      (0x1400)
-
-#define COMET_PCI_VENDOR_ID        (0x1317)  /* Admtek Inc. */
-#define COMET1_PCI_DEVICE_ID       (0x0981)
-#define COMET2_PCI_DEVICE_ID       (0x0985)
-#define COMET3_PCI_DEVICE_ID       (0x1985)
-
-#define COMPEX_PCI_VENDOR_ID       (0x11F6)  /* Powermatic Data Systems */
-#define COMPEX9881_PCI_DEVICE_ID   (0x9881)
-
-#ifndef INTEL_PCI_VENDOR_ID
-#define INTEL_PCI_VENDOR_ID        (0x8086)  /* Intel Corporation */
-#endif /* INTEL_PCI_VENDOR_ID */
-#define I21145_PCI_DEVICE_ID       (0x0039)
-
-#define DAVICOM_PCI_VENDOR_ID      (0x1282)  /* Davicom Semiconductor */
-#define DAVICOM9100_PCI_DEVICE_ID  (0x9100)
-#define DAVICOM9102_PCI_DEVICE_ID  (0x9102)
-
-#define ACCTON_PCI_VENDOR_ID       (0x1113)  /* Accton Technology Corp. */
-#define EN1217_PCI_DEVICE_ID       (0x1217)
-
-#endif /* 0 */
-
-#ifndef VERSARDC_VENDORID
-#define VERSARDC_DEVICEID_6040 		(0x6040) 
-#define VERSARDC_VENDORID			(0x17f3)	
-#define VERSARDC_NAME				"rdc"
-#endif
-#define RDC_PCI_VENDOR_ID			VERSARDC_VENDORID
-#define RDC_PCI_DEVICE_ID			VERSARDC_DEVICEID
+#define RDC_TYPE_6040       (1)  /* RDC R6040 10/100Base-TX */
+#define RDC_PCI_VENDOR_ID   VERSARDC_VENDORID
+#define RDC_PCI_DEVICE_ID   VERSARDC_DEVICEID
+#define VERSARDC_NAME       "rdc"
 
 /* forward declarations */
-
-END_OBJ * rdcEndLoad (char *);
 
 LOCAL UINT32 sysRdcDevToType (UINT32, UINT32, UINT8);
 
@@ -198,45 +92,20 @@ LOCAL PCI_BOARD_RESOURCE sysRdcPciRsrcs [R6040_MAX_DEV] =
     }
     };
 
-#if 0
-/* This table defines user load string flags for each supported
- * DEC board type.  Index the table via a DEC_TYPE_XXX constant.
- */
-
-LOCAL UINT32 decUsrFlags [] =
-    {
-    0,                         /* undefined board type */
-    DEC_USR_FLAGS_143,         /* DEC 21143 user load string flags */
-    DEC_USR_FLAGS_140,         /* DEC 21140 user load string flags */
-    DEC_USR_FLAGS_040,         /* DEC 21040 user load string flags */
-
-    /* Untested device flags */
-
-    PNIC_USR_FLAGS,            /* Lite-On PNIC */
-    MX98713_USR_FLAGS,         /* Macronix 98713 PMAC */
-    MX98715_USR_FLAGS,         /* Macronix 98715 PMAC */
-    AX88140_USR_FLAGS,         /* ASIX AX88140 */
-    PNIC2_USR_FLAGS,           /* Lite-On PNIC-II */
-    COMET_USR_FLAGS,           /* Comet family */
-    COMPEX9881_USR_FLAGS,      /* Compex 9881 */
-    I21145_USR_FLAGS           /* Intel 21145 */
-    };
-
-#endif
 /* imports */
 
 IMPORT STATUS    sysMmuMapAdd (void * address, UINT len,
                                UINT initialStateMask, UINT initialState);
 
-IMPORT END_OBJ * r6040EndLoad (char *);
+IMPORT END_OBJ * rdcEndLoad (char *);
 
 
 /******************************************************************************
 *
-* sysDec21x40EndLoad - create a load string and load an dec21x40End device
+* sysR6040EndLoad - create a load string and load an rdc6040End device
 *
 * This routine will be invoked by the MUX for the purpose of loading an
-* dec21x40End (dc) device with initial parameters.  This routine is
+* rdc6040End (rdc) device with initial parameters.  This routine is
 * constructed as an interface wrapper for the driver load routine.  Thus,
 * the arguments and return values are consistent with any xxxEndLoad()
 * routine defined for an END driver and the MUX API.
@@ -267,8 +136,8 @@ IMPORT END_OBJ * r6040EndLoad (char *);
 * RETURNS: An END object pointer, or NULL on error, or 0 and the name of the
 * device if the <pParamStr> was NULL.
 *
-* SEE ALSO: dec21x40EndLoad()
 */
+
 END_OBJ * sysR6040EndLoad
     (
     char *    pParamStr,   /* pointer to initialization parameter string */
@@ -300,7 +169,7 @@ END_OBJ * sysR6040EndLoad
         /* PASS (2)
          * The END <unit> number is prepended to <pParamStr>.  Construct
          * the rest of the driver load string based on physical devices
-         * discovered in sysDec21x40PciInit().  When this routine is called
+         * discovered in sysR6040PciInit().  When this routine is called
          * to process a particular END <unit> number, use the END <unit> as
          * an index into the PCI "resources" table to build the driver
          * parameter string.
@@ -323,11 +192,10 @@ END_OBJ * sysR6040EndLoad
         /* construct an index into the user flags resource table */
 
         typeIdx = (pciRsrc[endUnit].boardType);
-
-#if 1
+#if 0
         logMsg("IRQ vector %d IRQ Number %d\n",pciRsrc[endUnit].irqvec,
-				pciRsrc[endUnit].irq,0,0,0,0);
-				
+               pciRsrc[endUnit].irq,0,0,0,0);
+#endif
         /* finish off the initialization parameter string */
 
         sprintf (paramStr, paramTemplate, 
@@ -338,7 +206,7 @@ END_OBJ * sysR6040EndLoad
                  pciRsrc[endUnit].irqvec,     /* IRQ vector */
                  pciRsrc[endUnit].irq        /* IRQ number */
                 );
-#endif
+
         if ((pEnd = rdcEndLoad (paramStr)) == (END_OBJ *) NULL)
             {
             printf ("Error rdcEndLoad:  failed to load driver.\n");
@@ -350,19 +218,17 @@ END_OBJ * sysR6040EndLoad
 
 /*******************************************************************************
 *
-* sysDec21x40PciInit - initialize a DEC 21x4x PCI ethernet device
+* sysR6040PciInit - initialize a RDC6040 PCI ethernet device
 *
-* This routine performs basic PCI initialization for 21x4x ethernet devices
-* supported by the dec21x40End END driver.  If supported,  the device
+* This routine performs basic PCI initialization for RDC6040 ethernet device
+* supported by the rdc6040End END driver.  If supported,  the device
 * memory and I/O addresses are mapped into the local CPU address space and
 * an internal board-specific PCI resources table is updated with
 * information on the board type, memory address, and IO address.
 *
 * CAVEATS
 * This routine must be performed prior to MMU initialization, usrMmuInit().
-* If the number of supported 21x4x physical device instances installed
-* on the PCI bus exceeds DEC21X40_MAX_DEV, then the extra devices will not
-* be initialized in this routine.
+* NOTE: Only one RDC 6040 device instance Tested
 *
 * RETURNS:
 * OK, else ERROR when the specified device is not supported, or if the device
@@ -433,10 +299,6 @@ STATUS sysR6040PciInit
     sysRdcPciRsrcs[rdcUnitsFound].revisionID = revisionId;
     sysRdcPciRsrcs[rdcUnitsFound].boardType  = boardType;
 
-#if 1
-    logMsg("00IRQ vector %d IRQ Number %d\n",sysRdcPciRsrcs[rdcUnitsFound].irqvec,
-				sysRdcPciRsrcs[rdcUnitsFound].irq,0,0,0,0);
-#endif
     /* enable mapped memory and IO decoders */
 
     pciConfigOutWord (pciBus, pciDevice, pciFunc, PCI_CFG_COMMAND,
@@ -458,11 +320,11 @@ STATUS sysR6040PciInit
 
 /*******************************************************************************
 *
-* sysDecDevToType - convert PCI Vendor and Device IDs to a device type
+* sysRdcDevToType - convert PCI Vendor and Device IDs to a device type
 *
 * Given <vendorId>, <deviceId>, and <revisionId> values read from PCI Vendor
 * and Device ID registers in PCI configuration space, this routine will
-* attempt to map the IDs to a DEC 21x4x device type value defined in this
+* attempt to map the IDs to a RDC 6040 device type value defined in this
 * file.
 *
 * CAVEATS
@@ -472,12 +334,7 @@ STATUS sysR6040PciInit
 * A board type value which will be one of
 *
 * .IP
-* DEC_TYPE_EB143
-* .IP
-* DEC_TYPE_DC140
-* .IP
-* DEC_TYPE_DC040
-* .LP
+* RDC_TYPE_6040
 *
 * BOARD_TYPE_UNKNOWN will be returned if the Device ID does not map to
 * a supported board type.
@@ -507,9 +364,9 @@ LOCAL UINT32 sysRdcDevToType
 
 /*******************************************************************************
 *
-* sysLan97xIntEnable - enable Am79C97x ethernet device interrupts
+* sysR6040IntEnable - enable RDC6040 ethernet device interrupts
 *
-* This routine enables Am79C97x interrupts.  This may involve operations on
+* This routine enables RDC6040 interrupts.  This may involve operations on
 * interrupt control hardware.
 *
 * RETURNS: OK or ERROR for invalid arguments.
@@ -524,9 +381,9 @@ STATUS sysR6040IntEnable
 
 /*******************************************************************************
 *
-* sysLan97xIntDisable - disable Am79C97x ethernet device interrupts
+* sysR6040IntDisable - disable RDC6040 ethernet device interrupts
 *
-* This routine disables Am79C97x interrupts.  This may involve operations on
+* This routine disables RDC6040 interrupts.  This may involve operations on
 * interrupt control hardware.
 *
 * RETURNS: OK or ERROR for invalid arguments.

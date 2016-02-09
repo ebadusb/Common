@@ -624,7 +624,8 @@ STATUS sys82543BoardInit
     if (pRsrc->boardType != PRO1000_543_BOARD && 
         pRsrc->boardType != PRO1000_544_BOARD &&
         pRsrc->boardType != PRO1000_546_BOARD &&
-        pRsrc->boardType != PRO1000_573_BOARD) 
+        pRsrc->boardType != PRO1000_573_BOARD &&
+        pRsrc->boardType != PRO1000_I210_BOARD) 
          return ERROR;
         
     if (pRsrc->boardType == PRO1000_546_BOARD)
@@ -754,7 +755,8 @@ STATUS sys82543BoardInit
 
     pBoard->phyAddr = (pRsrc->boardType == PRO1000_544_BOARD || 
                        pRsrc->boardType == PRO1000_546_BOARD || 
-                       pRsrc->boardType == PRO1000_573_BOARD)? 1 : 0;
+                       pRsrc->boardType == PRO1000_573_BOARD ||
+                       pRsrc->boardType == PRO1000_I210_BOARD)? 1 : 0;
       
     /* BSP/adapter specific (for 82540/82545/82546 only)
      * allow users set up the device's internal timer based on their
@@ -1069,7 +1071,7 @@ LOCAL UINT16 sys543eepromReadWord
 
     pRsrc = &geiPciResources[unit];
 
-    if (pRsrc->boardType == PRO1000_573_BOARD)
+    if (pRsrc->boardType == PRO1000_573_BOARD || pRsrc->boardType == PRO1000_I210_BOARD)
         return (sys573eepromReadWord (unit, index));
 
     if (pRsrc->boardType == PRO1000_546_BOARD)
@@ -1210,7 +1212,7 @@ LOCAL STATUS sys543eepromCheckSum
 
     for (ix = 0; ix < EEPROM_WORD_SIZE; ix++) 
         checkSum += sys543eepromReadWord (unit, ix);
- 
+
     if (checkSum == (UINT16)EEPROM_SUM)
         return OK;
  
@@ -1550,9 +1552,10 @@ LOCAL UINT32 sysGeiDevToType
             case PRO1000_573_PCI_DEVICE_ID_IAMT:
             case PRO1000_571_PCI_DEVICE_ID_EB:
             case PRO1000_574_PCI_DEVICE_ID: /*Ampro*/
+			    return (PRO1000_573_BOARD);
 			case INTEL_I210_DEVICE_ID:
 					 printf("id = %x\n", deviceId);
-                return (PRO1000_573_BOARD);
+                return (PRO1000_I210_BOARD);
             }
         }
 

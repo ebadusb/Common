@@ -51,6 +51,9 @@ SEE ALSO: ifLib,
 #include "end.h"
 #include "drv/end/gei82543End.h"
 
+
+/* defines */
+
 /* specify the maximum number of physical devices to configure */
 
 #define GEI_MAX_DEV      (4)
@@ -112,107 +115,6 @@ SEE ALSO: ifLib,
 #define GEI_SYS_READ_REG(unit, reg)             \
    (*(volatile UINT32 *)(PCI_MEMIO2LOCAL(geiResources[(unit)].memBaseLow + reg)))
 
-#define GEI_SYS_WRITE_FLUSH(unit)                        \
-{                                                        \
-   UINT32 x;                                            \
-   x = GEI_SYS_READ_REG(unit, INTEL_82543GC_STATUS);    \
-}
-
-#define GEI_SYS_WRITE_REG_IO(unit, reg, value)    \
-{                                            \
-  sysOutByte(geiResources[(unit)].ioBase, (reg));    \
-  sysOutByte(geiResources[(unit)].ioBase+4, (value));    \
-}
-
-#define GEI_SYS_WRITE_REG_ARRAY(unit, reg, offset, value)  \
-    ((*(volatile UINT32 *)(PCI_MEMIO2LOCAL(geiResources[(unit)].memBaseLow+(reg)+((offset) <<2) ) ))  = \
-    (UINT32)(value))
-
-/* PCI Device IDs */
-#define DEV_ID_82542               0x1000
-#define DEV_ID_82543GC_FIBER       0x1001
-#define DEV_ID_82543GC_COPPER      0x1004
-#define DEV_ID_82544EI_COPPER      0x1008
-#define DEV_ID_82544EI_FIBER       0x1009
-#define DEV_ID_82544GC_COPPER      0x100C
-#define DEV_ID_82544GC_LOM         0x100D
-#define DEV_ID_82540EM             0x100E
-#define DEV_ID_82540EM_LOM         0x1015
-#define DEV_ID_82540EP_LOM         0x1016
-#define DEV_ID_82540EP             0x1017
-#define DEV_ID_82540EP_LP          0x101E
-#define DEV_ID_82545EM_COPPER      0x100F
-#define DEV_ID_82545EM_FIBER       0x1011
-#define DEV_ID_82545GM_COPPER      0x1026
-#define DEV_ID_82545GM_FIBER       0x1027
-#define DEV_ID_82545GM_SERDES      0x1028
-#define DEV_ID_82546EB_COPPER      0x1010
-#define DEV_ID_82546EB_FIBER       0x1012
-#define DEV_ID_82546EB_QUAD_COPPER 0x101D
-#define DEV_ID_82541EI             0x1013
-#define DEV_ID_82541EI_MOBILE      0x1018
-#define DEV_ID_82541ER             0x1078
-#define DEV_ID_82547GI             0x1075
-#define DEV_ID_82541PI             0x1076
-#define DEV_ID_82541GI_MOBILE      0x1077
-#define DEV_ID_82541GI_LF          0x107C
-#define DEV_ID_82546GB_COPPER      0x1079
-#define DEV_ID_82546GB_FIBER       0x107A
-#define DEV_ID_82546GB_SERDES      0x107B
-#define DEV_ID_82547EI             0x1019
-
-/* EEPROM/Flash Control */
-#define E1000_EECD_SK        0x00000001 /* EEPROM Clock */
-#define E1000_EECD_CS        0x00000002 /* EEPROM Chip Select */
-#define E1000_EECD_DI        0x00000004 /* EEPROM Data In */
-#define E1000_EECD_DO        0x00000008 /* EEPROM Data Out */
-#define E1000_EECD_FWE_MASK  0x00000030
-#define E1000_EECD_FWE_DIS   0x00000010 /* Disable FLASH writes */
-#define E1000_EECD_FWE_EN    0x00000020 /* Enable FLASH writes */
-#define E1000_EECD_FWE_SHIFT 4
-#define E1000_EECD_REQ       0x00000040 /* EEPROM Access Request */
-#define E1000_EECD_GNT       0x00000080 /* EEPROM Access Grant */
-#define E1000_EECD_PRES      0x00000100 /* EEPROM Present */
-#define E1000_EECD_SIZE      0x00000200 /* EEPROM Size (0=64 word 1=256 word) */
-#define E1000_EECD_ADDR_BITS 0x00000400 /* EEPROM Addressing bits based on type
-                                         * (0-small, 1-large) */
-#define E1000_EECD_TYPE      0x00002000 /* EEPROM Type (1-SPI, 0-Microwire) */
-#ifndef E1000_EEPROM_GRANT_ATTEMPTS
-#define E1000_EEPROM_GRANT_ATTEMPTS 1000 /* EEPROM # attempts to gain grant */
-#endif
-
-/* EEPROM Read */
-#define E1000_EERD_START      0x00000001 /* Start Read */
-#define E1000_EERD_DONE       0x00000010 /* Read Done */
-#define E1000_EERD_ADDR_SHIFT 8
-#define E1000_EERD_ADDR_MASK  0x0000FF00 /* Read Address */
-#define E1000_EERD_DATA_SHIFT 16
-#define E1000_EERD_DATA_MASK  0xFFFF0000 /* Read Data */
-
-/* SPI EEPROM Status Register */
-#define EEPROM_STATUS_RDY_SPI  0x01
-#define EEPROM_STATUS_WEN_SPI  0x02
-#define EEPROM_STATUS_BP0_SPI  0x04
-#define EEPROM_STATUS_BP1_SPI  0x08
-#define EEPROM_STATUS_WPEN_SPI 0x80
-
-/* EEPROM Commands - Microwire */
-#define EEPROM_READ_OPCODE_MICROWIRE  0x6  /* EEPROM read opcode */
-#define EEPROM_WRITE_OPCODE_MICROWIRE 0x5  /* EEPROM write opcode */
-#define EEPROM_ERASE_OPCODE_MICROWIRE 0x7  /* EEPROM erase opcode */
-#define EEPROM_EWEN_OPCODE_MICROWIRE  0x13 /* EEPROM erase/write enable */
-#define EEPROM_EWDS_OPCODE_MICROWIRE  0x10 /* EEPROM erast/write disable */
-
-/* EEPROM Commands - SPI */
-#define EEPROM_MAX_RETRY_SPI    5000 /* Max wait of 5ms, for RDY signal */
-#define EEPROM_READ_OPCODE_SPI  0x3  /* EEPROM read opcode */
-#define EEPROM_WRITE_OPCODE_SPI 0x2  /* EEPROM write opcode */
-#define EEPROM_A8_OPCODE_SPI    0x8  /* opcode bit-3 = address bit-8 */
-#define EEPROM_WREN_OPCODE_SPI  0x6  /* EEPROM set Write Enable latch */
-#define EEPROM_WRDI_OPCODE_SPI  0x4  /* EEPROM reset Write Enable latch */
-#define EEPROM_RDSR_OPCODE_SPI  0x5  /* EEPROM read Status register */
-#define EEPROM_WRSR_OPCODE_SPI  0x1  /* EEPROM write Status register */
-
 /* PCI device ID for Intel 82543/82544 Ethernet */
 
 #define PRO1000_543_PCI_DEVICE_ID_T     (0x1001) /* Copper */
@@ -225,6 +127,7 @@ SEE ALSO: ifLib,
 #define PRO1000_546_PCI_DEVICE_ID_XT    (0x1010) /* Copper */
 #define PRO1000_545_PCI_DEVICE_ID_MF    (0x1011) /* Fiber */
 #define PRO1000_546_PCI_DEVICE_ID_MF    (0x1012) /* Fiber */
+#define DEV_ID_82541PI                  (0x1076) /* Copper */
 
 /* device resources */
 
@@ -274,257 +177,6 @@ SEE ALSO: ifLib,
 #define INTEL_82544PHY_PSCR_ASSERT_CRS_ON_TX    (0x0800)
 #define INTEL_82544PHY_EPSCR_TX_CLK_25          (0x0070)
 
-
-
-/*INTEL 82543 for 82541PI porting from Linux*/
-#define MAX_PHY_REG_ADDRESS        0x1F  /* 5 bit address bus (0-0x1F) */
-#define MAX_PHY_MULTI_PAGE_REG     0xF   /* Registers equal on all pages */
-
-#define IGP01E1000_PHY_PAGE_SELECT     0x1F /* PHY Page Select Core Register */
-
-#define E1000_MANC     0x05820  /* Management Control - RW */
-#define E1000_MANC_ARP_EN        0x00002000 /* Enable ARP Request Filtering */
-
-#define E1000_LEDCTL   0x00E00  /* LED Control - RW */
-#define IGP_ACTIVITY_LED_MASK   0xFFFFF0FF
-#define IGP_ACTIVITY_LED_ENABLE 0x0300
-#define IGP_LED3_MODE           0x07000000
-
-#define E1000_WUC      0x05800  /* Wakeup Control - RW */
-
-#define ETHERNET_IEEE_VLAN_TYPE 0x8100  /* 802.3ac packet */
-
-#define E1000_MTA      0x05200  /* Multicast Table Array - RW Array */
-
-/* Filters */
-#define E1000_NUM_UNICAST          16   /* Unicast filter entries */
-#define E1000_MC_TBL_SIZE          128  /* Multicast Filter Table (4096 bits) */
-#define E1000_VLAN_FILTER_TBL_SIZE 128  /* VLAN Filter Table (4096 bits) */
-
-#define E1000_TXDCTL   0x03828  /* TX Descriptor Control - RW */
-
-/* Transmit Descriptor Control */
-#define E1000_TXDCTL_PTHRESH 0x000000FF /* TXDCTL Prefetch Threshold */
-#define E1000_TXDCTL_HTHRESH 0x0000FF00 /* TXDCTL Host Threshold */
-#define E1000_TXDCTL_WTHRESH 0x00FF0000 /* TXDCTL Writeback Threshold */
-#define E1000_TXDCTL_GRAN    0x01000000 /* TXDCTL Granularity */
-#define E1000_TXDCTL_LWTHRESH 0xFE000000 /* TXDCTL Low Threshold */
-#define E1000_TXDCTL_FULL_TX_DESC_WB 0x01010000 /* GRAN=1, WTHRESH=1 */
-#define E1000_TXDCTL_COUNT_DESC 0x00400000 /* Enable the counting of desc.
-                                              still to be processed. */
-
-/* MDI Control */
-#define E1000_MDIC_DATA_MASK 0x0000FFFF
-#define E1000_MDIC_REG_MASK  0x001F0000
-#define E1000_MDIC_REG_SHIFT 16
-#define E1000_MDIC_PHY_MASK  0x03E00000
-#define E1000_MDIC_PHY_SHIFT 21
-#define E1000_MDIC_OP_WRITE  0x04000000
-#define E1000_MDIC_OP_READ   0x08000000
-#define E1000_MDIC_READY     0x10000000
-#define E1000_MDIC_INT_EN    0x20000000
-#define E1000_MDIC_ERROR     0x40000000
-                                              
-/* Register Set. (82543, 82544)
- *
- * Registers are defined to be 32 bits and  should be accessed as 32 bit values.
- * These registers are physically located on the NIC, but are mapped into the
- * host memory address space.
- *
- * RW - register is both readable and writable
- * RO - register is read only
- * WO - register is write only
- * R/clr - register is read only and is cleared when read
- * A - register array
- */
-#define E1000_CTRL     0x00000  /* Device Control - RW */
-#define E1000_CTRL_DUP 0x00004  /* Device Control Duplicate (Shadow) - RW */
-#define E1000_STATUS   0x00008  /* Device Status - RO */
-#define E1000_EECD     0x00010  /* EEPROM/Flash Control - RW */
-#define E1000_EERD     0x00014  /* EEPROM Read - RW */
-#define E1000_CTRL_EXT 0x00018  /* Extended Device Control - RW */
-#define E1000_FLA      0x0001C  /* Flash Access - RW */
-#define E1000_MDIC     0x00020  /* MDI Control - RW */
-#define E1000_SCTL     0x00024  /* SerDes Control - RW */
-#define E1000_FCAL     0x00028  /* Flow Control Address Low - RW */
-#define E1000_FCAH     0x0002C  /* Flow Control Address High -RW */
-#define E1000_FCT      0x00030  /* Flow Control Type - RW */
-#define E1000_VET      0x00038  /* VLAN Ether Type - RW */
-#define E1000_ICR      0x000C0  /* Interrupt Cause Read - R/clr */
-#define E1000_ITR      0x000C4  /* Interrupt Throttling Rate - RW */
-#define E1000_ICS      0x000C8  /* Interrupt Cause Set - WO */
-#define E1000_IMS      0x000D0  /* Interrupt Mask Set - RW */
-#define E1000_IMC      0x000D8  /* Interrupt Mask Clear - WO */
-#define E1000_IAM      0x000E0  /* Interrupt Acknowledge Auto Mask */
-#define E1000_RCTL     0x00100  /* RX Control - RW */
-#define E1000_RDTR1    0x02820  /* RX Delay Timer (1) - RW */
-#define E1000_RDBAL1   0x02900  /* RX Descriptor Base Address Low (1) - RW */
-#define E1000_RDBAH1   0x02904  /* RX Descriptor Base Address High (1) - RW */
-#define E1000_RDLEN1   0x02908  /* RX Descriptor Length (1) - RW */
-#define E1000_RDH1     0x02910  /* RX Descriptor Head (1) - RW */
-#define E1000_RDT1     0x02918  /* RX Descriptor Tail (1) - RW */
-#define E1000_FCTTV    0x00170  /* Flow Control Transmit Timer Value - RW */
-#define E1000_TXCW     0x00178  /* TX Configuration Word - RW */
-#define E1000_RXCW     0x00180  /* RX Configuration Word - RO */
-#define E1000_TCTL     0x00400  /* TX Control - RW */
-#define E1000_TIPG     0x00410  /* TX Inter-packet gap -RW */
-#define E1000_TBT      0x00448  /* TX Burst Timer - RW */
-#define E1000_AIT      0x00458  /* Adaptive Interframe Spacing Throttle - RW */
-#define E1000_LEDCTL   0x00E00  /* LED Control - RW */
-#define E1000_EXTCNF_CTRL  0x00F00  /* Extended Configuration Control */
-#define E1000_EXTCNF_SIZE  0x00F08  /* Extended Configuration Size */
-#define E1000_PBA      0x01000  /* Packet Buffer Allocation - RW */
-#define E1000_PBS      0x01008  /* Packet Buffer Size */
-#define E1000_EEMNGCTL 0x01010  /* MNG EEprom Control */
-#define E1000_FLASH_UPDATES 1000
-#define E1000_EEARBC   0x01024  /* EEPROM Auto Read Bus Control */
-#define E1000_FLASHT   0x01028  /* FLASH Timer Register */
-#define E1000_EEWR     0x0102C  /* EEPROM Write Register - RW */
-#define E1000_FLSWCTL  0x01030  /* FLASH control register */
-#define E1000_FLSWDATA 0x01034  /* FLASH data register */
-#define E1000_FLSWCNT  0x01038  /* FLASH Access Counter */
-#define E1000_FLOP     0x0103C  /* FLASH Opcode Register */
-#define E1000_ERT      0x02008  /* Early Rx Threshold - RW */
-#define E1000_FCRTL    0x02160  /* Flow Control Receive Threshold Low - RW */
-#define E1000_FCRTH    0x02168  /* Flow Control Receive Threshold High - RW */
-#define E1000_PSRCTL   0x02170  /* Packet Split Receive Control - RW */
-#define E1000_RDBAL    0x02800  /* RX Descriptor Base Address Low - RW */
-#define E1000_RDBAH    0x02804  /* RX Descriptor Base Address High - RW */
-#define E1000_RDLEN    0x02808  /* RX Descriptor Length - RW */
-#define E1000_RDH      0x02810  /* RX Descriptor Head - RW */
-#define E1000_RDT      0x02818  /* RX Descriptor Tail - RW */
-#define E1000_RDTR     0x02820  /* RX Delay Timer - RW */
-#define E1000_RDBAL0   E1000_RDBAL /* RX Desc Base Address Low (0) - RW */
-#define E1000_RDBAH0   E1000_RDBAH /* RX Desc Base Address High (0) - RW */
-#define E1000_RDLEN0   E1000_RDLEN /* RX Desc Length (0) - RW */
-#define E1000_RDH0     E1000_RDH   /* RX Desc Head (0) - RW */
-#define E1000_RDT0     E1000_RDT   /* RX Desc Tail (0) - RW */
-#define E1000_RDTR0    E1000_RDTR  /* RX Delay Timer (0) - RW */
-#define E1000_RXDCTL   0x02828  /* RX Descriptor Control - RW */
-#define E1000_RADV     0x0282C  /* RX Interrupt Absolute Delay Timer - RW */
-#define E1000_RSRPD    0x02C00  /* RX Small Packet Detect - RW */
-#define E1000_RAID     0x02C08  /* Receive Ack Interrupt Delay - RW */
-#define E1000_TXDMAC   0x03000  /* TX DMA Control - RW */
-#define E1000_TDFH     0x03410  /* TX Data FIFO Head - RW */
-#define E1000_TDFT     0x03418  /* TX Data FIFO Tail - RW */
-#define E1000_TDFHS    0x03420  /* TX Data FIFO Head Saved - RW */
-#define E1000_TDFTS    0x03428  /* TX Data FIFO Tail Saved - RW */
-#define E1000_TDFPC    0x03430  /* TX Data FIFO Packet Count - RW */
-#define E1000_TDBAL    0x03800  /* TX Descriptor Base Address Low - RW */
-#define E1000_TDBAH    0x03804  /* TX Descriptor Base Address High - RW */
-#define E1000_TDLEN    0x03808  /* TX Descriptor Length - RW */
-#define E1000_TDH      0x03810  /* TX Descriptor Head - RW */
-#define E1000_TDT      0x03818  /* TX Descripotr Tail - RW */
-#define E1000_TIDV     0x03820  /* TX Interrupt Delay Value - RW */
-#define E1000_TXDCTL   0x03828  /* TX Descriptor Control - RW */
-#define E1000_TADV     0x0382C  /* TX Interrupt Absolute Delay Val - RW */
-#define E1000_TSPMT    0x03830  /* TCP Segmentation PAD & Min Threshold - RW */
-#define E1000_TARC0    0x03840  /* TX Arbitration Count (0) */
-#define E1000_TDBAL1   0x03900  /* TX Desc Base Address Low (1) - RW */
-#define E1000_TDBAH1   0x03904  /* TX Desc Base Address High (1) - RW */
-#define E1000_TDLEN1   0x03908  /* TX Desc Length (1) - RW */
-#define E1000_TDH1     0x03910  /* TX Desc Head (1) - RW */
-#define E1000_TDT1     0x03918  /* TX Desc Tail (1) - RW */
-#define E1000_TXDCTL1  0x03928  /* TX Descriptor Control (1) - RW */
-#define E1000_TARC1    0x03940  /* TX Arbitration Count (1) */
-#define E1000_CRCERRS  0x04000  /* CRC Error Count - R/clr */
-#define E1000_ALGNERRC 0x04004  /* Alignment Error Count - R/clr */
-#define E1000_SYMERRS  0x04008  /* Symbol Error Count - R/clr */
-#define E1000_RXERRC   0x0400C  /* Receive Error Count - R/clr */
-#define E1000_MPC      0x04010  /* Missed Packet Count - R/clr */
-#define E1000_SCC      0x04014  /* Single Collision Count - R/clr */
-#define E1000_ECOL     0x04018  /* Excessive Collision Count - R/clr */
-#define E1000_MCC      0x0401C  /* Multiple Collision Count - R/clr */
-#define E1000_LATECOL  0x04020  /* Late Collision Count - R/clr */
-#define E1000_COLC     0x04028  /* Collision Count - R/clr */
-#define E1000_DC       0x04030  /* Defer Count - R/clr */
-#define E1000_TNCRS    0x04034  /* TX-No CRS - R/clr */
-#define E1000_SEC      0x04038  /* Sequence Error Count - R/clr */
-#define E1000_CEXTERR  0x0403C  /* Carrier Extension Error Count - R/clr */
-#define E1000_RLEC     0x04040  /* Receive Length Error Count - R/clr */
-#define E1000_XONRXC   0x04048  /* XON RX Count - R/clr */
-#define E1000_XONTXC   0x0404C  /* XON TX Count - R/clr */
-#define E1000_XOFFRXC  0x04050  /* XOFF RX Count - R/clr */
-#define E1000_XOFFTXC  0x04054  /* XOFF TX Count - R/clr */
-#define E1000_FCRUC    0x04058  /* Flow Control RX Unsupported Count- R/clr */
-#define E1000_PRC64    0x0405C  /* Packets RX (64 bytes) - R/clr */
-#define E1000_PRC127   0x04060  /* Packets RX (65-127 bytes) - R/clr */
-#define E1000_PRC255   0x04064  /* Packets RX (128-255 bytes) - R/clr */
-#define E1000_PRC511   0x04068  /* Packets RX (255-511 bytes) - R/clr */
-#define E1000_PRC1023  0x0406C  /* Packets RX (512-1023 bytes) - R/clr */
-#define E1000_PRC1522  0x04070  /* Packets RX (1024-1522 bytes) - R/clr */
-#define E1000_GPRC     0x04074  /* Good Packets RX Count - R/clr */
-#define E1000_BPRC     0x04078  /* Broadcast Packets RX Count - R/clr */
-#define E1000_MPRC     0x0407C  /* Multicast Packets RX Count - R/clr */
-#define E1000_GPTC     0x04080  /* Good Packets TX Count - R/clr */
-#define E1000_GORCL    0x04088  /* Good Octets RX Count Low - R/clr */
-#define E1000_GORCH    0x0408C  /* Good Octets RX Count High - R/clr */
-#define E1000_GOTCL    0x04090  /* Good Octets TX Count Low - R/clr */
-#define E1000_GOTCH    0x04094  /* Good Octets TX Count High - R/clr */
-#define E1000_RNBC     0x040A0  /* RX No Buffers Count - R/clr */
-#define E1000_RUC      0x040A4  /* RX Undersize Count - R/clr */
-#define E1000_RFC      0x040A8  /* RX Fragment Count - R/clr */
-#define E1000_ROC      0x040AC  /* RX Oversize Count - R/clr */
-#define E1000_RJC      0x040B0  /* RX Jabber Count - R/clr */
-#define E1000_MGTPRC   0x040B4  /* Management Packets RX Count - R/clr */
-#define E1000_MGTPDC   0x040B8  /* Management Packets Dropped Count - R/clr */
-#define E1000_MGTPTC   0x040BC  /* Management Packets TX Count - R/clr */
-#define E1000_TORL     0x040C0  /* Total Octets RX Low - R/clr */
-#define E1000_TORH     0x040C4  /* Total Octets RX High - R/clr */
-#define E1000_TOTL     0x040C8  /* Total Octets TX Low - R/clr */
-#define E1000_TOTH     0x040CC  /* Total Octets TX High - R/clr */
-#define E1000_TPR      0x040D0  /* Total Packets RX - R/clr */
-#define E1000_TPT      0x040D4  /* Total Packets TX - R/clr */
-#define E1000_PTC64    0x040D8  /* Packets TX (64 bytes) - R/clr */
-#define E1000_PTC127   0x040DC  /* Packets TX (65-127 bytes) - R/clr */
-#define E1000_PTC255   0x040E0  /* Packets TX (128-255 bytes) - R/clr */
-#define E1000_PTC511   0x040E4  /* Packets TX (256-511 bytes) - R/clr */
-#define E1000_PTC1023  0x040E8  /* Packets TX (512-1023 bytes) - R/clr */
-#define E1000_PTC1522  0x040EC  /* Packets TX (1024-1522 Bytes) - R/clr */
-#define E1000_MPTC     0x040F0  /* Multicast Packets TX Count - R/clr */
-#define E1000_BPTC     0x040F4  /* Broadcast Packets TX Count - R/clr */
-#define E1000_TSCTC    0x040F8  /* TCP Segmentation Context TX - R/clr */
-#define E1000_TSCTFC   0x040FC  /* TCP Segmentation Context TX Fail - R/clr */
-#define E1000_IAC      0x04100  /* Interrupt Assertion Count */
-#define E1000_ICRXPTC  0x04104  /* Interrupt Cause Rx Packet Timer Expire Count */
-#define E1000_ICRXATC  0x04108  /* Interrupt Cause Rx Absolute Timer Expire Count */
-#define E1000_ICTXPTC  0x0410C  /* Interrupt Cause Tx Packet Timer Expire Count */
-#define E1000_ICTXATC  0x04110  /* Interrupt Cause Tx Absolute Timer Expire Count */
-#define E1000_ICTXQEC  0x04118  /* Interrupt Cause Tx Queue Empty Count */
-#define E1000_ICTXQMTC 0x0411C  /* Interrupt Cause Tx Queue Minimum Threshold Count */
-#define E1000_ICRXDMTC 0x04120  /* Interrupt Cause Rx Descriptor Minimum Threshold Count */
-#define E1000_ICRXOC   0x04124  /* Interrupt Cause Receiver Overrun Count */
-#define E1000_RXCSUM   0x05000  /* RX Checksum Control - RW */
-#define E1000_RFCTL    0x05008  /* Receive Filter Control*/
-#define E1000_MTA      0x05200  /* Multicast Table Array - RW Array */
-#define E1000_RA       0x05400  /* Receive Address - RW Array */
-#define E1000_VFTA     0x05600  /* VLAN Filter Table Array - RW Array */
-#define E1000_WUC      0x05800  /* Wakeup Control - RW */
-#define E1000_WUFC     0x05808  /* Wakeup Filter Control - RW */
-#define E1000_WUS      0x05810  /* Wakeup Status - RO */
-#define E1000_MANC     0x05820  /* Management Control - RW */
-#define E1000_IPAV     0x05838  /* IP Address Valid - RW */
-#define E1000_IP4AT    0x05840  /* IPv4 Address Table - RW Array */
-#define E1000_IP6AT    0x05880  /* IPv6 Address Table - RW Array */
-#define E1000_WUPL     0x05900  /* Wakeup Packet Length - RW */
-#define E1000_WUPM     0x05A00  /* Wakeup Packet Memory - RO A */
-#define E1000_FFLT     0x05F00  /* Flexible Filter Length Table - RW Array */
-#define E1000_HOST_IF  0x08800  /* Host Interface */
-#define E1000_FFMT     0x09000  /* Flexible Filter Mask Table - RW Array */
-#define E1000_FFVT     0x09800  /* Flexible Filter Value Table - RW Array */
-
-#define E1000_GCR       0x05B00 /* PCI-Ex Control */
-#define E1000_GSCL_1    0x05B10 /* PCI-Ex Statistic Control #1 */
-#define E1000_GSCL_2    0x05B14 /* PCI-Ex Statistic Control #2 */
-#define E1000_GSCL_3    0x05B18 /* PCI-Ex Statistic Control #3 */
-#define E1000_GSCL_4    0x05B1C /* PCI-Ex Statistic Control #4 */
-#define E1000_FACTPS    0x05B30 /* Function Active and Power State to MNG */
-#define E1000_SWSM      0x05B50 /* SW Semaphore */
-#define E1000_FWSM      0x05B54 /* FW Semaphore */
-#define E1000_FFLT_DBG  0x05F04 /* Debug Register */
-#define E1000_HICR      0x08F00 /* Host Inteface Control */
-
-
 /* Alaska PHY's information */
 
 #define MARVELL_OUI_ID                  (0x5043)
@@ -550,36 +202,59 @@ SEE ALSO: ifLib,
 #define ALASKA_PSSR_100MBS              (0x4000)
 #define ALASKA_PSSR_1000MBS             (0x8000)
 
+/************************************************************/
+/* EEPROM defines/macros ported from vxWorks 6.9 GEI driver */
+/************************************************************/
+
+#define GEI_EECD    0x0010    /* EEPROM/flash control */
+#define GEI_EERD    0x0014    /* EEPROM/flash data (!82544) */
+
+/* EEPROM read register (not valid on 82544 or earlier) */
+
+#define GEI_EERD_START      0x00000001
+#define GEI_EERD_DONE       0x00000010
+#define GEI_EERD_ADDR       0x0000FF00
+#define GEI_EERD_DATA       0xFFFF0000
+#define GEI_EEADDR(x)           (((x) << 8) & GEI_EERD_ADDR)
+#define GEI_EEDATA(x)           (((x) & GEI_EERD_DATA) >> 16)
+#define GEI_TIMEOUT              10000
+#define le16toh(x)      ((UINT16)(x))
+
+/* 9346 EEPROM commands */
+
+#define GEI_9346_WRITE      0x5
+#define GEI_9346_READ       0x6
+#define GEI_9346_ERASE      0x7
+
+#define GEI_EECD    0x0010   /* EEPROM/flash control */
+
+/* EEPROM/flash control register (must be used on 82544 or earlier) */
+
+#define GEI_EECD_SK		0x00000001 /* EEPROM clock */
+#define GEI_EECD_CS		0x00000002 /* EEPROM chip select */
+#define GEI_EECD_DI		0x00000004 /* EEPROM data in */
+#define GEI_EECD_DO		0x00000008 /* EEPROM data out */
+#define GEI_EECD_EE_REQ		0x00000040 /* Request access (!82544) */
+#define GEI_EECD_EE_GNT		0x00000080 /* Grant access (!82544) */
+
+#define CSR_SETBIT_4(unit, offset, val)          \
+        GEI_SYS_WRITE_REG(unit, offset, GEI_SYS_READ_REG(unit, offset) | (val))
+
+#define CSR_CLRBIT_4(unit, offset, val)          \
+        GEI_SYS_WRITE_REG(unit, offset, GEI_SYS_READ_REG(unit, offset) & (UINT32)(~(val)))
+
 /* typedefs */
-
-typedef enum {
-    EEPROM_UNINITIALIZED = 0,
-    EEPROM_SPI,
-    EEPROM_MICROWIRE,
-    NUM_EEPROM_TYPES
-} EEPROM_TYPE;
-
-typedef struct eeprom {
-    EEPROM_TYPE type;
-    UINT16 mac_type;
-    UINT16 opcode_bits;
-    UINT16 address_bits;
-    UINT16 delay_usec;
-    UINT16 page_size;
-}EEPROM;
-
 
 typedef struct geiResource        /* GEI_RESOURCE */
     {
     BOOL   adr64;                 /* Indicator for 64-bit support */
-    UINT32 boardType;             /* board type */
+    UINT32 boardType;             /* board type 82541 */
     UINT32 memBaseLow;            /* Base Address LOW */
     UINT32 memBaseHigh;           /* Base Address HIGH */
     UINT32 flashBase;             /* Base Address for FLASH */
-    UINT32 ioBase;            /*IO Base Address*/
 
     UINT16 eepromSize;            /* size in unit of word (16 bit) - 64/256 */ 
-    EEPROM eeprom;
+	UINT16 eeprom_address_bits;   /* eeprom address_bits  - 82541 */
     UINT16 eeprom_icw1;           /* EEPROM initialization control word 1 */
     UINT16 eeprom_icw2;           /* EEPROM initialization control word 2 */
     UCHAR  enetAddr[6];           /* MAC address for this adaptor */
@@ -603,29 +278,25 @@ LOCAL UINT32 geiUnits = 0;     /* number of GEIs we found */
 
 /* This table defined board extended resources */
 
-GEI_RESOURCE geiResources [GEI_MAX_DEV] =
+LOCAL GEI_RESOURCE geiResources [GEI_MAX_DEV] =
     {
-    {FALSE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, GEI_EEPROM_SZ_64, 
-     {(EEPROM_TYPE)NONE, (UINT16)NONE, (UINT16)NONE, (UINT16)NONE, (UINT16)NONE, (UINT16)NONE}, 0, 0, {(UCHAR)NONE},
-     (UINT32)GEI0_SHMEM_BASE, GEI0_SHMEM_SIZE, GEI0_RXDES_NUM, GEI0_TXDES_NUM, FALSE, 
+    {FALSE, NONE, NONE, NONE, NONE, GEI_EEPROM_SZ_64, 6, 0, 0, {NONE},
+     GEI0_SHMEM_BASE, GEI0_SHMEM_SIZE, GEI0_RXDES_NUM, GEI0_TXDES_NUM, FALSE, 
      GEI0_USR_FLAG, ERROR
     },
 
-    {FALSE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, GEI_EEPROM_SZ_64, 
-      {(EEPROM_TYPE)NONE, (UINT16)NONE, (UINT16)NONE, (UINT16)NONE, (UINT16)NONE, (UINT16)NONE}, 0, 0, {(UCHAR)NONE},
-     (UINT32)GEI1_SHMEM_BASE, GEI1_SHMEM_SIZE, GEI1_RXDES_NUM, GEI1_TXDES_NUM, FALSE, 
+    {FALSE, NONE, NONE, NONE, NONE, GEI_EEPROM_SZ_64, 6, 0, 0, {NONE},
+     GEI1_SHMEM_BASE, GEI1_SHMEM_SIZE, GEI1_RXDES_NUM, GEI1_TXDES_NUM, FALSE, 
      GEI1_USR_FLAG, ERROR
     },
 
-    {FALSE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, GEI_EEPROM_SZ_64, 
-     {(EEPROM_TYPE)NONE, (UINT16)NONE, (UINT16)NONE, (UINT16)NONE, (UINT16)NONE, (UINT16)NONE}, 0, 0, {(UCHAR)NONE},
-     (UINT32)GEI2_SHMEM_BASE, GEI2_SHMEM_SIZE, GEI2_RXDES_NUM, GEI2_TXDES_NUM, FALSE, 
+    {FALSE, NONE, NONE, NONE, NONE, GEI_EEPROM_SZ_64, 6, 0, 0, {NONE},
+     GEI2_SHMEM_BASE, GEI2_SHMEM_SIZE, GEI2_RXDES_NUM, GEI2_TXDES_NUM, FALSE, 
      GEI2_USR_FLAG, ERROR
     },
 
-    {FALSE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, GEI_EEPROM_SZ_64, 
-     {(EEPROM_TYPE)NONE, (UINT16)NONE, (UINT16)NONE, (UINT16)NONE, (UINT16)NONE, (UINT16)NONE}, 0, 0, {(UCHAR)NONE},
-     (UINT32)GEI3_SHMEM_BASE, GEI3_SHMEM_SIZE, GEI3_RXDES_NUM, GEI3_TXDES_NUM, FALSE, 
+    {FALSE, NONE, NONE, NONE, NONE, GEI_EEPROM_SZ_64, 6, 0, 0, {NONE},
+     GEI3_SHMEM_BASE, GEI3_SHMEM_SIZE, GEI3_RXDES_NUM, GEI3_TXDES_NUM, FALSE, 
      GEI3_USR_FLAG, ERROR
     }
     };
@@ -634,23 +305,23 @@ GEI_RESOURCE geiResources [GEI_MAX_DEV] =
 
 LOCAL PCI_BOARD_RESOURCE geiPciResources [GEI_MAX_DEV] =
     {
-    {(UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT8)NONE, (UINT32)NONE, (UINT8)NONE, (UINT32)NONE,
-    {(UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE},
+    {NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE,
+    {NONE, NONE, NONE, NONE, NONE, NONE},
      (void * const)(&geiResources[0])
     },
 
-    {(UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT8)NONE, (UINT32)NONE, (UINT8)NONE, (UINT32)NONE,
-    {(UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE},
+    {NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE,
+    {NONE, NONE, NONE, NONE, NONE, NONE},
      (void * const)(&geiResources[1])
     },
 
-    {(UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT8)NONE, (UINT32)NONE, (UINT8)NONE, (UINT32)NONE,
-    {(UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE},
+    {NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE,
+    {NONE, NONE, NONE, NONE, NONE, NONE},
      (void * const)(&geiResources[2])
     },
 
-    {(UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT8)NONE, (UINT32)NONE, (UINT8)NONE, (UINT32)NONE,
-    {(UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE, (UINT32)NONE},
+    {NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE,
+    {NONE, NONE, NONE, NONE, NONE, NONE},
      (void * const)(&geiResources[3])
     }
     };
@@ -673,9 +344,7 @@ LOCAL BOOL      sysGei82546InitTimerSetup (ADAPTOR_INFO * );
 LOCAL BOOL      sysGei82546DynaTimerSetup (ADAPTOR_INFO * ); 
 LOCAL UINT32    sysGeiDevToType (UINT32, UINT32, UINT8);
 
-void sysGei541InitParam(int unit, int deviceId);
-STATUS sysGei541ReadEeprom(int unit, UINT16 offset, UINT16 words, UINT16 *data);
-
+void sysGei541ReadEeprom(int unit,int off, int cnt,UINT8 *dest);
 
 /*****************************************************************************
 *
@@ -804,11 +473,12 @@ STATUS sys543PciInit
     geiPciResources[geiUnits].revisionID = revisionId;
     geiPciResources[geiUnits].boardType  = boardType;
 
-    if(boardType == DEV_ID_82541PI){ 
-      geiPciResources[geiUnits].boardType = DEV_ID_82541PI;
-      geiResources[geiUnits].boardType = DEV_ID_82541PI;
-    }
-
+    if(boardType == DEV_ID_82541PI)
+        { 
+        geiPciResources[geiUnits].boardType = DEV_ID_82541PI;
+        geiResources[geiUnits].eeprom_address_bits = 6;
+        geiResources[geiUnits].boardType = DEV_ID_82541PI;
+        }
    /* the following support legacy interfaces and data structures */
 
     geiPciResources[geiUnits].pciBus     = pciBus;
@@ -821,18 +491,11 @@ STATUS sys543PciInit
                       PCI_CMD_MEM_ENABLE | PCI_CMD_IO_ENABLE |
                       PCI_CMD_MASTER_ENABLE);
 
-    /*for 82541PI*/
-    if(boardType == DEV_ID_82541PI)
-        {
-        sysGei541InitParam(geiUnits, boardType);
-        }
-    else
-        {
-        /* disable sleep mode */
+    /* disable sleep mode */
 
-        pciConfigOutByte (pciBus, pciDevice, pciFunc, PCI_CFG_MODE,
+    pciConfigOutByte (pciBus, pciDevice, pciFunc, PCI_CFG_MODE,
                       SLEEP_MODE_DIS);
-        }
+
     ++geiUnits;  /* increment number of units initialized */
 
     return (OK);
@@ -886,6 +549,7 @@ END_OBJ * sysGei8254xEndLoad
     END_OBJ * pEnd;
     char      paramStr [END_INIT_STR_MAX];
 
+
     if (strlen (pParamStr) == 0)
         {
         /* PASS (1)
@@ -937,6 +601,7 @@ END_OBJ * sysGei8254xEndLoad
             printf ("ERROR: sysGei8254xEndLoad fails to load gei %d\n", unit);
             }
         }
+
     return (pEnd);
     }
 
@@ -968,15 +633,7 @@ STATUS sys82543BoardInit
         return (ERROR);
 
     pRsrc = &geiPciResources[unit];
-
-    if(pRsrc->boardType == DEV_ID_82541PI)
-        {
-        pReso = &geiResources[unit];
-        }
-    else
-        {
-        pReso = (GEI_RESOURCE *)(pRsrc->pExtended);
-        }
+    pReso = (GEI_RESOURCE *)(pRsrc->pExtended);
 
     if (pRsrc->boardType != PRO1000_543_BOARD && 
         pRsrc->boardType != PRO1000_544_BOARD &&
@@ -1007,20 +664,20 @@ STATUS sys82543BoardInit
         
         if (devId == PRO1000_546_PCI_DEVICE_ID_XT ||
             devId == PRO1000_546_PCI_DEVICE_ID_MF) 
-        {        
+	    {        
             UINT8 headerType;
 
             pciConfigInByte (pRsrc->pciBus, pRsrc->pciDevice, pRsrc->pciFunc,
                              PCI_CFG_HEADER_TYPE, &headerType);
 
             if (headerType == 0x80)
-              lanB = (pRsrc->pciFunc == 1)? TRUE : FALSE;
+  	        lanB = (pRsrc->pciFunc == 1)? TRUE : FALSE;
 
             else if (pRsrc->pciFunc != 0)
-             {
+ 	        {
                 printf ("Error in detecting 82546 dual port: header type =%2d, 
                          pci func=%2d\n", (UINT32)headerType, (UINT32)(pRsrc->pciFunc));
-             }
+ 	        }
             }
         }
 
@@ -1039,12 +696,12 @@ STATUS sys82543BoardInit
            {
            int   ix;
 
-       /* update LANB address */
+	   /* update LANB address */
 
            for (ix = 5; ix >= 0; ix--)
-            {
-        if (pReso->enetAddr[ix] != 0xff)
-            {
+	        {
+		if (pReso->enetAddr[ix] != 0xff)
+		    {
                     pReso->enetAddr[ix]++;
                     break;
                     }
@@ -1055,39 +712,33 @@ STATUS sys82543BoardInit
         }
     else
          printf ("ERROR: gei unit=%d, Invalid Ethernet Address!\n", unit);
-
+ 
     if(pReso->boardType == DEV_ID_82541PI)
         {
-
         /* get the initialization control word 1 (ICW1) in EEPROM */
-        sysGei541ReadEeprom(unit, EEPROM_ICW1, 1, &(geiResources[unit].eeprom_icw1));
+        sysGei541ReadEeprom(unit, EEPROM_ICW1, 1, 
+                    (UINT8 *)&(geiResources[unit].eeprom_icw1));
 
         /* get the initialization control word 2 (ICW2) in EEPROM */
-        sysGei541ReadEeprom(unit, EEPROM_ICW2, 1, &(geiResources[unit].eeprom_icw2));
+        sysGei541ReadEeprom(unit, EEPROM_ICW2, 1,
+                    (UINT8 *)&(geiResources[unit].eeprom_icw2));
         }
     else
         {
         /* get the initialization control word 1 (ICW1) in EEPROM */
+
         pReso->eeprom_icw1 = sys543eepromReadWord (unit, EEPROM_ICW1);
 
         /* get the initialization control word 2 (ICW2) in EEPROM */
+
         pReso->eeprom_icw2 = sys543eepromReadWord (unit, EEPROM_ICW2);
         }
-        
     /* initializes the board information structure */
 
     pBoard->boardType   = pRsrc->boardType;
     pBoard->vector      = INT_NUM_GET((pRsrc->irq));
 
-    if(pReso->boardType == DEV_ID_82541PI)
-        {
-        /*pBoard->vector      = pRsrc->irq;*/
-        pBoard->regBaseHigh = PCI_MEMIO2LOCAL(pReso->memBaseHigh);
-        }
-    else
-        {    
     pBoard->regBaseHigh = pReso->memBaseHigh;
-        }
     pBoard->regBaseLow  = PCI_MEMIO2LOCAL(pReso->memBaseLow);
     pBoard->flashBase   = PCI_MEMIO2LOCAL(pReso->flashBase);
     pBoard->adr64       = pReso->adr64;
@@ -1135,8 +786,7 @@ STATUS sys82543BoardInit
 
     if (pReso->boardType == DEV_ID_82541PI)
         {
-            pBoard->phyAddr = 1;
-            /*printf ("DEV_ID_82541PI, phyaddr: %d\n", pBoard->phyAddr);*/
+        pBoard->phyAddr = 1;
         }
       
     /* BSP/adapter specific (for 82540/82545/82546 only)
@@ -1180,14 +830,15 @@ STATUS sys82543BoardInit
     /*for 82541PI*/
     if(pReso->boardType == DEV_ID_82541PI)
         {
-        pBoard->eeprom_icw1   = geiResources[unit].eeprom_icw1;    
-        pBoard->eeprom_icw2   = geiResources[unit].eeprom_icw2;
+        pBoard->eeprom_icw1  = geiResources[unit].eeprom_icw1;
+        pBoard->eeprom_icw2  = geiResources[unit].eeprom_icw2;
         }
     else
         {
-        pBoard->eeprom_icw1   = pReso->eeprom_icw1;
-        pBoard->eeprom_icw2   = pReso->eeprom_icw2;
+        pBoard->eeprom_icw1  = pReso->eeprom_icw1;
+        pBoard->eeprom_icw2  = pReso->eeprom_icw2;
         }
+
     /* copy Ether address */
 
     memcpy (&pBoard->enetAddr[0], &(pReso->enetAddr[0]), 
@@ -1440,15 +1091,15 @@ LOCAL UINT16 sys543eepromReadWord
               sysDelay ();
 
          if ((tmp = GEI_SYS_READ_REG(unit, INTEL_82543GC_EECD)) & EECD_GNT_BIT)
-         {
+	     {
              accessGet = TRUE;
              break;
              }
          } while (ix++ < 500000);
 
       if (!accessGet) 
-    {
-    /* timeout in a second */
+	{
+	/* timeout in a second */
         printf ("ERROR: timeout to grant access to gei unit %d EEPROM\n", unit);
         return 0;
         }
@@ -1526,7 +1177,7 @@ LOCAL STATUS sys543EtherAdrGet
         {
         sysGei541ReadEeprom(unit, EEPROM_IA_ADDRESS, 
                 (ETHER_ADDRESS_SIZE / sizeof(UINT16)), 
-                (UINT16*)adr);
+                (UINT8 *)adr);
 
         for (ix = 0, iy = 0; ix < 6; ix++)
             { 
@@ -1538,15 +1189,15 @@ LOCAL STATUS sys543EtherAdrGet
         GEI_RESOURCE * pReso = (GEI_RESOURCE *)(geiPciResources[unit].pExtended);
 
         for (ix = 0; ix < ETHER_ADDRESS_SIZE / sizeof(UINT16); ix++) 
-        {
-        /* get word i from EEPROM */
+            {
+            /* get word i from EEPROM */
 
-        val = sys543eepromReadWord (unit, (UINT16)(EEPROM_IA_ADDRESS + ix));
+            val = sys543eepromReadWord (unit, (UINT16)(EEPROM_IA_ADDRESS + ix));
 
-        adr [count++] = (UCHAR)val;
+            adr [count++] = (UCHAR)val;
 
-        adr [count++] = (UCHAR) (val >> 8);
-        }
+            adr [count++] = (UCHAR) (val >> 8);
+            }
 
         memcpy (&(pReso->enetAddr[0]), adr, ETHER_ADDRESS_SIZE);
         }
@@ -1575,19 +1226,25 @@ LOCAL STATUS sys543eepromCheckSum
     UINT32 ix;
     UINT16 checkSumTmp;
 
-    /*for 82541GI*/
-    for (ix = 0; ix < EEPROM_WORD_SIZE; ix++)
-        if(geiResources[unit].boardType == DEV_ID_82541PI)
+ #ifdef FOX_CHKSUM_SKIP
+    return OK;
+ #endif /* FOX_BOOTROM_CHKSUM_SKIP */
+ 
+    /*for 82541PI*/
+    if(geiResources[unit].boardType == DEV_ID_82541PI)
+        {
+        for (ix = 0; ix < EEPROM_WORD_SIZE; ix++)
             {
-             /*printf("543checksum for 82541GI,unit:%d\n",unit);*/
-            sysGei541ReadEeprom(unit, EEPROM_IA_ADDRESS + ix, 1, &checkSumTmp);
+            sysGei541ReadEeprom(unit, EEPROM_IA_ADDRESS + ix,
+                                   1, (UINT8 *)&checkSumTmp);
             checkSum += checkSumTmp;
             }
-        else
-            {
+        }
+    else
+        {
+        for (ix = 0; ix < EEPROM_WORD_SIZE; ix++) 
             checkSum += sys543eepromReadWord (unit, ix);
-            }
- 
+        }
     if (checkSum == (UINT16)EEPROM_SUM)
         return OK;
  
@@ -1930,528 +1587,122 @@ LOCAL UINT32 sysGeiDevToType
     return (BOARD_TYPE_UNKNOWN);
     }
 
-
-/*******************************************************************************
-* sysGei541InitParam - Initialize the eeprom struct.
+/****************************************************************************
+* EEPROM read functiond ported from vxWorks 6.9 GEI driver
 *
-* DESCRIPTION:
-*        This function initialize the eeprom struct according to the MAC type.
+* geiEeAddrSet - select a word in the EEPROM
 *
-* INPUT:
-*        unit     - Device unit number.
-*        deviceId - The device ID as defined in PCI configuration.
+* This is a helper function used by geiBitBangEeWordGet(), which clocks a
+* sequence of bits through to the serial EEPROM attached to the Intel
+* chip which contains a read command and specifies what word we
+* want to access.
 *
-* OUTPUT:
-*        None.
+* RETURNS: N/A
 *
-* RETURN:
-*        None.
-*
-*******************************************************************************/
-void sysGei541InitParam(int unit, int deviceId)
-{
-    EEPROM *eeprom = &geiResources[unit].eeprom;
-    
-    UINT32 eecd = GEI_SYS_READ_REG(unit, INTEL_82543GC_EECD);
-    if (eecd & E1000_EECD_TYPE) 
+* ERRNO: N/A
+*/
+void geiEeAddrSet(int unit, UINT32 addr)
     {
-        eeprom->type = EEPROM_SPI;
-        eeprom->opcode_bits = 8;
-        eeprom->delay_usec = 1;
-        if (eecd & E1000_EECD_ADDR_BITS) 
+    UINT32 d;
+    int i;
+
+    d = addr | (GEI_9346_READ << geiResources[unit].eeprom_address_bits);
+
+    for (i = 1 << (geiResources[unit].eeprom_address_bits + 3); i; i >>= 1)
         {
-            eeprom->page_size = 32;
-            eeprom->address_bits = 16;
-        } 
-        else 
-        {
-            eeprom->page_size = 8;
-            eeprom->address_bits = 8;
+        if (d & i)
+            CSR_SETBIT_4(unit, GEI_EECD, GEI_EECD_DI);
+        else
+            CSR_CLRBIT_4(unit, GEI_EECD, GEI_EECD_DI);
+        sysUsDelay (50);
+        CSR_SETBIT_4(unit, GEI_EECD, GEI_EECD_SK);
+        CSR_CLRBIT_4(unit, GEI_EECD, GEI_EECD_SK);
         }
-    } 
-    else 
+
+    return;
+    }
+
+/*****************************************************************************
+*
+* geiBitBangEeWordGet - read a word from the EEPROM using bitbang I/O
+*
+* This routine reads a single 16 bit word from a specified address
+* within the EEPROM attached to the PRO/1000 controller and returns
+* it to the caller. After clocking in a read command and the address
+* we want to access, we read back the 16 bit datum stored there.
+*
+* RETURNS: N/A
+*
+* ERRNO: N/A
+*/
+
+void geiBitBangEeWordGet(int unit, UINT32 addr, UINT16 *dest)
     {
-        eeprom->type = EEPROM_MICROWIRE;
-        eeprom->opcode_bits = 3;
-        eeprom->delay_usec = 50;
-        if (eecd & E1000_EECD_ADDR_BITS) 
-        {
-            eeprom->address_bits = 8;
-        } 
-        else 
-        {
-            eeprom->address_bits = 6;
-        }
-    }
-}
+    int i;
+    UINT16 word = 0;
 
-/*******************************************************************************
-* sysGei541RaiseClk - Raises the EEPROM's clock input.
-*
-* DESCRIPTION:
-*        To generate eeprom read/write, its clock input pins should be toggled. 
-*        This function raises the EEPROM's clock input.
-*
-* INPUT:
-*        unit - Device unit number.
-*        eecd - The device eeprom structure.
-*
-* OUTPUT:
-*        None.
-*
-* RETURN:
-*        None.
-*
-*******************************************************************************/
-static void sysGei541RaiseClk(int unit, UINT32 *eecd)
-{
-    EEPROM *eeprom = &geiResources[unit].eeprom;
-
-    /* Raise the clock input to the EEPROM (by setting the SK bit), and then
-     * wait <delay> microseconds.
-     */
-    *eecd = *eecd | E1000_EECD_SK;
-    GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, *eecd);
-    GEI_SYS_WRITE_FLUSH(unit);
-    sysUsDelay(eeprom->delay_usec);
-}
-
-/*******************************************************************************
-* sysGei541LowerClk - Lowers the EEPROM's clock input.
-*
-* DESCRIPTION:
-*       To generate eeprom read/write, its clock input pins should be toggled. 
-*       This function lowers the EEPROM's clock input.
-*
-* INPUT:
-*       unit - Device unit number.
-*       eecd - The device eeprom structure.
-*
-* OUTPUT:
-*       None.
-*
-* RETURN:
-*       None.
-*
-*******************************************************************************/
-static void sysGei541LowerClk(int unit, UINT32 *eecd)
-{
-    EEPROM *eeprom = &geiResources[unit].eeprom;
-
-    /* Lower the clock input to the EEPROM (by clearing the SK bit), and then
-     * wait 50 microseconds.
-     */
-    *eecd = *eecd & ~E1000_EECD_SK;
-    GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, *eecd);
-    GEI_SYS_WRITE_FLUSH(unit);
-    sysUsDelay(eeprom->delay_usec);
-}
-
-/*******************************************************************************
-* sysGei541ShiftOutBits - Read data bits out to the EEPROM.
-*
-* DESCRIPTION:
-*       To generate eeprom write, a binary value is written bit by bit. 
-*       A value of "1" is written to the eeprom by setting bit "DI" to a "1",
-*       and then raising and then lowering the clock.
-*       A value of "0" is written to the eeprom by setting bit "DI" to a "0", 
-*       and then raising and then lowering the clock.
-*
-* INPUT:
-*       unit  - Device unit number.
-*       data  - Data to write.
-*       count - Number of bits to write.
-*
-* OUTPUT:
-*      None.
-*
-* RETURN:
-*      None.
-*
-*******************************************************************************/
-static void sysGei541ShiftOutBits(int unit, UINT16 data, UINT16 count)
-{
-    EEPROM *eeprom = &geiResources[unit].eeprom;
-    UINT32 eecd;
-    UINT32 mask;
-
-    /* We need to shift "count" bits out to the EEPROM. So, value in the
-     * "data" parameter will be shifted out to the EEPROM one bit at a time.
-     * In order to do this, "data" must be broken down into bits.
-     */
-    mask = 0x01 << (count - 1);
-    eecd = GEI_SYS_READ_REG(unit, INTEL_82543GC_EECD);
-
-    if (eeprom->type == EEPROM_MICROWIRE) {
-        eecd &= ~E1000_EECD_DO;
-    } else if (eeprom->type == EEPROM_SPI) {
-        eecd |= E1000_EECD_DO;
-    }
-    do {
-        /* A "1" is shifted out to the EEPROM by setting bit "DI" to a "1",
-         * and then raising and then lowering the clock (the SK bit controls
-         * the clock input to the EEPROM).  A "0" is shifted out to the EEPROM
-         * by setting "DI" to "0" and then raising and then lowering the clock.
-         */
-        eecd &= ~E1000_EECD_DI;
-
-        if(data & mask)
-            eecd |= E1000_EECD_DI;
-
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-        GEI_SYS_WRITE_FLUSH(unit);
-
-        sysUsDelay(eeprom->delay_usec);
-
-        sysGei541RaiseClk(unit, &eecd);
-        sysGei541LowerClk(unit, &eecd);
-
-        mask = mask >> 1;
-
-    } while(mask);
-
-    /* We leave the "DI" bit set to "0" when we leave this routine. */
-    eecd &= ~E1000_EECD_DI;
-    GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-}
-
-/*******************************************************************************
-* sysGei541ShiftInBits - Read data bits from the EEPROM
-*
-* DESCRIPTION:
-*       In order to read a register from the EEPROM, we need to shift 'count'
-*       bits in from the EEPROM. Bits are "shifted in" by raising the clock
-*       input to the EEPROM, and then reading the value of the "DO" bit.  
-*
-* INPUT:
-*       unit  - Device unit number.
-*       count - Number of bits to write.
-*
-* OUTPUT:
-*       None.
-*
-* RETURN:
-*       Up to 16 bit read data
-*
-*******************************************************************************/
-static UINT16 sysGei541ShiftInBits(int unit, UINT16 count)
-{
-    UINT32 eecd;
-    UINT32 i;
-    UINT16 data;
-
-    /* In order to read a register from the EEPROM, we need to shift 'count'
-     * bits in from the EEPROM. Bits are "shifted in" by raising the clock
-     * input to the EEPROM (setting the SK bit), and then reading the value of
-     * the "DO" bit.  During this "shifting in" process the "DI" bit should
-     * always be clear.
+    /*
+     * Some devices require us to acquire access to the EEPROM
+     * interface before we can do a read access. On devices that
+     * don't support this (82543, 82544), this has no effect.
      */
 
-    eecd = GEI_SYS_READ_REG(unit, INTEL_82543GC_EECD);
+    CSR_SETBIT_4(unit, GEI_EECD, GEI_EECD_EE_REQ);
 
-    eecd &= ~(E1000_EECD_DO | E1000_EECD_DI);
-    data = 0;
-
-    for(i = 0; i < count; i++) 
-    {
-        data = data << 1;
-        sysGei541RaiseClk(unit, &eecd);
-
-        eecd = GEI_SYS_READ_REG(unit, INTEL_82543GC_EECD);
-
-        eecd &= ~(E1000_EECD_DI);
-        if(eecd & E1000_EECD_DO)
-            data |= 1;
-
-        sysGei541LowerClk(unit, &eecd);
-    }
-
-    return data;
-}
-
-/*******************************************************************************
-* sysGei541AcquireEeprom - Prepares EEPROM for access
-*
-* DESCRIPTION:
-*       This function prepares the eeprom for accesses:
-*       Lowers EEPROM clock. 
-*       Clears input pin. 
-*       Sets the chip select pin. 
-*       This function should be called before issuing a command to the EEPROM.
-*
-* INPUT:
-*       unit  - Device unit number.
-*
-* OUTPUT:
-*       None.
-*
-* RETURN:
-*       None.
-*
-*******************************************************************************/
-static STATUS sysGei541AcquireEeprom(int unit)
-{
-    EEPROM *eeprom = &geiResources[unit].eeprom;
-    UINT32 eecd, i=0;
-
-    eecd = GEI_SYS_READ_REG(unit, INTEL_82543GC_EECD);
-
-    /* Request EEPROM Access */
-        eecd |= E1000_EECD_REQ;
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-        eecd = GEI_SYS_READ_REG(unit, INTEL_82543GC_EECD);
-        while((!(eecd & E1000_EECD_GNT)) &&
-              (i < E1000_EEPROM_GRANT_ATTEMPTS)) {
-            i++;
-            sysUsDelay(5);
-            eecd = GEI_SYS_READ_REG(unit, INTEL_82543GC_EECD);
-        }
-        if(!(eecd & E1000_EECD_GNT)) {
-            eecd &= ~E1000_EECD_REQ;
-            GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-            /*mvOsPrintf("Could not acquire EEPROM grant\n");*/
-            printf("Could not acquire EEPROM grant\n");
-            return ERROR;
-        }
-
-    /* Setup EEPROM for Read/Write */
-
-    if (eeprom->type == EEPROM_MICROWIRE) {
-        /* Clear SK and DI */
-        eecd &= ~(E1000_EECD_DI | E1000_EECD_SK);
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-
-        /* Set CS */
-        eecd |= E1000_EECD_CS;
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-    } else if (eeprom->type == EEPROM_SPI) {
-        /* Clear SK and CS */
-        eecd &= ~(E1000_EECD_CS | E1000_EECD_SK);
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-        sysUsDelay(1);
-    }
-
-    return OK;
-}
-
-/*******************************************************************************
-* sysGei541StandbyEeprom - Returns EEPROM to a "standby" state
-*
-* DESCRIPTION:
-*       This function returns the EEPROM to a "standby" state.
-*
-* INPUT:
-*       unit  - Device unit number.
-*
-* OUTPUT:
-*       None.
-*
-* RETURN:
-*       None.
-*
-*******************************************************************************/
-static void sysGei541StandbyEeprom(int unit)
-{
-    EEPROM *eeprom = &geiResources[unit].eeprom;
-    UINT32 eecd;
-
-    eecd = GEI_SYS_READ_REG(unit, INTEL_82543GC_EECD);
-
-    if(eeprom->type == EEPROM_MICROWIRE) {
-        eecd &= ~(E1000_EECD_CS | E1000_EECD_SK);
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-        GEI_SYS_WRITE_FLUSH(unit);
-        sysUsDelay(eeprom->delay_usec);
-
-        /* Clock high */
-        eecd |= E1000_EECD_SK;
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-        GEI_SYS_WRITE_FLUSH(unit);
-        sysUsDelay(eeprom->delay_usec);
-
-        /* Select EEPROM */
-        eecd |= E1000_EECD_CS;
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-        GEI_SYS_WRITE_FLUSH(unit);
-        sysUsDelay(eeprom->delay_usec);
-
-        /* Clock low */
-        eecd &= ~E1000_EECD_SK;
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-        GEI_SYS_WRITE_FLUSH(unit);
-        sysUsDelay(eeprom->delay_usec);
-    } else if(eeprom->type == EEPROM_SPI) {
-        /* Toggle CS to flush commands */
-        eecd |= E1000_EECD_CS;
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-        GEI_SYS_WRITE_FLUSH(unit);
-        sysUsDelay(eeprom->delay_usec);
-        
-        eecd &= ~E1000_EECD_CS;
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-        GEI_SYS_WRITE_FLUSH(unit);
-        sysUsDelay(eeprom->delay_usec);
-    }
-}
-
-/*******************************************************************************
-* sysGei541ReleaseEeprom - Terminates a command.
-*
-* DESCRIPTION:
-*       This function Terminates a command by inverting the EEPROM's 
-*       chip select pin.
-*
-* INPUT:
-*       unit  - Device unit number.
-*
-* OUTPUT:
-*       None.
-*
-* RETURN:
-*       None.
-*
-*******************************************************************************/
-static void sysGei541ReleaseEeprom(int unit)
-{
-    EEPROM *eeprom = &geiResources[unit].eeprom;
-    UINT32 eecd;
-
-    eecd = GEI_SYS_READ_REG(unit, INTEL_82543GC_EECD);
-
-    if (eeprom->type == EEPROM_SPI) {
-        eecd |= E1000_EECD_CS;  /* Pull CS high */
-        eecd &= ~E1000_EECD_SK; /* Lower SCK */
-
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-
-        sysUsDelay(eeprom->delay_usec);
-    } else if(eeprom->type == EEPROM_MICROWIRE) {
-        /* cleanup eeprom */
-
-        /* CS on Microwire is active-high */
-        eecd &= ~(E1000_EECD_CS | E1000_EECD_DI);
-
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-
-        /* Rising edge of clock */
-        eecd |= E1000_EECD_SK;
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-        GEI_SYS_WRITE_FLUSH(unit);
-        sysUsDelay(eeprom->delay_usec);
-
-        /* Falling edge of clock */
-        eecd &= ~E1000_EECD_SK;
-        GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-        GEI_SYS_WRITE_FLUSH(unit);
-        sysUsDelay(eeprom->delay_usec);
-    }
-
-    /* Stop requesting EEPROM access */
-    eecd &= ~E1000_EECD_REQ;
-    GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EECD, eecd);
-}
-
-/******************************************************************************
- * Reads a 16 bit word from the EEPROM.
- *
- * hw - Struct containing variables accessed by shared code
- * offset - offset of  word in the EEPROM to read
- * data - word read from the EEPROM
- * words - number of words to read
- *****************************************************************************/
-/*******************************************************************************
-* sysGei541ReadEeprom - Reads a 16 bit word from the EEPROM.
-*
-* DESCRIPTION:
-*       This function reads 16 bit word from the EEPROM.
-*
-* INPUT:
-*       unit   - Device unit number.
-*       offset - offset within the eeprom.
-*       words  - Number of words to read.
-*
-* OUTPUT:
-*       data   - Pointer to buffer that holds the read result.
-*
-* RETURN:
-*       OK if reading succeded.
-*
-*******************************************************************************/
-STATUS sysGei541ReadEeprom(int unit, UINT16 offset, UINT16 words, UINT16 *data)
-{
-    EEPROM *eeprom = &geiResources[unit].eeprom;
-    UINT32 i = 0;
-
-    /* Prepare the EEPROM for reading  */
-    if(sysGei541AcquireEeprom(unit) != OK)
-        return ERROR;
-
-    for (i = 0; i < words; i++)
-	{
-        /* Send the READ command (opcode + addr)  */
-        sysGei541ShiftOutBits(unit, EEPROM_READ_OPCODE_MICROWIRE,
-                                 eeprom->opcode_bits);
-        sysGei541ShiftOutBits(unit, (unsigned short)(offset + i),
-                                eeprom->address_bits);
-
-        /* Read the data.  For microwire, each word requires the overhead
-         * of eeprom setup and tear-down. */
-        data[i] = sysGei541ShiftInBits(unit, 16);
-        sysGei541StandbyEeprom(unit);
-    }
-
-    /* End this read operation */
-    sysGei541ReleaseEeprom(unit);
-    return OK;
-}
-
-void sys543geiread(int unit, int reg){
-  UINT32 eecd;
-  
-  eecd = GEI_SYS_READ_REG(unit, reg);
-
-  printf("unit:%d,offset:%d,value:%8.8X\n", unit, reg, eecd);
-}
-
-void sys543geiwrite(int unit, int reg, UINT32 value){
-    GEI_SYS_WRITE_REG(unit, reg, value);
-
-}
-
-void sys543geiphyread(int unit, int phyReg){
-
-    int             count = 6;    /* counter */
-    volatile UINT32 mdicRegVal;
-
-    UINT16 data;
-    
-    mdicRegVal = (MDI_READ_BIT | 1 << MDI_PHY_SHIFT | 
-                  phyReg << MDI_REG_SHIFT);
- 
-    GEI_SYS_WRITE_REG(unit, INTEL_82543GC_MDI, mdicRegVal);
-
-    sysMsDelay (32); /* wait 32 microseconds */
-
-    while (count--)                  /* wait max 96 microseconds */
-        {
-        mdicRegVal = GEI_SYS_READ_REG(unit, INTEL_82543GC_MDI);
-
-        if (mdicRegVal & MDI_READY_BIT)
+    for (i = 0; i < GEI_TIMEOUT; i++)
+        if (GEI_SYS_READ_REG(unit, GEI_EECD) & GEI_EECD_EE_GNT)
             break;
-        
-        sysMsDelay (16);
-        }
-     
-    if ((mdicRegVal & (MDI_READY_BIT | MDI_ERR_BIT)) != MDI_READY_BIT)
+
+    GEI_SYS_WRITE_REG(unit, GEI_EECD, GEI_EECD_EE_REQ|GEI_EECD_CS);
+
+    geiEeAddrSet (unit, addr);
+
+    GEI_SYS_WRITE_REG(unit, GEI_EECD, GEI_EECD_EE_REQ|GEI_EECD_CS);
+
+    for (i = 0x8000; i; i >>= 1)
         {
-        /*DRV_LOG (DRV_DEBUG_LOAD, "Error: MII read PhyAddr=%d, phyReg=%d\n...",
-               phyAddr, phyReg, 3, 4, 5, 6);*/
+        CSR_SETBIT_4(unit, GEI_EECD, GEI_EECD_SK);
+        sysUsDelay (50);
+        if (GEI_SYS_READ_REG(unit, GEI_EECD) & GEI_EECD_DO)
+            word = (UINT16) (word | i);
+        CSR_CLRBIT_4(unit, GEI_EECD, GEI_EECD_SK);
         }
 
-    /**data = (UINT16) mdicRegVal;*/
-        data = (UINT16)mdicRegVal;
-    printf("unit:%d, offset:%d, value:%x\n", unit, phyReg, mdicRegVal);
-        
-}
+    GEI_SYS_WRITE_REG(unit, GEI_EECD, 0);
+
+    *dest = word;
+    return;
+    }
+
+/*****************************************************************************
+*
+* sysGei541ReadEeprom - read a sequence of words from the EEPROM
+*
+* This is the top-level EEPROM access function. It will read a
+* sequence of words from the specified address into a supplied
+* destination buffer. This is used mainly to read the station
+* address.
+*
+* available EEPROM access methods: direct 'bitbang' I/O
+* via the EECD register.
+*
+* RETURNS: N/A
+*
+* ERRNO: N/A
+*/
+
+void sysGei541ReadEeprom(int unit,int off, int cnt,UINT8 *dest)
+    {
+    int i;
+    UINT16 word, *ptr;
+
+    for (i = 0; i < cnt; i++)
+        {
+        geiBitBangEeWordGet (unit, (UINT32)(off + i), &word);
+        ptr = (UINT16 *)(dest + (i * 2));
+        *ptr = le16toh(word);
+        }
+    return;
+    }
 
 #endif /* INCLUDE_GEI8254X_END */

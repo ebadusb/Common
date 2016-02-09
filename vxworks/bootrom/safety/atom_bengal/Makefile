@@ -31,7 +31,7 @@
 #*/
 
 CPU		= PENTIUM4
-TOOL		= gnu
+TOOL	= gnu
 
 TGT_DIR = $(WIND_BASE)/target
 
@@ -79,6 +79,18 @@ RELEASE += bootrom_uncmp.bin bootrom.bin mkboot.o
 include $(TGT_DIR)/h/make/rules.bsp
 #include $(TGT_DIR)/h/make/rules.$(WIND_HOST_TYPE)
 
+################################################################################
+# Terumo BCT target to build the PXE version
+#
+bootrom.pxe: bootrom_uncmp preboot.s
+	objcopypentium -O binary --gap-fill=0 bootrom_uncmp bootrom.tmp
+	aspentium preboot.s -o preboot.out
+	objcopypentium -O binary --gap-fill=0 preboot.out preboot.1024
+	copy /B preboot.1024+bootrom.tmp bootrom.pxe
+	rm -f preboot.out preboot.1024 bootrom.tmp
+
+################################################################################
+
 
 # Following bootable vxWorks should be placed in bootable diskette
 # by "mkboot" or "mkbootFd, mkbootAta" utility.
@@ -121,4 +133,3 @@ romcard_vxWorks_st_512.hex:	depend.$(BSP_NAME) romcard.o vxWorks.st_rom
 	$(BINHEX) -a 7fe00 -b romcard >> $@
 	- @ $(RM) romcard.o romcard
 	$(POST_HEX_BUILD_RULE)
-

@@ -212,8 +212,10 @@ END_TBL_ENTRY endDevTbl [] =
 #ifdef INCLUDE_GEI8254X_END
     {0, GEI8254X_LOAD_FUNC, GEI8254X_LOAD_STR, GEI8254X_BUFF_LOAN,
     NULL, FALSE},
+  #ifndef TRIMA_BOOTROM
     {1, GEI8254X_LOAD_FUNC, GEI8254X_LOAD_STR, GEI8254X_BUFF_LOAN,
     NULL, FALSE},
+  #endif
 #endif /* INCLUDE_GEI8254X_END */
 
 #ifdef INCLUDE_RDC_R6040_END
@@ -221,6 +223,14 @@ END_TBL_ENTRY endDevTbl [] =
     NULL, FALSE},
 #endif /* INCLUDE_RDC_R6040_END */
 
+/*
+   Empty END table entries for network auto detection.
+   Must have enough entries to handle worst case number
+   of network adapters plus one.
+*/
+    {0, END_TBL_END, NULL, 0, NULL, FALSE},
+    {0, END_TBL_END, NULL, 0, NULL, FALSE},
+    {0, END_TBL_END, NULL, 0, NULL, FALSE},
     {0, END_TBL_END, NULL, 0, NULL, FALSE}
     };
 

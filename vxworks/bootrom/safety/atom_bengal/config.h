@@ -290,6 +290,7 @@ extern "C" {
 
 #define INCLUDE_END             /* Enhanced Network Driver Support */
 #define INCLUDE_TFTP_CLIENT     /* Needed by some Safety network cards to load vxWorks OS while in bootrom */
+#define INCLUDE_FTP
 
 #undef  INCLUDE_DEC21X40_END    /* (END) DEC 21x4x PCI interface */
 #undef  INCLUDE_EL_3C90X_END    /* (END) 3Com Fast EtherLink XL PCI */
@@ -836,8 +837,6 @@ extern "C" {
 #endif
 
 #endif	/* INCconfigh */
-
-#undef INCLUDE_FTP
 
 #if defined(PRJ_BUILD)
 #   include "prjParams.h"

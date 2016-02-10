@@ -202,6 +202,12 @@ END_TBL_ENTRY endDevTbl [] =
     NULL, FALSE},
 #endif /* INCLUDE_GEI8254X_END */
 
+/*
+   Empty END table entries for network auto detection.
+   Must have enough entries to handle worst case number
+   of network adapters plus one.
+*/
+    {0, END_TBL_END, NULL, 0, NULL, FALSE},
     {0, END_TBL_END, NULL, 0, NULL, FALSE}
     };
 

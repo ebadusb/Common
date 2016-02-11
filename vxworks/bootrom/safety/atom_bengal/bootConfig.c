@@ -1766,6 +1766,7 @@ LOCAL char autoboot
 					{
 						/* Go to alternate boot mode */
 						altboot = 1;
+                        printf("\nProceeding to alternate boot mode...\n");
 						break;
 					}
 	
@@ -2813,7 +2814,8 @@ LOCAL STATUS netLoad
 	BOOL bootFtp = (passwd[0] != EOS);
 	BOOL bootRsh = FALSE;
 
-	printf ("Loading... ");
+    printf ("Loading... ");
+	printf ("\nXXX %s(): hostName=%s fileName=%s sysFlags=%#x\n", __FUNCTION__, hostName, fileName, sysFlags);
 
 	#ifdef INCLUDE_TFTP_CLIENT
 	if ( sysFlags & SYSFLG_TFTP )		 /* use tftp to get image */
@@ -2828,10 +2830,16 @@ LOCAL STATUS netLoad
 	{
 		if ( bootFtp )
 		{
-
-			if ( ftpXfer (hostName, usr, passwd, "", "RETR %s", "", fileName,
-							  &errFd, &fd) == ERROR )
-				return(ERROR);
+			printf ("XXX %s(): FTP'ing: usr=%s, pass=%s\n", __FUNCTION__, usr, passwd);
+			if ( ftpXfer (hostName, usr, passwd, "", "RETR %s", "", fileName, &errFd, &fd) == ERROR )
+			{
+			   printf ("XXX %s(): Failed in ftpXfer(). Returning...\n", __FUNCTION__);
+			   return(ERROR);
+			}
+			else
+			{
+			   printf ("XXX %s(): ftpXfer() Succeeded...\n", __FUNCTION__);
+			}
 		}
 		else
 		{

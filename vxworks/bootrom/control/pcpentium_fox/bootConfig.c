@@ -1431,7 +1431,7 @@ LOCAL void bootCmdLoop (void)
     * as a response.
    */
    enum { EchoCommand = 0xee };
-   int   kbdFound = 1; /* XXX temporary */
+   int   kbdFound = 0;
 
 	/* flush standard input to get rid of any garbage;
 	 * E.g. the Heurikon HKV2F gets junk in USART if no terminal connected.
@@ -1486,6 +1486,13 @@ LOCAL void bootCmdLoop (void)
 				kbdFound = 1;
 			}
 		}
+	}
+
+	/* XXX-MFR: keyboard discovery not working; harcoding for now */
+	if (!kbdFound)
+	{
+	   printf("XXX: keyboard not found; overriding ...\n");
+	   kbdFound = 1;
 	}
 
    if ( !(sysStartType & BOOT_NO_AUTOBOOT) &&
@@ -1706,6 +1713,15 @@ LOCAL void bootCmdLoop (void)
 * RETURNS: Doesn't return if successful (starts execution of booted system).
 */
 
+/* Terumo BCT configuration to set string printed by bootLoad() */
+#if   defined(TRIMA_BOOTROM)
+  #define BOOTLOAD_TAG      "Trima"
+#elif defined(OPTIA_BOOTROM)
+  #define BOOTLOAD_TAG      "TAOS"
+#else
+  #define BOOTLOAD_TAG      "Terumo BCT"
+#endif
+
 LOCAL char autoboot 
 		(
 		int timeout,	/* timeout time in seconds */
@@ -1779,16 +1795,8 @@ LOCAL char autoboot
 	 * on it to see if it's still alive) */
 
 	(void) ioctl (consoleFd, FIOSETOPTIONS, OPT_TERMINAL);
-
-#if !defined(TRIMA_BOOTROM) && !defined(OPTIA_BOOTROM)
-	printf ("Booting Terumo BCT Software ...\n");
-#endif
-#ifdef TRIMA_BOOTROM
-	printf ("Booting Trima Software ...\n");
-#endif
-#ifdef OPTIA_BOOTROM
-	printf ("Booting TAOS Software ...\n");
-#endif
+	
+	printf ("Booting " BOOTLOAD_TAG " Software (kbdFound=%d altboot=%d numKeysPressed=%d) ...\n", kbdFound, altboot, keypressedno);
 
 	if ( bootLoad (BOOT_LINE_ADRS, &entry, kbdFound, altboot) == OK )
 	{
@@ -2049,16 +2057,23 @@ LOCAL STATUS bootLoad
 
 	/* bootParamsShow (BOOT_LINE_ADRS); */
 
-   /* Set up alternate boot */
-   if ( kbdPresent )
+	/* Clear keyBd+altBoot bits in case params got restored from NVRAM (see SYS_WARM_TYPE) */
+	if (params.flags & (SYSFLG_VENDOR_0|SYSFLG_VENDOR_1))
 	{
-		params.flags |= SYSFLG_VENDOR_1;
+	   printf("XXX: Clearing keyBd|altBoot flag(s) cuz params.flags=%#x\n", params.flags);
+	   params.flags &= ~(SYSFLG_VENDOR_1|SYSFLG_VENDOR_0);
 	}
 
-   if ( altBoot )
-   {
-      params.flags |= SYSFLG_VENDOR_0;
-   }
+	/* Set up keyboard and alternate boot flags */
+	if ( kbdPresent )
+	{
+	   params.flags |= SYSFLG_VENDOR_1;
+	}
+
+	if ( altBoot )
+	{
+	   params.flags |= SYSFLG_VENDOR_0;
+	}
 
    bootStructToString (BOOT_LINE_ADRS, &params);
    (void) sysNvRamSet (BOOT_LINE_ADRS,

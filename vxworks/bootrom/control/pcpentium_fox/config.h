@@ -213,7 +213,7 @@ extern "C" {
 #define SYS_WARM_ATA  		2	/* warm start from ATA */
 #define SYS_WARM_TFFS  		3	/* warm start from DiskOnChip */
 
-#define SYS_WARM_TYPE		SYS_WARM_ATA /* warm start device */
+#define SYS_WARM_TYPE           SYS_WARM_BIOS /* warm start device */
 #define SYS_WARM_FD_DRIVE       0       /* 0 = drive a:, 1 = b: */
 #define SYS_WARM_FD_TYPE        0       /* 0 = 3.5" 2HD, 1 = 5.25" 2HD */
 #define SYS_WARM_ATA_CTRL       1       /* controller 1 */

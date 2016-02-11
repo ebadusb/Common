@@ -27,10 +27,10 @@
 #define INTFTPPASS "Dri6SWLe"
 
 #define DEFAULT_BOOT_LINE \
-  "gei(0,0)control_safety:/trima/safety/boot/vxWorks" \
+  "gei(0,0)control:/trima/safety/boot/vxWorks" \
   " e=10.0.0.1:ffffff00 h=10.0.0.2 tn=safety" \
   " u=" INTFTPUSER " pw=" INTFTPPASS \
-  " f=0"
+  " f=0x80"
 
 #define BOOTLOAD_TAG   "Trima"
 

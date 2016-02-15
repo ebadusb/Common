@@ -61,7 +61,7 @@ typedef struct ccaPciResourcesStruct
    int           busNo;             /* PCI bus number */
    int           deviceNo;          /* PCI device number */
    int           funcNo;            /* PCI function number */
-   unsigned char irq;               /* PCI interrupt line -- should always be zero for our CCAs */
+   unsigned char ipin;              /* PCI interrupt pin -- should always be zero for our CCAs */
    void*         pBAR0;             /* pointer to register base address */
    void*         pBAR1;             /* pointer to register base address */
    int           statusCode;        /* log code if unable to detect or configure */

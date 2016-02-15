@@ -64,7 +64,7 @@ void ccaPciShow (void)
       }
    }
 
-   printf("Index VendorID DeviceID Bus Device Func IRQ BAR0 Addr  BAR1 Addr\n");
+   printf("Index VendorID DeviceID Bus Device Func Pin BAR0 Addr  BAR1 Addr\n");
    for (index = 0; index < CCA_MAX_PCI_RESOURCES; index++)
    {
       printf("  %d:  0x%04X   0x%04X %3d %6d %4d %3d  0x%08X  0x%08X\n",
@@ -74,7 +74,7 @@ void ccaPciShow (void)
              ccaPciData[index].busNo,
              ccaPciData[index].deviceNo,
              ccaPciData[index].funcNo,
-             ccaPciData[index].irq,
+             ccaPciData[index].ipin,
              ccaPciData[index].pBAR0,
              ccaPciData[index].pBAR1);
    }
@@ -136,7 +136,7 @@ LOCAL void ccaResourceArrayInit (ccaPciResources data[CCA_MAX_PCI_RESOURCES])
       data[index].busNo      = 0;
       data[index].deviceNo   = 0;
       data[index].funcNo     = 0;
-      data[index].irq        = 0;
+      data[index].ipin       = 0;
       data[index].pBAR0      = NULL;
       data[index].pBAR1      = NULL;
       data[index].statusCode = CCA_DEVICE_INIT_STATE;
@@ -154,7 +154,7 @@ LOCAL void ccaResourceArraySave (ccaPciResources data[CCA_MAX_PCI_RESOURCES])
       ccaPciData[index].busNo      = data[index].busNo;
       ccaPciData[index].deviceNo   = data[index].deviceNo;
       ccaPciData[index].funcNo     = data[index].funcNo;
-      ccaPciData[index].irq        = data[index].irq;
+      ccaPciData[index].ipin       = data[index].ipin;
       ccaPciData[index].pBAR0      = data[index].pBAR0;
       ccaPciData[index].pBAR1      = data[index].pBAR1;
       ccaPciData[index].statusCode = data[index].statusCode;
@@ -167,7 +167,7 @@ LOCAL STATUS ccaPciDetect (int index, ccaPciResources data[CCA_MAX_PCI_RESOURCES
    int           busNo;
    int           deviceNo;
    int           funcNo;
-   unsigned char irq;
+   unsigned char ipin;
    UINT16        vendorId;
    UINT16        deviceId;
 
@@ -217,18 +217,18 @@ LOCAL STATUS ccaPciDetect (int index, ccaPciResources data[CCA_MAX_PCI_RESOURCES
          break;
       }
 
-      /* get irq -- even though not used we want to see the value */
+      /* get ipin -- value should always be zero */
       retVal = pciConfigInByte(busNo,
                                deviceNo,
                                funcNo,
-                               PCI_CFG_DEV_INT_LINE,
-                               &irq);
+                               PCI_CFG_DEV_INT_PIN,
+                               &ipin);
 
       /* save off information for installation */
       data[index].busNo      = busNo;
       data[index].deviceNo   = deviceNo;
       data[index].funcNo     = funcNo;
-      data[index].irq        = irq;
+      data[index].ipin       = ipin;
       data[index].vendorId   = vendorId;
       data[index].deviceId   = deviceId;
       data[index].statusCode = CCA_DEVICE_FOUND;

@@ -242,6 +242,10 @@ SEE ALSO:
 #include "arch/i86/pentiumLib.h"
 #include "cca_pci_support.h"     /* TerumoBCT CCA Support */
 
+#ifdef   OPTIA_AIM_KERNEL
+#   include "firewire/fw_pci_support.h" 
+#endif
+
 #ifdef	INCLUDE_TFFS
 #   include "tffs/tffsDrv.h"
 #endif	/* INCLUDE_TFFS */
@@ -1260,6 +1264,11 @@ void sysHwInit (void)
 
      /* Terumo CCA initialization */
      sysCCAHwInit();
+
+#ifdef OPTIA_AIM_KERNEL
+    /* Initialize the firewire adapter(s) */
+    sysFirewireHwInit();
+#endif
 
     }
 

@@ -15,6 +15,7 @@
 
 #include <vxWorks.h>
 #include <stdio.h>
+#include <string.h>
 #include <vmLib.h>
 #include <drv/pci/pciConfigLib.h>
 #include <drv/pci/pciIntLib.h>
@@ -24,12 +25,12 @@
 #include "cca_pci_support.h"
 
 /* Local prototypes */
-LOCAL void   ccaResourceArrayInit(ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
-LOCAL void   ccaResourceArraySave(ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
-LOCAL STATUS ccaPciDetect(int index, ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
-LOCAL STATUS ccaPciInstall(ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
-LOCAL STATUS installOneBarDevice(UINT index, ccaPciResources ccaData[CCA_MAX_PCI_RESOURCES], UINT32 mapSize);
-LOCAL STATUS installTwoBarDevice(UINT index, ccaPciResources ccaData[CCA_MAX_PCI_RESOURCES], UINT32 mapSize1, UINT32 mapSize2);
+LOCAL void   ccaResourceArrayInit (ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
+LOCAL void   ccaResourceArraySave (ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
+LOCAL STATUS ccaPciDetect (int index, ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
+LOCAL STATUS ccaPciInstall (ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
+LOCAL STATUS installOneBarDevice (UINT index, ccaPciResources ccaData[CCA_MAX_PCI_RESOURCES], UINT32 mapSize);
+LOCAL STATUS installTwoBarDevice (UINT index, ccaPciResources ccaData[CCA_MAX_PCI_RESOURCES], UINT32 mapSize1, UINT32 mapSize2);
 
 /* Prototypes (vxWorks prototypes included here because they are not in the vxWorks headers!) */
 IMPORT STATUS sysMmuMapAdd (void* address,
@@ -64,13 +65,15 @@ void ccaPciShow (void)
       }
    }
 
-   printf("Index VendorID DeviceID Bus Device Func Pin BAR0 Addr  BAR1 Addr\n");
+   printf("Indx  VendorID DeviceID FW# IF# Bus Device Func Pin  BAR0 Addr   BAR1 Addr\n");
    for (index = 0; index < CCA_MAX_PCI_RESOURCES; index++)
    {
-      printf("  %d:  0x%04X   0x%04X %3d %6d %4d %3d  0x%08X  0x%08X\n",
+      printf("  %d:  0x%04X   0x%04X   %3d %3d %3d %6d %4d %3d  0x%08X  0x%08X\n",
              index,
              ccaPciData[index].vendorId,
              ccaPciData[index].deviceId,
+             ccaPciData[index].firmwareRevNo,
+             ccaPciData[index].interfaceRevNo,
              ccaPciData[index].busNo,
              ccaPciData[index].deviceNo,
              ccaPciData[index].funcNo,
@@ -131,14 +134,7 @@ LOCAL void ccaResourceArrayInit (ccaPciResources data[CCA_MAX_PCI_RESOURCES])
    /* Initialize the resource array */
    for (index = 0; index < CCA_MAX_PCI_RESOURCES; index++)
    {
-      data[index].vendorId   = 0;
-      data[index].deviceId   = 0;
-      data[index].busNo      = 0;
-      data[index].deviceNo   = 0;
-      data[index].funcNo     = 0;
-      data[index].ipin       = 0;
-      data[index].pBAR0      = NULL;
-      data[index].pBAR1      = NULL;
+      memset(&data[index], 0, sizeof(ccaPciResources));
       data[index].statusCode = CCA_DEVICE_INIT_STATE;
    }
 }
@@ -149,27 +145,21 @@ LOCAL void ccaResourceArraySave (ccaPciResources data[CCA_MAX_PCI_RESOURCES])
 
    for (index = 0; index < CCA_MAX_PCI_RESOURCES; index++)
    {
-      ccaPciData[index].vendorId   = data[index].vendorId;
-      ccaPciData[index].deviceId   = data[index].deviceId;
-      ccaPciData[index].busNo      = data[index].busNo;
-      ccaPciData[index].deviceNo   = data[index].deviceNo;
-      ccaPciData[index].funcNo     = data[index].funcNo;
-      ccaPciData[index].ipin       = data[index].ipin;
-      ccaPciData[index].pBAR0      = data[index].pBAR0;
-      ccaPciData[index].pBAR1      = data[index].pBAR1;
-      ccaPciData[index].statusCode = data[index].statusCode;
+      ccaPciData[index] = data[index];
    }
 }
 
 LOCAL STATUS ccaPciDetect (int index, ccaPciResources data[CCA_MAX_PCI_RESOURCES])
 {
-   STATUS        retVal = ERROR;
-   int           busNo;
-   int           deviceNo;
-   int           funcNo;
-   unsigned char ipin;
-   UINT16        vendorId;
-   UINT16        deviceId;
+   STATUS        retVal         = ERROR;
+   int           busNo          = 0;
+   int           deviceNo       = 0;
+   int           funcNo         = 0;
+   unsigned char ipin           = 0;
+   UINT16        vendorId       = 0;
+   UINT16        deviceId       = 0;
+   UINT16        boardRevNo     = 0;
+   UINT8         interfaceRevNo = 0;
 
    do
    {
@@ -217,6 +207,20 @@ LOCAL STATUS ccaPciDetect (int index, ccaPciResources data[CCA_MAX_PCI_RESOURCES
          break;
       }
 
+      /* get the CCA board revision number, stored in PCI SubSytem ID field */
+      retVal = pciConfigInWord(busNo,
+                               deviceNo,
+                               funcNo,
+                               PCI_CFG_SUB_SYSTEM_ID,
+                               &boardRevNo);
+
+      /* get the CCA interface revision number, stored in PCI Revision field */
+      retVal = pciConfigInByte(busNo,
+                               deviceNo,
+                               funcNo,
+                               PCI_CFG_REVISION,
+                               &interfaceRevNo);
+
       /* get ipin -- value should always be zero */
       retVal = pciConfigInByte(busNo,
                                deviceNo,
@@ -225,13 +229,15 @@ LOCAL STATUS ccaPciDetect (int index, ccaPciResources data[CCA_MAX_PCI_RESOURCES
                                &ipin);
 
       /* save off information for installation */
-      data[index].busNo      = busNo;
-      data[index].deviceNo   = deviceNo;
-      data[index].funcNo     = funcNo;
-      data[index].ipin       = ipin;
-      data[index].vendorId   = vendorId;
-      data[index].deviceId   = deviceId;
-      data[index].statusCode = CCA_DEVICE_FOUND;
+      data[index].busNo          = busNo;
+      data[index].deviceNo       = deviceNo;
+      data[index].funcNo         = funcNo;
+      data[index].ipin           = ipin;
+      data[index].vendorId       = vendorId;
+      data[index].deviceId       = deviceId;
+      data[index].firmwareRevNo     = boardRevNo;
+      data[index].interfaceRevNo = interfaceRevNo;
+      data[index].statusCode     = CCA_DEVICE_FOUND;
 
       retVal = OK;
 
@@ -423,3 +429,4 @@ LOCAL STATUS installTwoBarDevice (UINT index,
 
    return retVal;
 }
+

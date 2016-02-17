@@ -58,6 +58,8 @@ typedef struct ccaPciResourcesStruct
 {
    int           vendorId;          /* PCI vendor ID */
    int           deviceId;          /* PCI device ID */
+   int           firmwareRevNo;     /* CCA firmware revision number */
+   int           interfaceRevNo;    /* CCA interface revision number */
    int           busNo;             /* PCI bus number */
    int           deviceNo;          /* PCI device number */
    int           funcNo;            /* PCI function number */
@@ -87,5 +89,33 @@ STATUS ccaPciGetResource (int index, ccaPciResources* pResource);
 #ifdef __cplusplus
 }
 #endif
+
+#ifdef __cplusplus
+
+/**
+ * Simple wrapper class to do read/write operations on a CCA PCI resource.
+ */
+class CcaInOut
+{
+public:
+
+   /** Constructor for a specified resource */
+   CcaInOut(int index=0, bool useBar0=true) : pBar(0)
+   {
+      ccaPciResources rsrc;
+      if ( OK == ccaPciGetResource(index, &rsrc)
+         pBar = (useBar0 ? rsrc.pBAR0 : rsrc.pBAR1);
+   }
+
+   UCHAR  InByte(ULONG offset) { return *(pBar+offset); }
+   USHORT InWord(ULONG offset) { return *(pBar+offset); }
+
+   void	OutByte(ULONG offset, UCHAR  data) { *(pBar+offset) = data; }
+   void OutWord(ULONG offset, UINT16 data) { *(pBar+offset) = data; }
+
+   void* pBar;
+};
+
+#endif /* __cplusplus */
 
 #endif /* #ifndef _CCA_PCI_SUPPORT_INCLUDE_ */

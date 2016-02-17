@@ -638,7 +638,9 @@ extern "C" {
 #ifdef INCLUDE_PC_CONSOLE
 #   define PC_CONSOLE           (0)      /* console number */
 #   define N_VIRTUAL_CONSOLES   (2)      /* shell / application */
-#   define TRIMA_BOOTROM_VGA_FIX         /* TRIMA BOOTROM VGA FIX */
+# ifdef TRIMA_BOOTROM
+#   define TRIMA_VGA_ROW_FIX             /* adjust number of rows for console */
+# endif
 #endif /* INCLUDE_PC_CONSOLE */
 
 /* PS/2 101-key default keyboard type (use PC_XT_83_KBD for 83-key) */

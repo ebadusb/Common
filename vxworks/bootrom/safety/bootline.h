@@ -33,7 +33,7 @@
 
 #define BOOTLOAD_TAG   "TAOS"
 
-#endif /* OPTIA_BOOTROM */
+#endif /* OPTIA_APC_BOOTROM */
 
 /* ================================================================================ */
 

@@ -84,7 +84,20 @@ void ccaPciShow (void);
 /**
  * Get a copy of the specified PCI resource.
  */
-STATUS ccaPciGetResource (int index, ccaPciResources* pResource);
+STATUS ccaPciGetResource (UINT rsrcIndx, ccaPciResources* pResource);
+
+/**
+ * Read data from the specified resource. Offset is applied either to BAR1 or BAR0.
+ */
+UINT8  ccaInByte(UINT8 offset, UINT rsrcIndx, BOOL useBar1);
+UINT16 ccaInWord(UINT8 offset, UINT rsrcIndx, BOOL useBar1);
+
+/**
+ * Write value to the specified resource. Offset is applied either to BAR1 or BAR0.
+ */
+void ccaOutByte(UINT8 offset, UINT8  value, UINT rsrcIndx, BOOL useBar1);
+void ccaOutWord(UINT8 offset, UINT16 value, UINT rsrcIndx, BOOL useBar1);
+
 
 #ifdef __cplusplus
 }
@@ -99,21 +112,24 @@ class CcaInOut
 {
 public:
 
-   /** Constructor for a specified resource */
-   CcaInOut(int index=0, bool useBar0=true) : pBar(0)
+   /** Constructor for a specified resource for either BAR1 or BAR0 */
+   CcaInOut(int index=0, bool useBar1=false) : pBar(0)
    {
       ccaPciResources rsrc;
-      if ( OK == ccaPciGetResource(index, &rsrc)
-         pBar = (useBar0 ? rsrc.pBAR0 : rsrc.pBAR1);
+      if (OK == ccaPciGetResource(index, &rsrc))
+         pBar = (UINT8*)(useBar1 ? rsrc.pBAR1 : rsrc.pBAR1);
+      else
+         abort();
    }
 
-   UCHAR  InByte(ULONG offset) { return *(pBar+offset); }
-   USHORT InWord(ULONG offset) { return *(pBar+offset); }
+   UINT8  InByte(UINT8 offset) { return pBar[offset]; }
+   UINT16 InWord(UINT8 offset) { return *(UINT16*)(pBar+offset); }
 
-   void	OutByte(ULONG offset, UCHAR  data) { *(pBar+offset) = data; }
-   void OutWord(ULONG offset, UINT16 data) { *(pBar+offset) = data; }
+   void	OutByte(UINT8 offset, UINT8  value) { pBar[offset] = value; }
+   void OutWord(UINT8 offset, UINT16 value) { *(UINT16*)(pBar+offset) = value; }
 
-   void* pBar;
+private:
+   UINT8 * pBar;
 };
 
 #endif /* __cplusplus */

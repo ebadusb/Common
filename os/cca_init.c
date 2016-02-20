@@ -14,6 +14,7 @@
  */
 
 #include <vxWorks.h>
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <vmLib.h>
@@ -117,15 +118,45 @@ STATUS sysCCAHwInit (void)
 }
 
 
-STATUS ccaPciGetResource (int index, ccaPciResources* pResource)
+STATUS ccaPciGetResource (UINT rsrcIndx, ccaPciResources* pResource)
 {
-   if (index < 0 || index >= CCA_MAX_PCI_RESOURCES || NULL == pResource)
-      return ERROR;
-
-   *pResource = ccaPciData[index];
-   return OK;
+   if (rsrcIndx < CCA_MAX_PCI_RESOURCES && pResource != NULL)
+   {
+      *pResource = ccaPciData[rsrcIndx];
+      return OK;
+   }
+   return ERROR;
 }
 
+UINT8 ccaInByte(UINT8 offset, UINT rsrcIndx, BOOL useBar1)
+{
+   UINT8 * pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
+      return pBar[offset];
+   return 0;
+}
+
+UINT16 ccaInWord(UINT8 offset, UINT rsrcIndx, BOOL useBar1)
+{
+   UINT8 * pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
+      return *(UINT16*)(pBar+offset);
+   return 0;
+}
+
+void ccaOutByte(UINT8 offset, UINT8 value, UINT rsrcIndx, BOOL useBar1)
+{
+   UINT8 * pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
+      pBar[offset] = value;
+}
+
+void ccaOutWord(UINT8 offset, UINT16 value, UINT rsrcIndx, BOOL useBar1)
+{
+   UINT16 * pBar = (UINT16*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
+      *(UINT16*)(pBar+offset) = value;
+}
 
 LOCAL void ccaResourceArrayInit (ccaPciResources data[CCA_MAX_PCI_RESOURCES])
 {

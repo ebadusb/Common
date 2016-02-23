@@ -35,6 +35,11 @@ typedef enum
    INPW_PLASMA_ENCODER      = 0x0C,
    INPW_AC_ENCODER          = 0x10,
    INPW_RETURN_ENCODER      = 0x14,
+   INW_PUMP1_ENCODER        = INPW_AC_ENCODER,
+   INW_PUMP2_ENCODER        = INPW_INLET_ENCODER,
+   INW_PUMP3_ENCODER        = INPW_RETURN_ENCODER,
+   INW_PUMP4_ENCODER        = INPW_PLASMA_ENCODER,
+   INW_PUMP5_ENCODER        = INPW_PLATELET_ENCODER,
    //
    // Pump PWMs (8-bit, read/write pump speed control registers)
    //
@@ -43,6 +48,11 @@ typedef enum
    IOP_PLASMA_PWM           = 0x20,
    IOP_AC_PWM               = 0x24,
    IOP_RETURN_PWM           = 0x28,
+   IO_PUMP1_PWM             = IOP_AC_PWM,
+   IO_PUMP2_PWM             = IOP_INLET_PWM,
+   IO_PUMP3_PWM             = IOP_RETURN_PWM,
+   IO_PUMP4_PWM             = IOP_PLASMA_PWM,
+   IO_PUMP5_PWM             = IOP_RETURN_PWM,
    //
    // External Status Circuits (8-bit, read-only status registers)
    //
@@ -189,16 +199,16 @@ typedef enum
    //
    VALVE_RUN_BIT            = 0x20,
    VALVE_SELECT_CASSETTE_BIT= 0x10,
-   VALVE_SELECT_VALVE1_BIT  = 0x08,
-   VALVE_SELECT_VALVE2_BIT  = 0x04,
-   VALVE_SELECT_VALVE3_BIT  = 0x02,
-   VALVE_SELECT_RBC_BIT     = VALVE_SELECT_VALVE1_BIT,
-   VALVE_SELECT_PLASMA_BIT  = VALVE_SELECT_VALVE2_BIT,
-   VALVE_SELECT_PLATELET_BIT= VALVE_SELECT_VALVE3_BIT,
-   VALVE_LEFT_BIT           = 0x01,
-   VALVE_RIGHT_BIT          = 0x00,
-   VALVE_CCW_BIT            = VALVE_LEFT_BIT,
-   VALVE_CW_BIT             = VALVE_RIGHT_BIT,
+   VALVE_SELECT_RBC_BIT     = 0x08,
+   VALVE_SELECT_PLASMA_BIT  = 0x04,
+   VALVE_SELECT_PLATELET_BIT= 0x02,
+   VALVE_CCW_BIT            = 0x01,
+   VALVE_CW_BIT             = 0x00,
+   VALVE_SELECT_VALVE1_BIT  = VALVE_SELECT_RBC_BIT,
+   VALVE_SELECT_VALVE2_BIT  = VALVE_SELECT_PLASMA_BIT,
+   VALVE_SELECT_VALVE3_BIT  = VALVE_SELECT_PLATELET_BIT,
+   VALVE_LEFT_BIT           = VALVE_CCW_BIT,
+   VALVE_RIGHT_BIT          = VALVE_CW_BIT,
    //
    // bit masks for IOP_PUMP_ENABLE
    //

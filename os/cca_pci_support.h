@@ -58,8 +58,8 @@ typedef struct ccaPciResourcesStruct
 {
    int           vendorId;          /* PCI vendor ID */
    int           deviceId;          /* PCI device ID */
-   int           firmwareRevNo;     /* CCA firmware revision number */
-   int           interfaceRevNo;    /* CCA interface revision number */
+   int           subsystemId;       /* PCI subsystem ID */
+   int           revisionId;        /* PCI revision ID */
    int           busNo;             /* PCI bus number */
    int           deviceNo;          /* PCI device number */
    int           funcNo;            /* PCI function number */

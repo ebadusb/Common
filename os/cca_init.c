@@ -66,15 +66,15 @@ void ccaPciShow (void)
       }
    }
 
-   printf("Indx  VendorID DeviceID FW# IF# Bus Device Func Pin  BAR0 Addr   BAR1 Addr\n");
+   printf("Indx VendID DeviceID SubSysID RevID Bus Device Func Pin  BAR0 Addr   BAR1 Addr\n");
    for (index = 0; index < CCA_MAX_PCI_RESOURCES; index++)
    {
-      printf("  %d:  0x%04X   0x%04X   %3d %3d %3d %6d %4d %3d  0x%08X  0x%08X\n",
+      printf("  %d: 0x%04X 0x%04X   0x%04X   0x%02d  %3d %6d %4d %3d  0x%08X  0x%08X\n",
              index,
              ccaPciData[index].vendorId,
              ccaPciData[index].deviceId,
-             ccaPciData[index].firmwareRevNo,
-             ccaPciData[index].interfaceRevNo,
+             ccaPciData[index].subsystemId,
+             ccaPciData[index].revisionId,
              ccaPciData[index].busNo,
              ccaPciData[index].deviceNo,
              ccaPciData[index].funcNo,
@@ -128,32 +128,32 @@ STATUS ccaPciGetResource (UINT rsrcIndx, ccaPciResources* pResource)
    return ERROR;
 }
 
-UINT8 ccaInByte(UINT8 offset, UINT rsrcIndx, BOOL useBar1)
+UINT8 ccaInByte (UINT8 offset, UINT rsrcIndx, BOOL useBar1)
 {
-   UINT8 * pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   UINT8* pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
    if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
       return pBar[offset];
    return 0;
 }
 
-UINT16 ccaInWord(UINT8 offset, UINT rsrcIndx, BOOL useBar1)
+UINT16 ccaInWord (UINT8 offset, UINT rsrcIndx, BOOL useBar1)
 {
-   UINT8 * pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   UINT8* pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
    if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
       return *(UINT16*)(pBar+offset);
    return 0;
 }
 
-void ccaOutByte(UINT8 offset, UINT8 value, UINT rsrcIndx, BOOL useBar1)
+void ccaOutByte (UINT8 offset, UINT8 value, UINT rsrcIndx, BOOL useBar1)
 {
-   UINT8 * pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   UINT8* pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
    if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
       pBar[offset] = value;
 }
 
-void ccaOutWord(UINT8 offset, UINT16 value, UINT rsrcIndx, BOOL useBar1)
+void ccaOutWord (UINT8 offset, UINT16 value, UINT rsrcIndx, BOOL useBar1)
 {
-   UINT16 * pBar = (UINT16*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   UINT16* pBar = (UINT16*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
    if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
       *(UINT16*)(pBar+offset) = value;
 }
@@ -182,15 +182,15 @@ LOCAL void ccaResourceArraySave (ccaPciResources data[CCA_MAX_PCI_RESOURCES])
 
 LOCAL STATUS ccaPciDetect (int index, ccaPciResources data[CCA_MAX_PCI_RESOURCES])
 {
-   STATUS        retVal         = ERROR;
-   int           busNo          = 0;
-   int           deviceNo       = 0;
-   int           funcNo         = 0;
-   unsigned char ipin           = 0;
-   UINT16        vendorId       = 0;
-   UINT16        deviceId       = 0;
-   UINT16        boardRevNo     = 0;
-   UINT8         interfaceRevNo = 0;
+   STATUS        retVal      = ERROR;
+   int           busNo       = 0;
+   int           deviceNo    = 0;
+   int           funcNo      = 0;
+   unsigned char ipin        = 0;
+   UINT16        vendorId    = 0;
+   UINT16        deviceId    = 0;
+   UINT16        subsystemId = 0;
+   UINT8         revisionId  = 0;
 
    do
    {
@@ -243,14 +243,14 @@ LOCAL STATUS ccaPciDetect (int index, ccaPciResources data[CCA_MAX_PCI_RESOURCES
                                deviceNo,
                                funcNo,
                                PCI_CFG_SUB_SYSTEM_ID,
-                               &boardRevNo);
+                               &subsystemId);
 
       /* get the CCA interface revision number, stored in PCI Revision field */
       retVal = pciConfigInByte(busNo,
                                deviceNo,
                                funcNo,
                                PCI_CFG_REVISION,
-                               &interfaceRevNo);
+                               &revisionId);
 
       /* get ipin -- value should always be zero */
       retVal = pciConfigInByte(busNo,
@@ -260,15 +260,15 @@ LOCAL STATUS ccaPciDetect (int index, ccaPciResources data[CCA_MAX_PCI_RESOURCES
                                &ipin);
 
       /* save off information for installation */
-      data[index].busNo          = busNo;
-      data[index].deviceNo       = deviceNo;
-      data[index].funcNo         = funcNo;
-      data[index].ipin           = ipin;
-      data[index].vendorId       = vendorId;
-      data[index].deviceId       = deviceId;
-      data[index].firmwareRevNo     = boardRevNo;
-      data[index].interfaceRevNo = interfaceRevNo;
-      data[index].statusCode     = CCA_DEVICE_FOUND;
+      data[index].busNo       = busNo;
+      data[index].deviceNo    = deviceNo;
+      data[index].funcNo      = funcNo;
+      data[index].ipin        = ipin;
+      data[index].vendorId    = vendorId;
+      data[index].deviceId    = deviceId;
+      data[index].subsystemId = subsystemId;
+      data[index].revisionId  = revisionId;
+      data[index].statusCode  = CCA_DEVICE_FOUND;
 
       retVal = OK;
 

@@ -25,7 +25,7 @@ typedef enum
    //
    // Software Reset and CCA ID (32-bit, write-only / read-only)
    //
-   OUT_SW_RESET             = 0x00, // Write 0xFF00AA55 to force reset
+   OUT_SW_RESET             = 0x00, // Write 0xFF00AA55 to force reset of cca
    INP_CCA_ID               = 0x00, // Read to get CCA ID pins cca_id[15:0]
    //
    // Pump Encoders (12-bit, read-only encoder counts)
@@ -59,14 +59,19 @@ typedef enum
    INP_SWITCH_STATUS        = 0x2C, // plasma valve, fault bits, front-panel buttons
    INP_VALVE_STATUS         = 0x30, // platelet valve, cassette position, RBC valve
    INP_POWER_STATUS         = 0x34, // fans, over temperature warning, power status
+   IN_BUTTONS               = INP_SWITCH_STATUS,
+   IN_VALVES                = INP_VALVE_STATUS,
+   IN_POWER_STATUS          = INP_POWER_STATUS,
    //
    // Power Supply Interface Register (5-bit, RW + RO register)
    //
    IOP_PWR_SUPPLY           = 0x38,
+   IO_POWER_STATUS2         = IOP_PWR_SUPPLY,
    //
    // Sound and Spare Digital Output Register (7-bit, read/write)
    //
    IOP_SOUND_CONTROL        = 0x3C,
+   IO_SOUND_LEVEL           = IOP_SOUND_CONTROL,
    //
    // Counters for Air & Fluid Sample & Centrifuge Commutation (8-bit, read-only)
    //
@@ -75,18 +80,22 @@ typedef enum
    INP_UPPER_AIR_COUNT      = 0x48,
    INP_UPPER_FLUID_COUNT    = 0x4C,
    INP_CENT_COMM            = 0x4C,
+   IN_CENT_COMM             = INP_CENT_COMM,
    //
    // Miscellaneous Status (8-bit, read-only)
    //
    INP_MISC_STATUS          = 0x54, // solenoid, door, AC/repl fluids, commutator, centrifuge, A/D
+   IN_ODDS_AND_ENDS         = INP_MISC_STATUS,
    //
    // Centrifuge Control (3-bit, read-write)
    //
    IOP_CENT_ENABLE          = 0x58, // centrifuge reset and enable bits
+   IO_CENT_ENABLE           = IOP_CENT_ENABLE,
    //
    // Centrifuge Speed Control (12-bit, read/write)
    //
    IOPW_CENT_SPEED          = 0x5C,
+   IOW_CENT_SPEED           = IOPW_CENT_SPEED,
    //
    // Watchdog Pet (write-only) and Status (read-only) registers
    //
@@ -96,27 +105,36 @@ typedef enum
    OUT_WATCHDOG_A5_REG      = OUT_WATCHDOG2,
    INP_WATCHDOG_STATUS      = 0x60,
    INP_WATCHDOG_CHECK       = 0x64,
+   IN_WATCHDOG_STATUS       = INP_WATCHDOG_STATUS,
+   IN_WATCHDOG_CHECK        = INP_WATCHDOG_CHECK,
    //
    // Analog-to-Digital Converter Channel Select and Read registers
    //
    IOP_ADC_MUX              = 0x68, // write-only bit7 (start reading); read/write bits 5:0
    INPW_ADC_VALUE           = 0x6C, // 12-bit read-only of A/D Converter Reading
+   IO_ADC_MUX               = IOP_ADC_MUX,
+   INW_ADC_VALUE            = INPW_ADC_VALUE,
+
    //
    // Valve Selection register (6-bit, read/write)
    //
    IOP_VALVE                = 0x70,
+   IO_VALVE                 = IOP_VALVE,
    //
    // Pump Control & Status register (4-bit, read/write)
    //
    IOP_PUMP_ENABLE          = 0x74,
+   IO_PUMP_ENABLE           = IOP_PUMP_ENABLE,
    //
    // Door Lock Control & Status register (2-bit, read/write)
    //
    IOP_DOOR                 = 0x78,
+   IO_DOOR                  = IOP_DOOR,
    //
    // Leak Detector and Alarm (2-bit, read/write)
    //
-   IOP_LEAK_ALARM           = 0x7C
+   IOP_LEAK_ALARM           = 0x7C,
+   IO_ALARM                 = IOP_LEAK_ALARM
 
 } Control3_BAR_Offset;
 
@@ -168,6 +186,10 @@ typedef enum
    DISABLE_POWER_BIT        = 0x04,
    NOT_SEAL_SAFE_OTW_BIT    = 0x02,
    SEAL_SAFE_IN_USE_BIT     = 0x01,
+   OVP_TEST_FAIL            = OVP_TEST_FAIL_BIT,
+   START_OVP_TEST           = START_OVP_TEST_BIT,
+   NOT_SEAL_SAFE_OVERTEMP   = NOT_SEAL_SAFE_OTW_BIT,
+   SEAL_SAFE_IN_USE         = SEAL_SAFE_IN_USE_BIT,
    //
    // bit masks for IOP_SOUND_CONTROL
    //
@@ -184,6 +206,8 @@ typedef enum
    CENT_COMM_FAULT_BIT      = 0x04,
    CENT_REVERSE_BIT         = 0x02,
    ADC_BUSY_BIT             = 0x01,
+   NOT_FLUID_SENSOR1_BIT    = AC_FLUID_GONE_BIT,
+   NOT_FLUID_SENSOR2_BIT    = REPL_FLUID_GONE_BIT,
    //
    // bit masks for IOP_CENT_ENABLE
    //

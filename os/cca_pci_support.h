@@ -97,6 +97,7 @@ UINT16 ccaInWord(UINT8 offset, UINT rsrcIndx, BOOL useBar1);
  */
 void ccaOutByte(UINT8 offset, UINT8  value, UINT rsrcIndx, BOOL useBar1);
 void ccaOutWord(UINT8 offset, UINT16 value, UINT rsrcIndx, BOOL useBar1);
+void ccaOut32Word(UINT8 offset, UINT32 value, UINT rsrcIndx, BOOL useBar1);
 
 
 #ifdef __cplusplus

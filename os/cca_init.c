@@ -158,6 +158,13 @@ void ccaOutWord (UINT8 offset, UINT16 value, UINT rsrcIndx, BOOL useBar1)
       *(UINT16*)(pBar+offset) = value;
 }
 
+void ccaOut32Word(UINT8 offset, UINT32 value, UINT rsrcIndx, BOOL useBar1)
+{
+   UINT32 * pBar = (UINT32*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
+      *(UINT32*)(pBar+offset) = value;
+}
+
 LOCAL void ccaResourceArrayInit (ccaPciResources data[CCA_MAX_PCI_RESOURCES])
 {
    int index = 0;

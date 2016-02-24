@@ -13,7 +13,7 @@
   "gei(0,0)control:/taos/boot/safety/vxWorks" \
   " e=90.1.0.1:ffffff00 h=90.1.0.2" \
   " u=" INTFTPUSER " pw=" INTFTPPASS \
-  " f=0x80"
+  " f=0x0"
 
 #define BOOTLOAD_TAG   "TAOS"
 
@@ -29,7 +29,7 @@
   "gei(0,0)control:/taos/boot/apc/vxWorks" \
   " e=90.2.0.1:ffffff00 h=90.2.0.2" \
   " u=" INTFTPUSER " pw=" INTFTPPASS \
-  " f=0x80"
+  " f=0x0"
 
 #define BOOTLOAD_TAG   "TAOS"
 

@@ -46,7 +46,7 @@
   "gei(0,0)control:/trima/safety/boot/vxWorks" \
   " e=10.0.0.1:ffffff00 h=10.0.0.2 tn=safety" \
   " u=" INTFTPUSER " pw=" INTFTPPASS \
-  " f=0x80"
+  " f=0x0"
 
 #define BOOTLOAD_TAG   "Trima"
 

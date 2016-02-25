@@ -2822,7 +2822,6 @@ LOCAL STATUS netLoad
 	BOOL bootRsh = FALSE;
 
     printf ("Loading... ");
-	printf ("\nXXX %s(): hostName=%s fileName=%s sysFlags=%#x\n", __FUNCTION__, hostName, fileName, sysFlags);
 
 	#ifdef INCLUDE_TFTP_CLIENT
 	if ( sysFlags & SYSFLG_TFTP )		 /* use tftp to get image */
@@ -2837,16 +2836,9 @@ LOCAL STATUS netLoad
 	{
 		if ( bootFtp )
 		{
-			printf ("XXX %s(): FTP'ing: usr=%s, pass=%s\n", __FUNCTION__, usr, passwd);
-			if ( ftpXfer (hostName, usr, passwd, "", "RETR %s", "", fileName, &errFd, &fd) == ERROR )
-			{
-			   printf ("XXX %s(): Failed in ftpXfer(). Returning...\n", __FUNCTION__);
+			if ( ftpXfer (hostName, usr, passwd, "", "RETR %s", "", fileName,
+			              &errFd, &fd) == ERROR )
 			   return(ERROR);
-			}
-			else
-			{
-			   printf ("XXX %s(): ftpXfer() Succeeded...\n", __FUNCTION__);
-			}
 		}
 		else
 		{

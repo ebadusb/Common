@@ -28,6 +28,7 @@ MY_OPTIA_OBJ = $(MY_OUT_DIR)/$(MY_OPTIA_CFG:.cfg=.o)
 MY_UGL_OBJS  = $(MY_TRIMA_OBJ) $(MY_OPTIA_OBJ)
 
 WIND_UGL_DIR = $(WIND_BASE)\target\src\ugl
+WIND_LIB_DIR = $(WIND_BASE)\target\lib\pentium\$(CPU)\common
 
 ifeq ($(TERSE),true)
  Q=@
@@ -61,5 +62,8 @@ $(MY_OUT_DIR)/%.o : %.cfg
 
 clean:
 	$(MAKE) $(SUBMAKE_ARGS) CPU=$(CPU) rclean
+	rm -f $(WIND_LIB_DIR)\libwndml.a
+	rm -f $(WIND_LIB_DIR)\wndml.o
+	rm -fr $(WIND_LIB_DIR)\objwndml
 	rm -f $(MY_UGL_OBJS)
 

@@ -91,6 +91,7 @@ STATUS ccaPciGetResource (UINT rsrcIndx, ccaPciResources* pResource);
  */
 UINT8  ccaInByte(UINT8 offset, UINT rsrcIndx, BOOL useBar1);
 UINT16 ccaInWord(UINT8 offset, UINT rsrcIndx, BOOL useBar1);
+UINT32 ccaIn32Word(UINT8 offset, UINT rsrcIndx, BOOL useBar1);
 
 /**
  * Write value to the specified resource. Offset is applied either to BAR1 or BAR0.

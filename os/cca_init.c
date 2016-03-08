@@ -130,7 +130,7 @@ STATUS ccaPciGetResource (UINT rsrcIndx, ccaPciResources* pResource)
 
 UINT8 ccaInByte (UINT8 offset, UINT rsrcIndx, BOOL useBar1)
 {
-   UINT8* pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   UINT8* pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0);
    if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
       return pBar[offset];
    return 0;
@@ -138,29 +138,37 @@ UINT8 ccaInByte (UINT8 offset, UINT rsrcIndx, BOOL useBar1)
 
 UINT16 ccaInWord (UINT8 offset, UINT rsrcIndx, BOOL useBar1)
 {
-   UINT8* pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   void* pBar = (useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0);
    if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
       return *(UINT16*)(pBar+offset);
    return 0;
 }
 
+UINT32 ccaIn32Word (UINT8 offset, UINT rsrcIndx, BOOL useBar1)
+{
+   void* pBar = (useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0);
+   if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
+      return *(UINT32*)(pBar+offset);
+   return 0;
+}
+
 void ccaOutByte (UINT8 offset, UINT8 value, UINT rsrcIndx, BOOL useBar1)
 {
-   UINT8* pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   UINT8* pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0);
    if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
       pBar[offset] = value;
 }
 
 void ccaOutWord (UINT8 offset, UINT16 value, UINT rsrcIndx, BOOL useBar1)
 {
-   UINT16* pBar = (UINT16*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   void* pBar = (useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0);
    if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
       *(UINT16*)(pBar+offset) = value;
 }
 
 void ccaOut32Word(UINT8 offset, UINT32 value, UINT rsrcIndx, BOOL useBar1)
 {
-   UINT32 * pBar = (UINT32*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0 );
+   void* pBar = (useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0);
    if (pBar && rsrcIndx < CCA_MAX_PCI_RESOURCES)
       *(UINT32*)(pBar+offset) = value;
 }

@@ -27,27 +27,33 @@ typedef enum
    //
    // Configuration and status register (16-bit, read/write)
    //
-   IOPW_CFG_STAT            = 0x04, 
+   IOPW_CFG_STAT            = 0x04,
+   CFG_STAT_ADDR            = IOPW_CFG_STAT,
    //
    // Session Trigger (16-bit, read/write)
    //
    IOPW_SES_TRIG            = 0x08,
+   SES_TRIG_ADDR            = IOPW_SES_TRIG,
    //
    // Session User Strobe Light Pulse Width (8-bit, read/write)
    //
    IOP_SES_U_PW             = 0x0C,
+   SES_U_PW_ADDR            = IOP_SES_U_PW,
    //
    // Filler position register (12-bit, read only)
    //
    INPW_FILLER_POS          = 0x10,
+   FILLER_POS_ADDR          = INPW_FILLER_POS,
    //
    // Filler Rotation Time (15-bit, read only)
    //
    INPW_FILLER_ROT_TIME     = 0x14,
+   FILLER_ROT_TIME_ADDR     = INPW_FILLER_ROT_TIME,
    //
    // Encoder Emulator (16-bit, read/write)
    //
    IOPW_ENC_EMU             = 0x18,
+   ENC_EMU_ADDR             = IOPW_ENC_EMU,
    //
    // Miscellaneous Status (1-bit, reset on read)
    //

@@ -37,8 +37,8 @@ typedef enum
    //
    // Counters for Lower Level Air & Fluid Sample & Centrifuge Commutation (8-bit)
    //
-   INP_LL_AIR_COUNT         = 0x0C,
-   INP_LL_FLUID_COUNT       = 0x10,
+   INP_LL_AIR_COUNT         = 0x0C, // Ultra-sonics
+   INP_LL_FLUID_COUNT       = 0x10, // Ultra-sonics
    INP_CENTRIFUGE           = 0x14, // Read comm counter
    OUTP_CLR_CENT_FAULT      = 0x14, // Write clears comm fault bit
    //
@@ -65,6 +65,7 @@ typedef enum
    //
    // bit masks for INP_VALVES
    //
+   NOT_CASSETTE_ERROR_BIT   = 0x00,
    NOT_CASSETTE_RAISED_BIT  = 0x80,
    NOT_CASSETTE_LOWERED_BIT = 0x40,
    NOT_RBC_OPEN_BIT         = 0x20,

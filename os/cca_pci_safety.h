@@ -25,7 +25,7 @@ typedef enum
    //
    // Software Reset and CCA ID (32-bit, write-only / read-only)
    //
-   OUT_SW_RESET             = 0x00, // Write 0xFF00AA55 to force reset
+   OUT_SW_RESET             = 0x00, // Write CCA_RESET_VALUE to force a reset of the CCA
    INP_CCA_ID               = 0x00, // Read to get CCA ID pins cca_id[15:0]
    //
    // Watchdog Pet (write-only) and Status (read-only) registers
@@ -62,6 +62,10 @@ typedef enum
  */
 typedef enum
 {
+   //
+   // output reset value for OUT_SW_RESET
+   //
+   CCA_RESET_VALUE          = 0xFF00AA55,
    //
    // bit masks for INP_VALVES
    //

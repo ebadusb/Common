@@ -62,6 +62,24 @@ typedef enum
 } USTC_BAR_Offset;
 
 
+/**
+ * Bit masks for USTCP CCA registers
+ */
+typedef enum
+{
+   //
+   // bit masks for CFG_STAT
+   //
+   CFG_STAT_USE_ENCODER_VALUE =	0x7070,   //set Encoder bit ON
+   CFG_STAT_USE_HALLS_VALUE =		0x7030,   //set Hall bit ON
+   CFG_STAT_DISABLE_VALUE =		0x7050,   //set User Strobe Pulse OFF
+   //
+   // bit masks for ENC_EMU
+   //
+   ENC_EMU_ENABLE_VALUE =			0x0300,
+	ENC_EMU_DISABLE_VALUE =			0x0100
+} USTCP_BitMasks;
+
 
 #endif /* CCA_PCI_USTC_H_ */
 

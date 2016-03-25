@@ -79,7 +79,7 @@ typedef enum
    INP_LOWER_FLUID_COUNT    = 0x44,
    INP_UPPER_AIR_COUNT      = 0x48,
    INP_UPPER_FLUID_COUNT    = 0x4C,
-   INP_CENT_COMM            = 0x4C,
+   INP_CENT_COMM            = 0x50,
    IN_CENT_COMM             = INP_CENT_COMM,
    //
    // Miscellaneous Status (8-bit, read-only)
@@ -155,11 +155,11 @@ typedef enum
    NOT_PLASMA_OPEN_BIT      = 0x80,
    NOT_PLASMA_COLLECT_BIT   = 0x40,
    NOT_PLASMA_RETURN_BIT    = 0x20,
-   NOT_PUMP_FAULT_BIT       = 0x10,
-   NOT_CENT_FAULT_BIT       = 0x08,
+   PUMP_FAULT_BIT           = 0x10,
+   CENT_FAULT_BIT           = 0x08,
    NOT_STOP_SWITCH_BIT      = 0x04,
    NOT_PAUSE_SWITCH_BIT     = 0x02,
-   NOT_VALVE_FAULT_BIT      = 0x01,
+   VALVE_FAULT_BIT          = 0x01,
    //
    // bit masks for INP_VALVE_STATUS
    //

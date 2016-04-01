@@ -1,6 +1,14 @@
 ################################################################################
 #
-# Makefile for VxWorks 5.5 UGL libraries
+# Makefile for VxWorks 5.5 UGL libraries for E-Box configurations.
+#
+# The UGL binary modules for Trima and Optia are checked in to the bin folder.
+# This makefile is intended for manually updating them when necessary.
+#
+# It is recommended to first build the project's respective kernel, and then
+# build the respective UGL components here.
+#
+# Usage: make -f makefile.vx [trima_obj|optia_obj|all]
 #
 ################################################################################
 

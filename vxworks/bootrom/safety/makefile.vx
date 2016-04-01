@@ -1,12 +1,17 @@
 ################################################################################
 #
-# Makefile for bootroms of Safety's Atom Bengal board (EBox 2016)
+# Makefile for Trima & Optia bootroms for Atom Bengal CCAs (EBox 2016).
+# These bootroms are used for the Safety boards, and Optia's APC board.
 #
+# Note: this makefile can be invoked from the bootrom makefile under Trima/Optia
+# with the value of BIN_DIR passed on the command-line. Othewise, output goes
+# to ../bin.
 ################################################################################
 
-# ROM_FILE is the final output copied from MY_BSP_DIR
-BIN_DIR    := ../bin
-ROM_FILES  := $(BIN_DIR)/bootrom_bengal_optia.pxe $(BIN_DIR)/bootrom_bengal_trima.pxe \
+# ROM_FILES are the final output copied from MY_BSP_DIR to BIN_DIR
+BIN_DIR    ?= ../bin
+ROM_FILES  := $(BIN_DIR)/bootrom_bengal_trima.pxe \
+              $(BIN_DIR)/bootrom_bengal_optia.pxe \
               $(BIN_DIR)/bootrom_bengal_optia_apc.pxe 
 MY_BSP_DIR := atom_bengal
 THIS_DIR   := $(notdir $(shell pwd))
@@ -30,9 +35,9 @@ endif
 
 # Target-specific flags
 #
+$(BIN_DIR)/bootrom_bengal_trima.pxe:     MY_DFLAGS := -DTRIMA_BOOTROM
 $(BIN_DIR)/bootrom_bengal_optia.pxe:     MY_DFLAGS := -DOPTIA_BOOTROM
 $(BIN_DIR)/bootrom_bengal_optia_apc.pxe: MY_DFLAGS := -DOPTIA_APC_BOOTROM
-$(BIN_DIR)/bootrom_bengal_trima.pxe:     MY_DFLAGS := -DTRIMA_BOOTROM
 
 
 SUBMAKE_ARGS += EXTRA_DEFINE=$(MY_DFLAGS)

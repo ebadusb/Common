@@ -118,20 +118,22 @@ public:
    CcaInOut(int index=0, bool useBar1=false) : pBar(0)
    {
       ccaPciResources rsrc;
-      if (OK == ccaPciGetResource(index, &rsrc))
-         pBar = (UINT8*)(useBar1 ? rsrc.pBAR1 : rsrc.pBAR1);
-      else
-         abort();
+      ccaPciGetResource(index, &rsrc);
+      pBar = (UINT32*)(useBar1 ? rsrc.pBAR1 : rsrc.pBAR1);
    }
 
-   UINT8  InByte(UINT8 offset) { return pBar[offset]; }
-   UINT16 InWord(UINT8 offset) { return *(UINT16*)(pBar+offset); }
+   /* Implemented as 32-bit reads */
+   UINT32 InLong(UINT8 offset) { return *(pBar+offset); }
+   UINT16 InWord(UINT8 offset) { return (UINT16) InLong(offset); }
+   UINT8  InByte(UINT8 offset) { return (UINT8)  InLong(offset); }
 
-   void	OutByte(UINT8 offset, UINT8  value) { pBar[offset] = value; }
-   void OutWord(UINT8 offset, UINT16 value) { *(UINT16*)(pBar+offset) = value; }
+   /* Implemented as 32-bit writes */
+   void OutLong(UINT8 offset, UINT32 value) { *(pBar+offset) = value; }
+   void OutWord(UINT8 offset, UINT16 value) { OutLong(offset, value); }
+   void	OutByte(UINT8 offset, UINT8  value) { OutLong(offset, value); }
 
 private:
-   UINT8 * pBar;
+   UINT32* pBar;
 };
 
 #endif /* __cplusplus */

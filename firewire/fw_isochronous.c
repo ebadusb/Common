@@ -373,9 +373,6 @@ FWStatus fwIsoAdvanceRecvBuffer(FWDriverData *pDriver, FWIsoChannel *isoChannel)
 			break;
 		}
 
-		/* Determine if the buffer is full by checking resCount in the last block. */
-		fwInvalidateDMAMemPool( contextProgram->descriptorBlock->commandList );
-
 		if( isoChannel->current->lastBlock[3] & 0x0000FFFF )
 		{
 			retVal = FWIsoBufferSyncError;
@@ -398,6 +395,9 @@ FWStatus fwIsoAdvanceRecvBuffer(FWDriverData *pDriver, FWIsoChannel *isoChannel)
 
 		/* initialize the context program */
 		contextProgram->xferStatus = 0;
+
+		/* Determine if the buffer is full by checking resCount in the last block. */
+		fwInvalidateDMAMemPool( contextProgram->descriptorBlock->commandList );
 
 		memcpy( contextProgram->descriptorBlock->commandList->virtualAddr,
 				  contextProgram->descriptorBlock->program,

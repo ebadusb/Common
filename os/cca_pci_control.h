@@ -52,7 +52,7 @@ typedef enum
    IO_PUMP2_PWM             = IOP_INLET_PWM,
    IO_PUMP3_PWM             = IOP_RETURN_PWM,
    IO_PUMP4_PWM             = IOP_PLASMA_PWM,
-   IO_PUMP5_PWM             = IOP_RETURN_PWM,
+   IO_PUMP5_PWM             = IOP_PLATELET_PWM,
    //
    // External Status Circuits (8-bit, read-only status registers)
    //

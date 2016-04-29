@@ -1484,7 +1484,7 @@ LOCAL void bootCmdLoop (void)
 	sysStartType |= BOOT_NO_AUTOBOOT;
 #endif
 
-	sysOutByte((int)(DataReg),(short)(EchoCommand));	  /* int & short used in x86 architecture */
+	sysOutByte((int)DataReg, (UCHAR)EchoCommand);
 	for ( retry=0 ; retry<10 && !kbdFound ; retry++ )
 	{
 		taskDelay(1);
@@ -2050,7 +2050,6 @@ LOCAL STATUS bootLoad
 	/* Clear keyBd+altBoot bits in case params got restored from NVRAM (see SYS_WARM_TYPE) */
 	if (params.flags & (SYSFLG_VENDOR_0|SYSFLG_VENDOR_1))
 	{
-	   printf("XXX: Clearing keyBd|altBoot flag(s) cuz params.flags=%#x\n", params.flags);
 	   params.flags &= ~(SYSFLG_VENDOR_1|SYSFLG_VENDOR_0);
 	}
 
@@ -4158,7 +4157,6 @@ LOCAL void usrBootLineInit
 			   strcpy(BOOT_LINE_ADRS, (char*)cookieTbl[endBootDevIndex].devName);
 			}
 #endif
-			printf("%d %s\n", endBootDevIndex, BOOT_LINE_ADRS);
       }
    }
 }

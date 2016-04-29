@@ -1475,7 +1475,7 @@ LOCAL void bootCmdLoop (void)
 	sysStartType |= BOOT_NO_AUTOBOOT;
 #endif
 
-	sysOutByte((int)(DataReg),(short)(EchoCommand));	  /* int & short used in x86 architecture */
+	sysOutByte((int)DataReg, (UCHAR)EchoCommand);
 	for ( retry=0 ; retry<10 && !kbdFound ; retry++ )
 	{
 		taskDelay(1);
@@ -1488,12 +1488,17 @@ LOCAL void bootCmdLoop (void)
 		}
 	}
 
-	/* XXX-MFR: keyboard discovery not working; harcoding for now */
+#ifdef TRIMA_BOOTROM
+	/*
+	 * XXX-MFR: keyboard discovery not working; harcoding for now, but only for Trima.
+	 * Optia will not enter service mode if keyboard is present
+	 */
 	if (!kbdFound)
 	{
 	   printf("XXX: keyboard not found; overriding ...\n");
 	   kbdFound = 1;
 	}
+#endif
 
    if ( !(sysStartType & BOOT_NO_AUTOBOOT) &&
         !(sysFlags & SYSFLG_NO_AUTOBOOT) )

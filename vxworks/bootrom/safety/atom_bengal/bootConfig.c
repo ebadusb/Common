@@ -1328,9 +1328,6 @@ void usrRoot
 	csInit (CS_PCCARD_STACK);
 #endif /* INCLUDE_PCCARD */
 
-	/* put console in line mode */
-	(void) ioctl (consoleFd, FIOSETOPTIONS, OPT_TERMINAL);
-
 #ifdef INCLUDE_END
 
 	/* initialize the MUX */
@@ -1442,6 +1439,15 @@ LOCAL void bootCmdLoop (void)
    enum { EchoCommand = 0xee };
    int   kbdFound = 0;
 
+   /*
+    * As a backup work around for i8042 PS/2 emulator on Fox board:
+    * - Read keyboard status byte stored in BIOS Data Area (BDA).
+    * - Requires that bootrom image is loaded above the BDA
+    */
+   enum { BDA_KbdStatusAddr = 0x496, BDA_KbdIsPresent = 0x10 };
+   char kbdBDA = *((char*)BDA_KbdStatusAddr);
+   kbdFound = (BDA_KbdIsPresent == (kbdBDA & BDA_KbdIsPresent));
+
 	/* flush standard input to get rid of any garbage;
 	 * E.g. the Heurikon HKV2F gets junk in USART if no terminal connected.
 	 */
@@ -1484,6 +1490,7 @@ LOCAL void bootCmdLoop (void)
 	sysStartType |= BOOT_NO_AUTOBOOT;
 #endif
 
+#ifdef USE_ECHO_FOR_KEYBOARD_DETECT
 	sysOutByte((int)DataReg, (UCHAR)EchoCommand);
 	for ( retry=0 ; retry<10 && !kbdFound ; retry++ )
 	{
@@ -1496,8 +1503,9 @@ LOCAL void bootCmdLoop (void)
 			}
 		}
 	}
+#endif /* USE_ECHO_FOR_KEYBOARD_DETECT */
 
-   if ( !(sysStartType & BOOT_NO_AUTOBOOT) &&
+	if ( !(sysStartType & BOOT_NO_AUTOBOOT) &&
         !(sysFlags & SYSFLG_NO_AUTOBOOT) )
    {
 		int timeout = TIMEOUT;
@@ -1784,7 +1792,12 @@ LOCAL char autoboot
 
     /* auto-boot */
 
-	printf ("Booting " BOOTLOAD_TAG " Software (kbdFound=%d altboot=%d numKeysPressed=%d) ...\n", kbdFound, altboot, keypressedno);
+	/* put the console back in line mode so it echoes (so's you can bang
+	 * on it to see if it's still alive) */
+
+	(void) ioctl (consoleFd, FIOSETOPTIONS, OPT_TERMINAL);
+
+    printf ("Booting " BOOTLOAD_TAG " Software (kbdFound=%d altboot=%d) ...\n", kbdFound, altboot);
    
 	if ( bootLoad (BOOT_LINE_ADRS, &entry, kbdFound, altboot) == OK )
 	{

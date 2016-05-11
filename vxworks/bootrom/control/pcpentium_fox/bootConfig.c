@@ -1433,6 +1433,15 @@ LOCAL void bootCmdLoop (void)
    enum { EchoCommand = 0xee };
    int   kbdFound = 0;
 
+   /*
+    * As a backup work around for i8042 PS/2 emulator on Fox board:
+    * - Read keyboard status byte stored in BIOS Data Area (BDA).
+    * - Requires that bootrom image is loaded above the BDA
+    */
+   enum { BDA_KbdStatusAddr = 0x496, BDA_KbdIsPresent = 0x10 };
+   char kbdBDA = *((char*)BDA_KbdStatusAddr);
+   kbdFound = (BDA_KbdIsPresent == (kbdBDA & BDA_KbdIsPresent));
+
 	/* flush standard input to get rid of any garbage;
 	 * E.g. the Heurikon HKV2F gets junk in USART if no terminal connected.
 	 */
@@ -1487,18 +1496,6 @@ LOCAL void bootCmdLoop (void)
 			}
 		}
 	}
-
-#ifdef TRIMA_BOOTROM
-	/*
-	 * XXX-MFR: keyboard discovery not working; harcoding for now, but only for Trima.
-	 * Optia will not enter service mode if keyboard is present
-	 */
-	if (!kbdFound)
-	{
-	   printf("XXX: keyboard not found; overriding ...\n");
-	   kbdFound = 1;
-	}
-#endif
 
    if ( !(sysStartType & BOOT_NO_AUTOBOOT) &&
         !(sysFlags & SYSFLG_NO_AUTOBOOT) )
@@ -1801,7 +1798,7 @@ LOCAL char autoboot
 
 	(void) ioctl (consoleFd, FIOSETOPTIONS, OPT_TERMINAL);
 	
-	printf ("Booting " BOOTLOAD_TAG " Software (kbdFound=%d altboot=%d numKeysPressed=%d) ...\n", kbdFound, altboot, keypressedno);
+	printf ("Booting " BOOTLOAD_TAG " Software (kbdFound=%d altboot=%d) ...\n", kbdFound, altboot);
 
 	if ( bootLoad (BOOT_LINE_ADRS, &entry, kbdFound, altboot) == OK )
 	{

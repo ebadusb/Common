@@ -12,7 +12,7 @@
 #
 ################################################################################
 
-.PHONY: all ugl clean
+.PHONY: all ugl clean trima optia apc
 
 all: ugl
 
@@ -28,12 +28,16 @@ include $(MAINDIR)/makefile.vxc
 #
 MY_OUT_DIR   = bin
 MY_CFG_DIR   = $(shell cmd /c cd)
+
 MY_TRIMA_CFG = pentium_VGA_640x480_8bit.cfg
 MY_OPTIA_CFG = pentium_VGA_800x600_16bit.cfg
-MY_CFG_FILES = $(MY_TRIMA_CFG) $(MY_OPTIA_CFG)  
+MY_APC_CFG   = bengal_VESABIOS_Grey_1024x768_8bit.cfg 
+MY_CFG_FILES = $(MY_TRIMA_CFG) $(MY_OPTIA_CFG) $(MY_APC_CFG)  
+
 MY_TRIMA_OBJ = $(MY_OUT_DIR)/$(MY_TRIMA_CFG:.cfg=.o)
 MY_OPTIA_OBJ = $(MY_OUT_DIR)/$(MY_OPTIA_CFG:.cfg=.o)
-MY_UGL_OBJS  = $(MY_TRIMA_OBJ) $(MY_OPTIA_OBJ)
+MY_APC_OBJ   = $(MY_OUT_DIR)/$(MY_APC_CFG:.cfg=.o)
+MY_UGL_OBJS  = $(MY_TRIMA_OBJ) $(MY_OPTIA_OBJ) $(MY_APC_OBJ)
 
 WIND_UGL_DIR = $(WIND_BASE)\target\src\ugl
 WIND_LIB_DIR = $(WIND_BASE)\target\lib\pentium\$(CPU)\common
@@ -49,10 +53,11 @@ SUBMAKE_ARGS += -C $(WIND_UGL_DIR) WINDML_CONFIG_DIR=$(MY_CFG_DIR)
 
 ugl : $(MY_UGL_OBJS)
 
-# Convience targets to selectively build for just Trima or Optia
+# Convience targets to selectively build for just Trima, Optia, or APC
 #
-trima_obj : $(MY_TRIMA_OBJ)
-optia_obj : $(MY_OPTIA_OBJ)
+trima : $(MY_TRIMA_OBJ)
+optia : $(MY_OPTIA_OBJ)
+apc   : $(MY_APC_OBJ)
 
 #
 # Build xxx_windml.o from xxx.cfg and rename it to MY_OUT_DIR/xxx.o
@@ -74,4 +79,3 @@ clean:
 	rm -f $(WIND_LIB_DIR)\wndml.o
 	rm -fr $(WIND_LIB_DIR)\objwndml
 	rm -f $(MY_UGL_OBJS)
-

@@ -176,6 +176,10 @@ extern "C" {
 #define BENGAL_BSP
 #define BENGAL_DEBUG  (0)
 
+#ifdef OPTIA_APC_BOOTROM
+#define INCLUDE_WINDML      /* This is required for VESA GRAPHIC BIOS support */
+#endif /* OPTIA_APC_BOOTROM */
+
 #include "configAll.h"
 #include "pc.h"
 

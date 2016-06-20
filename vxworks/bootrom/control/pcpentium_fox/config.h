@@ -204,7 +204,8 @@ extern "C" {
 
 /* Default boot line */
 
-#define DEFAULT_BOOT_LINE "ata=1,0(0,0)host:/ata10/vxWorks"
+#define DEFAULT_BOOT_LINE "ata=1,0(0,0)host:/ata10/vxWorks tn=control u=terumo"
+/* to suppress boot msgs: "ata=1,0(0,0)host:/ata10/vxWorks tn=control u=terumo o=rdc0" */
 
 /* Warm boot (reboot) devices and parameters */
 

@@ -1,18 +1,23 @@
 ################################################################################
 #
-# Makefile for Trima & Optia bootroms for Pentium Fox CCAs (EBox 2016).
-# These bootroms are used for the Control boards, and Optia's APC board.
+# Makefile Pentium Fox CCAs (EBox 2016).
+# These bootroms are used for Trima and Optia Control boards.
 #
 # Note: this makefile can be invoked from the bootrom makefile under Trima/Optia
 # with the value of BIN_DIR passed on the command-line. Othewise, output goes
 # to ../bin.
 ################################################################################
 
-# ROM_FILES are the final output copied from MY_BSP_DIR to BIN_DIR
-BIN_DIR    ?= ../bin
+# Hack for building a bootrom for use with Common Kernel. TODO: revisit this
+ifeq ($(CK),true)
+BIN_DIR   := $(CKDIR)/bootrom/bin
+MY_DFLAGS := -DCOMMON_KERNEL
+endif
+
+# ROM_FILES are the final output copied to BIN_DIR
+BIN_DIR    ?= $(COMDIR)/vxworks/bootrom/bin
 ROM_FILES  := $(BIN_DIR)/bootrom_fox_trima.sys \
               $(BIN_DIR)/bootrom_fox_optia.sys
-MY_BSP_DIR := pcpentium_fox
 THIS_DIR   := $(notdir $(shell pwd))
 
 .PHONY: all clean
@@ -32,29 +37,35 @@ else
  MV=mv -v
 endif
 
+# Convenience targets for building individual bootroms
+#
+.PHONY: trima optia
+trima:	$(BIN_DIR)/bootrom_fox_trima.sys
+optia:	$(BIN_DIR)/bootrom_fox_optia.sys
+	
 # Target-specific flags
 #
-$(BIN_DIR)/bootrom_fox_trima.sys: MY_DFLAGS := -DTRIMA_BOOTROM
-$(BIN_DIR)/bootrom_fox_optia.sys: MY_DFLAGS := -DOPTIA_BOOTROM
+$(BIN_DIR)/bootrom_fox_trima.sys: MY_DFLAGS += -DTRIMA_BOOTROM
+$(BIN_DIR)/bootrom_fox_optia.sys: MY_DFLAGS += -DOPTIA_BOOTROM
 
-SUBMAKE_ARGS += EXTRA_DEFINE=$(MY_DFLAGS)
+SUBMAKE_ARGS += EXTRA_DEFINE="$(MY_DFLAGS)"
 
 # Not a true list of dependencies, but sufficient to trigger developer rebuilds
 #
-ROM_DEPS := $(wildcard $(MY_BSP_DIR)/*.h) \
-            $(wildcard $(MY_BSP_DIR)/*.c) \
-            $(wildcard $(MY_BSP_DIR)/sys*.s)
+ROM_DEPS := $(wildcard *.h) \
+            $(wildcard *.c) \
+            $(wildcard sys*.s)
 
 $(ROM_FILES): $(ROM_DEPS) | $(BIN_DIR)
 	@echo x Building: $(THIS_DIR)/$@
-	$(Q)rm -f $(MY_BSP_DIR)/*.o
-	$(Q)$(MAKE) -C $(MY_BSP_DIR) $(SUBMAKE_ARGS) bootrom.bin
-	$(Q)$(MV) -f $(MY_BSP_DIR)/bootrom.bin $@
+	$(Q)rm -f *.o
+	$(Q)$(MAKE) $(SUBMAKE_ARGS) bootrom.bin
+	$(Q)$(MV) -f bootrom.bin $@
 	@echo Done: $@
 
 $(BIN_DIR):
 	md $(subst /,\,$@)
 
 clean:
-	$(Q)$(MAKE) -C $(MY_BSP_DIR) clean
+	$(Q)$(MAKE) clean
 	$(Q)rm -f $(ROM_FILES)

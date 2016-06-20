@@ -206,7 +206,7 @@ extern "C" {
 #define X86CPU_DEFAULT	X86CPU_PENTIUM	/* for sysProcessor set in BSP */
 
 /* Default product-specific boot line */
-#include "../bootline.h"
+#include "bootline.h"
 
 #if (BENGAL_DEBUG >= 1)
   /* Boot from ATA drive */

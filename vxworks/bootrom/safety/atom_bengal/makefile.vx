@@ -8,12 +8,17 @@
 # to ../bin.
 ################################################################################
 
-# ROM_FILES are the final output copied from MY_BSP_DIR to BIN_DIR
-BIN_DIR    ?= ../bin
+# Hack for building a bootrom for use with Common Kernel. TODO: revisit this
+ifeq ($(CK),true)
+BIN_DIR   := $(CKDIR)/bootrom/bin
+MY_DFLAGS := -DCOMMON_KERNEL
+endif
+
+# ROM_FILES are the final output copied to BIN_DIR
+BIN_DIR    ?= $(COMDIR)/vxworks/bootrom/bin
 ROM_FILES  := $(BIN_DIR)/bootrom_bengal_trima.pxe \
               $(BIN_DIR)/bootrom_bengal_optia.pxe \
               $(BIN_DIR)/bootrom_bengal_optia_apc.pxe 
-MY_BSP_DIR := atom_bengal
 THIS_DIR   := $(notdir $(shell pwd))
 
 .PHONY: all clean
@@ -26,34 +31,40 @@ endif
 
 ifeq ($(TERSE),true)
  Q=@
- CP=cp
+ MV=mv
  SUBMAKE_ARGS += --silent
 else
  Q=
- CP=cp -v
+ MV=mv -v
 endif
 
+# Convenience targets for building individual bootroms
+#
+.PHONY: trima optia apc
+trima:	$(BIN_DIR)/bootrom_bengal_trima.pxe
+optia:	$(BIN_DIR)/bootrom_bengal_optia.pxe
+apc:	$(BIN_DIR)/bootrom_bengal_optia_apc.pxe 
+	
 # Target-specific flags
 #
-$(BIN_DIR)/bootrom_bengal_trima.pxe:     MY_DFLAGS := -DTRIMA_BOOTROM
-$(BIN_DIR)/bootrom_bengal_optia.pxe:     MY_DFLAGS := -DOPTIA_BOOTROM
-$(BIN_DIR)/bootrom_bengal_optia_apc.pxe: MY_DFLAGS := -DOPTIA_APC_BOOTROM
+$(BIN_DIR)/bootrom_bengal_trima.pxe:     MY_DFLAGS += -DTRIMA_BOOTROM
+$(BIN_DIR)/bootrom_bengal_optia.pxe:     MY_DFLAGS += -DOPTIA_BOOTROM
+$(BIN_DIR)/bootrom_bengal_optia_apc.pxe: MY_DFLAGS += -DOPTIA_APC_BOOTROM
 
 
-SUBMAKE_ARGS += EXTRA_DEFINE=$(MY_DFLAGS)
+SUBMAKE_ARGS += EXTRA_DEFINE="$(MY_DFLAGS)"
 
 # Not a true list of dependencies, but sufficient to trigger developer rebuilds
 #
-ROM_DEPS := bootline.h \
-            $(wildcard $(MY_BSP_DIR)/*.h) \
-            $(wildcard $(MY_BSP_DIR)/*.c) \
-            $(wildcard $(MY_BSP_DIR)/*.s)
+ROM_DEPS := $(wildcard *.h) \
+            $(wildcard *.c) \
+            $(wildcard sys*.s)
 
 $(ROM_FILES): $(ROM_DEPS) | $(BIN_DIR)
 	@echo x Building: $(THIS_DIR)/$@
-	$(Q)rm -f $(MY_BSP_DIR)/*.o
-	$(Q)$(MAKE) -C $(MY_BSP_DIR) $(SUBMAKE_ARGS) bootrom.pxe
-	$(Q)$(CP) -f $(MY_BSP_DIR)/bootrom.pxe $@
+	$(Q)rm -f *.o
+	$(Q)$(MAKE) $(SUBMAKE_ARGS) bootrom.pxe
+	$(Q)$(MV) -f bootrom.pxe $@
 	@echo Done: $@
 
 bootrom.sys : bootrom_uncmp
@@ -62,5 +73,5 @@ $(BIN_DIR):
 	md $(subst /,\,$@)
 
 clean:
-	$(Q)$(MAKE) -C $(MY_BSP_DIR) clean
+	$(Q)$(MAKE) clean
 	$(Q)rm -f $(ROM_FILES)

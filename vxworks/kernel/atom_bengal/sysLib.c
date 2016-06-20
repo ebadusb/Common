@@ -505,7 +505,12 @@ PHYS_MEM_DESC sysPhysMemDesc [] =
     DUMMY_MMU_ENTRY,
     DUMMY_MMU_ENTRY,
     DUMMY_MMU_ENTRY,
-
+#ifdef OPTIA_AIM_KERNEL
+	DUMMY_MMU_ENTRY,
+	DUMMY_MMU_ENTRY,
+	DUMMY_MMU_ENTRY,
+	DUMMY_MMU_ENTRY,
+#endif
     };
 
 int sysPhysMemDescNumEnt; 	/* number Mmu entries to be mapped */

@@ -55,7 +55,6 @@ typedef enum
 
 } SafetyP_BAR_Offset;
 
-#define CCA_ID_MASK     (0x00FF)
 
 /**
  * Bit masks for SafetyP CCA registers

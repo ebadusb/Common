@@ -10,14 +10,14 @@
 
 # Hack for building a bootrom for use with Common Kernel. TODO: revisit this
 ifeq ($(CK),true)
-BIN_DIR   := $(CKDIR)/bootrom/bin
+DST_DIR   := $(CKDIR)/bootrom/bin
 MY_DFLAGS := -DCOMMON_KERNEL
 endif
 
-# ROM_FILES are the final output copied to BIN_DIR
-BIN_DIR    ?= $(COMDIR)/vxworks/bootrom/bin
-ROM_FILES  := $(BIN_DIR)/bootrom_fox_trima.sys \
-              $(BIN_DIR)/bootrom_fox_optia.sys
+# ROM_FILES are the final output copied to DST_DIR
+DST_DIR    ?= $(COMDIR)/vxworks/bootrom/bin
+ROM_FILES  := $(DST_DIR)/bootrom_fox_trima.sys \
+              $(DST_DIR)/bootrom_fox_optia.sys
 THIS_DIR   := $(notdir $(shell pwd))
 
 .PHONY: all clean
@@ -31,7 +31,7 @@ endif
 ifeq ($(TERSE),true)
  Q=@
  MV=mv
- SUBMAKE_ARGS += --silent
+ MY_MAKE_ARGS += --silent
 else
  Q=
  MV=mv -v
@@ -40,15 +40,15 @@ endif
 # Convenience targets for building individual bootroms
 #
 .PHONY: trima optia
-trima:	$(BIN_DIR)/bootrom_fox_trima.sys
-optia:	$(BIN_DIR)/bootrom_fox_optia.sys
+trima:	$(DST_DIR)/bootrom_fox_trima.sys
+optia:	$(DST_DIR)/bootrom_fox_optia.sys
 	
 # Target-specific flags
 #
-$(BIN_DIR)/bootrom_fox_trima.sys: MY_DFLAGS += -DTRIMA_BOOTROM
-$(BIN_DIR)/bootrom_fox_optia.sys: MY_DFLAGS += -DOPTIA_BOOTROM
+$(DST_DIR)/bootrom_fox_trima.sys: MY_DFLAGS += -DTRIMA_BOOTROM
+$(DST_DIR)/bootrom_fox_optia.sys: MY_DFLAGS += -DOPTIA_BOOTROM
 
-SUBMAKE_ARGS += EXTRA_DEFINE="$(MY_DFLAGS)"
+MY_MAKE_ARGS += EXTRA_DEFINE="$(MY_DFLAGS)"
 
 # Not a true list of dependencies, but sufficient to trigger developer rebuilds
 #
@@ -56,14 +56,14 @@ ROM_DEPS := $(wildcard *.h) \
             $(wildcard *.c) \
             $(wildcard sys*.s)
 
-$(ROM_FILES): $(ROM_DEPS) | $(BIN_DIR)
+$(ROM_FILES): $(ROM_DEPS) | $(DST_DIR)
 	@echo x Building: $(THIS_DIR)/$@
 	$(Q)rm -f *.o
-	$(Q)$(MAKE) $(SUBMAKE_ARGS) bootrom.bin
+	$(Q)$(MAKE) $(MY_MAKE_ARGS) bootrom.bin
 	$(Q)$(MV) -f bootrom.bin $@
 	@echo Done: $@
 
-$(BIN_DIR):
+$(DST_DIR):
 	md $(subst /,\,$@)
 
 clean:

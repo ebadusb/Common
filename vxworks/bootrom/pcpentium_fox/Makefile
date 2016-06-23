@@ -32,8 +32,9 @@
 #     makeTarget
 #*/
 
-CPU  = PENTIUM
-TOOL = gnu
+# Prevent any clashes with environment variable and/or command-line settings
+override CPU  := PENTIUM
+override TOOL := gnu
 
 TGT_DIR = $(WIND_BASE)/target
 

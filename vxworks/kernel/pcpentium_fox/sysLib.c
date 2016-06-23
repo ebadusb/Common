@@ -240,7 +240,8 @@ SEE ALSO:
 #include "cacheLib.h"
 #include "private/vmLibP.h"
 #include "arch/i86/pentiumLib.h"
-#include "cca_pci_support.h"     /* TerumoBCT CCA Support */
+
+#include "cca_pci_intf.h"     /* TerumoBCT CCA Support */
 
 
 #ifdef	INCLUDE_TFFS

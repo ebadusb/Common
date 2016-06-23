@@ -24,6 +24,11 @@
 
 #include "cca_pci_intf.h"
 
+/* Macros to split a CcaIoPort into its components */
+#define CCA_IO_PORT_RSRC(ccaIoPort)     (ccaIoPort >> CCA_BIT0_RSRC)
+#define CCA_IO_PORT_BAR(ccaIoPort)      (ccaIoPort >> CCA_BIT0_BAR )
+#define CCA_IO_PORT_OFFSET(ccaIoPort)   (ccaIoPort & 0xFF)
+
 /* Local prototypes */
 LOCAL void   ccaResourceArrayInit (ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
 LOCAL void   ccaResourceArraySave (ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
@@ -127,7 +132,7 @@ STATUS sysCCAHwInit (void)
    return retVal;
 }
 
-unsigned int ccaPciResourcesAvailable ()
+unsigned int ccaPciResourcesAvailable (void)
 {
    return ccaNumResourcesAvail;
 }
@@ -145,39 +150,63 @@ STATUS ccaPciGetResource (UINT rsrcIndx, ccaPciResources* pResource)
 UINT32 ccaPciIn32 (UINT8 offset, UINT rsrcIndx, BOOL useBar1)
 {
    UINT32 retVal = 0;
+   UINT8* pBar   = NULL;
+
    if (rsrcIndx < CCA_MAX_PCI_RESOURCES)
    {
-      UINT8* pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0);
-      if (pBar) retVal = *(UINT32*)(pBar+offset);
+      pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0);
+   }
+   if (pBar)
+   {
+      retVal = *(UINT32*)(pBar+offset);
+   }
+   else
+   {
+      fprintf(stderr, "ERROR: NULL pBar for rsrcIndx=%d useBar1=%d offset=%#x\n", rsrcIndx, useBar1, offset);
    }
    return retVal;
 }
 
 void ccaPciOut32 (UINT8 offset, UINT32 value, UINT rsrcIndx, BOOL useBar1)
 {
+   UINT8* pBar = NULL;
+
    if (rsrcIndx < CCA_MAX_PCI_RESOURCES)
    {
-      UINT8* pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0);
-      if (pBar) *(UINT32*)(pBar+offset) = value;
+      pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0);
+   }
+   if (pBar)
+   {
+      *(UINT32*)(pBar+offset) = value;
+   }
+   else
+   {
+      fprintf(stderr, "ERROR: NULL pBar for rsrcIndx=%d useBar1=%d offset=%#x\n", rsrcIndx, useBar1, offset);
    }
 }
 
 UCHAR ccaInByte (CcaIoPort barIdWithOffset)
 {
    /* Implemented via 32-bit read given the 32-bit PCI interface */
-   return (UCHAR)ccaInLong(barIdWithOffset);
+   UINT  ccaIndx = CCA_IO_PORT_RSRC(barIdWithOffset);
+   BOOL  useBar1 = CCA_IO_PORT_BAR(barIdWithOffset);
+   UINT8 offset  = CCA_IO_PORT_OFFSET(barIdWithOffset);
+   return (UCHAR)ccaPciIn32(offset, ccaIndx, useBar1);
 }
 
 USHORT ccaInWord (CcaIoPort barIdWithOffset)
 {
    /* Implemented via 32-bit read given the 32-bit PCI interface */
-   return (USHORT)ccaInLong(barIdWithOffset);
+   UINT  ccaIndx = CCA_IO_PORT_RSRC(barIdWithOffset);
+   BOOL  useBar1 = CCA_IO_PORT_BAR(barIdWithOffset);
+   UINT8 offset  = CCA_IO_PORT_OFFSET(barIdWithOffset);
+   return (USHORT)ccaPciIn32(offset, ccaIndx, useBar1);
 }
 
 ULONG ccaInLong (CcaIoPort barIdWithOffset)
 {
-   UINT  ccaIndx = CCA_IO_PORT_RSRC_INDX(barIdWithOffset);
-   BOOL  useBar1 = CCA_IO_PORT_BAR_INDX(barIdWithOffset);
+   UINT  ccaIndx = CCA_IO_PORT_RSRC(barIdWithOffset);
+   BOOL  useBar1 = CCA_IO_PORT_BAR(barIdWithOffset);
    UINT8 offset  = CCA_IO_PORT_OFFSET(barIdWithOffset);
    return ccaPciIn32(offset, ccaIndx, useBar1);
 }
@@ -185,19 +214,25 @@ ULONG ccaInLong (CcaIoPort barIdWithOffset)
 void ccaOutByte (CcaIoPort barIdWithOffset, CcaByte data)
 {
    /* Implemented via 32-bit write given the 32-bit PCI interface */
-   ccaOutLong(barIdWithOffset, data);
+   UINT  ccaIndx = CCA_IO_PORT_RSRC(barIdWithOffset);
+   BOOL  useBar1 = CCA_IO_PORT_BAR(barIdWithOffset);
+   UINT8 offset  = CCA_IO_PORT_OFFSET(barIdWithOffset);
+   ccaPciOut32(offset, (UINT32)data, ccaIndx, useBar1);
 }
 
 void ccaOutWord (CcaIoPort barIdWithOffset, CcaWord data)
 {
    /* Implemented via 32-bit write given the 32-bit PCI interface */
-   ccaOutLong(barIdWithOffset, data);
+   UINT  ccaIndx = CCA_IO_PORT_RSRC(barIdWithOffset);
+   BOOL  useBar1 = CCA_IO_PORT_BAR(barIdWithOffset);
+   UINT8 offset  = CCA_IO_PORT_OFFSET(barIdWithOffset);
+   ccaPciOut32(offset, (UINT32)data, ccaIndx, useBar1);
 }
 
 void ccaOutLong (CcaIoPort barIdWithOffset, CcaLong data)
 {
-   UINT  ccaIndx = CCA_IO_PORT_RSRC_INDX(barIdWithOffset);
-   BOOL  useBar1 = CCA_IO_PORT_BAR_INDX(barIdWithOffset);
+   UINT  ccaIndx = CCA_IO_PORT_RSRC(barIdWithOffset);
+   BOOL  useBar1 = CCA_IO_PORT_BAR(barIdWithOffset);
    UINT8 offset  = CCA_IO_PORT_OFFSET(barIdWithOffset);
    ccaPciOut32(offset, (UINT32)data, ccaIndx, useBar1);
 }

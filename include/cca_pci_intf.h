@@ -80,7 +80,7 @@ STATUS sysCCAHwInit (void);
 /**
  * Returns number of CCA resources available and initialized.
  */
-unsigned int ccaPciResourcesAvailable ();
+unsigned int ccaPciResourcesAvailable (void);
 
 /**
  * Displays a list of the of detected CCA resources.
@@ -103,24 +103,20 @@ UINT32 ccaPciIn32 (UINT8 offset, UINT rsrcIndx, BOOL useBar1);
 void ccaPciOut32 (UINT8 offset, UINT32 value, UINT rsrcIndx, BOOL useBar1);
 
 /* These typedefs match the input types for sysLib's I/O interface */
-typedef int CcaIoPort;
-typedef char CcaByte;
+typedef int       CcaIoPort;
+typedef char      CcaByte;
 typedef short int CcaWord;
-typedef long int CcaLong;
+typedef long int  CcaLong;
 
 
-#define CCA_RSRC_MASK   0x01    /* CCA_MAX_PCI_RESOURCES - 1 */
-#define CCA_BAR_MASK    0x01
-#define CCA_OFFSET_MASK 0xFF
+#define CCA_BIT0_RSRC   13  /* Bit position for resource index b0 */
+#define CCA_BIT0_BAR    12  /* Bit position for bar index b0 */
 
 /**
- * Helper macros to compose a CcaIoPort and/or extract its components
+ * Helper macro to compose a CcaIoPort from its components
  */
-#define CCA_IO_PORT(rsrc, bar, offset)      \
-   (((rsrc & CCA_RSRC_MASK) << 16)|((bar & CCA_BAR_MASK) << 8)|(offset & 0xFF))
-#define CCA_IO_PORT_RSRC_INDX(ccaIoPort)    ((ccaIoPort >> 16) & CCA_RSRC_MASK)
-#define CCA_IO_PORT_BAR_INDX(ccaIoPort)     ((ccaIoPort >>  8) & CCA_BAR_MASK)
-#define CCA_IO_PORT_OFFSET(ccaIoPort)       (ccaIoPort & CCA_OFFSET_MASK)
+#define CCA_IO_PORT(rsrc, bar, offset) \
+ ((rsrc << CCA_BIT0_RSRC)|(bar << CCA_BIT0_BAR)|(offset))
 
 /**
  * I/O functions to read/Write data to/from a specified CCA resource, where:

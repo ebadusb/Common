@@ -30,8 +30,9 @@
 #     makeTarget
 #*/
 
-CPU		= PENTIUM4
-TOOL	= gnu
+# Prevent any clashes with environment variable and/or command-line settings
+override CPU  := PENTIUM4
+override TOOL := gnu
 
 TGT_DIR = $(WIND_BASE)/target
 
@@ -88,6 +89,9 @@ bootrom.pxe: bootrom_uncmp preboot.s
 	objcopypentium -O binary --gap-fill=0 preboot.out preboot.1024
 	copy /B preboot.1024+bootrom.tmp bootrom.pxe
 	rm -f preboot.out preboot.1024 bootrom.tmp
+
+cputest:
+	@echo From Makefile: CPU=$(CPU)
 
 ################################################################################
 

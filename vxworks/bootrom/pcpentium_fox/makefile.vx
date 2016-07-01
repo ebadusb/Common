@@ -57,7 +57,7 @@ ROM_DEPS := $(wildcard *.h) \
             $(wildcard sys*.s)
 
 $(ROM_FILES): $(ROM_DEPS) | $(DST_DIR)
-	@echo x Building: $(THIS_DIR)/$@
+	@echo x Building: $@ from $(THIS_DIR)
 	$(Q)rm -f *.o
 	$(Q)$(MAKE) $(MY_MAKE_ARGS) bootrom.bin
 	$(Q)$(MV) -f bootrom.bin $@

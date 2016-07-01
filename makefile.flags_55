@@ -335,15 +335,6 @@ endif
 endif
 
 #
-# Check for E-Box 2016 redesign command-line option: EBOX=true
-#
-ifeq ($(EBOX),true)
- CC_ARCH_FLAGS  += -DPCI_EBOX
- CXX_ARCH_FLAGS += -DPCI_EBOX
- CPP_ARCH_FLAGS += -DPCI_EBOX
-endif
-
-#
 # This section sets debug and optimization options based on
 # the build type.
 #

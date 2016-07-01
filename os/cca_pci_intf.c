@@ -28,6 +28,7 @@
 #define CCA_IO_PORT_RSRC(ccaIoPort)     (ccaIoPort >> CCA_BIT0_RSRC)
 #define CCA_IO_PORT_BAR(ccaIoPort)      (ccaIoPort >> CCA_BIT0_BAR )
 #define CCA_IO_PORT_OFFSET(ccaIoPort)   (ccaIoPort & 0xFF)
+#define CCA_OFFSET_NA                   (0xFF)
 
 /* Local prototypes */
 LOCAL void   ccaResourceArrayInit (ccaPciResources data[CCA_MAX_PCI_RESOURCES]);
@@ -152,7 +153,7 @@ UINT32 ccaPciIn32 (UINT8 offset, UINT rsrcIndx, BOOL useBar1)
    UINT32 retVal = 0;
    UINT8* pBar   = NULL;
 
-   if (rsrcIndx < CCA_MAX_PCI_RESOURCES)
+   if (offset < CCA_OFFSET_NA && rsrcIndx < CCA_MAX_PCI_RESOURCES)
    {
       pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0);
    }
@@ -162,8 +163,9 @@ UINT32 ccaPciIn32 (UINT8 offset, UINT rsrcIndx, BOOL useBar1)
    }
    else
    {
-      fprintf(stderr, "ERROR: NULL pBar for rsrcIndx=%d useBar1=%d offset=%#x\n", rsrcIndx, useBar1, offset);
+      printf("%s(): null pBAR for offset=%#x rsrcIndx=%d useBar1=%d\n", __FUNCTION__, offset, rsrcIndx, useBar1);
    }
+
    return retVal;
 }
 
@@ -171,7 +173,7 @@ void ccaPciOut32 (UINT8 offset, UINT32 value, UINT rsrcIndx, BOOL useBar1)
 {
    UINT8* pBar = NULL;
 
-   if (rsrcIndx < CCA_MAX_PCI_RESOURCES)
+   if (offset < CCA_OFFSET_NA && rsrcIndx < CCA_MAX_PCI_RESOURCES)
    {
       pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIndx].pBAR1 : ccaPciData[rsrcIndx].pBAR0);
    }
@@ -181,7 +183,7 @@ void ccaPciOut32 (UINT8 offset, UINT32 value, UINT rsrcIndx, BOOL useBar1)
    }
    else
    {
-      fprintf(stderr, "ERROR: NULL pBar for rsrcIndx=%d useBar1=%d offset=%#x\n", rsrcIndx, useBar1, offset);
+      printf("%s(): null pBAR for offset=%#x rsrcIndx=%d useBar1=%d\n", __FUNCTION__, offset, rsrcIndx, useBar1);
    }
 }
 

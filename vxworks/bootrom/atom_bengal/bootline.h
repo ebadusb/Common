@@ -10,7 +10,7 @@
 #define INTFTPPASS "Aunt_078"
 
 #define DEFAULT_BOOT_LINE \
-  "gei(0,0)control:/taos/boot/safety/vxWorks" \
+  "gei(0,0)control:/taos/boot/safety/vxWorks_bengal" \
   " e=90.1.0.1:ffffff00 h=90.1.0.2" \
   " u=" INTFTPUSER " pw=" INTFTPPASS \
   " f=0x0"
@@ -26,7 +26,7 @@
 #define INTFTPPASS "Aunt_078"
 
 #define DEFAULT_BOOT_LINE \
-  "gei(0,0)control:/taos/boot/apc/vxWorks" \
+  "gei(0,0)control:/taos/boot/apc/vxWorks_bengal" \
   " e=90.2.0.1:ffffff00 h=90.2.0.2" \
   " u=" INTFTPUSER " pw=" INTFTPPASS \
   " f=0x0"

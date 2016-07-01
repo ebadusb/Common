@@ -437,17 +437,6 @@ FWStatus fwProcessEvents(void)
 					/* Process interrupts */
 					FWLOGLEVEL9("Interrupt received from adapter %d intMask:0x%08X isoXmit:0x%08X isoRecv:0x%08X\n", index, interruptMask, isoXmitInterruptMask, isoRecvInterruptMask);
 
-					/* Check for missing isochRx bit anomaly (E-Box 2016 diagnostics) */
-					if ( isoRecvInterruptMask )
-					{
-					   ++xxFwIsoRxIntCnt;
-					   if( interruptMask == 0 )
-					   {
-					      ++xxFwIntrEmptyCnt;
-					      FWLOGLEVEL4("Got IsoRx interrupt on adaptor %d with intMask=0 : cnt=%d/%d isoRecv=%#x\n", index, xxFwIntrEmptyCnt, xxFwIsoRxIntCnt, isoRecvInterruptMask);
-					   }
-					}
-
 					if( interruptMask & 0x00000001 )
 					{
 						retVal = fwRequestTxCompleteIntHandler( pDriver );
@@ -485,6 +474,13 @@ FWStatus fwProcessEvents(void)
 
 					if( isoRecvInterruptMask /* || (interruptMask & 0x00000080) */)
 					{
+						/* Check for missing isochRx bit anomaly (E-Box 2016 diagnostics) */
+						++xxFwIsoRxIntCnt;
+						if( interruptMask == 0 )
+						{
+						   ++xxFwIntrEmptyCnt;
+						   FWLOGLEVEL7("Got IsoRx interrupt on adaptor %d with intMask=0 : cnt=%d/%d isoRecv=%#x\n", index, xxFwIntrEmptyCnt, xxFwIsoRxIntCnt, isoRecvInterruptMask);
+						}
 						retVal = fwIsoRxIntHandler( pDriver, isoRecvInterruptMask );
 					}
 

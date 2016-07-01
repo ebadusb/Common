@@ -13,17 +13,36 @@
  *
  */
 #include <vxWorks.h>
-#include <assert.h>
 #include <stdio.h>
 
 #include "hw_intf.h"
 #include "cca_pci_intf.h"
+#include "datalog.h"
 
 /* ----------------------------- MACROS ---------------------------- */
-#define ASSERT(cond)    assert(cond)
+#undef HW_DEBUG
+#ifdef HW_DEBUG
+
+#include <assert.h>
+int xxBadPort = 0;
+
+#define BAD_PORT_ID() \
+ datalog_PrintToDefault(__FILE__, __LINE__, "%s(): invalid portId=%d (GetPortRegFn=%#x)", __FUNCTION__, portId, (int)theImpl.GetPortRegister); \
+ assert(++xxBadPort < 10);
+
+#define ASSERT_OPORT(port) if (port == HwPortReg_NA) { BAD_PORT_ID(); return;   }
+#define ASSERT_IPORT(port) if (port == HwPortReg_NA) { BAD_PORT_ID(); return 0; }
+
+#else
+
+#define ASSERT_OPORT(port)
+#define ASSERT_IPORT(port)
+
+#endif /* HW_DEBUG */
 
 /* ----------------------------- CONSTANTS ------------------------- */
 /* ----------------------------- PROTOTYPES------------------------- */
+
 
 static HwInterfaceImpl theImpl = {0};
 
@@ -34,7 +53,7 @@ BOOL hwInitInterface(const HwInterfaceImpl* pImpl)
    /* Once initialized, don't re-initialize */
    if (theImpl.GetPortRegister != NULL)
    {
-      printf("%s(): HwInterfaceImpl already initialized to %s\n", __FUNCTION__, theImpl.name);
+      datalog_PrintToDefault(__FILE__, __LINE__, "HwInterfaceImpl already initialized to %s\n", theImpl.name);
       isValid = TRUE;
    }
    else if (pImpl && pImpl->GetPortRegister &&
@@ -44,13 +63,13 @@ BOOL hwInitInterface(const HwInterfaceImpl* pImpl)
    {
       theImpl = *pImpl;
       isValid = TRUE;
-      /*
-       * hwShowPortMap();
-       */
+   #if 0
+      hwShowPortMap();
+   #endif
    }
    else
    {
-      printf("%s(): invalid HwInterfaceImpl\n", __FUNCTION__);
+      datalog_PrintToDefault(__FILE__, __LINE__, "Invalid HwInterfaceImpl\n");
    }
 
    return isValid;
@@ -64,45 +83,48 @@ HwPortReg hwGetPortRegister(HwPortId portId)
 UCHAR hwInByte(HwPortId portId)
 {
    HwPortReg port = hwGetPortRegister(portId);
-   ASSERT(port != HwPortReg_NA);
+   ASSERT_IPORT(port);
    return theImpl.InByte(port);
 }
 
 USHORT hwInWord(HwPortId portId)
 {
    HwPortReg port = hwGetPortRegister(portId);
-   ASSERT(port != HwPortReg_NA);
+   ASSERT_IPORT(port);
    return theImpl.InWord(port);
 }
 
 ULONG hwInLong(HwPortId portId)
 {
    HwPortReg port = hwGetPortRegister(portId);
-   ASSERT(port != HwPortReg_NA);
+   ASSERT_IPORT(port);
    return theImpl.InLong(port);
 }
 
 void hwOutByte(HwPortId portId, HwByte data)
 {
    HwPortReg port = hwGetPortRegister(portId);
-   ASSERT(port != HwPortReg_NA);
+   ASSERT_OPORT(port);
    theImpl.OutByte(port, data);
 }
 
 void hwOutWord(HwPortId portId, HwWord data)
 {
    HwPortReg port = hwGetPortRegister(portId);
-   ASSERT(port != HwPortReg_NA);
+   ASSERT_OPORT(port);
    theImpl.OutWord(port, data);
 }
 
 void hwOutLong(HwPortId portId, HwLong data)
 {
    HwPortReg port = hwGetPortRegister(portId);
-   ASSERT(port != HwPortReg_NA);
+   ASSERT_OPORT(port);
    theImpl.OutLong(port, data);
 }
 
+/**
+ * Command-line utility to print the current HwPortId-to-HwPortReg mapping.
+ */
 int hwShowPortMap(void)
 {
    int mapSize = 0;
@@ -115,14 +137,15 @@ int hwShowPortMap(void)
    {
       HwPortId portId;
 
-      printf("HwInterfaceImpl port mapping for: %s\n", theImpl.name);
+      printf("HwInterfaceImpl:\n Name=%s\n GetPortRegister=%p\n Port mapping:\n",
+             (theImpl.name ? theImpl.name : "<NoName>"), theImpl.GetPortRegister );
 
       mapSize = theImpl.numPorts;
 
       for (portId = 0; portId < mapSize; portId++)
       {
          HwPortReg portReg = theImpl.GetPortRegister(portId);
-         printf("portId=%#x : portReg=%#x\n", portId, portReg);
+         printf("portId=%02d -> portReg=%#02x\n", portId, portReg);
       }
    }
 

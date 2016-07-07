@@ -43,20 +43,24 @@ endif
 trima:	$(DST_DIR)/bootrom_fox_trima.sys
 optia:	$(DST_DIR)/bootrom_fox_optia.sys
 	
-# Target-specific flags
-#
-$(DST_DIR)/bootrom_fox_trima.sys: MY_DFLAGS += -DTRIMA_BOOTROM
-$(DST_DIR)/bootrom_fox_optia.sys: MY_DFLAGS += -DOPTIA_BOOTROM
-
-MY_MAKE_ARGS += EXTRA_DEFINE="$(MY_DFLAGS)"
-
 # Not a true list of dependencies, but sufficient to trigger developer rebuilds
 #
 ROM_DEPS := $(wildcard *.h) \
             $(wildcard *.c) \
             $(wildcard sys*.s)
 
+# Target-specific flags
+#
+$(DST_DIR)/bootrom_fox_trima.sys: MY_DFLAGS += -DTRIMA_BOOTROM
+$(DST_DIR)/bootrom_fox_optia.sys: MY_DFLAGS += -DOPTIA_BOOTROM
+$(DST_DIR)/bootrom_fox_optia.sys: ROM_DEPS += $(COMDIR)/os/cca_pci_intf.c
+$(DST_DIR)/bootrom_fox_optia.sys: MY_INCLS = -I$(COMDIR) -I$(COMDIR)/include
+
+MY_MAKE_ARGS += EXTRA_DEFINE="$(MY_DFLAGS)" EXTRA_INCLUDE="$(MY_INCLS)"
+
 $(ROM_FILES): $(ROM_DEPS) | $(DST_DIR)
+	@echo MY_INCLS=$(MY_INCLS)
+	@echo ROM_DEPS=$(ROM_DEPS)
 	@echo x Building: $@ from $(THIS_DIR)
 	$(Q)rm -f *.o
 	$(Q)$(MAKE) $(MY_MAKE_ARGS) bootrom.bin

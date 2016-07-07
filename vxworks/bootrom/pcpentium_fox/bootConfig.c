@@ -880,6 +880,7 @@ LOCAL void  printExcMsg (char *string);
 LOCAL STATUS   getArg (char **ppString, int *pValue, BOOL defaultHex,
 							  BOOL optional);
 #ifdef OPTIA_BOOTROM
+#include "include/cca_pci_intf.h"
 LOCAL int bootPauseButtonPressed(void);
 LOCAL int bootStopButtonPressed(void);
 #endif /* OPTIA_BOOTROM */
@@ -4154,14 +4155,13 @@ LOCAL STATUS getArg
  */
 
 #ifdef OPTIA_BOOTROM
-enum { BASE					= 0x0B00 };    /* lower I/O base address for control */
-enum { IN_BUTTONS			= BASE+0x14 };
-enum { NOT_STOP_SWITCH_BIT	= 0x02 };      /* stop switch bit for control */
-enum { NOT_PAUSE_SWITCH_BIT = 0x01 };      /* pause switch bit for control */
+enum { IN_BUTTONS           = CCA_IO_PORT(0, 0, 0x2C) };  /* CTL3_INP_BUTTONS */
+enum { NOT_STOP_SWITCH_BIT  = 0x04 };      /* CTL3_NOT_STOP_SWITCH_BIT  */
+enum { NOT_PAUSE_SWITCH_BIT = 0x02 };      /* CTL3_NOT_PAUSE_SWITCH_BIT */
 
 LOCAL int bootPauseButtonPressed(void)
 {
-	unsigned char value = sysInByte(IN_BUTTONS);
+	unsigned char value = ccaInByte(IN_BUTTONS);
 	int result = 0;
 
 	if ( !(value & NOT_PAUSE_SWITCH_BIT) ) result = 1;
@@ -4171,7 +4171,7 @@ LOCAL int bootPauseButtonPressed(void)
 
 LOCAL int bootStopButtonPressed(void)
 {
-	unsigned char value = sysInByte(IN_BUTTONS);
+	unsigned char value = ccaInByte(IN_BUTTONS);
 	int result = 0;
 
 	if ( !(value & NOT_STOP_SWITCH_BIT) ) result = 1;

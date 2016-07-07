@@ -26,7 +26,7 @@ include $(MAINDIR)/makefile.vxc
 #
 # The following should define the location of the resulting library.
 #
-MY_OUT_DIR   = bin
+MY_OUT_DIR  ?= bin
 MY_CFG_DIR   = $(shell cmd /c cd)
 
 MY_TRIMA_CFG = pentium_VGA_640x480_8bit.cfg

@@ -309,6 +309,11 @@ IMPORT void        intEnt (void);
 IMPORT int         sysCpuProbe (void);        /* set a type of CPU family */
 IMPORT VOID        sysUsbOhciPciInit (void);  /* USB OHCI Init */
 
+/* Terumo BCT specialization */
+#ifdef OPTIA_BOOTROM
+#include "os/cca_pci_intf.c"    /* TerumoBCT CCA Support for button press tests */
+#endif
+
 
 /* globals */
 
@@ -500,7 +505,15 @@ PHYS_MEM_DESC sysPhysMemDesc [] =
     DUMMY_MMU_ENTRY,
     DUMMY_MMU_ENTRY,
     DUMMY_MMU_ENTRY,
-
+#ifdef OPTIA_BOOTROM
+    DUMMY_MMU_ENTRY,
+    DUMMY_MMU_ENTRY,
+    DUMMY_MMU_ENTRY,
+    DUMMY_MMU_ENTRY,
+    DUMMY_MMU_ENTRY,
+    DUMMY_MMU_ENTRY,
+    DUMMY_MMU_ENTRY,
+#endif
     };
 
 int sysPhysMemDescNumEnt; 	/* number Mmu entries to be mapped */
@@ -1256,6 +1269,10 @@ void sysHwInit (void)
     vxPowerModeSet(VX_POWER_MODE_DEFAULT);
 #endif /* VX_POWER_MANAGEMENT */
 
+#ifdef OPTIA_BOOTROM
+    /* Terumo CCA initialization */
+    sysCCAHwInit();
+#endif
     }
 
 /*******************************************************************************

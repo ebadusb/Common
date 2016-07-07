@@ -204,7 +204,12 @@ extern "C" {
 
 /* Default boot line */
 
-#define DEFAULT_BOOT_LINE "ata=1,0(0,0)host:/ata10/vxWorks tn=control u=terumo"
+#ifdef OPTIA_BOOTROM
+   #define DEFAULT_BOOT_LINE "ata=1,0(0,0)host:/ata10/vxWorks_fox tn=control u=terumo"
+#else
+   #define DEFAULT_BOOT_LINE "ata=1,0(0,0)host:/ata10/vxWorks tn=control u=terumo"
+#endif
+
 /* to suppress boot msgs: "ata=1,0(0,0)host:/ata10/vxWorks tn=control u=terumo o=rdc0" */
 
 /* Warm boot (reboot) devices and parameters */

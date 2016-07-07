@@ -37,8 +37,7 @@ typedef enum
    //
    // Counters for Lower Level Air & Fluid Sample & Centrifuge Commutation (8-bit)
    //
-   SAFP_INP_LL_AIR_COUNT    = 0x0C, // Ultrasonics air counter
-   SAFP_INP_LL_FLUID_COUNT  = 0x10, // Ultrasonics fluid counter
+   SAFP_INPW_ULTRASONICS    = 0x0C, // Ultrasonics air + fluid counters
    SAFP_INP_CENTRIFUGE      = 0x14, // Read comm counter
    SAFP_OUTP_CLR_CENT_FAULT = 0x14, // Write clears comm fault bit
    //

@@ -87,8 +87,8 @@ void ccaPciShow (void)
              ccaPciData[index].deviceNo,
              ccaPciData[index].funcNo,
              ccaPciData[index].ipin,
-             ccaPciData[index].pBAR0,
-             ccaPciData[index].pBAR1);
+             (int)ccaPciData[index].pBAR0,
+             (int)ccaPciData[index].pBAR1);
    }
 }
 

@@ -78,10 +78,8 @@ typedef enum
    //
    // Counters for Air & Fluid Sample & Centrifuge Commutation (8-bit, read-only)
    //
-   CTL3_INP_LOWER_AIR_COUNT      = 0x40,
-   CTL3_INP_LOWER_FLUID_COUNT    = 0x44,
-   CTL3_INP_UPPER_AIR_COUNT      = 0x48,
-   CTL3_INP_UPPER_FLUID_COUNT    = 0x4C,
+   CTL3_INW_LOWER_AIR_AND_FLUID  = 0x40,
+   CTL3_INW_UPPER_AIR_AND_FLUID  = 0x48,
    CTL3_INP_CENT_COMM            = 0x50,
    CTL3_IN_CENT_COMM             = CTL3_INP_CENT_COMM,
    //

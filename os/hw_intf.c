@@ -27,7 +27,7 @@
 int xxBadPort = 0;
 
 #define BAD_PORT_ID() \
- datalog_PrintToDefault(__FILE__, __LINE__, "%s(): invalid portId=%d (GetPortRegFn=%#x)", __FUNCTION__, portId, (int)theImpl.GetPortRegister); \
+ printf("%s(): invalid portId=%d (GetPortRegFn=%#x)", __FUNCTION__, portId, (int)theImpl.GetPortRegister); \
  assert(++xxBadPort < 10);
 
 #define ASSERT_OPORT(port) if (port == HwPortReg_NA) { BAD_PORT_ID(); return;   }
@@ -53,7 +53,7 @@ BOOL hwInitInterface(const HwInterfaceImpl* pImpl)
    /* Once initialized, don't re-initialize */
    if (theImpl.GetPortRegister != NULL)
    {
-      datalog_PrintToDefault(__FILE__, __LINE__, "HwInterfaceImpl already initialized to %s\n", theImpl.name);
+      printf("HwInterfaceImpl already initialized to %s\n", theImpl.name);
       isValid = TRUE;
    }
    else if (pImpl && pImpl->GetPortRegister &&
@@ -69,7 +69,7 @@ BOOL hwInitInterface(const HwInterfaceImpl* pImpl)
    }
    else
    {
-      datalog_PrintToDefault(__FILE__, __LINE__, "Invalid HwInterfaceImpl\n");
+      printf("Invalid HwInterfaceImpl\n");
    }
 
    return isValid;

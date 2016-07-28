@@ -30,14 +30,30 @@ SEE ALSO:
 /* includes */
 
 #ifdef  INCLUDE_END
+# ifdef  INCLUDE_DEC21X40_END
 #   include "sysDec21x40End.c"          /* dec21x40End support routines */
+# endif
+# ifdef  INCLUDE_EL_3C90X_END
 #   include "sysEl3c90xEnd.c"           /* el3c90xEnd support routines  */
+# endif
+# ifdef  INCLUDE_ELT_3C509_END
 #   include "sysElt3c509End.c"          /* elt3c509End support routines */
+# endif
+# ifdef	INCLUDE_FEI_END
 #   include "sysFei82557End.c"          /* fei82557End support routines */
+# endif
+# ifdef	INCLUDE_GEI8254X_END
 #   include "sysGei82543End.c"          /* gei82543End support routines */
+# endif
+# ifdef  INCLUDE_LN_97X_END
 #   include "sysLn97xEnd.c"             /* ln97xEnd support routines    */
+# endif
+# ifdef  INCLUDE_ENE_END
 #   include "sysNe2000End.c"            /* ne2000End support routines   */
+# endif
+# ifdef  INCLUDE_ULTRA_END
 #   include "sysUltraEnd.c"             /* ultraEnd support routines    */
+# endif
 #endif  /* INCLUDE_END */
 
 #ifdef  INCLUDE_BSD

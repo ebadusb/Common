@@ -293,7 +293,7 @@ extern "C" {
 /* Network driver options */
 
 #define INCLUDE_END             /* Enhanced Network Driver Support */
-#define INCLUDE_TFTP_CLIENT     /* Needed by some Safety network cards to load vxWorks OS while in bootrom */
+#undef  INCLUDE_TFTP_CLIENT     /* Needed by some Safety network cards to load vxWorks OS while in bootrom */
 #define INCLUDE_FTP
 
 #undef  INCLUDE_DEC21X40_END    /* (END) DEC 21x4x PCI interface */
@@ -728,7 +728,7 @@ extern "C" {
  * configuration option corrects SPR 21338.
  */
 
-#define INCLUDE_ADD_BOOTMEM     /* Add upper memory to low memory bootrom */
+#undef  INCLUDE_ADD_BOOTMEM     /* Add upper memory to low memory bootrom */
 #define ADDED_BOOTMEM_SIZE      (0x00200000)     /* 2MB additional memory */
 
 /* power management definitions */

@@ -722,6 +722,9 @@ STATUS sys82543BoardInit
         /* get the initialization control word 2 (ICW2) in EEPROM */
         sysGei541ReadEeprom(unit, EEPROM_ICW2, 1,
                     (UINT8 *)&(geiResources[unit].eeprom_icw2));
+
+        pReso->eeprom_icw1 = geiResources[unit].eeprom_icw1;
+        pReso->eeprom_icw2 = geiResources[unit].eeprom_icw2;
         }
     else
         {
@@ -770,10 +773,14 @@ STATUS sys82543BoardInit
     /* BSP specific
      * phyDelayRtn is used as a delay function for PHY detection, if not set,
      * taskDelay will be used.
+     *
+     * Furthermore, MII will adjust phyMaxDelay to ensure a minimum of 5 seconds
+     * based on the value of sysClkRateGet(), so initialize to NO_DELAY and let
+     * MII adjust it accordingly.
      */
 
     pBoard->phyDelayRtn = (FUNCPTR) taskDelay;
-    pBoard->phyMaxDelay = MII_PHY_DEF_DELAY;
+    pBoard->phyMaxDelay = MII_PHY_NO_DELAY;
     pBoard->phyDelayParm = 5; 
 
     /* BSP/adapter specific
@@ -847,10 +854,6 @@ STATUS sys82543BoardInit
     /* we finish adaptor initialization */
 
     pReso->iniStatus = OK;
-
-    /* enable adaptor interrupt */
-
-    sysIntEnablePIC (pRsrc->irq);
 
     return (OK);
     }
@@ -1437,7 +1440,8 @@ LOCAL STATUS sys543IntEnable
     int    unit        /* unit number */
     )
     {
-    return (OK);
+    return ((unit >= geiUnits) ? ERROR :
+            (sysIntEnablePIC(geiPciResources[unit].irq)));
     }
 
 /*****************************************************************************
@@ -1460,7 +1464,8 @@ LOCAL STATUS sys543IntDisable
     int    unit        /* unit number */
     )
     {
-    return (OK);
+    return ((unit >= geiUnits) ? ERROR :
+            (sysIntDisablePIC(geiPciResources[unit].irq)));
     }
 
 /*****************************************************************************
@@ -1496,6 +1501,8 @@ void sys543Show
         printf ("********* Intel PRO1000 82544GC/EI based Adapter ********\n");
     else if (pRsrc->boardType == PRO1000_546_BOARD)
         printf ("********* Intel 82540/82545/82546EB based Adapter ********\n");
+    else if (pRsrc->boardType == DEV_ID_82541PI)
+        printf ("********* Intel 82541PI Adapter ********\n");
     else
         printf ("********* UNKNOWN Adaptor ************ \n");
  
@@ -1503,10 +1510,8 @@ void sys543Show
  
     printf ("  Flash PCI Membase address = 0x%x\n", pReso->flashBase);
 
-    printf ("  PCI bus no.= 0x%x, device no.= 0x%x, function no.= 0x%x\n", 
-             pRsrc->pciBus, pRsrc->pciDevice, pRsrc->pciFunc);
-
-    printf ("  IRQ = %d\n", pRsrc->irq);  
+    printf ("  PCI bus no.= 0x%x, device no.= 0x%x, function no.= 0x%x, IRQ = %d\n",
+             pRsrc->pciBus, pRsrc->pciDevice, pRsrc->pciFunc, pRsrc->irq);
 
     if (pReso->iniStatus == ERROR)
         return;

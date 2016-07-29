@@ -54,11 +54,9 @@ clean: MY_DFLAGS += -DTRIMA_BOOTROM
 
 MY_MAKE_ARGS += EXTRA_DEFINE="$(MY_DFLAGS)"
 
-# Not a true list of dependencies, but sufficient to trigger developer rebuilds
+# Makefile will handle generating the dependencies 
 #
-ROM_DEPS := $(wildcard *.h) \
-            $(wildcard *.c) \
-            $(wildcard sys*.s)
+ROM_DEPS := depend.atom_bengal
 
 $(ROM_FILES): $(ROM_DEPS) | $(DST_DIR)
 	@echo x Building: $@ from $(THIS_DIR)
@@ -68,6 +66,9 @@ $(ROM_FILES): $(ROM_DEPS) | $(DST_DIR)
 	@echo Done: $@
 
 bootrom.sys : bootrom_uncmp
+
+$(ROM_DEPS):
+	$(Q)$(MAKE) $(MY_MAKE_ARGS) $@
 
 $(DST_DIR):
 	md $(subst /,\,$@)

@@ -742,11 +742,15 @@ STATUS sys82543BoardInit
     /* BSP specific
      * phyDelayRtn is used as a delay function for PHY detection, if not set,
      * taskDelay will be used.
+     *
+     * Furthermore, MII will adjust phyMaxDelay to ensure a minimum of 5 seconds
+     * based on the value of sysClkRateGet(), so initialize to NO_DELAY and let
+     * MII adjust it accordingly.
      */
 
     pBoard->phyDelayRtn = (FUNCPTR) taskDelay;
-    pBoard->phyMaxDelay = MII_PHY_DEF_DELAY;
-    pBoard->phyDelayParm = 5; 
+    pBoard->phyMaxDelay = MII_PHY_NO_DELAY;
+    pBoard->phyDelayParm = 5;
 
     /* BSP/adapter specific
      * set the PHY address if you know it, otherwise set to zero
@@ -1405,7 +1409,8 @@ LOCAL STATUS sys543IntEnable
     int    unit        /* unit number */
     )
     {
-    return (OK);
+    return ((unit >= geiUnits) ? ERROR :
+            (sysIntEnablePIC(geiPciResources[unit].irq)));
     }
 
 /*****************************************************************************
@@ -1428,7 +1433,8 @@ LOCAL STATUS sys543IntDisable
     int    unit        /* unit number */
     )
     {
-    return (OK);
+    return ((unit >= geiUnits) ? ERROR :
+            (sysIntDisablePIC(geiPciResources[unit].irq)));
     }
 
 /*****************************************************************************
@@ -1464,6 +1470,8 @@ void sys543Show
         printf ("********* Intel PRO1000 82544GC/EI based Adapter ********\n");
     else if (pRsrc->boardType == PRO1000_546_BOARD)
         printf ("********* Intel 82540/82541/82545/82546 based Adapter ********\n");
+    else if (pRsrc->boardType == PRO1000_I210_BOARD)
+        printf ("********* Intel I210 based Adapter ********\n");
     else
         printf ("********* UNKNOWN Adapter ************ \n");
  

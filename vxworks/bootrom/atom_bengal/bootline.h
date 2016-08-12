@@ -18,6 +18,7 @@
 #define BOOTLOAD_TAG   "TAOS"
 
 #endif /* OPTIA_BOOTROM */
+
 /* ================================================================================ */
 
 #ifdef OPTIA_APC_BOOTROM
@@ -37,6 +38,23 @@
 
 /* ================================================================================ */
 
+#ifdef OPTIA_PLT_BOOTROM    /* Trima platelet procedure on Optia */
+
+#define INTFTPUSER "trima"
+#define INTFTPPASS "Dri6SWLe"
+
+#define DEFAULT_BOOT_LINE \
+  "gei(0,0)control:/taos/plt_protocol/trima/safety/boot/vxWorks_bengal" \
+  " e=10.0.0.1:ffffff00 h=10.0.0.2 tn=safety" \
+  " u=" INTFTPUSER " pw=" INTFTPPASS \
+  " f=0x0"
+
+#define BOOTLOAD_TAG   "TAOS"
+
+#endif /* OPTIA_APC_BOOTROM */
+
+/* ================================================================================ */
+
 #ifdef TRIMA_BOOTROM
 
 #ifdef COMMON_KERNEL
@@ -44,7 +62,7 @@
 #define SFTYFTPUSER "SaF8t9d6er77823afZ"
 #define SFTYFTPPASS "Ru33st65890ZbcK3mo"
 
-/* XXX: For Common Kernel; need to revisit this */
+/* XXX: For Common Kernel; may need to revisit this */
 #define DEFAULT_BOOT_LINE \
   "gei(0,0)control:/config/kernel_init/safety/vxWorks" \
   " e=90.0.0.1:ffffff00 h=90.0.0.2 tn=safety" \
@@ -62,7 +80,7 @@
   " u=" INTFTPUSER " pw=" INTFTPPASS \
   " f=0x0"
 
-#endif
+#endif /* COMMON_KERNEL */
 
 #define BOOTLOAD_TAG   "Trima"
 

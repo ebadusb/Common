@@ -29,15 +29,17 @@ include $(MAINDIR)/makefile.vxc
 MY_OUT_DIR  ?= bin
 MY_CFG_DIR   = $(shell cmd /c cd)
 
-MY_TRIMA_CFG = pentium_VGA_640x480_8bit.cfg
-MY_OPTIA_CFG = pentium_VGA_800x600_16bit.cfg
-MY_APC_CFG   = bengal_VESABIOS_Grey_1024x768_8bit.cfg 
-MY_CFG_FILES = $(MY_TRIMA_CFG) $(MY_OPTIA_CFG) $(MY_APC_CFG)  
+MY_TRIMA_CFG     = pentium_VGA_640x480_8bit.cfg
+MY_OPTIA_PLT_CFG = pentium_VGA_800x600_8bit.cfg
+MY_OPTIA_CFG 	 = pentium_VGA_800x600_16bit.cfg
+MY_APC_CFG   	 = bengal_VESABIOS_Grey_1024x768_8bit.cfg 
+MY_CFG_FILES     = $(MY_TRIMA_CFG) $(MY_OPTIA_PLT_CFG) $(MY_OPTIA_CFG) $(MY_APC_CFG)  
 
-MY_TRIMA_OBJ = $(MY_OUT_DIR)/$(MY_TRIMA_CFG:.cfg=.o)
-MY_OPTIA_OBJ = $(MY_OUT_DIR)/$(MY_OPTIA_CFG:.cfg=.o)
-MY_APC_OBJ   = $(MY_OUT_DIR)/$(MY_APC_CFG:.cfg=.o)
-MY_UGL_OBJS  = $(MY_TRIMA_OBJ) $(MY_OPTIA_OBJ) $(MY_APC_OBJ)
+MY_TRIMA_OBJ     = $(MY_OUT_DIR)/$(MY_TRIMA_CFG:.cfg=.o)
+MY_OPTIA_PLT_OBJ = $(MY_OUT_DIR)/$(MY_OPTIA_PLT_CFG:.cfg=.o)
+MY_OPTIA_OBJ 	 = $(MY_OUT_DIR)/$(MY_OPTIA_CFG:.cfg=.o)
+MY_APC_OBJ   	 = $(MY_OUT_DIR)/$(MY_APC_CFG:.cfg=.o)
+MY_UGL_OBJS  	 = $(MY_TRIMA_OBJ) $(MY_OPTIA_PLT_OBJ) $(MY_OPTIA_OBJ) $(MY_APC_OBJ)
 
 WIND_UGL_DIR = $(WIND_BASE)\target\src\ugl
 WIND_LIB_DIR = $(WIND_BASE)\target\lib\pentium\$(CPU)\common
@@ -56,6 +58,7 @@ ugl : $(MY_UGL_OBJS)
 # Convience targets to selectively build for just Trima, Optia, or APC
 #
 trima : $(MY_TRIMA_OBJ)
+poo   : $(MY_OPTIA_PLT_OBJ)
 optia : $(MY_OPTIA_OBJ)
 apc   : $(MY_APC_OBJ)
 

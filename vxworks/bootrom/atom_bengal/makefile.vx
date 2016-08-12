@@ -18,7 +18,8 @@ endif
 DST_DIR    ?= $(COMDIR)/vxworks/bootrom/bin
 ROM_FILES  := $(DST_DIR)/bootrom_bengal_trima.pxe \
               $(DST_DIR)/bootrom_bengal_optia.pxe \
-              $(DST_DIR)/bootrom_bengal_optia_apc.pxe 
+              $(DST_DIR)/bootrom_bengal_optia_apc.pxe \
+              $(DST_DIR)/bootrom_bengal_optia_plt.pxe
 THIS_DIR   := $(notdir $(shell pwd))
 
 .PHONY: all clean
@@ -44,12 +45,14 @@ endif
 trima:	$(DST_DIR)/bootrom_bengal_trima.pxe
 optia:	$(DST_DIR)/bootrom_bengal_optia.pxe
 apc:	$(DST_DIR)/bootrom_bengal_optia_apc.pxe 
+plt:	$(DST_DIR)/bootrom_bengal_optia_plt.pxe 
 	
 # Target-specific flags
 #
 $(DST_DIR)/bootrom_bengal_trima.pxe:     MY_DFLAGS += -DTRIMA_BOOTROM
 $(DST_DIR)/bootrom_bengal_optia.pxe:     MY_DFLAGS += -DOPTIA_BOOTROM
 $(DST_DIR)/bootrom_bengal_optia_apc.pxe: MY_DFLAGS += -DOPTIA_APC_BOOTROM
+$(DST_DIR)/bootrom_bengal_optia_plt.pxe: MY_DFLAGS += -DOPTIA_PLT_BOOTROM
 clean: MY_DFLAGS += -DTRIMA_BOOTROM
 
 MY_MAKE_ARGS += EXTRA_DEFINE="$(MY_DFLAGS)"

@@ -212,7 +212,7 @@ END_TBL_ENTRY endDevTbl [] =
 #ifdef INCLUDE_GEI8254X_END
     {0, GEI8254X_LOAD_FUNC, GEI8254X_LOAD_STR, GEI8254X_BUFF_LOAN,
     NULL, FALSE},
-  #ifdef OPTIA_INCLUDE_2ND_GEI
+  #ifdef OPTIA_KERNEL /* INCLUDE_2ND_GEI */
     /* To avoid MII Auto-Negotiation timeout/failure, let Optia load manually for APC */
     {1, GEI8254X_LOAD_FUNC, GEI8254X_LOAD_STR, GEI8254X_BUFF_LOAN,
     NULL, FALSE},

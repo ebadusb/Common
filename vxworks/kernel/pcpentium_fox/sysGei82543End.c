@@ -48,8 +48,8 @@ SEE ALSO: ifLib,
 
 /* includes */
 
-#include "end.h"
-#include "drv/end/gei82543End.h"
+#include <end.h>
+#include <drv/end/gei82543End.h>
 
 
 /* defines */
@@ -344,7 +344,8 @@ LOCAL BOOL      sysGei82546InitTimerSetup (ADAPTOR_INFO * );
 LOCAL BOOL      sysGei82546DynaTimerSetup (ADAPTOR_INFO * ); 
 LOCAL UINT32    sysGeiDevToType (UINT32, UINT32, UINT8);
 
-void sysGei541ReadEeprom(int unit,int off, int cnt,UINT8 *dest);
+LOCAL void      sysGei541ReadEeprom(int unit,int off, int cnt,UINT8 *dest);
+LOCAL int       sysGeiTaskDelay(int millisecs);
 
 /*****************************************************************************
 *
@@ -774,14 +775,14 @@ STATUS sys82543BoardInit
      * phyDelayRtn is used as a delay function for PHY detection, if not set,
      * taskDelay will be used.
      *
-     * Furthermore, MII will adjust phyMaxDelay to ensure a minimum of 5 seconds
-     * based on the value of sysClkRateGet(), so initialize to NO_DELAY and let
-     * MII adjust it accordingly.
+     * For Fox, we know the 2nd GEI device (APC board) will be initially un-powered,
+     * so reduce the timeout to improve END initialization during kernel initialization.
+     * Moreover, when taskDelay() is set as the delay routine, the MII lib will enforce
+     * a 5 second delay, with a resolution of 1 second.
      */
-
-    pBoard->phyDelayRtn = (FUNCPTR) taskDelay;
-    pBoard->phyMaxDelay = MII_PHY_NO_DELAY;
-    pBoard->phyDelayParm = 5; 
+    pBoard->phyDelayRtn  = sysGeiTaskDelay;
+    pBoard->phyDelayParm = 3; /* 3 ticks => 50 msecs */
+    pBoard->phyMaxDelay  = (60*3) / pBoard->phyDelayParm;   /* => 3 seconds */
 
     /* BSP/adapter specific
      * set the PHY address if you know it, otherwise set to zero
@@ -1696,7 +1697,7 @@ void geiBitBangEeWordGet(int unit, UINT32 addr, UINT16 *dest)
 * ERRNO: N/A
 */
 
-void sysGei541ReadEeprom(int unit,int off, int cnt,UINT8 *dest)
+LOCAL void sysGei541ReadEeprom(int unit,int off, int cnt,UINT8 *dest)
     {
     int i;
     UINT16 word, *ptr;
@@ -1709,5 +1710,20 @@ void sysGei541ReadEeprom(int unit,int off, int cnt,UINT8 *dest)
         }
     return;
     }
+
+
+/*******************************************************************************
+*
+* sysGeiTaskDelay - suspend task for specified clock ticks
+*
+* For use by phyDelayRtn, as an alternative to taskDelay() so that we can tune
+* the phyMaxDelay below the 5 second minimum that miiLib will enforce iff taskDelay()
+* is used for phyDelayRtn. It is implemented in terms of taskDelay().
+*
+*/
+LOCAL int sysGeiTaskDelay(int ticks)
+{
+   return taskDelay(ticks);
+}
 
 #endif /* INCLUDE_GEI8254X_END */

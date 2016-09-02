@@ -142,12 +142,12 @@ extern "C" {
 #define COM2_BASE_ADR		0x2f8
 #define COM3_BASE_ADR		0x3e8
 #define COM4_BASE_ADR		0x2e8
-#define COM1_INT_LVL		0x0B    /* These match Trima's IRQ BIOS settings  */
-#define COM2_INT_LVL		0x03    /* Note that Optia customizes all 4 ports */
-#define COM3_INT_LVL		0x04
+#define COM1_INT_LVL		0x04    /* Fox IRQ BIOS settings should match these */
+#define COM2_INT_LVL		0x03
+#define COM3_INT_LVL		0x0B
 #define COM4_INT_LVL		0x07
 #define UART_REG_ADDR_INTERVAL	1	/* address diff of adjacent regs. */
-#define	N_UART_CHANNELS		1       /* Ports 1, 2, 3 get set by setupSerialPort() */
+#define	N_UART_CHANNELS		1
 
 /* timer (PIT) */
 

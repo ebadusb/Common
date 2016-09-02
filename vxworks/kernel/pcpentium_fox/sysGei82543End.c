@@ -782,7 +782,7 @@ STATUS sys82543BoardInit
      */
     pBoard->phyDelayRtn  = sysGeiTaskDelay;
     pBoard->phyDelayParm = 3; /* 3 ticks => 50 msecs */
-    pBoard->phyMaxDelay  = (60*3) / pBoard->phyDelayParm;   /* => 3 seconds */
+    pBoard->phyMaxDelay  = (60*4) / pBoard->phyDelayParm;   /* => 4 seconds */
 
     /* BSP/adapter specific
      * set the PHY address if you know it, otherwise set to zero

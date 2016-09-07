@@ -10,7 +10,7 @@
 #define INTFTPPASS "Aunt_078"
 
 #define DEFAULT_BOOT_LINE \
-  "gei(1,0)control:/taos/boot/safety/vxWorks_bengal" \
+  "gei(0,0)control:/taos/boot/safety/vxWorks_bengal" \
   " e=90.1.0.1:ffffff00 h=90.1.0.2" \
   " u=" INTFTPUSER " pw=" INTFTPPASS \
   " f=0x0"
@@ -27,7 +27,7 @@
 #define INTFTPPASS "Aunt_078"
 
 #define DEFAULT_BOOT_LINE \
-  "gei(1,0)control:/taos/boot/apc/vxWorks_bengal" \
+  "gei(0,0)control:/taos/boot/apc/vxWorks_bengal" \
   " e=90.2.0.1:ffffff00 h=90.2.0.2" \
   " u=" INTFTPUSER " pw=" INTFTPPASS \
   " f=0x0"
@@ -44,7 +44,7 @@
 #define INTFTPPASS "Dri6SWLe"
 
 #define DEFAULT_BOOT_LINE \
-  "gei(1,0)control:/taos/plt_protocol/trima/safety/boot/vxWorks_bengal" \
+  "gei(0,0)control:/taos/plt_protocol/trima/safety/boot/vxWorks_bengal" \
   " e=10.0.0.1:ffffff00 h=10.0.0.2 tn=safety" \
   " u=" INTFTPUSER " pw=" INTFTPPASS \
   " f=0x0"
@@ -64,7 +64,7 @@
 
 /* XXX: For Common Kernel; may need to revisit this */
 #define DEFAULT_BOOT_LINE \
-  "gei(1,0)control:/config/kernel_init/safety/vxWorks" \
+  "gei(0,0)control:/config/kernel_init/safety/vxWorks" \
   " e=90.0.0.1:ffffff00 h=90.0.0.2 tn=safety" \
   " u=" SFTYFTPUSER " pw=" SFTYFTPPASS \
   " f=0x0"
@@ -75,7 +75,7 @@
 #define INTFTPPASS "Dri6SWLe"
 
 #define DEFAULT_BOOT_LINE \
-  "gei(1,0)control:/trima/safety/boot/vxWorks" \
+  "gei(0,0)control:/trima/safety/boot/vxWorks" \
   " e=10.0.0.1:ffffff00 h=10.0.0.2 tn=safety" \
   " u=" INTFTPUSER " pw=" INTFTPPASS \
   " f=0x0"

@@ -756,6 +756,8 @@ M_CL_CONFIG mClBlkConfig =
 /*
  * network stack data cluster pool configuration table
  * Only used for data transfer in the network stack.
+ *
+ * TerumoBCT: tweaked to significantly increase FTP recv of kernel
  */
 CL_DESC clDescTbl [] =
 {
@@ -763,11 +765,11 @@ CL_DESC clDescTbl [] =
 	clusterSize     num             	memArea         memSize
 	-----------     ----            	-------         -------
 	*/
-	{64,            NUM_64_MIN,     NULL,           0},
-	{128,           NUM_128_MIN,        NULL,           0},
-	{256,           NUM_256_MIN,        NULL,           0},
-	{512,           NUM_512_MIN,        NULL,           0},
-	{1024,          NUM_1024_MIN,       NULL,           0},
+	{64,            NUM_64_MIN*2,       NULL,           0},
+	{128,           NUM_128_MIN*5,      NULL,           0},
+	{256,           NUM_256_MIN*2,      NULL,           0},
+	{512,           NUM_512_MIN*5,      NULL,           0},
+	{1024,          NUM_1024*2,         NULL,           0},
 };
 int clDescTblNumEnt = (NELEMENTS(clDescTbl));
 

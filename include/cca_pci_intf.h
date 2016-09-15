@@ -139,6 +139,11 @@ void   ccaOutByte (CcaIoPort barIdWithOffset, CcaByte data);
 void   ccaOutWord (CcaIoPort barIdWithOffset, CcaWord data);
 void   ccaOutLong (CcaIoPort barIdWithOffset, CcaLong data);
 
+/**
+ * Show the CCA PCI register info associated with a given CcaIoPort.
+ */
+void ccaIoPortShow(CcaIoPort barIdWithOffset);
+
 
 #ifdef __cplusplus
 }

@@ -26,7 +26,7 @@
 
 /* Macros to split a CcaIoPort into its components */
 #define CCA_IO_PORT_RSRC(ccaIoPort)     (ccaIoPort >> CCA_BIT0_RSRC)
-#define CCA_IO_PORT_BAR(ccaIoPort)      (ccaIoPort >> CCA_BIT0_BAR )
+#define CCA_IO_PORT_BAR(ccaIoPort)      ((ccaIoPort >> CCA_BIT0_BAR) & 0x1)
 #define CCA_IO_PORT_OFFSET(ccaIoPort)   (ccaIoPort & 0xFF)
 #define CCA_OFFSET_NA                   (0xFF)
 
@@ -237,6 +237,27 @@ void ccaOutLong (CcaIoPort barIdWithOffset, CcaLong data)
    BOOL  useBar1 = CCA_IO_PORT_BAR(barIdWithOffset);
    UINT8 offset  = CCA_IO_PORT_OFFSET(barIdWithOffset);
    ccaPciOut32(offset, (UINT32)data, ccaIndx, useBar1);
+}
+
+void ccaIoPortShow(CcaIoPort barIdWithOffset)
+{
+   UINT  rsrcIdx = CCA_IO_PORT_RSRC(barIdWithOffset);
+   BOOL  useBar1 = CCA_IO_PORT_BAR(barIdWithOffset);
+   UINT8 offset  = CCA_IO_PORT_OFFSET(barIdWithOffset);
+
+   printf("CcaIoPort=%04x : rsrcIdx=%d useBar1=%d", (barIdWithOffset & 0xFFFF), rsrcIdx, useBar1);
+
+   if (offset < CCA_OFFSET_NA && rsrcIdx < CCA_MAX_PCI_RESOURCES)
+   {
+      UINT8* pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIdx].pBAR1 : ccaPciData[rsrcIdx].pBAR0);
+      UINT8* pReg = pBar + offset;
+      printf(" -> pBar=%#x + offset=%02x => pReg=%#x\n", pBar, offset, pReg);
+   }
+   else
+   {
+      printf(" -> pBar=NULL + offset=%02x => pReg=N/A\n", offset);
+   }
+
 }
 
 LOCAL void ccaResourceArrayInit (ccaPciResources data[CCA_MAX_PCI_RESOURCES])

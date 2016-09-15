@@ -83,6 +83,11 @@ void hwOutLong(HwPortId portId, HwLong data);
  */
 int hwShowPortMap(void);
 
+/**
+ * Show the CCA PCI register info associated with a given HwPortId
+ */
+void hwShowPortId(HwPortId portId);
+
 #ifdef __cplusplus
 }
 #endif

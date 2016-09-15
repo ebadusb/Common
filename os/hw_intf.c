@@ -144,10 +144,19 @@ int hwShowPortMap(void)
 
       for (portId = 0; portId < mapSize; portId++)
       {
-         HwPortReg portReg = theImpl.GetPortRegister(portId);
-         printf("portId=%02d -> portReg=%#02x\n", portId, portReg);
+         printf("portId=%02d | ", portId);
+         hwShowPortId(portId);
       }
    }
 
    return mapSize;
+}
+
+/**
+ * Command-line utility to print CCA register info for a HwPortId
+ */
+void hwShowPortId(HwPortId portId)
+{
+   HwPortReg portReg = hwGetPortRegister(portId);
+   ccaIoPortShow(portReg);
 }

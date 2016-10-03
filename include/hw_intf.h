@@ -78,6 +78,33 @@ void hwOutWord(HwPortId portId, HwWord data);
 void hwOutLong(HwPortId portId, HwLong data);
 
 /**
+ * Typedef for function pointer that logs a discrepancy found in two consecutive reads.
+ * Optional value passed to the hwReadAndCheckXxx() functions.
+ */
+typedef void HwLogDiscrepancyFunc(const char * file,    /* file and */
+                                  int line,             /* line number of read request */
+                                  HwPortId portId,      /* portId to read */
+                                  ULONG firstValue,     /* 1st value read */
+                                  ULONG secondValue,    /* 2nd value read */
+                                  ULONG finalValue);    /* final value */
+
+/**
+ * Hardware interface routines to read the register mapped to a portId.
+ * Performs two reads of the port. If they differ by -negDiff/+posDiff, then
+ * a third read is done and returned as the final result. If the log function pointer
+ * is provided, the discrepancy is logged.
+ */
+UCHAR hwReadAndCheckByte(HwPortId portId, UINT negDiff, UINT posDiff, UINT maxVal,
+                         HwLogDiscrepancyFunc* func, const char* file, int line);
+
+/**
+ * Like hwReadAndCheckByte(), but if maxVal <= 256, the discrepancy is checked on the
+ * individual upper and lower bytes in the word values that are read.
+ */
+USHORT hwReadAndCheckWord(HwPortId portId, UINT negDiff, UINT posDiff, UINT maxVal,
+                          HwLogDiscrepancyFunc* func, const char* file, int line);
+
+/**
  * Utility for printing the port register mapping.
  * Returns the number of entries in the port map.
  */

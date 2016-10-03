@@ -122,6 +122,101 @@ void hwOutLong(HwPortId portId, HwLong data)
    theImpl.OutLong(port, data);
 }
 
+static BOOL diffExceeded(UINT v1, UINT v2, UINT negDiff, UINT posDiff, UINT maxVal)
+{
+   BOOL result = FALSE;
+   UINT diff;
+
+   if ( v2 > v1 )
+   {
+      // Check for underflow on a decrementing counter
+      if ( v1 < negDiff && v2 >= maxVal-negDiff )
+      {
+         diff = ( v1+maxVal ) - v2;
+         result = ( diff < negDiff );
+      }
+      else
+      {
+         diff = v2 - v1;
+         result = ( diff < posDiff );
+      }
+   }
+   else if ( v2 < v1 )
+   {
+      // Check for overflow on an incrementing counter
+      if ( v2 < posDiff && v1 >= maxVal-posDiff )
+      {
+         diff = ( v2+maxVal ) - v1;
+         result = ( diff < posDiff );
+      }
+      else
+      {
+         diff = v1 - v2;
+         result = ( diff < negDiff );
+      }
+   }
+   return result;
+}
+
+UCHAR hwReadAndCheckByte(HwPortId portId, UINT negDiff, UINT posDiff, UINT maxVal,
+                         HwLogDiscrepancyFunc* logFunc, const char* file, int line)
+{
+   HwPortReg port = hwGetPortRegister(portId);
+   UCHAR result = theImpl.InByte(port);
+
+   UCHAR v1 = result;
+   UCHAR v2 = theImpl.InByte(port);
+
+   if ( (v1 != v2) && diffExceeded(v1, v2, negDiff, posDiff, maxVal) )
+   {
+      /* Use the 3rd reading as the final result */
+      result = theImpl.InByte(port);
+
+      /* And optionally log the discrepancy */
+      if ( logFunc != NULL ) logFunc(file, line, port, v1, v2, result);
+   }
+   return result;
+}
+
+USHORT hwReadAndCheckWord(HwPortId portId, UINT negDiff, UINT posDiff, UINT maxVal,
+                          HwLogDiscrepancyFunc* logFunc, const char* file, int line)
+{
+   HwPortReg port = hwGetPortRegister(portId);
+   USHORT result = theImpl.InWord(port);
+
+   USHORT v1 = result;
+   USHORT v2 = theImpl.InWord(port);
+
+   BOOL   isOutOfRange = FALSE;
+
+   if (v1 == v2) return result;
+
+   if (maxVal <= 256)
+   {
+      UCHAR v1Lo = (v1 & 0x00FF);
+      UCHAR v2Lo = (v2 & 0x00FF);
+      UCHAR v1Hi = (v1 & 0xFF00) >> 8;
+      UCHAR v2Hi = (v2 & 0xFF00) >> 8;
+
+      isOutOfRange = ( diffExceeded(v1Lo, v2Lo, negDiff, posDiff, maxVal) ||
+                       diffExceeded(v1Hi, v2Hi, negDiff, posDiff, maxVal) );
+   }
+   else
+   {
+      isOutOfRange = diffExceeded(v1, v2, negDiff, posDiff, maxVal);
+   }
+
+   if (isOutOfRange)
+   {
+      /* Use the 3rd reading as the final result */
+      result = theImpl.InWord(port);
+
+      /* And optionally log the discrepancy */
+      if (logFunc != NULL) logFunc(file, line, port, v1, v2, result);
+   }
+   return result;
+}
+
 /**
  * Command-line utility to print the current HwPortId-to-HwPortReg mapping.
  */

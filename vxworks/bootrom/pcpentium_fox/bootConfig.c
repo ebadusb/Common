@@ -1403,7 +1403,6 @@ LOCAL void bootCmdLoop (void)
 	int adr2;
 	FUNCPTR entry;
 	char key = 0;
-	int retry;
 
    /*
     * The keyboard uses I/O port 0x60 as a read/write data register, and
@@ -1485,8 +1484,9 @@ LOCAL void bootCmdLoop (void)
 	sysStartType |= BOOT_NO_AUTOBOOT;
 #endif
 
+#ifdef USE_ECHO_FOR_KEYBOARD_DETECT
 	sysOutByte((int)DataReg, (UCHAR)EchoCommand);
-	for ( retry=0 ; retry<10 && !kbdFound ; retry++ )
+	for ( value=0 ; value<10 && !kbdFound ; value++ )
 	{
 		taskDelay(1);
 		if ( sysInByte((int)StatusReg) && RcvDataAvail )
@@ -1497,6 +1497,7 @@ LOCAL void bootCmdLoop (void)
 			}
 		}
 	}
+#endif /* USE_ECHO_FOR_KEYBOARD_DETECT */
 
    if ( !(sysStartType & BOOT_NO_AUTOBOOT) &&
         !(sysFlags & SYSFLG_NO_AUTOBOOT) )

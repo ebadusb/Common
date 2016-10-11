@@ -251,7 +251,7 @@ void ccaIoPortShow(CcaIoPort barIdWithOffset)
    {
       UINT8* pBar = (UINT8*)(useBar1 ? ccaPciData[rsrcIdx].pBAR1 : ccaPciData[rsrcIdx].pBAR0);
       UINT8* pReg = pBar + offset;
-      printf(" -> pBar=%#x + offset=%02x => pReg=%#x\n", pBar, offset, pReg);
+      printf(" -> pBar=%p + offset=%02x => pReg=%p\n", pBar, offset, pReg);
    }
    else
    {

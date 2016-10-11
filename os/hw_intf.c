@@ -43,8 +43,9 @@ int xxBadPort = 0;
 /* ----------------------------- CONSTANTS ------------------------- */
 /* ----------------------------- PROTOTYPES------------------------- */
 
-
 static HwInterfaceImpl theImpl = {0};
+
+static unsigned long theCcaPciVerno = 0; /* for development/testing purposes */
 
 BOOL hwInitInterface(const HwInterfaceImpl* pImpl)
 {
@@ -63,6 +64,15 @@ BOOL hwInitInterface(const HwInterfaceImpl* pImpl)
    {
       theImpl = *pImpl;
       isValid = TRUE;
+
+      /* For development/testing purposes */
+      if (ccaPciResourcesAvailable())
+      {
+         ccaPciResources ccaInfo = {0};
+         ccaPciGetResource(0, &ccaInfo);
+         theCcaPciVerno = (ccaInfo.subsystemId << 8) | (ccaInfo.revisionId);
+      }
+
    #if 0
       hwShowPortMap();
    #endif
@@ -133,12 +143,12 @@ static BOOL diffExceeded(UINT v1, UINT v2, UINT negDiff, UINT posDiff, UINT maxV
       if ( v1 < negDiff && v2 >= maxVal-negDiff )
       {
          diff = ( v1+maxVal ) - v2;
-         result = ( diff < negDiff );
+         result = ( diff > negDiff );
       }
       else
       {
          diff = v2 - v1;
-         result = ( diff < posDiff );
+         result = ( diff > posDiff );
       }
    }
    else if ( v2 < v1 )
@@ -147,12 +157,12 @@ static BOOL diffExceeded(UINT v1, UINT v2, UINT negDiff, UINT posDiff, UINT maxV
       if ( v2 < posDiff && v1 >= maxVal-posDiff )
       {
          diff = ( v2+maxVal ) - v1;
-         result = ( diff < posDiff );
+         result = ( diff > posDiff );
       }
       else
       {
          diff = v1 - v2;
-         result = ( diff < negDiff );
+         result = ( diff > negDiff );
       }
    }
    return result;
@@ -173,7 +183,7 @@ UCHAR hwReadAndCheckByte(HwPortId portId, UINT negDiff, UINT posDiff, UINT maxVa
       result = theImpl.InByte(port);
 
       /* And optionally log the discrepancy */
-      if ( logFunc != NULL ) logFunc(file, line, port, v1, v2, result);
+      if ( logFunc != NULL ) logFunc(file, line, portId, v1, v2, result);
    }
    return result;
 }
@@ -212,7 +222,7 @@ USHORT hwReadAndCheckWord(HwPortId portId, UINT negDiff, UINT posDiff, UINT maxV
       result = theImpl.InWord(port);
 
       /* And optionally log the discrepancy */
-      if (logFunc != NULL) logFunc(file, line, port, v1, v2, result);
+      if (logFunc != NULL) logFunc(file, line, portId, v1, v2, result);
    }
    return result;
 }

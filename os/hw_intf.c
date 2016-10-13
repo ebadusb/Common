@@ -45,8 +45,6 @@ int xxBadPort = 0;
 
 static HwInterfaceImpl theImpl = {0};
 
-static unsigned long theCcaPciVerno = 0; /* for development/testing purposes */
-
 BOOL hwInitInterface(const HwInterfaceImpl* pImpl)
 {
    BOOL isValid = FALSE;
@@ -64,18 +62,9 @@ BOOL hwInitInterface(const HwInterfaceImpl* pImpl)
    {
       theImpl = *pImpl;
       isValid = TRUE;
-
-      /* For development/testing purposes */
-      if (ccaPciResourcesAvailable())
-      {
-         ccaPciResources ccaInfo = {0};
-         ccaPciGetResource(0, &ccaInfo);
-         theCcaPciVerno = (ccaInfo.subsystemId << 8) | (ccaInfo.revisionId);
-      }
-
-   #if 0
-      hwShowPortMap();
-   #endif
+      /*
+       * hwShowPortMap();
+       */
    }
    else
    {
@@ -172,10 +161,10 @@ UCHAR hwReadAndCheckByte(HwPortId portId, UINT negDiff, UINT posDiff, UINT maxVa
                          HwLogDiscrepancyFunc* logFunc, const char* file, int line)
 {
    HwPortReg port = hwGetPortRegister(portId);
-   UCHAR result = theImpl.InByte(port);
 
-   UCHAR v1 = result;
+   UCHAR v1 = theImpl.InByte(port);
    UCHAR v2 = theImpl.InByte(port);
+   UCHAR result = v2;
 
    if ( (v1 != v2) && diffExceeded(v1, v2, negDiff, posDiff, maxVal) )
    {
@@ -192,10 +181,10 @@ USHORT hwReadAndCheckWord(HwPortId portId, UINT negDiff, UINT posDiff, UINT maxV
                           HwLogDiscrepancyFunc* logFunc, const char* file, int line)
 {
    HwPortReg port = hwGetPortRegister(portId);
-   USHORT result = theImpl.InWord(port);
 
-   USHORT v1 = result;
+   USHORT v1 = theImpl.InWord(port);
    USHORT v2 = theImpl.InWord(port);
+   USHORT result = v2;
 
    BOOL   isOutOfRange = FALSE;
 

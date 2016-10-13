@@ -64,7 +64,7 @@
 
 /* XXX: For Common Kernel; may need to revisit this */
 #define DEFAULT_BOOT_LINE \
-  "gei(0,0)control:/config/kernel_init/safety/vxWorks" \
+  "gei(0,0)control:/machine/kernel_init/safety/vxWorks" \
   " e=90.0.0.1:ffffff00 h=90.0.0.2 tn=safety" \
   " u=" SFTYFTPUSER " pw=" SFTYFTPPASS \
   " f=0x0"

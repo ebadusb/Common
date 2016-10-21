@@ -10,6 +10,7 @@
 
 # Hack for building a bootrom for use with Common Kernel. TODO: revisit this
 ifeq ($(CK),true)
+MY_MAKE_ARGS = CK=true
 DST_DIR   := $(CKDIR)/bootrom/bin
 MY_DFLAGS := -DCOMMON_KERNEL
 endif

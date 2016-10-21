@@ -64,7 +64,11 @@ ROM_SIZE           = 00090000	# number of bytes of ROM space
 # endif
 
 RAM_LOW_ADRS       = 00308000	# VxWorks image entry point
+ifeq ($(CK),true)
+RAM_HIGH_ADRS      = 04008000	# Boot image entry point (Common Kernel)
+else
 RAM_HIGH_ADRS      = 00108000	# Boot image entry point
+endif
 
 EXTRA_DEFINE       = 		# -DFAST_REBOOT
 
@@ -92,6 +96,8 @@ bootrom.pxe: bootrom_uncmp preboot.s
 
 cputest:
 	@echo From Makefile: CPU=$(CPU)
+	@echo Bootrom entry point is RAM_HIGH_ADRS=$(RAM_HIGH_ADRS)
+	@echo VxWorks entry point is  RAM_LOW_ADRS=$(RAM_LOW_ADRS)
 
 ################################################################################
 

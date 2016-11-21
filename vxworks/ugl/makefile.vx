@@ -8,13 +8,20 @@
 # It is recommended to first build the project's respective kernel, and then
 # build the respective UGL components here.
 #
-# Usage: make -f makefile.vx [trima_obj|optia_obj|all]
+# Usage: make -f makefile.vx [all|trima|poo|optia|apc|clean|clean4]
 #
 ################################################################################
 
-.PHONY: all ugl clean trima optia apc
+.PHONY: all trima poo optia apc clean clean4
 
-all: ugl
+all: trima poo optia apc
+
+# For Fox (Control), CPU=PENTIUM
+# For Bengal (APC) , CPU=PENTIUM4  
+#
+override CPU=PENTIUM
+apc    : override CPU=PENTIUM4
+clean4 : override CPU=PENTIUM4
 
 #
 # MAINDIR should be set to the relative path from this makefile directory
@@ -53,8 +60,6 @@ endif
 
 SUBMAKE_ARGS += -C $(WIND_UGL_DIR) WINDML_CONFIG_DIR=$(MY_CFG_DIR)
 
-ugl : $(MY_UGL_OBJS)
-
 # Convience targets to selectively build for just Trima, Optia, or APC
 #
 trima : $(MY_TRIMA_OBJ)
@@ -76,7 +81,7 @@ $(MY_OUT_DIR)/%.o : %.cfg
 	$(Q)rm -f $@
 	mv $(basename $<)_windml.o $@
 
-clean:
+clean clean4:
 	$(MAKE) $(SUBMAKE_ARGS) CPU=$(CPU) rclean
 	rm -f $(WIND_LIB_DIR)\libwndml.a
 	rm -f $(WIND_LIB_DIR)\wndml.o

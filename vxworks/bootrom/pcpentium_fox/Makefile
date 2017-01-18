@@ -65,12 +65,9 @@ ROM_SIZE           = 00090000	# number of bytes of ROM space
 # ROM_SIZE           = 0007fe00	# number of bytes of ROM space
 # endif
 
-# For compatibility with TBCT's Vx69 Common Kernel: 
-RAM_LOW_ADRS      = 00308000	# VxWorks image entry point
-RAM_HIGH_ADRS     = 00108000	# Boot image entry point
-# Previous Trima/Optia kernels:
-#RAM_LOW_ADRS      = 00108000	# VxWorks image entry point
-#RAM_HIGH_ADRS     = 00008000	# Boot image entry point
+# Same as previous Trima/Optia kernels:
+RAM_LOW_ADRS      = 00108000	# VxWorks image entry point
+RAM_HIGH_ADRS     = 00008000	# Boot image entry point
 
 EXTRA_DEFINE       = 		# -DFAST_REBOOT
 

@@ -287,7 +287,7 @@ extern "C" {
 
 /* Network driver options */
 
-#define INCLUDE_END             /* Enhanced Network Driver Support */
+#undef INCLUDE_END             /* Enhanced Network Driver Support */
 
 #undef  INCLUDE_DEC21X40_END    /* (END) DEC 21x4x PCI interface */
 #undef  INCLUDE_EL_3C90X_END    /* (END) 3Com Fast EtherLink XL PCI */
@@ -663,7 +663,7 @@ extern "C" {
 #endif
 
 #define USER_RESERVED_MEM       (0)             /* user reserved memory */
-#define LOCAL_MEM_LOCAL_ADRS    (0x00100000)    /* on-board memory base */
+#define LOCAL_MEM_LOCAL_ADRS    (0x00001000)    /* on-board memory base (preserve BIOS Data Area ~ 0x500) */
 
 /*
  * LOCAL_MEM_SIZE is the offset from the start of on-board memory to the
@@ -700,13 +700,9 @@ extern "C" {
 #   define ROM_SIZE             (0x0007fe00)    /* size of ROM */
 #endif
 
-#if 1 /* From WiPro: */
-#define RAM_LOW_ADRS            (0x00308000)	/* VxWorks image entry point */
-#define RAM_HIGH_ADRS           (0x00108000)	/* Boot image entry point */
-#else /* Previous Trima/Optia kernels: */
+/* Previous Trima/Optia kernels: */
 #define RAM_LOW_ADRS            (0x00108000)    /* VxWorks image entry point */
 #define RAM_HIGH_ADRS           (0x00008000)    /* Boot image entry point */
-#endif
 
 /*
  * The INCLUDE_ADD_BOOTMEM configuration option enables runtime code which

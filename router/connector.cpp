@@ -54,8 +54,10 @@ int Connector_main( unsigned long netAddress, int sock )
                     << ") TCP port " << dec << getGatewayPort() << " - attempt connection..."
                     << endmsg;
 
+   struct timeval timeOut = {10 /* seconds */, 0 /* microsecs */};
+
    while (    sock == ERROR 
-           || connect( sock, (sockaddr *)&addr, sizeof(addr) ) == ERROR )
+           || connectWithTimeout( sock, (sockaddr *)&addr, sizeof(addr), &timeOut ) == ERROR )
    {
       if ( sock != ERROR )
          close( sock );  // start over again

@@ -74,6 +74,11 @@ BOOL hwInitInterface(const HwInterfaceImpl* pImpl)
    return isValid;
 }
 
+const char* hwGetPortName(HwPortId portId)
+{
+   return (theImpl.GetPortName ? theImpl.GetPortName(portId) : "PortName_NA");
+}
+
 HwPortReg hwGetPortRegister(HwPortId portId)
 {
    return (theImpl.GetPortRegister ? theImpl.GetPortRegister(portId) : HwPortReg_NA);
@@ -219,7 +224,7 @@ USHORT hwReadAndCheckWord(HwPortId portId, UINT negDiff, UINT posDiff, UINT maxV
 /**
  * Command-line utility to print the current HwPortId-to-HwPortReg mapping.
  */
-int hwShowPortMap(void)
+int hwShowPortMap(int verbose)
 {
    int mapSize = 0;
 
@@ -238,8 +243,15 @@ int hwShowPortMap(void)
 
       for (portId = 0; portId < mapSize; portId++)
       {
-         printf("portId=%02d | ", portId);
-         hwShowPortId(portId);
+         if (verbose)
+         {
+            printf("portId=%02d | ", portId);
+            hwShowPortId(portId);
+         }
+         else
+         {
+            printf("portId=%02d | %25s -> 0x%02x\n", portId, hwGetPortName(portId), hwGetPortRegister(portId));
+         }
       }
    }
 

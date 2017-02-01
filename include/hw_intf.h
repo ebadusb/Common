@@ -31,6 +31,9 @@ enum {HwPortReg_NA = 0xFFFFFFFF};
 
 typedef struct _HwInterfaceImpl
 {
+   /* Function pointer that translates portId to its string name */
+   const char* (*GetPortName)(HwPortId);
+
    /*
     * Function pointer that returns the port register mapped to a portId.
     * Returns HwPortReg_NA if the portId can't be decoded or is not applicable.
@@ -57,6 +60,11 @@ typedef struct _HwInterfaceImpl
  * Returns TRUE if successful; otherwise, FALSE;
  */
 BOOL hwInitInterface(const HwInterfaceImpl* pImpl);
+
+/**
+ * Returns the string name mapped to portId.
+ */
+const char* hwGetPortName(HwPortId portId);
 
 /**
  * Returns the register mapped to portId for the implementation.
@@ -108,7 +116,7 @@ USHORT hwReadAndCheckWord(HwPortId portId, UINT negDiff, UINT posDiff, UINT maxV
  * Utility for printing the port register mapping.
  * Returns the number of entries in the port map.
  */
-int hwShowPortMap(void);
+int hwShowPortMap(int verbose);
 
 /**
  * Show the CCA PCI register info associated with a given HwPortId

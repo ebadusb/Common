@@ -98,14 +98,14 @@ typedef enum
    CTL3_IOPW_CENT_SPEED          = 0x5C,
    CTL3_IOW_CENT_SPEED           = CTL3_IOPW_CENT_SPEED,
    //
-   // Watchdog Pet (write-only) and Status (read-only) registers
+   // Watchdog Pet (read/write) and Status (read-only) registers
    //
-   CTL3_OUT_WATCHDOG1            = 0x60,
-   CTL3_OUT_WATCHDOG2            = 0x64,
-   CTL3_OUT_WATCHDOG_F0_REG      = CTL3_OUT_WATCHDOG1,
-   CTL3_OUT_WATCHDOG_A5_REG      = CTL3_OUT_WATCHDOG2,
-   CTL3_IN_WATCHDOG_STATUS       = 0x60,
-   CTL3_IN_WATCHDOG_CHECK        = 0x64,
+   CTL3_IO_WATCHDOG1             = 0x60,
+   CTL3_IO_WATCHDOG2             = 0x64,
+   CTL3_IO_WATCHDOG_F0_REG       = CTL3_IO_WATCHDOG1,
+   CTL3_IO_WATCHDOG_A5_REG       = CTL3_IO_WATCHDOG2,
+   CTL3_IN_WATCHDOG_STATUS       = 0x80,
+   CTL3_IN_WATCHDOG_CHECK        = 0x84,
    //
    // Analog-to-Digital Converter Channel Select and Read registers
    //

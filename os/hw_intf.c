@@ -165,11 +165,14 @@ static BOOL diffExceeded(UINT v1, UINT v2, UINT negDiff, UINT posDiff, UINT maxV
 UCHAR hwReadAndCheckByte(HwPortId portId, UINT negDiff, UINT posDiff, UINT maxVal,
                          HwLogDiscrepancyFunc* logFunc, const char* file, int line)
 {
-   HwPortReg port = hwGetPortRegister(portId);
+   UCHAR v1, v2, result;
 
-   UCHAR v1 = theImpl.InByte(port);
-   UCHAR v2 = theImpl.InByte(port);
-   UCHAR result = v2;
+   HwPortReg port = hwGetPortRegister(portId);
+   ASSERT_IPORT(port);
+
+   v1 = theImpl.InByte(port);
+   v2 = theImpl.InByte(port);
+   result = v2;
 
    if ( (v1 != v2) && diffExceeded(v1, v2, negDiff, posDiff, maxVal) )
    {
@@ -185,13 +188,15 @@ UCHAR hwReadAndCheckByte(HwPortId portId, UINT negDiff, UINT posDiff, UINT maxVa
 USHORT hwReadAndCheckWord(HwPortId portId, UINT negDiff, UINT posDiff, UINT maxVal,
                           HwLogDiscrepancyFunc* logFunc, const char* file, int line)
 {
-   HwPortReg port = hwGetPortRegister(portId);
-
-   USHORT v1 = theImpl.InWord(port);
-   USHORT v2 = theImpl.InWord(port);
-   USHORT result = v2;
-
+   USHORT v1, v2, result;
    BOOL   isOutOfRange = FALSE;
+
+   HwPortReg port = hwGetPortRegister(portId);
+   ASSERT_IPORT(port);
+
+   v1 = theImpl.InWord(port);
+   v2 = theImpl.InWord(port);
+   result = v2;
 
    if (v1 == v2) return result;
 

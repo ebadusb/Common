@@ -28,10 +28,10 @@ typedef enum
    SAFP_OUT_CCA_RESET       = 0x00, // Write CCA_RESET_VALUE to force a reset of the CCA
    SAFP_INP_CCA_ID          = 0x00, // Read to get CCA ID pins cca_id[15:0]
    //
-   // Watchdog Pet (write-only) and Status (read-only) registers
+   // Watchdog Pet (read/write) and Status (read-only) registers
    //
-   SAFP_OUTP_WATCHDOG_F0    = 0x04,
-   SAFP_OUTP_WATCHDOG_A5    = 0x08,
+   SAFP_IOP_WATCHDOG_F0     = 0x04,
+   SAFP_IOP_WATCHDOG_A5     = 0x08,
    SAFP_INP_WATCHDOG_STATUS = 0x20,
    SAFP_INP_WATCHDOG_CHECK  = 0x24,
    //
@@ -43,8 +43,8 @@ typedef enum
    //
    // Miscellaneous Status registers (8-bit, read-only)
    //
-   SAFP_INP_VALVES          = 0x04, // valves and cassette positions
-   SAFP_INP_HALLS           = 0x08, // pump hall sensors and platelet valve position
+   SAFP_INP_VALVES          = 0x2C, // valves and cassette positions
+   SAFP_INP_HALLS           = 0x30, // pump hall sensors and platelet valve position
    SAFP_INP_SWITCHES        = 0x18, // power fail, door, stop/pause buttons, draw/return
    SAFP_INP_BASIN_DATA      = 0x1C, // power line drop status
    //

@@ -2050,6 +2050,30 @@ LOCAL void sysIntInitPIC (void)
     }
 #else
     i8259Init ();
+
+    /*
+     * For Versalogic Fox (Vortex86, EPM-19) board. Patch IRQ mapping to
+     * accommodate presence of a Versalogic VL-MPEe-E5 card, a dual-gigabit
+     * ethernet mini-PCIe module (based on Intel i210 ethernet controller).
+     *
+     * The EPM-19 BIOS does not properly configure the interrupt PIRQ or the
+     * intLines of the devices connected to the M2 slot. These commands
+     * enable routing of the PIRQ INTD input to IRQ5, and sets the intLine
+     * of the two ethernet devices to 5 so the driver uses the correct IRQ.
+     *
+     * The VL-MPEe-E5 card has the Intel i210 devices at 5:0.0 and 6:0.0.
+     */
+    /* this tells the driver to use IRQ5 which BIOS maps INTC to */
+    pciConfigOutByte(5, 0, 0, PCI_CFG_DEV_INT_LINE, 5);
+
+    /* this tells the driver to use IRQ5 which we map INTD to below */
+    /* route gei0 to IRQ5 */
+    pciConfigOutByte(6, 0, 0, PCI_CFG_DEV_INT_LINE, 5);
+
+    /* configure PIRQ to enable INTD on IRQ5 which BIOS is not doing */
+    /* route INTD to IRQ5 */
+    pciConfigOutByte(0, 7, 0, 0x59, 0x55);
+
 #endif	/* defined(VIRTUAL_WIRE_MODE) */
     }
 

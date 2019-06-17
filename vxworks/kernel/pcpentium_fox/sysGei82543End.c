@@ -5,6 +5,7 @@
 /*
 modification history
 --------------------
+02j,28Jul18,mfr  Add I210 support
 01j,07jul02,jln  add 82544GC device ID (spr#79520)
 01i,21may02,jln  support 82545/82546 fiber-based adapters (spr 78084)
 01h,25apr02,jln  fix short cable errata; support larger EEPROM; add more 
@@ -38,19 +39,16 @@ SEE ALSO: ifLib,
 .I "RS82543GC GIGABIT ETHERNET CONTROLLER NETWORKING SILICON DEVELOPER'S MANUAL"
 */
 
-
 #if defined(INCLUDE_GEI8254X_END)
 
 /* namespace collisions */
 
 #undef INTEL_PCI_VENDOR_ID  /* redefined in gei82543End.h (temporary fix) */
 
-
 /* includes */
 
 #include <end.h>
 #include <drv/end/gei82543End.h>
-
 
 /* defines */
 
@@ -127,7 +125,15 @@ SEE ALSO: ifLib,
 #define PRO1000_546_PCI_DEVICE_ID_XT    (0x1010) /* Copper */
 #define PRO1000_545_PCI_DEVICE_ID_MF    (0x1011) /* Fiber */
 #define PRO1000_546_PCI_DEVICE_ID_MF    (0x1012) /* Fiber */
+#define PRO1000_541_PCI_DEVICE_ID_XT    (0x1078) /* Copper */
+#define PRO1000_546_PCI_DEVICE_ID_XT2   (0x1079) /* Copper - 82546 GB */
 #define DEV_ID_82541PI                  (0x1076) /* Copper */
+
+#define PRO1000_573_PCI_DEVICE_ID_E     (0x108B) /* Copper - 82573E */
+#define PRO1000_573_PCI_DEVICE_ID_IAMT  (0x108C) /* Copper - 82573E IAMT */
+#define PRO1000_571_PCI_DEVICE_ID_EB    (0x105E) /* Copper - 82571EB */
+#define PRO1000_574_PCI_DEVICE_ID       (0x10D3) /* Copper - 82574 */
+#define INTEL_I210_DEVICE_ID            (0x1533) /* Copper - I210 */
 
 /* device resources */
 
@@ -230,12 +236,12 @@ SEE ALSO: ifLib,
 
 /* EEPROM/flash control register (must be used on 82544 or earlier) */
 
-#define GEI_EECD_SK		0x00000001 /* EEPROM clock */
-#define GEI_EECD_CS		0x00000002 /* EEPROM chip select */
-#define GEI_EECD_DI		0x00000004 /* EEPROM data in */
-#define GEI_EECD_DO		0x00000008 /* EEPROM data out */
-#define GEI_EECD_EE_REQ		0x00000040 /* Request access (!82544) */
-#define GEI_EECD_EE_GNT		0x00000080 /* Grant access (!82544) */
+#define GEI_EECD_SK         0x00000001 /* EEPROM clock */
+#define GEI_EECD_CS         0x00000002 /* EEPROM chip select */
+#define GEI_EECD_DI         0x00000004 /* EEPROM data in */
+#define GEI_EECD_DO         0x00000008 /* EEPROM data out */
+#define GEI_EECD_EE_REQ     0x00000040 /* Request access (!82544) */
+#define GEI_EECD_EE_GNT     0x00000080 /* Grant access (!82544) */
 
 #define CSR_SETBIT_4(unit, offset, val)          \
         GEI_SYS_WRITE_REG(unit, offset, GEI_SYS_READ_REG(unit, offset) | (val))
@@ -254,7 +260,7 @@ typedef struct geiResource        /* GEI_RESOURCE */
     UINT32 flashBase;             /* Base Address for FLASH */
 
     UINT16 eepromSize;            /* size in unit of word (16 bit) - 64/256 */ 
-	UINT16 eeprom_address_bits;   /* eeprom address_bits  - 82541 */
+    UINT16 eeprom_address_bits;   /* eeprom address_bits  - 82541 */
     UINT16 eeprom_icw1;           /* EEPROM initialization control word 1 */
     UINT16 eeprom_icw2;           /* EEPROM initialization control word 2 */
     UCHAR  enetAddr[6];           /* MAC address for this adaptor */
@@ -520,7 +526,7 @@ STATUS sys543PciInit
 *
 * On the second pass though this routine, the initialization parameter
 * string is constructed.  Note that on the second pass, the <pParamStr>
-* consists of a colon-delimeted END device unit number and rudimentary
+* consists of a colon-delimited END device unit number and rudimentary
 * initialization string (often empty) constructed from entries in the
 * BSP END Device Table such that:
 *
@@ -549,7 +555,6 @@ END_OBJ * sysGei8254xEndLoad
     {
     END_OBJ * pEnd;
     char      paramStr [END_INIT_STR_MAX];
-
 
     if (strlen (pParamStr) == 0)
         {
@@ -608,7 +613,7 @@ END_OBJ * sysGei8254xEndLoad
 
 /*****************************************************************************
 *
-* sys82543BoardInit - Adaptor initialization for 8254x chip
+* sys82543BoardInit - Adapter initialization for 8254x chip
 *
 * This routine is expected to perform any adapter-specific or target-specific
 * initialization that must be done prior to initializing the 8254x chip.
@@ -639,6 +644,8 @@ STATUS sys82543BoardInit
     if (pRsrc->boardType != PRO1000_543_BOARD && 
         pRsrc->boardType != PRO1000_544_BOARD &&
         pRsrc->boardType != PRO1000_546_BOARD &&
+        pRsrc->boardType != PRO1000_573_BOARD &&
+        pRsrc->boardType != PRO1000_I210_BOARD && 
         pRsrc->boardType != DEV_ID_82541PI) 
          return ERROR;
         
@@ -665,20 +672,21 @@ STATUS sys82543BoardInit
         
         if (devId == PRO1000_546_PCI_DEVICE_ID_XT ||
             devId == PRO1000_546_PCI_DEVICE_ID_MF) 
-	    {        
+            {
             UINT8 headerType;
 
             pciConfigInByte (pRsrc->pciBus, pRsrc->pciDevice, pRsrc->pciFunc,
                              PCI_CFG_HEADER_TYPE, &headerType);
 
             if (headerType == 0x80)
-  	        lanB = (pRsrc->pciFunc == 1)? TRUE : FALSE;
-
+                {
+                lanB = (pRsrc->pciFunc == 1)? TRUE : FALSE;
+                }
             else if (pRsrc->pciFunc != 0)
- 	        {
-                printf ("Error in detecting 82546 dual port: header type =%2d, 
-                         pci func=%2d\n", (UINT32)headerType, (UINT32)(pRsrc->pciFunc));
- 	        }
+                {
+                printf ("Error in detecting 82546 dual port: header type =%2d, "
+                         "pci func=%2d\n", (UINT32)headerType, (UINT32)(pRsrc->pciFunc));
+                }
             }
         }
 
@@ -697,12 +705,12 @@ STATUS sys82543BoardInit
            {
            int   ix;
 
-	   /* update LANB address */
+       /* update LANB address */
 
            for (ix = 5; ix >= 0; ix--)
-	        {
-		if (pReso->enetAddr[ix] != 0xff)
-		    {
+               {
+               if (pReso->enetAddr[ix] != 0xff)
+                    {
                     pReso->enetAddr[ix]++;
                     break;
                     }
@@ -790,7 +798,9 @@ STATUS sys82543BoardInit
      */
 
     pBoard->phyAddr = (pRsrc->boardType == PRO1000_544_BOARD || 
-                       pRsrc->boardType == PRO1000_546_BOARD)? 1 : 0;
+                       pRsrc->boardType == PRO1000_546_BOARD || 
+                       pRsrc->boardType == PRO1000_573_BOARD ||
+                       pRsrc->boardType == PRO1000_I210_BOARD)? 1 : 0;
 
     if (pReso->boardType == DEV_ID_82541PI)
         {
@@ -816,7 +826,7 @@ STATUS sys82543BoardInit
         }
 
     /* BSP specific 
-     * call back functions perform system physcial memory mapping in the PCI 
+     * call back functions perform system physical memory mapping in the PCI 
      * address space. sysLocalToBus converts a system physical memory address 
      * into the pci address space. sysBusToLocal converts a pci address which 
      * actually reflects a system physical memory back to the system memory 
@@ -852,7 +862,7 @@ STATUS sys82543BoardInit
     memcpy (&pBoard->enetAddr[0], &(pReso->enetAddr[0]), 
             ETHER_ADDRESS_SIZE);
 
-    /* we finish adaptor initialization */
+    /* we finish adapter initialization */
 
     pReso->iniStatus = OK;
 
@@ -866,7 +876,7 @@ STATUS sys82543BoardInit
 * This routine will be called every 2 seconds by default if GEI_END_SET_TIMER
 * flag is set. The available timers to adjust include RDTR(unit of ns), 
 * RADV(unit of us), and ITR(unit of 256ns). Based on CPU's and/or tasks' 
-* usuage on system, user can tune the device's performace dynamically. 
+* usage on system, user can tune the device's performance dynamically. 
 * This routine would be called in the tNetTask context, and is only 
 * available for 82540/82545/82546 MACs. Any timer value greater than
 * 0xffff won't be used to change corresponding timer register.
@@ -881,8 +891,8 @@ LOCAL BOOL sysGei82546DynaTimerSetup
     {
     /* user's specific code to decide what value should be used.
      * For example, depending on 
-     * 1: CPU usuage on system and/or,
-     * 2: specific application task's usuage and/or,
+     * 1: CPU usage on system and/or,
+     * 2: specific application task's usage and/or,
      * 3: RX/TX packet processing per second, and/or 
      * 4: RX/TX interrupt counter per second, and/or
      * 5: RX packet processing for each calling gei82543RxTxIntHandle(),
@@ -892,7 +902,7 @@ LOCAL BOOL sysGei82546DynaTimerSetup
      *
      * NOTE:
      * ITR:  Interrupt throttling register (unit of 256ns) 
-     *       inter-interupt delay between chip's interrupts   
+     *       inter-interrupt delay between chip's interrupts   
      *
      * RADV: receive interrupt absolute delay timer register (unit of 1.024us) 
      *       a RX interrupt will absolutely occur at this defined value 
@@ -910,7 +920,7 @@ LOCAL BOOL sysGei82546DynaTimerSetup
     /* pBoard->devTimerUpdate.itrVal  = 0xffffffff; /@ unit of 256 ns */
     /* pBoard->devTimerUpdate.watchDogIntVal = 2;   /@ 2 second default */
   
-    /* retuen TRUE; */
+    /* return TRUE; */
 
     return FALSE;
     }
@@ -1060,6 +1070,46 @@ LOCAL void sys543eepromWriteBits
         }
     }
 
+/*
+ * For the 82573, forgo the bitbang access methods and just
+ * get the controller to read the EEPROM for us.
+ */
+
+LOCAL UINT16 sys573eepromReadWord
+    (
+    int     unit,
+    UINT32  index
+    )
+    {
+    int     count;
+    UINT16  val;
+    UINT32  tmp;
+    PCI_BOARD_RESOURCE * pRsrc;
+
+    pRsrc = &geiPciResources[unit];
+
+    tmp = EERD_START_BIT | (index << 2);
+
+    GEI_SYS_WRITE_REG(unit, INTEL_82543GC_EERD, tmp);
+
+    for (count = 0; count < 10000; count++)
+        {
+        sysDelay();
+        if (GEI_SYS_READ_REG(unit, INTEL_82543GC_EERD) & EERD_573_DONE_BIT)
+            break;
+        }
+
+    if (count == 10000)
+        {
+        printf("gei%d: EEPROM read timed out\n", unit);
+        return (0);
+        }
+
+    val = (GEI_SYS_READ_REG(unit, INTEL_82543GC_EERD) >> 16) & 0xFFFF;
+
+    return (val);
+    }
+
 /*************************************************************************
 *
 * sys543eepromReadWord - Read a word from EEPROM
@@ -1078,7 +1128,10 @@ LOCAL UINT16 sys543eepromReadWord
     PCI_BOARD_RESOURCE * pRsrc;
 
     pRsrc = &geiPciResources[unit];
-   
+
+    if (pRsrc->boardType == PRO1000_573_BOARD || pRsrc->boardType == PRO1000_I210_BOARD)
+        return (sys573eepromReadWord (unit, index));
+
     if (pRsrc->boardType == PRO1000_546_BOARD)
       {
       int  ix = 0; 
@@ -1095,18 +1148,18 @@ LOCAL UINT16 sys543eepromReadWord
               sysDelay ();
 
          if ((tmp = GEI_SYS_READ_REG(unit, INTEL_82543GC_EECD)) & EECD_GNT_BIT)
-	     {
+         {
              accessGet = TRUE;
              break;
              }
          } while (ix++ < 500000);
 
-      if (!accessGet) 
-	{
-	/* timeout in a second */
-        printf ("ERROR: timeout to grant access to gei unit %d EEPROM\n", unit);
-        return 0;
-        }
+         if (!accessGet) 
+         {
+             /* timeout in a second */
+             printf ("ERROR: timeout to grant access to gei unit %d EEPROM\n", unit);
+             return 0;
+         }
       }
 
     if (index >= geiResources[(unit)].eepromSize)
@@ -1322,7 +1375,7 @@ LOCAL void sys543PhySpecRegsInit
     UINT32 phyOui = 0;      /* PHY's manufacture ID */
     UINT32 phyMode;         /* PHY mode number */
 
-    /* Intel Pro1000T adaptor uses Alaska transceiver */
+    /* Intel Pro1000T adapter uses Alaska transceiver */
 
     /* read device ID to check Alaska chip available */
 
@@ -1501,11 +1554,13 @@ void sys543Show
     else if (pRsrc->boardType == PRO1000_544_BOARD)
         printf ("********* Intel PRO1000 82544GC/EI based Adapter ********\n");
     else if (pRsrc->boardType == PRO1000_546_BOARD)
-        printf ("********* Intel 82540/82545/82546EB based Adapter ********\n");
+        printf ("********* Intel 82540/82541/82545/82546 based Adapter ********\n");
+    else if (pRsrc->boardType == PRO1000_I210_BOARD)
+        printf ("********* Intel I210 based Adapter ********\n");
     else if (pRsrc->boardType == DEV_ID_82541PI)
         printf ("********* Intel 82541PI Adapter ********\n");
     else
-        printf ("********* UNKNOWN Adaptor ************ \n");
+        printf ("********* UNKNOWN Adapter ************ \n");
  
     printf ("  CSR PCI Membase address = 0x%x\n", pReso->memBaseLow);
  
@@ -1580,11 +1635,21 @@ LOCAL UINT32 sysGeiDevToType
                 return (PRO1000_544_BOARD);
             
             case PRO1000_540_PCI_DEVICE_ID_XT:
+            case PRO1000_541_PCI_DEVICE_ID_XT:
             case PRO1000_545_PCI_DEVICE_ID_XT:
             case PRO1000_546_PCI_DEVICE_ID_XT:
+            case PRO1000_546_PCI_DEVICE_ID_XT2:
             case PRO1000_545_PCI_DEVICE_ID_MF:
             case PRO1000_546_PCI_DEVICE_ID_MF:
                 return (PRO1000_546_BOARD);
+            case PRO1000_573_PCI_DEVICE_ID_E:
+            case PRO1000_573_PCI_DEVICE_ID_IAMT:
+            case PRO1000_571_PCI_DEVICE_ID_EB:
+            case PRO1000_574_PCI_DEVICE_ID: /*Ampro*/
+                return (PRO1000_573_BOARD);
+            case INTEL_I210_DEVICE_ID:
+                printf("id = %x\n", deviceId);
+                return (PRO1000_I210_BOARD);
             case DEV_ID_82541PI:
                 return DEV_ID_82541PI;
             }
